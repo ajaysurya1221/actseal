@@ -1,8 +1,8 @@
 # ADR 0006: Pin the tested Laya CPU path and keep inference optional
 
-- Status: accepted for the initial optional local adapter, subject to product-level acceptance.
+- Status: accepted; optional adapter product acceptance recorded below. Final release gates remain separate.
 - Date: 2026-10-06.
-- Evidence provenance: model-verification lane supplied two successful macOS native smoke-run receipts and subsequently checked Linux CPU wheel metadata and availability. Linux inference was not run.
+- Initial preflight provenance: model-verification lane supplied two successful macOS native smoke-run receipts and subsequently checked Linux CPU wheel metadata and availability. Linux inference was not run at that stage; later product execution is recorded below.
 
 ## Decision
 
@@ -50,7 +50,23 @@ The [3.12 metadata](https://download.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp31
 
 Preserve the tested macOS Python 3.12 arm64 PyPI wheel hash `420dbf314c180ee4b86e9bc00aee5746a7d6e5bacdd7df925af671ed393f0b2e`. Switching macOS to the CPU index would select a differently hashed artifact. The Linux source marker therefore preserves the evidence behind the existing macOS smoke.
 
-Actual uv resolution and Linux live runtime checks are pending. Regenerate and inspect the lock to prove CUDA/NVIDIA/Triton nodes are absent, then run Linux integration acceptance before claiming Linux support. Some `download-r2.pytorch.org` metadata links returned HTTP 403 while equivalent `download.pytorch.org` links returned HTTP 200; direct availability checks do not substitute for a successful uv lock/install. No other Linux architecture or libc is accepted by this amendment.
+At this amendment's preflight stage, actual uv resolution and Linux live runtime checks were pending. The required lock inspection and Linux integration acceptance were subsequently completed as recorded below. Some `download-r2.pytorch.org` metadata links returned HTTP 403 while equivalent `download.pytorch.org` links returned HTTP 200; direct availability checks did not substitute for a successful uv lock/install. No other Linux architecture or libc is accepted by this amendment.
+
+## Product acceptance update — 6 October 2026
+
+T00's accepted lock resolves the CPU-only graph without CUDA/NVIDIA/Triton nodes;
+the full pinned license inventory is in [dependencies](../dependencies.md).
+[REVIEW T30-02](../../plan/reviews/T30-02.md) accepts provider milestone
+`17ed0875541ecfa6402991dc90e278beb2f4cc01`: root ran five cached-native macOS
+tests in 4.58 s, and [Linux run 37439327535](https://github.com/ajaysurya1221/actseal/actions/runs/37439327535)
+ran five product tests in 10.75 s on Ubuntu/Python 3.12.3 with Torch 2.14.1+cpu.
+These are suite durations, not inference benchmarks or model-quality evidence.
+
+[REVIEW T30-03](../../plan/reviews/T30-03.md) accepts full T30 at
+`8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`; the native-tested adapter and
+normalization bytes are unchanged. Native Python 3.13 and broader hardware are
+not established by these receipts. Final CLI integration and release acceptance
+remain separate gates; no historical preflight claim is retrospectively widened.
 
 ## Evidence and known limits
 
