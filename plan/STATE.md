@@ -24,9 +24,9 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 |---|---|---|---|
 | Planning package | Codex | COMPLETE | ee99eee plus documented amendments |
 | T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff (merge 86dbca0) |
-| T10 contract/policy | Claude A | REVISE_T10_01 | none |
+| T10 contract/policy | Claude A | ACCEPT / MERGED | 9bdac25 (merge 28be58d) |
 | T20 statistics | Claude B | NUMERICAL_VERIFIED_WAITING_FOR_T10_T30 | none |
-| T30 providers/faults | Claude C | REVISE_T30_01 | none |
+| T30 providers/faults | Claude C | CORRECTED_MILESTONE_LOCAL_VERIFIED | none |
 | T40 evidence/replay | Claude B | WAITING_FOR_ACCEPTED_INTERFACES | none |
 | T50 CLI/demo | Claude A | WAITING_FOR_T10_T20_T30_T40 | none |
 | T60 acceptance | Claude C | WAITING_FOR_T50 | none |
@@ -51,17 +51,20 @@ The human approved the three hooks and standing routine execution on 2026-10-06.
 No pending permission question remains. Original scope/license/budget escalations
 and the release quality gates still apply; public launch messages remain drafts.
 
-T10 initial self-report DONE; independent review T10-01 requires three fixes:
-bounded reads, consistent lock wire-size limits and standalone cross-split ID
-checks. Root passed all four commands (738 tests), then reproduced each defect.
-ADR0010 freezes the approved shared I/O/digest helpers before downstream use.
-Next: resume T10 for fixes and a new immutable report T10-02.md.
+T10 accepted at 9bdac251a76a22a30f8d3d5ab8b773e0200945a1 and merged through PR3
+as 28be58d. REVIEW T10-02 records 755 root-run tests, lint/format/mypy, independent
+regression probes and all eight hosted push/PR jobs green. All three original
+findings fixed; ADR0010 helpers are frozen. Claude cumulative subscription meter
+$12.1806425 is an estimate, not API billing.
 
-T30 milestone received; review T30-01 requires four fixes. Root independently
-passed235 unit tests and5 real cached-native Mac tests, then reproduced deadline
-and malformed-IPC failures. Linux native acceptance remains pending. Next: resume
-T30 on milestone corrections with new immutable receipt T30-02.md; no faults
-until accepted T10 integration. ADR0011 and downstream packets are updated.
+T30-02 fixes all four milestone findings. Root independently passed 243 unit
+tests in 4.12s, lint/format/mypy and 5 real cached-native Mac tests in 4.58s.
+Separate review confirms stalled-send timeout and malformed-IPC cleanup. Original
+REPORT preserved; corrective report acknowledges its earlier denial reroutes and
+does not repeat them. Linux native acceptance remains pending. Next: integrate
+accepted T10 and current docs into idle T30, begin hosted milestone verification,
+and resume the real fault campaign. Cumulative subscription meter $17.69608775.
+No full T30 acceptance or merge until faults and exact candidate CI pass.
 
 T20 numerical milestone is
 verified: 159 tests independently pass; all four CI jobs green at 7df7600.
