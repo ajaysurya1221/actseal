@@ -1,0 +1,11 @@
+# REVIEW07 preliminary required repairs
+
+Verdict: REVISE at completed candidate282699aa60f7d177478e9e6f14221fb794951188 (initial source review covered76758d7084e396c8960718d28c1cad5fb70bac03 and its then-WIP additions). The authored inputs/policy/generator remain frozen. Preserve the original recording and producer identity; no resealing or threshold/data tuning.
+
+1. Request binding: ActionGate.decide must compare capture.request_sha256 against request_sha256(request) before normalization or effects. A same-identity capture for a different ticket cannot authorize a queue write. Fail loudly/closed and add a swapped-capture regression proving zero effects. This is application-owned code; no product API change.
+2. Archived lock failures: run.py treats every foreign-producer ERROR/integrity.lock as lack of registry approval, but that reason also covers invalid locks. Establish actual compatibility status explicitly and keep integrity failures as errors. Add an invalid archived seal alongside a valid current run and prove --check fails. Do not relabel generic replay errors as harmless compatibility notices. Keep unknown original archives unchanged and accurately reported.
+3. Approved compatible archives: --route currently requires exact current fingerprint even when replay/check accept the approved compatible archive. Route only after successful supported replay, including exact registry-approved foreign producers. Regression-test both check and route with an approved archive; reject unapproved producers without rewriting bytes or automatically editing the registry.
+4. Queue failure wording: an enqueue operation may perform its effect and then raise. Remove the promise that every failing queue operation never enqueues. State errors propagate with no retry and application-owned partial-effect handling. Add a local enqueue-then-raise test if needed to substantiate that scope; do not introduce transactional machinery.
+
+
+Follow-up: Claude07R repairs only application/example/tests/docs. Original data, policy and recorded bytes remain immutable. Full acceptance still waits for Task03 native receipt. The denied /tmp diff is not retried; new test-generated comparison paths are confined to a fresh owned TMPDIR inside the allowed checkout. No global control or permission change is authorized.
