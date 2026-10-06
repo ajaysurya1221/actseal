@@ -1000,6 +1000,7 @@ def test_implementation_fingerprint_does_not_execute_sources(tmp_path: Path) -> 
 # --------------------------------------------------------------------------- #
 
 OPTIONAL_MODULES = ("laya", "torch", "transformers", "huggingface_hub", "safetensors", "numpy")
+ACTSEAL_SOURCE_ROOT = Path(__file__).resolve().parents[2] / "src" / "actseal"
 
 
 def test_package_import_and_serialization_do_not_import_optional_stack() -> None:
@@ -1028,8 +1029,38 @@ def test_package_import_and_serialization_do_not_import_optional_stack() -> None
 
 
 def test_optional_stack_is_absent_from_default_environment() -> None:
+    """Importing the core modules this file exercises must not load any optional root.
+
+    The check runs in a fresh isolated interpreter. The shared pytest process may
+    already hold Laya or NumPy after genuine native integration tests, which says
+    nothing about what the core import graph pulls in.
+    """
+    script = (
+        "import json\n"
+        "import sys\n"
+        "import actseal\n"
+        "import actseal.errors\n"
+        "import actseal.records\n"
+        "import actseal.serialization\n"
+        f"roots = {OPTIONAL_MODULES!r}\n"
+        "loaded = sorted({m.split('.')[0] for m in sys.modules if m.split('.')[0] in roots})\n"
+        "print(json.dumps({'actseal_file': actseal.__file__, 'loaded': loaded}))\n"
+        "print('optional-stack-absent')\n"
+    )
+    result = subprocess.run(  # noqa: S603 - fixed interpreter and literal script, no user input
+        [sys.executable, "-I", "-c", script],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr[-2000:]
+    lines = result.stdout.splitlines()
+    assert lines[-1:] == ["optional-stack-absent"], result.stdout[-2000:]
+    report = json.loads(lines[-2])
+    assert Path(report["actseal_file"]).resolve() == ACTSEAL_SOURCE_ROOT / "__init__.py"
     for module in OPTIONAL_MODULES:
-        assert module not in sys.modules
+        assert module not in report["loaded"], report["loaded"]
 
 
 def test_public_api_surface() -> None:

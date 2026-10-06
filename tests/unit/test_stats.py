@@ -51,8 +51,10 @@ independently rather than copied.
 from __future__ import annotations
 
 import inspect
+import json
 import math
 import random
+import subprocess
 import sys
 from collections.abc import Callable, Iterator
 from decimal import Decimal, localcontext
@@ -587,6 +589,38 @@ def _code_after_docstring(source: str) -> str:
     return source[source.index(marker) :]
 
 
+def _assert_fresh_stats_import_loads_no_numeric_stack() -> None:
+    """Import ``actseal.stats`` in a fresh isolated interpreter and check NumPy/SciPy stay out.
+
+    The shared pytest process may already hold NumPy after genuine native integration
+    tests, so its module table cannot witness what the stats module itself imports.
+    """
+    script = (
+        "import json\n"
+        "import sys\n"
+        "import actseal.stats\n"
+        "roots = ('numpy', 'scipy')\n"
+        "loaded = sorted({m.split('.')[0] for m in sys.modules if m.split('.')[0] in roots})\n"
+        "print(json.dumps({'stats_file': actseal.stats.__file__, 'loaded': loaded}))\n"
+        "print('stats-stdlib-only')\n"
+    )
+    result = subprocess.run(  # noqa: S603 - fixed interpreter and literal script, no user input
+        [sys.executable, "-I", "-c", script],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr[-2000:]
+    lines = result.stdout.splitlines()
+    assert lines[-1:] == ["stats-stdlib-only"], result.stdout[-2000:]
+    report = json.loads(lines[-2])
+    child_file = Path(report["stats_file"]).resolve()
+    assert child_file == Path(inspect.getfile(stats_module)).resolve()
+    assert child_file == Path(__file__).resolve().parents[2] / "src" / "actseal" / "stats.py"
+    assert report["loaded"] == []
+
+
 def test_stats_module_is_stdlib_only_and_independent_of_other_actseal_modules() -> None:
     code = _code_after_docstring(_module_source())
     imports = [
@@ -595,7 +629,7 @@ def test_stats_module_is_stdlib_only_and_independent_of_other_actseal_modules() 
         if line.startswith(("import ", "from ")) and "__future__" not in line
     ]
     assert imports == ["import math"]
-    assert not any(name in sys.modules for name in ("scipy", "numpy"))
+    _assert_fresh_stats_import_loads_no_numeric_stack()
     for forbidden in ("wilson", "newcombe", "NormalDist", "scipy", "actseal."):
         assert forbidden not in code, forbidden
     assert not hasattr(stats_module, "wilson")
