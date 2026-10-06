@@ -25,7 +25,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | Planning package | Codex | COMPLETE | ee99eee plus documented amendments |
 | T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff (merge 86dbca0) |
 | T10 contract/policy | Claude A | ACCEPT / MERGED | 9bdac25 (merge 28be58d) |
-| T20 statistics | Claude B | ASSESSMENT_DISPATCH_READY | numerical milestone ad67ac6, unmerged |
+| T20 statistics | Claude B | ASSESSMENT_RUNNING | numerical milestone ad67ac6, unmerged |
 | T30 providers/faults | Claude C | ACCEPT / MERGED | 8b1efd6 (merge 87d2cd1) |
 | T40 evidence/replay | Claude B | WAITING_FOR_ACCEPTED_INTERFACES | none |
 | T50 CLI/demo | Claude A | WAITING_FOR_T10_T20_T30_T40 | none |
@@ -75,9 +75,9 @@ T20 numerical milestone is
 verified: 159 tests independently pass; all four CI jobs green at 7df7600.
 PR2 stays draft/unmerged until full assessment acceptance. See T20-numeric-01.
 T20 numerical session completed at $5.43887825 estimated subscription usage.
-Accepted T10 is integrated into its worktree. Next: integrate accepted T30 and
-resume session14d9398c-146f-40cf-827d-a3c6a79632f1 for assessment.py and its tests,
-with new receipt T20-02.md. Preserve verified stats.py/test_stats.py unchanged.
+Accepted T10/T30 are integrated into its worktree at dispatch HEAD656c77b.
+Session14d9398c-146f-40cf-827d-a3c6a79632f1 is implementing assessment.py and its
+tests, with new receipt T20-02.md. Verified stats.py/test_stats.py stay unchanged.
 All three report actual model claude-fable-5-1; effort high was supplied at dispatch.
 Local process/session receipts are in ignored plan/dispatch/active-lanes.json.
 ADR0009/CHANGE_LOG correct permanent-worker-loss statistical dependence before
