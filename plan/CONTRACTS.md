@@ -245,7 +245,8 @@ provider_error with a bounded, nonsecret warning code; setup errors stop the run
 Laya exact runtime/model pins and loading/preflight APIs are in docs/providers.md.
 Run one resident CPU model in a spawned child process, four Torch threads, eager,
 FP32, compile=False and fast=False. Startup has a 120s bound; per-request timeout
-default 30s, validated finite >0. On a request timeout terminate and join the worker;
+fixed at 30s for the evidence-producing runner; the low-level provider method
+accepts finite positive timeouts for testing/direct calls. On a request timeout terminate and join the worker;
 return timeout and make later calls explicitly unavailable until a new model object
 is created. close() is idempotent and leaves no worker alive. Unit tests use a tiny
 fake worker; they do not download weights or import the Laya stack.
@@ -375,7 +376,7 @@ actseal lock --contract PATH --calibration PATH --verification PATH
              --provider {fixture,laya} [--responses PATH] [--offline] --out PATH
 actseal verify --lock PATH --calibration PATH --verification PATH
                --provider {fixture,laya} [--responses PATH] [--offline]
-               [--timeout-seconds 30] --out DIRECTORY
+               --out DIRECTORY
 actseal replay DIRECTORY [--expected-lock-sha256 HEX]
 actseal demo --out NEW_DIRECTORY
 ```
@@ -386,6 +387,12 @@ fixture requires --responses, laya forbids it. lock validates/authenticates actu
 provider identity before sealing. verify rejects lock/source/provider mismatches
 before calls, runs exactly the locked cases sequentially, runs all six faults,
 assesses and writes one bundle. Both commands close providers in finally blocks.
+All evidence-producing runner entrypoints use timeout_s=30.0 for every normal
+case and the fixed 120s model startup bound. There is no CLI, environment or runner
+API deadline override in v1. These source-defined execution constants are bound
+by implementation_fingerprint. Direct calls to the low-level DecisionModel with
+other timeouts produce raw captures, not execution of the locked collection
+protocol. Configurable deadlines require a future locked execution schema.
 Provider setup failure -> ERROR with no purported complete bundle. Mid-run fatal
 runner errors cannot be reported as valid partial experiments. Existing paths are
 never overwritten. Default output includes status, reasons, a/n, e/a, bounds,

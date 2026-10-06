@@ -31,7 +31,7 @@ limit through a follow-up. T10/T20/T30/T40 receive revised contracts at dispatch
 Laya capture now explicitly preserves the full native response envelope instead
 of extracting its answer in the adapter. Pure normalization can therefore replay
 question-ID and native truncation/option-collapse checks. The exact usage schema
-was verified against Laya0.3.28 source and a fresh offline smoke. The canonical
+was verified against Laya 0.3.28 source and a fresh offline smoke. The canonical
 fault generator wraps Laya answers in a synthetic zero-usage envelope. No provider
 interface or product scope changes. Added explicit record-local normalized mass,
 provider-domain, overflow and verdict-count invariants from the T00 static review.
@@ -50,3 +50,12 @@ runtime are JSON objects; probabilities retain ordered pair arrays; other tuples
 are arrays. Supporting constants, a read-only question.labels property and the
 PEP695 Outcome alias are accepted conveniences, not added product scope. All
 reported schema/size/license findings remain mandatory fixes before T00 ACCEPT.
+
+## 2026-10-06 — fixed v1 collection deadlines
+
+Removed the proposed verify --timeout-seconds flag before T50 implementation.
+Timeouts alter failures and later worker availability, so an unsealed override
+would change the evaluated system under an identical lock. v1 evidence runners
+always use 30.0s per request and 120s startup, bound by the source fingerprint.
+Low-level provider timeout arguments remain for direct use/tests. Configurable
+deadlines move to a future versioned execution schema. No public record changes.
