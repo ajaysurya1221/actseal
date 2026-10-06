@@ -213,6 +213,8 @@ def normalize(
     capture: CapturedOutcome, question: ChoiceQuestion, expected_identity: ModelIdentity
 ) -> Outcome: ...
 
+def request_sha256(request: DecisionRequest) -> str: ...
+
 
 class FixtureModel:
     def __init__(self, responses: Path) -> None: ...
@@ -229,9 +231,19 @@ def fault_capture(lock: PlanLock, spec: FaultSpec) -> tuple[DecisionRequest, Cap
 Protocol is in `adapters/base.py`; implementations in `adapters/fixture.py` and
 `adapters/laya.py`. Pure `normalization.py` must import no model/client libraries;
 replay uses it without importing adapters. The protocol itself is dependency-free.
+The shared request_sha256 helper lives in normalization.py and hashes the canonical
+serialized DecisionRequest without LF. Constants for the prescribed versions,
+tolerances and budgets are permitted conveniences. adapters/__init__.py is an
+empty package marker. validate_timeout in adapters/fixture.py is a shared adapter
+helper: `validate_timeout(timeout_s: object) -> float`; it rejects bool, nonnumbers,
+nonfinite/nonpositive values and float conversion overflow with SchemaError.
 
 Fixture file format: JSONL rows `{case_id, body_json, failure_code, warnings}`;
 body_json is a string, not an embedded JSON object. Exactly one body/failure.
+The complete fixture file is at most 128 MiB, with a bounded read of at most that
+limit+1 before decoding, hashing or row parsing; each row remains at most 1 MiB.
+This aggregate fixture ceiling is explicit in ADR0011. It does not impose an
+additional fixture-row count limit or change the dataset case-count limit.
 No fixture model identity is accepted from the file. Derive identity provider=fixture,
 model=recorded-choice-v1, revision=SHA256(raw file), artifact_hashes=((responses,
 file_hash),), adapter_version=1, normalizer_version=1, runtime=(). Unknown or duplicate

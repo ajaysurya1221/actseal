@@ -83,3 +83,12 @@ and canonical wire boundaries, including terminal LF. Standalone validation must
 check cross-split IDs already visible in inventories. No new dependency, feature
 or shared record change. T10-01 is REVISE for three independently reproduced
 defects; the earlier 738 passing tests do not establish these missing invariants.
+
+## 2026-10-06 — T30 provider review and downstream packet consistency
+
+ADR0011 approves the package marker and request/timeout helpers and explicitly
+caps aggregate fixture input at128MiB. T30-01 requires deadline, malformed-IPC,
+Linux CPU-test and fixture-bound repairs despite235 passing unit/5 native Mac
+tests. T40/T50 packet wording now explicitly matches ADR0009 worker-loss ERROR,
+complete diagnostics and synthetic-fault exclusion, and the ADR0010 helpers.
+This prevents stale generic failure wording from overriding the frozen contract.
