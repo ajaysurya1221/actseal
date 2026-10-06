@@ -123,10 +123,14 @@ confident = ChoiceAnswer(
 decision = evaluate(confident, policy)
 assert (decision.action, decision.choice, decision.reason) == ("ACT", "billing", "policy.allowed")
 
-hesitant = ChoiceAnswer("billing", (("billing", 0.6), ("technical", 0.3), ("sales", 0.1)), 0.6, None, (), False)
+hesitant = ChoiceAnswer(
+    "billing", (("billing", 0.6), ("technical", 0.3), ("sales", 0.1)), 0.6, None, (), False
+)
 assert evaluate(hesitant, policy).action == "ABSTAIN"
 
-not_allowed = ChoiceAnswer("sales", (("billing", 0.05), ("technical", 0.03), ("sales", 0.92)), 0.92, None, (), False)
+not_allowed = ChoiceAnswer(
+    "sales", (("billing", 0.05), ("technical", 0.03), ("sales", 0.92)), 0.92, None, (), False
+)
 assert evaluate(not_allowed, policy).action == "DENY"
 
 failed = ProviderFailure(code="timeout", warnings=(), fallback_used=False)
@@ -221,7 +225,9 @@ def route_ticket(request: DecisionRequest, capture: CapturedOutcome) -> PolicyDe
     return decision
 
 
-request = DecisionRequest("live-001", "Ticket LIVE-001: my invoice shows a duplicate charge.", question)
+request = DecisionRequest(
+    "live-001", "Ticket LIVE-001: my invoice shows a duplicate charge.", question
+)
 body = '{"type": "choice", "choice": "billing", "probabilities": {"billing": 0.95, "technical": 0.03, "sales": 0.02}}'
 bound = CapturedOutcome(request_sha256(request), identity, body, None, (), False)
 decision = route_ticket(request, bound)
@@ -264,7 +270,15 @@ from actseal.replay import replay
 
 files = read_bundle_files(Path("recheck-evidence"))
 assert sorted(files) == sorted(
-    ["manifest.json", "lock.json", "calibration.jsonl", "verification.jsonl", "records.jsonl", "faults.jsonl", "verdict.json"]
+    [
+        "manifest.json",
+        "lock.json",
+        "calibration.jsonl",
+        "verification.jsonl",
+        "records.jsonl",
+        "faults.jsonl",
+        "verdict.json",
+    ]
 )
 recorded = decode_document(VERDICT_FILE, files[VERDICT_FILE], Verdict)
 assert replay(Path("recheck-evidence")) == recorded
@@ -283,7 +297,17 @@ from actseal import Interval, Verdict, canonical_json, from_data, sha256_bytes, 
 from actseal.contract import read_input_text
 from actseal.locking import MAX_LOCK_BYTES, case_digest, lock_digest, parse_lock
 
-verdict = Verdict("BLOCK", ("risk.exceeds_limit",), 128, 128, 32, Interval(0.168, 0.347), Interval(0.966, 1.0), "demo", "a" * 64)
+verdict = Verdict(
+    "BLOCK",
+    ("risk.exceeds_limit",),
+    128,
+    128,
+    32,
+    Interval(0.168, 0.347),
+    Interval(0.966, 1.0),
+    "demo",
+    "a" * 64,
+)
 data = to_data(verdict)
 assert from_data(Verdict, data) == verdict
 assert len(sha256_bytes(canonical_json(data))) == 64
