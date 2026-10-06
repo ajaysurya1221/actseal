@@ -219,39 +219,38 @@ def test_executable_looking_data_stays_inert_through_lock_verify_and_replay(
     marker = tmp_path / "pwned.marker"
     workspace = payload_workspace(tmp_path / "ws", marker)
     lock = tmp_path / "lock.json"
-    report = guarded(
+    lock_report = guarded(
         [*lock_argv(workspace, lock), "--json"],
         marker=marker,
         blocked=FIXTURE_BLOCKED,
         cwd=tmp_path,
     )
-    assert report["code"] == 0, report
+    assert lock_report["code"] == 0, lock_report
+    assert json.loads(str(lock_report["stdout"]))["ok"] is True
     out = tmp_path / "evidence"
-    report = guarded(
+    verify_report = guarded(
         [*verify_argv(workspace, lock, out), "--json"],
         marker=marker,
         blocked=FIXTURE_BLOCKED,
         cwd=tmp_path,
     )
-    assert report["code"] == 2, report
-    document = json.loads(str(report["stdout"]))
+    assert verify_report["code"] == 2, verify_report
+    document = json.loads(str(verify_report["stdout"]))
     assert document["status"] == "INCONCLUSIVE"
     assert (document["total"], document["accepted"]) == (6, 4)
     assert document["failures"] == {"malformed_response": 1, "unknown_choice": 1}
-    for stage in ("lock", "verify"):
-        assert report["attempts"] == [], stage
-        assert report["blocked_loaded"] == []
-        assert report["environment_unchanged"] is True
-        assert report["marker_exists"] is False
-    replayed = guarded(
+    replay_report = guarded(
         ["replay", str(out), "--json"], marker=marker, blocked=REPLAY_BLOCKED, cwd=tmp_path
     )
-    assert replayed["code"] == 2
-    assert replayed["attempts"] == []
-    assert replayed["blocked_loaded"] == []
-    assert replayed["environment_unchanged"] is True
-    assert replayed["marker_exists"] is False
-    assert json.loads(str(replayed["stdout"]))["lock_sha256"] == document["lock_sha256"]
+    assert replay_report["code"] == 2, replay_report
+    assert json.loads(str(replay_report["stdout"]))["lock_sha256"] == document["lock_sha256"]
+    # Each stage has its own guard receipt; every one must be clean independently.
+    receipts = {"lock": lock_report, "verify": verify_report, "replay": replay_report}
+    for stage, receipt in receipts.items():
+        assert receipt["attempts"] == [], (stage, receipt["attempts"])
+        assert receipt["blocked_loaded"] == [], stage
+        assert receipt["environment_unchanged"] is True, stage
+        assert receipt["marker_exists"] is False, stage
     # The payloads are preserved verbatim as data in the sealed evidence.
     assert (out / "verification.jsonl").read_bytes() == workspace.verification.read_bytes()
     records = (out / "records.jsonl").read_text(encoding="utf-8")
@@ -278,6 +277,12 @@ def bundle(tmp_path: Path) -> Path:
 
 
 def assert_structural_error(verdict_path: Path, cwd: Path) -> None:
+    """ERROR with exactly ``integrity.bundle_schema`` and the unknown-lock sentinel.
+
+    Reading an unreadable (mode 000) target would surface as ``integrity.bundle_io``
+    instead, so where a test makes its target unreadable this single reason code also
+    demonstrates that the target was never opened (when not running as root).
+    """
     verdict = replay(verdict_path)
     assert verdict.status == "ERROR"
     assert verdict.reasons == ("integrity.bundle_schema",)
@@ -297,6 +302,7 @@ def _defects() -> dict[str, Defect]:
     def symlinked_records(bundle: Path, tmp_path: Path) -> Path:
         target = tmp_path / "outside-secret.jsonl"
         target.write_bytes(b"not json at all\n")
+        target.chmod(0o000)  # opening it would be a PermissionError -> integrity.bundle_io
         (bundle / "records.jsonl").unlink()
         (bundle / "records.jsonl").symlink_to(target)
         return bundle
@@ -358,7 +364,7 @@ def _defects() -> dict[str, Defect]:
 
 
 @pytest.mark.parametrize("name", sorted(_defects()))
-def test_structural_defects_are_schema_errors_without_reading_targets(
+def test_structural_defects_are_schema_errors_with_the_unknown_lock_sentinel(
     bundle: Path, tmp_path: Path, name: str
 ) -> None:
     before = sorted(p.name for p in tmp_path.iterdir())
@@ -368,20 +374,33 @@ def test_structural_defects_are_schema_errors_without_reading_targets(
     assert sorted(p.name for p in tmp_path.iterdir()) == created
     assert set(before) <= set(created)
     if name == "symlinked_records":
-        assert (tmp_path / "outside-secret.jsonl").read_bytes() == b"not json at all\n"
+        target = tmp_path / "outside-secret.jsonl"
+        assert os.lstat(target).st_size == len(b"not json at all\n")
+        target.chmod(0o644)  # restore for cleanup, then check the bytes were left intact
+        assert target.read_bytes() == b"not json at all\n"
 
 
-def test_size_ceilings_reject_sparse_oversized_files_before_reading(
+def test_size_ceilings_reject_sparse_unreadable_oversized_files_as_schema_errors(
     bundle: Path, tmp_path: Path
 ) -> None:
+    """Oversized files are rejected by size alone: they are sparse, unreadable, and fast.
+
+    ``os.truncate`` allocates no data blocks; mode 000 makes any attempted open a
+    ``PermissionError`` (``integrity.bundle_io``) rather than the observed
+    ``integrity.bundle_schema`` when the process is unprivileged and permissions
+    are enforced. The elapsed-time bound checks prompt completion, not read absence.
+    """
     cases = {
         "verdict.json": 128 * MIB + 1,
         "lock.json": 32 * MIB + 1,
     }
+    oversized: list[Path] = []
     for name, size in cases.items():
         copy = tmp_path / f"copy-{name}"
         shutil.copytree(bundle, copy)
         os.truncate(copy / name, size)  # sparse: no model-scale allocation
+        (copy / name).chmod(0o000)
+        oversized.append(copy / name)
         started = time.monotonic()
         assert_structural_error(copy, tmp_path)
         assert time.monotonic() - started < 10.0, name
@@ -389,9 +408,14 @@ def test_size_ceilings_reject_sparse_oversized_files_before_reading(
     shutil.copytree(bundle, aggregate)
     os.truncate(aggregate / "verification.jsonl", 100 * MIB)  # each under its own ceiling
     os.truncate(aggregate / "records.jsonl", 30 * MIB)
+    for name in ("verification.jsonl", "records.jsonl"):
+        (aggregate / name).chmod(0o000)
+        oversized.append(aggregate / name)
     started = time.monotonic()
     assert_structural_error(aggregate, tmp_path)
     assert time.monotonic() - started < 10.0
+    for path in oversized:
+        path.chmod(0o644)  # restore for pytest's temporary-directory cleanup
 
 
 def test_depth_and_row_limits_are_schema_errors_with_the_decoded_lock(

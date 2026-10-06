@@ -3,10 +3,11 @@
 Evidence is produced by the real ``lock_run``/``verify_run`` protocol around a
 scripted or fixture ``DecisionModel``; records are then mutated with
 ``dataclasses.replace`` and handed to the real ``assess``/``replay``. Expected
-statuses come from the frozen table applied to an independent exact
-Clopper-Pearson oracle. The T30 review follow-up injects an actual fault-policy
-violation through a narrow wrapper around the real evaluator and proves the
-campaign still emits all six ordered terminal results.
+statuses come from the frozen table applied to an independent Clopper-Pearson
+oracle (binomial-tail bisection in floating point, written here without the
+product's kernel). The T30 review follow-up injects an actual fault-policy
+violation on the FIRST canonical fault through a narrow wrapper around the real
+evaluator and proves the campaign still emits all six ordered terminal results.
 """
 
 from __future__ import annotations
@@ -462,13 +463,19 @@ def test_repeating_or_replaying_a_run_adds_no_observations(tmp_path: Path) -> No
 def _violating_wrapper(
     delegated: list[str], injected: list[str]
 ) -> Callable[[ChoiceAnswer | ProviderFailure, LockedPolicy], PolicyDecision]:
-    """Wrap the real evaluator: wrong ACT for the low_confidence fault only, delegate the rest."""
+    """Wrap the real evaluator: wrong ACT for the FIRST fault (timeout) only, delegate the rest.
+
+    The timeout scenario is the first of the six canonical faults, so a campaign
+    that stopped at the violation would emit one result instead of six. The
+    ordinary verification records used with this wrapper carry no timeout, so the
+    assessor's record re-evaluation is untouched by the injected branch.
+    """
     real = evaluate
 
     def wrapper(outcome: ChoiceAnswer | ProviderFailure, policy: LockedPolicy) -> PolicyDecision:
-        if isinstance(outcome, ChoiceAnswer) and outcome.selected_probability == 0.0:
-            injected.append(outcome.choice)
-            return PolicyDecision("ACT", outcome.choice, "policy.allowed", False)
+        if isinstance(outcome, ProviderFailure) and outcome.code == "timeout":
+            injected.append(outcome.code)
+            return PolicyDecision("ACT", policy.allowed_labels[0], "policy.allowed", False)
         decision = real(outcome, policy)
         delegated.append(decision.action)
         return decision
@@ -476,12 +483,18 @@ def _violating_wrapper(
     return wrapper
 
 
-def test_injected_fault_violation_keeps_all_six_ordered_results(
+EXPECTED_FAULT_ACTIONS = ["ESCALATE", "ESCALATE", "ESCALATE", "ESCALATE", "DENY", "ABSTAIN"]
+VIOLATED_FAULT_ACTIONS = ["ACT", "ESCALATE", "ESCALATE", "ESCALATE", "DENY", "ABSTAIN"]
+
+
+def test_injected_first_fault_violation_keeps_all_six_ordered_results(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     workspace = write_workspace(tmp_path / "ws", count=6, prefix="fv")
     bundle, _ = fixture_run(tmp_path, workspace)
     lock = bundle.lock
+    assert [s.expected_action for s in lock.fault_inventory] == EXPECTED_FAULT_ACTIONS
+    assert all(r.capture.failure_code is None for r in bundle.records)  # no regular timeout
     delegated: list[str] = []
     injected: list[str] = []
     monkeypatch.setattr(faults_module, "evaluate", _violating_wrapper(delegated, injected))
@@ -495,16 +508,21 @@ def test_injected_fault_violation_keeps_all_six_ordered_results(
         "fault.unknown_choice",
         "fault.low_confidence",
     ]
-    assert delegated == ["ESCALATE", "ESCALATE", "ESCALATE", "ESCALATE", "DENY"]
-    assert injected == [lock.contract.policy.allowed_labels[0]]
-    assert [f.decision.action for f in faults] == [*delegated, "ACT"]
-    assert faults[5].decision.action != lock.fault_inventory[5].expected_action
+    # The violation happened on the first scenario; the five later scenarios were
+    # still evaluated by the real evaluator, in order, after it.
+    assert injected == ["timeout"]
+    assert delegated == EXPECTED_FAULT_ACTIONS[1:]
+    assert [f.decision.action for f in faults] == VIOLATED_FAULT_ACTIONS
+    assert faults[0].decision == PolicyDecision(
+        "ACT", lock.contract.policy.allowed_labels[0], "policy.allowed", False
+    )
+    assert faults[0].decision.action != lock.fault_inventory[0].expected_action
     # Every other field is the real canonical fault result.
-    assert faults[:5] == bundle.faults[:5]
-    assert (faults[5].request, faults[5].capture, faults[5].outcome) == (
-        bundle.faults[5].request,
-        bundle.faults[5].capture,
-        bundle.faults[5].outcome,
+    assert faults[1:] == bundle.faults[1:]
+    assert (faults[0].request, faults[0].capture, faults[0].outcome) == (
+        bundle.faults[0].request,
+        bundle.faults[0].capture,
+        bundle.faults[0].outcome,
     )
     # The unpatched assessor re-evaluates with the real policy: a decision that does
     # not reproduce is invalid evidence (ERROR), not a certified fault BLOCK.
@@ -528,18 +546,14 @@ def test_consistent_policy_regression_blocks_and_retains_all_six_results(
     faults = run_fault_campaign(lock)
     verdict = assess(bundle.records, lock, faults)
     assert verdict.status == "BLOCK"
-    assert verdict.reasons == ("evidence.insufficient", "fault.low_confidence")
+    assert verdict.reasons == ("evidence.insufficient", "fault.timeout")
     assert (verdict.total, verdict.accepted, verdict.errors) == (6, 6, 0)
     assert len(faults) == 6
-    assert [f.decision.action for f in faults] == [
-        "ESCALATE",
-        "ESCALATE",
-        "ESCALATE",
-        "ESCALATE",
-        "DENY",
-        "ACT",
-    ]
-    assert len(injected) == 2  # once in the campaign, once in the assessor's re-evaluation
+    assert [f.decision.action for f in faults] == VIOLATED_FAULT_ACTIONS
+    assert injected == ["timeout", "timeout"]  # once in the campaign, once in the assessor
+    # Campaign: five delegated faults. Assessor: six real records plus five faults.
+    assert delegated[:5] == EXPECTED_FAULT_ACTIONS[1:]
+    assert sorted(delegated[5:]) == sorted([*EXPECTED_FAULT_ACTIONS[1:], *["ACT"] * 6])
     # Statistics are still those of the six real records (fault cases never inflate n).
     assert_statistics_match_oracle(
         replace(verdict, status="INCONCLUSIVE", reasons=("evidence.insufficient",)), lock
@@ -547,8 +561,8 @@ def test_consistent_policy_regression_blocks_and_retains_all_six_results(
     # The real evaluator still disagrees: outside the regression the same faults are ERROR.
     monkeypatch.undo()
     assert (
-        normalize(faults[5].capture, lock.contract.question, lock.model_identity)
-        == faults[5].outcome
+        normalize(faults[0].capture, lock.contract.question, lock.model_identity)
+        == faults[0].outcome
     )
-    assert evaluate(faults[5].outcome, lock.contract.policy).action == "ABSTAIN"
+    assert evaluate(faults[0].outcome, lock.contract.policy).action == "ESCALATE"
     assert_error(assess(bundle.records, lock, faults), lock, "integrity.fault_decision")

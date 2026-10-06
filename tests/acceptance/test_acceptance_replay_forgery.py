@@ -6,9 +6,9 @@ recomputed with ``hashlib``/``json`` here, so ordinary integrity checks pass
 and only semantic replay can notice. Each forgery must ERROR both through
 ``replay()`` and through the ``actseal replay`` subprocess anchored with the
 ORIGINAL trusted lock digest. The T40 review follow-up (a rehashed
-``fallback_used`` forgery that keeps the stored ACT/PASS) is included, and a
-wholly coherent same-lock rewrite is documented as the ADR 0005 boundary rather
-than asserted as detectable.
+``fallback_used`` forgery that keeps the stored ACT/PASS) is included. A wholly
+coherent rewrite that reseals a changed lock is documented as the ADR 0005
+boundary: the external lock digest catches it, nothing else can.
 """
 
 from __future__ import annotations
@@ -42,6 +42,7 @@ from acceptance_support import (
 
 from actseal.adapters.fixture import FixtureModel
 from actseal.assessment import assess
+from actseal.errors import IntegrityError
 from actseal.evidence import write_bundle
 from actseal.records import (
     DecisionRecord,
@@ -348,15 +349,16 @@ def test_same_lock_forgeries_error_even_without_an_external_anchor(
     assert result.json()["status"] == "ERROR"
 
 
-def test_coherent_same_lock_rewrite_is_the_documented_trust_boundary(
+def test_coherent_resealed_lock_rewrite_is_caught_only_by_the_external_digest(
     good: tuple[Path, EvidenceBundle], tmp_path: Path
 ) -> None:
     """A gold-label change that updates lock, inventory, raw bytes AND verdict coherently.
 
-    The lock digest changes, so the trusted external digest catches it. Without
-    an anchor the rewritten bundle replays as its own (different) verdict: ADR
-    0005 states that hash anchors cannot authenticate a wholly coherent rewrite,
-    and this test records that limit instead of inventing a stronger guarantee.
+    This rewrite RESEALS A CHANGED LOCK (it is not a same-lock forgery), so the
+    trusted external digest catches it. Without an anchor the rewritten bundle
+    replays as its own (different) experiment: ADR 0005 states that hash anchors
+    cannot authenticate a wholly coherent rewrite, and this test records that
+    limit instead of inventing a stronger guarantee.
     """
     source, bundle = good
     forged = copy_bundle(source, tmp_path)
@@ -393,7 +395,7 @@ def test_coherent_same_lock_rewrite_is_the_documented_trust_boundary(
     assert anchored.lock_sha256 == new_lock.sha256  # observed digest, not the expectation
     assert_cli_error_with_anchor(forged, bundle.lock.sha256, new_lock.sha256, tmp_path)
     unanchored = replay(forged)
-    assert unanchored == coherent  # documented limit: a coherent rewrite is a different experiment
+    assert unanchored == coherent  # documented limit: a coherent resealed rewrite replays as itself
     assert unanchored.lock_sha256 != bundle.lock.sha256
 
 
@@ -480,7 +482,7 @@ def test_writer_refuses_a_bundle_whose_verdict_was_authored(
         bundle.faults,
         authored,
     )
-    with pytest.raises(Exception, match="verdict"):
+    with pytest.raises(IntegrityError, match="verdict"):
         write_bundle(forged, tmp_path / "authored")
     assert not (tmp_path / "authored").exists()
     assert [p.name for p in tmp_path.iterdir() if p.name.startswith(".actseal")] == []

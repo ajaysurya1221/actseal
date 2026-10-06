@@ -3,8 +3,9 @@
 Every command here runs ``python -m actseal`` or the ``actseal`` console script
 in a fresh subprocess with independently generated inputs. Expected exit codes
 come from the frozen table (PASS 0, BLOCK 1, INCONCLUSIVE 2, ERROR 3); expected
-statuses come from the ADR 0003 rule evaluated with an independent exact
-Clopper-Pearson oracle, never from the product's own output. No network path
+statuses come from the ADR 0003 rule evaluated with an independent Clopper-Pearson
+oracle (binomial-tail bisection in floating point, compared at 1e-9), never from
+the product's own output. No network path
 is used; the fixture provider reads one local file.
 """
 

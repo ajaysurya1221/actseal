@@ -5,7 +5,8 @@ TOML/JSONL/fixture shapes; bundle rewrites recompute the documented manifest
 with ``hashlib``/``json`` only, so a forgery whose *ordinary* file hashes are
 all consistent can be handed to the real replay. Expected verdict behavior is
 stated independently in the test modules (exit-code table, policy table and an
-exact Clopper-Pearson oracle), never read back from the product.
+independent Clopper-Pearson oracle that bisects the binomial tail in ordinary
+floating-point arithmetic), never read back from the product.
 """
 
 from __future__ import annotations
@@ -416,7 +417,7 @@ def rehash_bundle(bundle: Path, replacements: Mapping[str, bytes]) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Independent exact Clopper-Pearson oracle
+# Independent Clopper-Pearson oracle (binomial formula, floating-point bisection)
 # --------------------------------------------------------------------------- #
 
 
@@ -447,7 +448,12 @@ def _bisect(function: Callable[[float], float], target: float, *, increasing: bo
 
 
 def clopper_pearson(successes: int, trials: int, tail: float) -> tuple[float, float]:
-    """Exact one-sided CP bounds at ``tail`` each, computed by binomial-tail bisection."""
+    """One-sided Clopper-Pearson bounds at ``tail`` each, by bisection on the binomial tail.
+
+    This uses the binomial formula with ``math.comb`` and finite floating-point
+    arithmetic (200 bisection steps); it is independent of the product's kernel,
+    not an exact-arithmetic oracle. Callers compare with an absolute tolerance.
+    """
     assert trials >= 1
     assert 0 <= successes <= trials
     lower = (
