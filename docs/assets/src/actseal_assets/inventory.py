@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import hero
+from . import hero, social
 
 ASSET_DIR = "docs/assets"
 SOURCE_DIR = "docs/assets/src"
@@ -194,6 +194,7 @@ ASSETS: tuple[Asset, ...] = (
         summary="GitHub social preview from the banner composition.",
         outputs=(Output(path="social.png", kind="png", width=SOCIAL_WIDTH, height=SOCIAL_HEIGHT),),
         needs=("resvg", "jetbrains-mono", "fonttools"),
+        renderer=social.render,
     ),
     Asset(
         name="where",
