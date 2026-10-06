@@ -111,8 +111,14 @@ executable.
 horizontal stages Freeze → Run → Verify → Seal → Replay plus a command
 bracket row) and `how-it-works-mobile-light.svg` /
 `how-it-works-mobile-dark.svg` (720 wide, stages stacked vertically, the
-command folded into each stage label; height derived from the wrapped
-content). Light and dark differ only in colour. Desktop labels are 26 units
+command written under each stage heading; height derived from the wrapped
+content). Each stage states its inputs and, after an arrow, its output:
+policy + labelled inputs → lock; provider answers → ACT · ABSTAIN · ESCALATE
+· DENY; bounds and fault rules → verdict with exit code; lock, answers,
+decisions and verdict → bounded evidence bundle; replay recomputes the
+verdict offline with no model call. Module names, file inventories and hashes
+are deliberately absent from this overview (they belong to the architecture
+figure). Light and dark differ only in colour. Desktop labels are 26 units
 (14.3 px at the 880 px README column) with 34-unit headings; mobile labels
 are 30 units (15 px at 360 px) with 44-unit headings.
 

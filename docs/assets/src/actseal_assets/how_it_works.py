@@ -1,11 +1,15 @@
 """The how-it-works figure: Freeze, Run, Verify, Seal, Replay.
 
-Five stage groups in the approved order, each with its module name, the
-inputs or outputs that matter, and the enumerations the contract freezes: the
-four per-case decisions, the four run verdicts paired with their exit codes,
-the hashed size-bounded bundle and ``offline; no model call``. A sixth group
-on the desktop canvas maps the stages to the three CLI commands; the mobile
-canvas folds the command into each stage's label instead.
+Five stage groups in the approved order, each stating what goes in and what
+comes out: the frozen policy and labelled inputs become one lock; provider
+answers become ACT, ABSTAIN, ESCALATE or DENY decisions; risk and coverage
+bounds plus fault rules become one verdict paired with its exit code; the
+lock, answers, decisions and verdict become one bounded evidence bundle; and
+replay recomputes the verdict from that bundle offline with no model call.
+Module names, file inventories and hashes belong to the architecture figure
+and REPORT 12, not to this overview. A sixth group on the desktop canvas maps
+the stages to the three CLI commands; the mobile canvas writes the command
+under each stage heading instead.
 
 Two canvases are rendered, each in a light and a dark palette. The desktop
 canvas is 1600x400 and is displayed at about 880 CSS px in the README, so
@@ -43,6 +47,7 @@ SEPARATOR = " · "
 
 PLAIN = "plain"
 ACCENT = "accent"
+ARROW = "→ "
 
 OUTPUTS = (
     "how-it-works-light.svg",
@@ -52,7 +57,8 @@ OUTPUTS = (
 )
 
 # Helvetica advance widths per 1000 em for printable ASCII plus the middle
-# dot. A character outside this table is an error, never a guess.
+# dot and the rightwards arrow (Arial's advance; Helvetica borrows the glyph).
+# A character outside this table is an error, never a guess.
 _WIDTHS: dict[str, int] = {
     " ": 278, "!": 278, '"': 355, "#": 556, "$": 556, "%": 889, "&": 667, "'": 191,
     "(": 333, ")": 333, "*": 389, "+": 584, ",": 278, "-": 333, ".": 278, "/": 278,
@@ -66,6 +72,7 @@ _WIDTHS: dict[str, int] = {
     "i": 222, "j": 222, "k": 500, "l": 222, "m": 833, "n": 556, "o": 556, "p": 556,
     "q": 556, "r": 333, "s": 500, "t": 278, "u": 556, "v": 500, "w": 722, "x": 500,
     "y": 500, "z": 500, "{": 334, "|": 260, "}": 334, "~": 584, "·": 278,
+    "→": 1000,
 }  # fmt: skip
 
 
@@ -84,17 +91,20 @@ def text_width(text: str, size: float, *, bold: bool = False) -> float:
 
 @dataclass(frozen=True, slots=True)
 class Item:
-    """One body entry: a run of phrases that may share a line, and its emphasis."""
+    """One body entry: a run of phrases that may share a line, and its emphasis.
+
+    ``prefix`` (the arrow) is written once, in front of the first line.
+    """
 
     phrases: tuple[str, ...]
     emphasis: str = PLAIN
+    prefix: str = ""
 
 
 @dataclass(frozen=True, slots=True)
 class Stage:
     key: str
     title: str
-    module: str
     items: tuple[Item, ...]
 
 
@@ -109,59 +119,51 @@ STAGES: tuple[Stage, ...] = (
     Stage(
         "freeze",
         "Freeze",
-        "locking",
         (
-            Item(("allowed labels",)),
-            Item(("threshold + limits",)),
-            Item(("scheduled cases",)),
-            Item(("model identity",)),
-            Item(("lock.json + sha256",)),
+            Item(("frozen policy",)),
+            Item(("+ labelled inputs",)),
+            Item(("+ model identity",)),
+            Item(("lock",), ACCENT, ARROW),
         ),
     ),
     Stage(
         "run",
         "Run",
-        "policy",
         (
+            Item(("provider answers",)),
             Item(("every locked case",)),
             Item(("+ 6 fault scenarios",)),
-            Item(("decision per case:",)),
-            Item(("ACT", "ABSTAIN", "ESCALATE", "DENY"), ACCENT),
+            Item(("ACT", "ABSTAIN", "ESCALATE", "DENY"), ACCENT, ARROW),
         ),
     ),
     Stage(
         "verify",
         "Verify",
-        "assessment",
         (
             Item(("risk + coverage",)),
             Item(("bounds, fault rules",)),
-            Item(("verdict, exit code:",)),
+            Item(("verdict, exit code:",), PLAIN, ARROW),
             Item(("PASS 0", "BLOCK 1", "INCONCLUSIVE 2", "ERROR 3"), ACCENT),
         ),
     ),
     Stage(
         "seal",
         "Seal",
-        "evidence",
         (
-            Item(("lock + cases",)),
-            Item(("records + faults",)),
-            Item(("verdict + manifest",)),
-            Item(("every file hashed",)),
-            Item(("bounded size",)),
+            Item(("lock + answers",)),
+            Item(("decisions + verdict",)),
+            Item(("bounded",), ACCENT, ARROW),
+            Item(("evidence bundle",), ACCENT),
         ),
     ),
     Stage(
         "replay",
         "Replay",
-        "replay",
         (
             Item(("offline; no model call",), ACCENT),
             Item(("no provider loaded",)),
-            Item(("rechecks every hash",)),
             Item(("recomputes verdict",)),
-            Item(("exit codes 0/1/2/3",)),
+            Item(("from the bundle",)),
         ),
     ),
 )
@@ -174,17 +176,16 @@ COMMANDS: tuple[Command, ...] = (
 
 TITLE = "How Actseal works: freeze, run, verify, seal, replay"
 DESC = (
-    "Five stages in order. Freeze locks the allowed labels, threshold, limits, "
-    "scheduled cases and model identity into lock.json with its sha256. "
-    "Run decides every locked case plus six fault scenarios with the frozen "
-    "policy: ACT, ABSTAIN, ESCALATE or DENY. Verify bounds risk and coverage "
-    "and applies the fault rules to reach one verdict and exit code: PASS 0, "
-    "BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes the evidence bundle of "
-    "lock, cases, records, faults, verdict and manifest, every file hashed and "
-    "size-bounded. Replay recomputes the verdict from the bundle offline with "
-    "no model call and no provider loaded, exiting with the same codes. "
-    "The lock command performs Freeze, the verify command performs Run, Verify "
-    "and Seal, and the replay command performs Replay."
+    "Five stages in order. Freeze turns the frozen policy, the labelled inputs "
+    "and the model identity into one lock. Run collects provider answers for "
+    "every locked case plus six fault scenarios and turns each into a decision: "
+    "ACT, ABSTAIN, ESCALATE or DENY. Verify applies risk and coverage bounds "
+    "and the fault rules to reach one verdict with its exit code: PASS 0, "
+    "BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes the lock, answers, "
+    "decisions and verdict into one bounded evidence bundle. Replay recomputes "
+    "the verdict from that bundle offline, with no model call and no provider "
+    "loaded. The lock command performs Freeze, the verify command performs "
+    "Run, Verify and Seal, and the replay command performs Replay."
 )
 
 
@@ -245,29 +246,29 @@ class Metrics:
     def label_baseline(self) -> int:
         return self.heading_baseline + self.label_gap + self.label
 
-    @property
-    def divider(self) -> int:
-        return self.label_baseline + self.divider_gap
+    def divider(self, *, labelled: bool) -> int:
+        """The rule under the heading, or under the command label when present."""
+        anchor = self.label_baseline if labelled else self.heading_baseline
+        return anchor + self.divider_gap
 
-    @property
-    def body_baseline(self) -> int:
-        return self.divider + self.body_gap + self.body
+    def body_baseline(self, *, labelled: bool) -> int:
+        return self.divider(labelled=labelled) + self.body_gap + self.body
 
-    def box_height(self, lines: int) -> int:
-        return self.body_baseline + self.line * (lines - 1) + self.bottom
+    def box_height(self, lines: int, *, labelled: bool) -> int:
+        return self.body_baseline(labelled=labelled) + self.line * (lines - 1) + self.bottom
 
 
 DESKTOP = Metrics(
     heading=34,
     label=26,
     body=26,
-    line=32,
+    line=34,
     pad=14,
-    heading_top=12,
+    heading_top=16,
     label_gap=8,
-    divider_gap=14,
-    body_gap=6,
-    bottom=18,
+    divider_gap=16,
+    body_gap=8,
+    bottom=22,
 )
 MOBILE = Metrics(
     heading=44,
@@ -284,7 +285,7 @@ MOBILE = Metrics(
 
 DESKTOP_MARGIN = 20
 DESKTOP_GAP = 30
-DESKTOP_TOP = 18
+DESKTOP_TOP = 24
 DESKTOP_BRACKET_GAP = 14
 DESKTOP_TICK = 6
 DESKTOP_LABEL_DROP = 6
@@ -306,13 +307,18 @@ CANVAS_SLACK = 4
 def wrap(item: Item, size: float, max_width: float) -> list[str]:
     """Pack the phrases of ``item`` onto lines no wider than ``max_width``.
 
-    A single phrase that cannot fit is an error: text is never shrunk.
+    A single phrase that cannot fit is an error: text is never shrunk. The
+    item's prefix is written in front of the first line only.
     """
     lines: list[str] = []
     current = ""
     for phrase in item.phrases:
         _require_fit(phrase, size, max_width)
-        candidate = phrase if not current else f"{current}{SEPARATOR}{phrase}"
+        if not current:
+            candidate = f"{item.prefix}{phrase}" if not lines else phrase
+            _require_fit(candidate, size, max_width)
+        else:
+            candidate = f"{current}{SEPARATOR}{phrase}"
         if current and text_width(candidate, size) > max_width:
             lines.append(current)
             current = phrase
@@ -338,9 +344,10 @@ def _stage_group(
     height: float,
     metrics: Metrics,
     palette: Palette,
-    label: str,
+    label: str | None,
 ) -> svg.Node:
     inner = width - 2 * metrics.pad
+    labelled = label is not None
     group = svg.Node("g", id=f"stage-{stage.key}", font_family=FONT_STACK)
     group.add(
         "rect",
@@ -367,24 +374,26 @@ def _stage_group(
     heading.add("tspan", fill=palette.accent).text(numeral)
     heading.text(" ")
     heading.add("tspan", dx=NUMERAL_GAP).text(stage.title)
-    _require_fit(label, metrics.label, inner)
-    group.add(
-        "text",
-        x=left,
-        y=y + metrics.label_baseline,
-        font_size=metrics.label,
-        fill=palette.muted,
-    ).text(label)
+    if label is not None:
+        _require_fit(label, metrics.label, inner)
+        group.add(
+            "text",
+            x=left,
+            y=y + metrics.label_baseline,
+            font_size=metrics.label,
+            fill=palette.muted,
+        ).text(label)
+    divider = y + metrics.divider(labelled=labelled)
     group.add(
         "line",
         x1=left,
-        y1=y + metrics.divider,
+        y1=divider,
         x2=x + width - metrics.pad,
-        y2=y + metrics.divider,
+        y2=divider,
         stroke=palette.border,
         stroke_width=BORDER,
     )
-    baseline = y + metrics.body_baseline
+    baseline = y + metrics.body_baseline(labelled=labelled)
     for item in stage.items:
         fill = palette.accent if item.emphasis == ACCENT else palette.body
         for line in wrap(item, metrics.body, inner):
@@ -446,7 +455,7 @@ def _desktop(palette: Palette) -> svg.Node:
     box_width = (width - 2 * DESKTOP_MARGIN - (count - 1) * DESKTOP_GAP) / count
     inner = box_width - 2 * metrics.pad
     lines = max(_line_count(stage, metrics, inner) for stage in STAGES)
-    box_height = metrics.box_height(lines)
+    box_height = metrics.box_height(lines, labelled=False)
     top = DESKTOP_TOP
     bracket_y = top + box_height + DESKTOP_BRACKET_GAP + DESKTOP_TICK
     label_baseline = bracket_y + DESKTOP_LABEL_DROP + metrics.label
@@ -467,7 +476,7 @@ def _desktop(palette: Palette) -> svg.Node:
             height=box_height,
             metrics=metrics,
             palette=palette,
-            label=stage.module,
+            label=None,
         )
         if index + 1 < count:
             x1 = xs[index] + box_width + ARROW_CLEARANCE
@@ -503,13 +512,6 @@ def _command_for(index: int) -> Command:
     raise ValueError(msg)
 
 
-def _mobile_label(stage: Stage, command: Command) -> str:
-    """``command · module`` unless the module name already is the command's."""
-    if stage.module in command.label.split():
-        return command.label
-    return f"{command.label}{SEPARATOR}{stage.module}"
-
-
 def _mobile_layout() -> tuple[list[int], list[int], int]:
     """Box tops, box heights and the canvas height of the stacked variant."""
     metrics = MOBILE
@@ -519,7 +521,7 @@ def _mobile_layout() -> tuple[list[int], list[int], int]:
     heights: list[int] = []
     y = MOBILE_TOP
     for index, stage in enumerate(STAGES):
-        height = metrics.box_height(_line_count(stage, metrics, inner))
+        height = metrics.box_height(_line_count(stage, metrics, inner), labelled=True)
         tops.append(y)
         heights.append(height)
         y += height
@@ -549,7 +551,7 @@ def _mobile(palette: Palette) -> svg.Node:
             height=heights[index],
             metrics=metrics,
             palette=palette,
-            label=_mobile_label(stage, _command_for(index)),
+            label=_command_for(index).label,
         )
         if index + 1 < len(STAGES):
             y1 = tops[index] + heights[index] + ARROW_CLEARANCE
