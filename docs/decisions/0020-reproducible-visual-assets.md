@@ -1,0 +1,88 @@
+# ADR 0020: Reproducible, authoring-only visual asset pipeline
+
+- Status: approved (plan/v1/PLAN.md section D and Decision 2A); toolchain
+  accepted (Task 10); fonts, binaries, previews and every actual asset
+  pending.
+- Date: 2026-10-07.
+
+## Decision
+
+Every committed file under `docs/assets/` is produced by one renderer,
+`docs/assets/src/render.py --write|--check [--only ASSET]`, from sources in
+`docs/assets/src/`. `--check` regenerates each implemented asset into
+temporary storage, rejects nondeterministic output, validates the bytes and
+compares them with the committed files; it also validates referenced local
+images, dimensions, prohibited SVG content and recording size/duration.
+
+The toolchain is **authoring-only** and pinned outside the runtime:
+fontTools 4.66.1 (MIT), JetBrains Mono 2.304 (OFL-1.1), asciinema 3.2.1
+(GPL-3.0-or-later), agg 1.9.0 (GPL-3.0-or-later) and resvg 0.48.1
+(Apache-2.0 OR MIT), with source commits and SHA-256 digests in
+`docs/assets/src/tools.toml` and notices in `NOTICES.md`. Downloads are
+explicit, hashed against the pin before installation, and recorded in
+receipts; nothing executable is committed and the package has no runtime
+dependency on any of them.
+
+Frozen asset rules:
+
+- Static figures are SVG with light and dark variants and a vertical mobile
+  variant wherever scaling would push labels below 14 rendered pixels; the
+  social preview is a 1280×640 PNG rendered from the banner composition.
+- SVGs contain no scripts, stylesheets, external fonts, images, gradients,
+  filters or animation; text uses generic font stacks except the hero, whose
+  text is outlined from the licensed font. Flat colours, one typography
+  system, at most seven semantic groups per diagram, no padlocks, shields or
+  other stock security symbols, and no metrics that the receipts do not
+  support.
+- The demo asset is a genuine recording of the published PyPI 1.0.0 demo,
+  fixed replay and bad replay: the original `.cast`, 20 to 40 seconds,
+  unedited output with exits 0, 0 and 1 visible, rendered to a GIF below
+  3,000,000 bytes at speed 1 with an idle limit longer than the recording so
+  pauses are never trimmed. Under Decision 2A it is captured and merged
+  immediately after 1.0.0 reaches PyPI; the immutable tag does not contain
+  it, and final release communication waits for its acceptance. No local
+  wheel, prerelease or 0.1.0 recording may be labelled as that asset.
+- P1 (hero, how-it-works, architecture, demo, social preview) is mandatory;
+  P2 (where-it-sits, decision/verdict matrix, evidence boundary) is cut at the
+  recorded deadline if incomplete. The three evidence-boundary limitations
+  stay in plain text even if that figure is cut.
+- The social preview is delivered as a file; uploading it through GitHub
+  settings is the user's manual step and is never reported as done by an
+  executor.
+
+Acceptance of an asset is **actual rendered review**, repeated regeneration
+and the blind ten-second README first-screen test (1366×900, no repository
+context, two sentences compared with the frozen stability/threat contract).
+Passing unit tests or a bootstrap `--check` with zero implemented assets is
+not acceptance.
+
+## Rationale
+
+Choosing a deterministic, pinned, licence-tracked pipeline makes the
+documentation images reviewable and regenerable like code and keeps GPL and
+font licences out of the distributed package. That choice is distinct from
+reproducibility itself: byte-identical regeneration across hosts is an
+execution acceptance check that must be measured, not assumed from the
+design.
+
+## Consequences
+
+- Rendering determinism and visual readability are verified per asset at
+  review time; a renderer that differs between two runs fails `--check`.
+- Any new figure follows the inventory, renderer and `--check` path; ad hoc
+  images under `docs/assets/` are reported as orphans.
+- The README's first screen depends on accepted P1 assets, so README
+  composition and final release notes wait for them.
+
+## Evidence and status
+
+- Toolchain accepted: Task 10 at `030ef840`, merged `6ad1e91`, with the
+  visual test suite and manifest/lock pin checks; its bootstrap reported zero
+  implemented assets, which is not completeness.
+- Pending: pinned font and binary downloads and local previews (approval for
+  the configured download denial unanswered), the hero, how-it-works
+  (REVISE recorded), architecture, social preview and recording, the
+  ten-second test, and every P2 figure. No generated hero, social image or
+  media is claimed to exist, and no v1 release has occurred.
+- Related: [ADR 0015](0015-v1-stability-and-replay-compatibility.md),
+  `docs/assets/src/README.md`, `docs/assets/src/tools.toml`.
