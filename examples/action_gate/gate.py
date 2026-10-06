@@ -11,13 +11,19 @@ where Actseal sits in ordinary control flow:
    identity, and the verification verdict for that exact lock must be PASS.
 2. For each incoming ticket the application builds a label-free
    :class:`~actseal.records.DecisionRequest`, captures the model's raw
-   response, normalizes it against the locked question and identity with the
+   response, requires the capture to be bound to that exact request (its
+   ``request_sha256`` must equal ``request_sha256(request)``; a capture for a
+   different ticket is :class:`RequestBindingError` before anything else
+   happens), normalizes it against the locked question and identity with the
    same pure ``normalize`` that verification and replay use, and evaluates the
    locked policy with the same ``evaluate``.
 3. Only an ``ACT`` decision performs the application's action, here one
    ``enqueue`` on a local in-memory queue. ``ABSTAIN``, ``ESCALATE`` and
    ``DENY`` take explicit non-execution paths (held for a person, escalated,
-   rejected). Nothing is retried, repaired or downgraded.
+   rejected). Nothing is retried, repaired or downgraded. An exception from
+   the provider or the queue propagates as is; whether a failing queue
+   operation left a partial effect behind is the queue's and the
+   application's concern, not something this example can promise away.
 
 Actseal does not enforce any of this: the application calls the evaluator and
 owns every effect. A gold label is never needed at run time and never enters
@@ -31,7 +37,7 @@ from typing import Final, Literal
 
 from actseal.adapters.base import DecisionModel
 from actseal.locking import validate_lock
-from actseal.normalization import normalize
+from actseal.normalization import normalize, request_sha256
 from actseal.policy import evaluate
 from actseal.records import Action, DecisionRequest, PlanLock, PolicyDecision, Verdict
 from actseal.runner import REQUEST_TIMEOUT_S
@@ -45,6 +51,7 @@ __all__ = [
     "Disposition",
     "GateClosedError",
     "LocalQueue",
+    "RequestBindingError",
     "RoutePath",
     "Ticket",
     "route_all",
@@ -60,6 +67,10 @@ PATH_REJECTED: Final[RoutePath] = "rejected"
 
 class GateClosedError(RuntimeError):
     """The application refused to open the gate; no ticket is routed."""
+
+
+class RequestBindingError(RuntimeError):
+    """The provider returned a capture for a different request; nothing is evaluated or executed."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,10 +146,20 @@ class ActionGate:
         return self._lock
 
     def decide(self, ticket: Ticket) -> PolicyDecision:
-        """Capture, normalize and evaluate one ticket. Executes nothing."""
+        """Capture, bind, normalize and evaluate one ticket. Executes nothing.
+
+        The capture must carry the canonical hash of exactly this request. A
+        same-identity capture for another ticket (a provider bug, a stale
+        cache, a swapped reply) is :class:`RequestBindingError` before
+        normalization, so it can never authorize a queue write.
+        """
         question = self._lock.contract.question
         request = DecisionRequest(ticket.ticket_id, ticket.text, question)
         capture = self._model.decide(request, timeout_s=REQUEST_TIMEOUT_S)
+        if capture.request_sha256 != request_sha256(request):
+            raise RequestBindingError(
+                f"capture: request_sha256 is not bound to ticket {ticket.ticket_id}"
+            )
         outcome = normalize(capture, question, self._lock.model_identity)
         return evaluate(outcome, self._lock.contract.policy)
 
@@ -196,8 +217,12 @@ def route_all(
 ) -> tuple[Disposition, ...]:
     """Route tickets in order.
 
-    An exception from the provider or the queue propagates and stops routing
-    at that ticket: nothing is retried, skipped or downgraded to a different
-    path, and the ticket that failed is never enqueued.
+    An exception from the provider, the binding check or the queue propagates
+    and stops routing at that ticket: nothing is retried, skipped or
+    downgraded to a different path, and no :class:`Disposition` is produced
+    for it. A provider or binding failure happens before any effect. A queue
+    operation that fails may or may not have performed its effect first; the
+    exception carries that question to the application, which owns the queue.
+    This example adds no transaction or compensation machinery.
     """
     return tuple(gate.route(ticket, queue) for ticket in tickets)
