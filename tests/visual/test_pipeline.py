@@ -190,14 +190,61 @@ def test_implemented_asset_requiring_missing_tool_fails(
     assert report.checked == []
 
 
+@pytest.mark.parametrize(
+    ("platform_name", "detail"),
+    [
+        (
+            "darwin-arm64",
+            (
+                "agg 1.9.0 is not cached at {cache}/agg-1.9.0/agg-aarch64-apple-darwin; "
+                "run setup_tools.py"
+            ),
+        ),
+        ("linux-x86_64", "agg 1.9.0: no pinned artifact for platform linux-x86_64"),
+    ],
+)
 def test_planned_asset_requirements_are_informational(
-    kit: ModuleType, repo: Path, monkeypatch: pytest.MonkeyPatch
+    kit: ModuleType,
+    repo: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    platform_name: str,
+    detail: str,
 ) -> None:
-    monkeypatch.setenv(kit.tools.CACHE_ENV, str(repo / "cache"))
+    """An unavailable prerequisite of a planned asset is informational on every platform.
+
+    The platform is pinned with a deterministic double so the macOS profile
+    (pinned but not cached) and the Linux profile (no pinned artifact in the
+    audit) are both exercised regardless of where the suite runs.
+    """
+    cache = repo / "cache"
+    monkeypatch.setenv(kit.tools.CACHE_ENV, str(cache))
+    monkeypatch.setattr(kit.tools, "platform_key", lambda: platform_name)
+    assert kit.tools.platform_key() == platform_name
     asset = make_asset(kit, outputs=(make_output(kit),), needs=("agg",))
     report = kit.pipeline.run(repo, mode="check", assets=(asset,))
     assert report.ok
-    assert _messages(report, "probe")[0].startswith("requires agg 1.9.0: agg 1.9.0 is not cached")
+    assert _errors(report) == []
+    expected = f"requires agg 1.9.0: {detail.format(cache=cache)}"
+    assert _messages(report, "probe") == [expected, "not implemented (planned in Task 99)"]
+    assert [f.level for f in report.findings if f.scope == "probe"] == ["info", "info"]
+    assert report.planned == ["probe"]
+    assert report.checked == []
+
+
+@pytest.mark.parametrize("platform_name", ["darwin-arm64", "linux-x86_64"])
+def test_implemented_asset_missing_tool_is_an_error_on_every_platform(
+    kit: ModuleType, repo: Path, monkeypatch: pytest.MonkeyPatch, platform_name: str
+) -> None:
+    monkeypatch.setenv(kit.tools.CACHE_ENV, str(repo / "cache"))
+    monkeypatch.setattr(kit.tools, "platform_key", lambda: platform_name)
+    asset = make_asset(
+        kit, outputs=(make_output(kit),), renderer=_deterministic(kit).renderer, needs=("agg",)
+    )
+    report = kit.pipeline.run(repo, mode="check", assets=(asset,))
+    errors = _errors(report)
+    assert errors[0].startswith("requires agg 1.9.0: ")
+    assert errors[-1] == "skipped rendering because prerequisites failed"
+    assert report.checked == []
 
 
 def test_unknown_tool_requirement_fails(kit: ModuleType, repo: Path) -> None:
