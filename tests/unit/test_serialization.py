@@ -803,6 +803,60 @@ def test_from_data_error_paths_disclose_location_not_value() -> None:
     assert sentinel not in message
 
 
+@pytest.mark.parametrize(
+    ("name", "path"),
+    [
+        ("Option", ("label",)),
+        ("Option", ("description",)),
+        ("Case", ("state",)),
+        ("ModelIdentity", ("revision",)),
+        ("ModelIdentity", ("runtime", "python")),
+        ("CapturedOutcome", ("body_json",)),
+        ("CapturedOutcome", ("identity", "runtime", "os")),
+        ("ChoiceAnswer", ("probabilities", 0, 0)),
+        ("ChoiceAnswer", ("warnings", 0)),
+        ("LockedPolicy", ("known_labels", 0)),
+        ("PolicyDecision", ("choice",)),
+        ("PlanLock", ("contract", "question", "options", 1, "description")),
+        ("EvidenceBundle", ("verification_jsonl",)),
+        ("Verdict", ("reasons", 0)),
+    ],
+)
+@pytest.mark.parametrize("bad", ["\ud800", "x\udfffy"])
+def test_from_data_rejects_unpaired_surrogate_strings(name: str, path: Any, bad: str) -> None:
+    """Python data can carry lone surrogates even though strict JSON text cannot."""
+    data = to_data(SAMPLE_BUILDERS[name]())
+    _set_path(data, path, bad)
+    with pytest.raises(SchemaError, match="Unicode") as excinfo:
+        from_data(RECORD_TYPES[name], data)
+    message = str(excinfo.value)
+    assert message.startswith(name)
+    assert bad not in message
+    assert message.isascii()
+
+
+def test_from_data_rejects_unpaired_surrogate_map_keys() -> None:
+    data = to_data(SAMPLE_BUILDERS["ModelIdentity"]())
+    _set_path(data, ("runtime",), {"\ud800": "v"})
+    with pytest.raises(SchemaError, match="Unicode") as excinfo:
+        from_data(ModelIdentity, data)
+    assert str(excinfo.value).isascii()
+    _set_path(data, ("runtime",), {"k": "v"})
+    _set_path(data, ("artifact_hashes",), {"w\udc00": HEX_A})
+    with pytest.raises(SchemaError, match="Unicode") as excinfo:
+        from_data(ModelIdentity, data)
+    assert str(excinfo.value).isascii()
+
+
+def test_every_accepted_record_with_valid_non_ascii_round_trips() -> None:
+    text = "café ☃ \U0001f600 Ж"
+    question = ChoiceQuestion(text, text, (Option(text, text), Option("b", text)))
+    data = to_data(question)
+    wire = canonical_json(data)
+    assert text.encode("utf-8") in wire
+    assert from_data(ChoiceQuestion, strict_json_loads(wire.decode("utf-8"))) == question
+
+
 def test_from_data_accepts_integers_for_float_fields() -> None:
     interval = from_data(Interval, {"lower": 0, "upper": 1})
     assert interval == Interval(0.0, 1.0)

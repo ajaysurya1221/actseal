@@ -96,10 +96,22 @@ def _fail(field: str, reason: str) -> SchemaError:
 
 
 def _str(field: str, value: object, *, nonempty: bool = True) -> str:
+    """Validate a string field: type, optional nonemptiness and UTF-8 encodability.
+
+    Every string child of every record (plain fields, optional fields, tuple
+    items, map keys/values, probability labels, enums and hashes) passes
+    through here, so an unpaired surrogate can never enter an accepted record
+    and later fail canonical serialization.
+    """
     if not isinstance(value, str):
         raise _fail(field, "must be a string")
     if nonempty and not value:
         raise _fail(field, "must be nonempty")
+    if not value.isascii():
+        try:
+            value.encode("utf-8")
+        except UnicodeEncodeError:
+            raise _fail(field, "must be valid Unicode text") from None
     return value
 
 

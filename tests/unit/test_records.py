@@ -753,6 +753,60 @@ def test_error_messages_do_not_echo_values() -> None:
     assert sentinel not in str(excinfo.value)
 
 
+LONE_SURROGATES = ("\ud800", "\udfff", "ok\ud83d", "\ude00tail", "mid\udc00dle")
+
+
+@pytest.mark.parametrize("bad", LONE_SURROGATES)
+def test_string_fields_reject_unpaired_surrogates_at_construction(bad: str) -> None:
+    sentinel_free = "\\u" not in bad
+    assert sentinel_free
+    cases: list[tuple[str, Any]] = [
+        ("label", lambda: Option(bad, "d")),
+        ("description", lambda: Option("l", bad)),
+        ("question_id", lambda: _replace(make_question(), question_id=bad)),
+        ("state", lambda: _replace(make_case(), state=bad)),
+        ("revision", lambda: _replace(make_identity(), revision=bad)),
+        ("body_json", lambda: _replace(make_capture(), body_json=bad)),
+        ("warnings[0]", lambda: _replace(make_capture(), warnings=(bad,))),
+        ("choice", lambda: _replace(make_decision(), choice=bad)),
+        ("reason", lambda: _replace(make_decision(), reason=bad)),
+        ("known_labels[0]", lambda: LockedPolicy((bad, "b"), ("b",), 0.5)),
+        ("runtime[0].key", lambda: _replace(make_identity(), runtime=((bad, "v"),))),
+        ("runtime[0].value", lambda: _replace(make_identity(), runtime=(("k", bad),))),
+        (
+            "artifact_hashes[0].key",
+            lambda: _replace(make_identity(), artifact_hashes=((bad, HEX_A),)),
+        ),
+        (
+            "probabilities[0].label",
+            lambda: ChoiceAnswer("b", ((bad, 0.0), ("b", 1.0)), 1.0, None, (), False),
+        ),
+        ("population", lambda: _replace(make_contract(), population=bad)),
+        ("calibration_jsonl", lambda: _replace(make_bundle(), calibration_jsonl=bad)),
+        ("reasons[0]", lambda: _replace(make_verdict(), reasons=(bad,))),
+    ]
+    for field, build in cases:
+        with pytest.raises(SchemaError, match="Unicode") as excinfo:
+            build()
+        message = str(excinfo.value)
+        assert message.startswith(field), field
+        assert bad not in message
+        assert message.isascii()
+
+
+def test_valid_non_ascii_strings_are_preserved() -> None:
+    text = "café ☃ \U0001f600 Ж א ก"
+    option = Option(text, "\U0001f600")
+    assert option.label == text
+    case = _replace(make_case(), state=text)
+    assert case.state == text
+    capture = _replace(make_capture(), body_json=text, warnings=(text,))
+    assert capture.body_json == text
+    assert capture.warnings == (text,)
+    identity = _replace(make_identity(), runtime=((text, text),))
+    assert identity.runtime == ((text, text),)
+
+
 def test_decision_record_equality_and_hash() -> None:
     assert make_record() == make_record()
     assert hash(make_record()) == hash(make_record())
