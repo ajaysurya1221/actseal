@@ -130,3 +130,10 @@ ADR0012/CONTRACTS now explicitly include malformed expected digests and NUL path
 alongside wrong Python types in the SchemaError argument boundary. Invalid bundle
 contents still return an ERROR verdict. This records T40's reviewed path fix and
 existing digest validation; no schema, signature or verdict semantics change.
+
+## 2026-10-06 — executor memory isolation
+
+ADR0007 now uses the documented process-local automatic-memory disable flag for
+controlled Claude dispatches. Project STATE/REPORT/REVIEW records remain the
+shared memory; existing private notes and global settings are preserved. This
+corrects an ownership mismatch observed during T50, not the product interface.
