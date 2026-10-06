@@ -24,19 +24,19 @@ Codex is the sole writer of this state and REVIEW records. Executors write their
 
 | Task | Owner | Status |
 | --- | --- | --- |
-| 00 | Codex | Approval receipt persisted; commit and independent comparison next |
-| 01 | Codex | NEXT: complete the full baseline before product changes |
-| 02 | Claude A | Waiting for 01; first product task |
+| 00 | Codex | ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8 |
+| 01 | Codex | REVISE: 2300 passed, 2 process-contamination failures; see Task 01R |
+| 02 | Claude A | Held for 01R and independent full-baseline ACCEPT |
 | 03–08 | Claude B/C/D | Waiting for frozen Task 02 contracts and specified dependencies |
-| 09 | Codex | Ready after receipt commit; CI/packaging only |
-| 10 | Claude V | Ready after receipt commit; may run in parallel with baseline/core |
+| 09 | Codex | Asset dependency prerequisite in codex/v1-09-assets; review/CI pending |
+| 10 | Claude V | Ready after assets dependency glue; independent of baseline repair |
 | 11–18 | Claude V | Waiting for their specified dependencies |
 | 19–22 | Claude A/D and Codex | Waiting for integration/release gates |
 
 ## Accepted commits and reports
 
-No v1 implementation commits accepted yet. Historical v0.1 reports remain unchanged. The starting core/packaging baseline was checked during planning; six integration tests remain to run.
+Task 00 ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8. All 2302 baseline tests were exercised: 2300 passed and two shared-process isolation checks failed. Native inference passed; full baseline is not green. Historical v0.1 reports remain unchanged.
 
 ## Next action
 
-Commit the exact approval receipt, run Task 01, and provide Task 02 and Task 10 verbatim packets for the user's separate Claude sessions. Do not launch Claude or substitute another product implementer.
+Prepare manual Claude Task 01R for the baseline repair and Task 10 for visuals after the optional authoring dependency is reviewed. Do not dispatch Task 02 until the baseline is ACCEPT. Do not launch Claude or substitute another product implementer.

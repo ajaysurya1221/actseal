@@ -1,0 +1,88 @@
+Installed 30 packages in 471ms
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/ajay/Developer/not-yet-named
+configfile: pyproject.toml
+testpaths: tests
+plugins: platformdirs-4.12.3, anyio-4.15.1
+collected 2302 items
+
+tests/acceptance/test_acceptance_cli_workflow.py ....................... [  0%]
+.............                                                            [  1%]
+tests/acceptance/test_acceptance_data_boundary.py ..............         [  2%]
+tests/acceptance/test_acceptance_replay_forgery.py ..................... [  3%]
+....                                                                     [  3%]
+tests/acceptance/test_acceptance_statistics.py .......................   [  4%]
+tests/acceptance/test_acceptance_wheel_receipts.py ......                [  4%]
+tests/integration/test_laya.py .....                                     [  4%]
+tests/packaging/test_wheel.py ........                                   [  5%]
+tests/unit/test_assessment.py .......................................... [  6%]
+..........................................................               [  9%]
+tests/unit/test_cli.py ................................................. [ 11%]
+..................................                                       [ 13%]
+tests/unit/test_contract.py ............................................ [ 14%]
+........................................................................ [ 18%]
+...............................................................          [ 20%]
+tests/unit/test_evidence.py ............................................ [ 22%]
+...................................................................      [ 25%]
+tests/unit/test_faults.py ....................................           [ 27%]
+tests/unit/test_locking.py ............................................. [ 29%]
+.............................................................            [ 31%]
+tests/unit/test_normalization.py ....................................... [ 33%]
+........................................................................ [ 36%]
+..................                                                       [ 37%]
+tests/unit/test_policy.py .............................................. [ 39%]
+........................................................................ [ 42%]
+........................................................................ [ 45%]
+........................................................................ [ 48%]
+........................................................................ [ 51%]
+........................................................................ [ 55%]
+................................................................         [ 57%]
+tests/unit/test_providers.py ........................................... [ 59%]
+.......................................................................  [ 62%]
+tests/unit/test_records.py ............................................. [ 64%]
+........................................................................ [ 67%]
+........................................................................ [ 70%]
+.....................                                                    [ 71%]
+tests/unit/test_replay.py .............................................. [ 73%]
+.....................                                                    [ 74%]
+tests/unit/test_runner.py ............................................   [ 76%]
+tests/unit/test_serialization.py ....................................... [ 78%]
+........................................................................ [ 81%]
+........................................................................ [ 84%]
+........................................................................ [ 87%]
+........................................................................ [ 90%]
+..............................................F...                       [ 93%]
+tests/unit/test_stats.py ............................................... [ 95%]
+........................................................................ [ 98%]
+......................................F.                                 [100%]
+
+=================================== FAILURES ===================================
+____________ test_optional_stack_is_absent_from_default_environment ____________
+
+    def test_optional_stack_is_absent_from_default_environment() -> None:
+        for module in OPTIONAL_MODULES:
+>           assert module not in sys.modules
+E           AssertionError: assert 'laya' not in {'sys': <module 'sys' (built-in)>, 'builtins': <module 'builtins' (built-in)>, '_frozen_importlib': <module '_frozen_importlib' (frozen)>, '_imp': <module '_imp' (built-in)>, ...}
+E            +  where {'sys': <module 'sys' (built-in)>, 'builtins': <module 'builtins' (built-in)>, '_frozen_importlib': <module '_frozen_importlib' (frozen)>, '_imp': <module '_imp' (built-in)>, ...} = sys.modules
+
+tests/unit/test_serialization.py:1032: AssertionError
+__ test_stats_module_is_stdlib_only_and_independent_of_other_actseal_modules ___
+
+    def test_stats_module_is_stdlib_only_and_independent_of_other_actseal_modules() -> None:
+        code = _code_after_docstring(_module_source())
+        imports = [
+            line.strip()
+            for line in code.splitlines()
+            if line.startswith(("import ", "from ")) and "__future__" not in line
+        ]
+        assert imports == ["import math"]
+>       assert not any(name in sys.modules for name in ("scipy", "numpy"))
+E       assert not True
+E        +  where True = any(<generator object test_stats_module_is_stdlib_only_and_independent_of_other_actseal_modules.<locals>.<genexpr> at 0x10836c2b0>)
+
+tests/unit/test_stats.py:598: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_serialization.py::test_optional_stack_is_absent_from_default_environment
+FAILED tests/unit/test_stats.py::test_stats_module_is_stdlib_only_and_independent_of_other_actseal_modules
+================== 2 failed, 2300 passed in 64.82s (0:01:04) ===================
