@@ -14,15 +14,34 @@ from visual.visual_support import REPO_ROOT, SRC_DIR
 RENDER = SRC_DIR / "render.py"
 
 
-def test_check_on_bootstrap_repository_reports_planned_assets(
+IMPLEMENTED = ("how-it-works",)
+PLANNED = ("hero", "architecture", "demo", "social", "where", "matrix", "boundary")
+
+
+def test_check_on_bootstrap_repository_reports_planned_and_uncommitted_assets(
     kit: ModuleType, repo: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """Planned assets are informational; an implemented asset without committed output errs."""
+    assert set(IMPLEMENTED) | set(PLANNED) == set(kit.inventory.ASSET_NAMES)
+    assert kit.cli.main(["--check"], root=repo) == 1
+    out = capsys.readouterr().out
+    for name in PLANNED:
+        assert f"[info] {name}: not implemented (planned in Task " in out
+    for output in kit.how_it_works.OUTPUTS:
+        assert f"[error] how-it-works: docs/assets/{output} is not committed; run render.py" in out
+    assert out.rstrip().endswith("1 asset(s) checked; 7 planned/not implemented; 4 error(s)")
+
+
+def test_write_then_check_on_bootstrap_repository_passes(
+    kit: ModuleType, repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert kit.cli.main(["--write"], root=repo) == 0
+    written = capsys.readouterr().out
+    assert written.rstrip().endswith("4 file(s) written")
     assert kit.cli.main(["--check"], root=repo) == 0
     out = capsys.readouterr().out
-    for name in kit.inventory.ASSET_NAMES:
-        assert f"[info] {name}: not implemented (planned in Task " in out
-    assert out.rstrip().endswith("8 planned/not implemented; 0 error(s)")
     assert "[error]" not in out
+    assert out.rstrip().endswith("1 asset(s) checked; 7 planned/not implemented; 0 error(s)")
 
 
 def test_only_planned_asset_exits_one(
@@ -51,12 +70,15 @@ def test_repository_root_resolves_to_the_checkout(kit: ModuleType) -> None:
 
 
 def test_render_script_runs_without_fonttools(repo: Path) -> None:
-    """The script path and --check work in a process where fontTools is unavailable."""
+    """--write and --check work in a process where fontTools is unavailable."""
     script = (
         "import sys\n"
         "sys.modules['fontTools'] = None\n"
         f"sys.path.insert(0, {str(SRC_DIR)!r})\n"
         "from actseal_assets import cli\n"
+        f"written = cli.main(['--write'], root={str(repo)!r})\n"
+        "if written != 0:\n"
+        "    raise SystemExit(written)\n"
         f"raise SystemExit(cli.main(['--check'], root={str(repo)!r}))\n"
     )
     result = subprocess.run(  # noqa: S603 - fixed interpreter and literal script, no user input
