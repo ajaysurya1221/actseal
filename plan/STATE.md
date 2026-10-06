@@ -27,7 +27,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | T10 contract/policy | Claude A | ACCEPT / MERGED | 9bdac25 (merge 28be58d) |
 | T20 statistics | Claude B | ACCEPT / MERGED | b1eace7 (merge 6d6d7c4) |
 | T30 providers/faults | Claude C | ACCEPT / MERGED | 8b1efd6 (merge 87d2cd1) |
-| T40 evidence/replay | Claude B | READY_FOR_DISPATCH | none |
+| T40 evidence/replay | Claude B | RUNNING | base525ec58 |
 | T50 CLI/demo | Claude A | WAITING_FOR_T10_T20_T30_T40 | none |
 | T60 acceptance | Claude C | WAITING_FOR_T50 | none |
 | T70 publication | Codex | WAITING_FOR_T60 | none |
@@ -77,7 +77,8 @@ and statistical probes found no material defects. Both four-job hosted matrices
 pass in runs37441967584/37441973261. REVIEW T20-02 records exact evidence.
 Numerical source/tests remain unchanged from the accepted port. Final cumulative
 session meter $11.50984675 is estimated subscription usage, not API billing.
-T40 will receive real accepted dependencies and ADR0012 before implementation.
+T40 session a02c2248-c36b-496c-b941-e4b806cc5247 is running from base525ec58
+with real accepted dependencies and ADR0012; model/effort verified at dispatch.
 No fake authorities or stubs are allowed. Raw session receipts remain ignored.
 
 T00 Claude session25979d71-e2c8-4a20-932b-a18022ec31c7 completed. Model was
