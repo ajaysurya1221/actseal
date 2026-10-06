@@ -1,27 +1,29 @@
 # Actseal v0.1.0 — final report draft
 
-**PENDING RELEASE — progress snapshot, 6 October 2026.** T00, T10, T20, T30 and
-T40 are independently accepted and merged. T50 CLI/demo is running; T60 acceptance
-and T70 publication are pending. This is not a release receipt or a validated
-quickstart. The [public repository](https://github.com/ajaysurya1221/actseal)
-exists; that does not establish a published v0.1.0. [STATE](STATE.md) records
-subsequent progress.
+**PENDING RELEASE — 6 October 2026.** T00 through T50 are independently
+accepted and merged. T60 adversarial acceptance is running; T70 publication
+remains pending. The CLI, installed fixture demo and native Laya CLI have actual
+receipts below. The [public repository](https://github.com/ajaysurya1221/actseal)
+exists; the v0.1.0 release asset has not yet been published.
 
-| Final release field | Status / receipt still required |
+| Release field | Current evidence / remaining gate |
 |---|---|
-| T50 and T60 ACCEPT | **PENDING** — exact reviewed commits and independent checks |
-| Final candidate and required hosted CI | **PENDING** — full commit SHA and four successful Linux/macOS × Python3.12/3.13 jobs, with packaging/demo guards removed |
-| Installed-wheel quickstart and demo | **PENDING** — actual commands, statuses, counts/bounds, replay results, platform and elapsed time; no timing or metrics claimed here |
-| Native CLI integration | **PENDING** — pinned cached Laya `lock` → `verify` → `replay`, preserving the actual verdict |
-| Tag, release and distributions | **PENDING** — v0.1.0 target, release URL, wheel/sdist inventories and SHA-256 hashes |
-| Final spend and publication review | **PENDING** — complete session ledger and T70 ACCEPT; launch post remains a draft |
+| T50 CLI acceptance | ACCEPT `286ae67`, merge `7e696c5`; 127 unit and 8 clean-wheel tests independently passed |
+| T60 acceptance | PENDING — independent adversarial tests and review |
+| Required hosted CI | T50's eight jobs passed; all demo bytes agree. Final candidate jobs remain required. |
+| Installed demo | bad BLOCK 32/128; fixed PASS 0/128; both replay; installed fixture 0.170645s after cached preparation |
+| Native CLI | Real pinned cached Laya lock0 / verifyBLOCK1 / replayBLOCK1;128 ABSTAIN; [receipt](reports/T70-native.md) |
+| Tag and distributions | PENDING — final artifact hashes, v0.1.0 release and public-URL quickstart |
+| Spend and publication review | Paid API $0; final T60 meter and T70 ACCEPT pending. Launch remains a draft. |
+
 
 ## Accepted implementation versus planned release
 
 The accepted core freezes an application decision policy and its labelled inputs,
 records provider outcomes, checks failure behavior, calculates accepted-action
 error and coverage bounds, and independently replays bounded evidence. The
-complete user-facing workflow remains a release target until T50/T60 pass.
+complete user-facing workflow is accepted through T50; independent adversarial
+acceptance and publication remain gated.
 
 | Planned component | Accepted implementation / remaining work |
 |---|---|
@@ -30,7 +32,8 @@ complete user-facing workflow remains a release target until T50/T60 pass.
 | T20 statistics and assessment | Exact-integer CP kernel; full-evidence reconstruction; risk/coverage bounds and PASS/BLOCK/INCONCLUSIVE/ERROR. [ACCEPT](reviews/T20-02.md), [PR 2](https://github.com/ajaysurya1221/actseal/pull/2), candidate `b1eace7009bc5bc966e4f600d756ff1802fd6e8e`. |
 | T30 providers and faults | Fixture and pinned native Laya CPU adapters, strict normalization, bounded worker lifecycle and six canonical failure scenarios. [ACCEPT](reviews/T30-03.md), [PR 4](https://github.com/ajaysurya1221/actseal/pull/4), candidate `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`. |
 | T40 evidence and replay | Bounded seven-file bundles, exclusive atomic publication and provider-free semantic replay. [ACCEPT](reviews/T40-02.md), [PR 5](https://github.com/ajaysurya1221/actseal/pull/5), candidate `98297d5f79cfa62e348d722d8ae91ec59252eebd`. |
-| T50–T70 completion | CLI/runner, packaged synthetic demonstration, installed-wheel acceptance, adversarial acceptance, final documentation/artifact audit and GitHub release are **PENDING**. |
+| T50 CLI and demo | Complete runner, four CLI commands, packaged support-triage inputs and installed-wheel entrypoints/isolation. [ACCEPT](reviews/T50-02.md), [PR6](https://github.com/ajaysurya1221/actseal/pull/6), candidate `286ae67e252ecbb77e9c330ebe1f66cc375bfbab`. |
+| T60/T70 | Adversarial acceptance, final artifact/CI gate and publication are **PENDING**. |
 
 Claude Code Fable 5.1/high implemented product code and tests; Codex specified,
 reviewed, independently checked and gated each accepted task. Project-local
@@ -51,11 +54,13 @@ formatting and strict mypy passed for each accepted task.
 | T20 assessment/statistics | 259 tests; denominator, tail allocation, boundary and integrity-precedence probes | [Push](https://github.com/ajaysurya1221/actseal/actions/runs/37441967584), [PR](https://github.com/ajaysurya1221/actseal/actions/runs/37441973261) |
 | T30 providers/faults | 279 tests; independent canonical-fault and worker-lifecycle review | [Push](https://github.com/ajaysurya1221/actseal/actions/runs/37440036303), [PR](https://github.com/ajaysurya1221/actseal/actions/runs/37440043375) |
 | T40 evidence/replay | 178 tests; semantic forgery, raw-input preservation, incremental bounds and filesystem probes | [Push](https://github.com/ajaysurya1221/actseal/actions/runs/37447161362), [PR](https://github.com/ajaysurya1221/actseal/actions/runs/37447188177) |
+| T50 CLI/demo | 127 unit tests,8 clean-wheel tests; independent diagnostics/cleanup and installed demo/replay | [Push](https://github.com/ajaysurya1221/actseal/actions/runs/37451569089), [PR](https://github.com/ajaysurya1221/actseal/actions/runs/37451595664) |
 
 Each linked hosted run passed four Linux/macOS × Python3.12/3.13 jobs. T40's jobs
 executed the real exclusive-publication operation on both operating systems.
-Existing guards skipped the future CLI packaging/demo checks; those skips do not
-satisfy release requirements. Earlier REVISE reports remain preserved; their
+Earlier core runs skipped future CLI packaging/demo through existence guards;
+T50 removed those guards. Every T50 job executed real packaging and reproduction,
+and all eight 24-file inventories match the local installed result. Earlier REVISE reports remain preserved; their
 required product corrections were resolved before the listed ACCEPTs.
 
 The [native product receipt](reviews/T30-02.md) separately records **five cached
@@ -69,12 +74,36 @@ product-adapter execution, not model quality, general hardware compatibility,
 network isolation or final CLI integration. The earlier upstream one-case smoke
 and ARCI source tests remain distinct [preflight evidence](VERIFICATION.md).
 
-Still unrun as final release gates: the complete candidate checks in
-[RELEASE_CHECKLIST](RELEASE_CHECKLIST.md), installed console/module execution,
-measured fixture quickstart, real demo and cross-platform artifact comparison,
-native CLI smoke, T60 adversarial acceptance, final license/privacy inventories
-and tag/release verification. Native CLI results must retain BLOCK or
-INCONCLUSIVE if observed; no policy adjustment or retry-until-PASS is permitted.
+The root installed-wheel fixture run completed in 0.170645s on macOS/Python3.12.13,
+after a separately measured 0.046136s cached environment/install step. It used a
+fresh dependency-free venv outside the checkout. Both 128-case runs accepted 128:
+bad had 32 wrong ACTs and BLOCKed; fixed had 0 and PASSed. Risk intervals are
+[0.1687604663492846,0.346264539835876] and [0,0.033655210093607835], respectively;
+both coverage intervals are [0.9663447899063922,1]. Fresh installed module replays
+with expected hashes return 1/0. This is authored demo evidence, not model quality.
+The [review](reviews/T50-02.md) binds source, locks and 24-file inventory digest.
+Final artifact metadata/public-download verification remains pending.
+
+The [native CLI check](reports/T70-native.md) separately ran all 128 committed
+synthetic verification inputs once through pinned cached Laya at candidate 434c682.
+All 128 ABSTAINed below threshold 0.90: no provider failures, zero ACT, risk [0,1],
+coverage [0,0.033655210093607835], BLOCK for coverage.below_minimum and
+risk.no_accepted_cases. All six faults matched and replay reproduced BLOCK.
+No tuning, sample replacement or retry occurred. macOS 26.6.2 arm64/Python3.12.13,
+CPU FP32/four threads; full identity and timing are in that receipt. This closes
+native CLI integration, not an accuracy or latency benchmark.
+
+The source archive explicitly includes public docs/configuration/contracts.
+Independent inventory/credential-pattern review found no material privacy/license
+issue in 143 tracked files, 36 wheel entries and 140 sdist files at 1337f3d. No .env,
+research originals, private memory, dispatch/local receipts, weights or generated
+runs were included. All 53 third-party lock records match the license inventory;
+core runtime requirements are empty and Linux Torch remains the official CPU
+build. Final rebuilt archives require fresh hashes/inventories; no blanket audit
+of every embedded third-party-wheel file or all Git history is claimed.
+
+Still required: T60's independent adversarial review, full final candidate checks,
+final archive/README/public-URL verification and immutable tag/release receipts.
 
 ## Material deviations from the research
 
@@ -95,7 +124,7 @@ being silently converted into facts.
 | Jev deferred; no proprietary core or required service | Documented price is not proof of universal access. Terms and API identity/normalization require a separately reviewed optional adapter; future key name is JEV_API_KEY. v1's fixture/local path is sufficient. Failures remain visible and conservative; no automatic provider switch or retry inherits ACT. M24–M28/P08/P13; [Jev sources](SOURCES.md#j01--jev-api-price-identity-and-confidence), [ADR0004](../docs/decisions/0004-identity-normalization-fallback.md). |
 | Minimal public reuse instead of composing four runtimes | Port the audited ARCI CP primitives and use evidence/replay invariants; do not add SciPy or recursive framework gates. Scout's release warning prevents treating it as an authoritative gate; Dorian's code-executing checks add a different trust boundary. All four assets were verified public, but private unlicensed shared-brain code was excluded. Claimed 70–80% reuse was not measured. R01–R10/S16; [ADR0002](../docs/decisions/0002-minimal-attributed-reuse.md). |
 | Honest demand, competition and success claims | Several cited upstream needs already received fixes/guides; Ollaya and AI PR Proof Gate overlap was verified. Unavailable sys1bench and unverified surveys/incidents/model counts do not establish absence or market demand. “10×,” adoption forecasts, star-to-integration equivalence, coverage-as-proof and zero-maintenance/cost claims are not publication facts. D14–D34/D36, P12/P14–P17; [research-only limits](SOURCES.md#research-only-evidence-and-negative-knowledge). |
-| Fixture-first demonstration with a prespecified policy | Research's illustrative ticket counts were not results. The pending demo uses different authored outputs under the same fixed policy, not a repaired model, tuned threshold or population benchmark. Native preparation and execution are separate from the ≤60-second fixture target. P09/P10; [ADR0013](../docs/decisions/0013-prespecified-synthetic-demo.md). |
+| Fixture-first demonstration with a prespecified policy | Research's illustrative ticket counts were not results. The demo uses different authored outputs under the same fixed policy, not a repaired model, tuned threshold or population benchmark. Native preparation and execution are separate from the ≤60-second fixture target. P09/P10; [ADR0013](../docs/decisions/0013-prespecified-synthetic-demo.md). |
 | Explicit execution, replay and resource limits | One fixed attempt uses case-level, unconditional assumptions; worker loss invalidates statistical assessment while retaining scheduled terminal evidence. Shared bounded readers, canonical faults and exclusive publication replace underspecified mechanics. A trusted lock anchors identity, not response execution or truth. These corrections make the chosen scope reviewable, not broader. S10/S17; [ADR0005](../docs/decisions/0005-data-only-replay-and-trust.md), [ADR0008](../docs/decisions/0008-fixed-collection-deadlines.md), [ADR0009](../docs/decisions/0009-worker-loss-invalidates-statistical-run.md), [ADR0010](../docs/decisions/0010-shared-bounded-input-helpers.md), [ADR0011](../docs/decisions/0011-provider-helpers-and-fixture-bound.md), [ADR0012](../docs/decisions/0012-replay-errors-and-exclusive-publication.md). |
 | User engineering and publication rules override research defaults | Python3.12+/mypy, Claude-only product implementation, three implementation lanes plus Codex verification, frozen dependent interfaces and the requested TASK/REPORT/REVIEW format replace conflicting proposals. GitHub release is required; PyPI upload and promotional posting are not. No final delivery or cost forecast is reported as achieved. P01–P06/P11/P20–P24; [ADR0007](../docs/decisions/0007-claude-execution-codex-review-memory.md). |
 
@@ -131,7 +160,7 @@ call or paid hosting was required. Claude used the existing authenticated
 claude.ai Max subscription. Existing subscriptions, local compute and labour
 are not claimed free. The completed-session meters below are estimates, not API
 invoices; successive reports from one session are cumulative and must not be
-added together. Final T50/T60 and full-session reconciliation remain pending.
+added together. T50 is complete; final T60 and full-session reconciliation remain pending.
 
 | Completed execution session | Latest recorded estimated subscription meter |
 |---|---|
@@ -140,6 +169,7 @@ added together. Final T50/T60 and full-session reconciliation remain pending.
 | T20 complete session | $11.50984675 — [T20 review](reviews/T20-02.md); includes the earlier $5.43887825 numerical milestone |
 | T30 complete session | $20.95634925 — [T30 review](reviews/T30-03.md); replaces earlier milestone meter |
 | T40 complete session | $18.21350825 — [T40 review](reviews/T40-02.md); includes corrective work |
+| T50 complete session | $19.152133 — [T50 review](reviews/T50-02.md); includes initial and corrective attempts |
 
 Root checked the ignored raw result metadata: T20's numerical and assessment
 attempts share session `14d9398c-146f-40cf-827d-a3c6a79632f1`; their cumulative

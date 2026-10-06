@@ -1,6 +1,6 @@
 # Actseal v1 statistical contract
 
-**Statistical core accepted; CLI/demo, final acceptance and release pending.** [T20's review](../plan/reviews/T20-02.md) records acceptance of the numerical kernel and complete-evidence assessment; [T40's review](../plan/reviews/T40-02.md) covers fresh replay. Exact APIs/verdict rules live in [CONTRACTS](../plan/CONTRACTS.md). [ADR 0003](decisions/0003-risk-coverage-statistical-contract.md) and [ADR 0009](decisions/0009-worker-loss-invalidates-statistical-run.md) explain the inference and worker-loss decisions.
+[T20's review](../plan/reviews/T20-02.md) records acceptance of the numerical kernel and complete-evidence assessment; [T40's review](../plan/reviews/T40-02.md) covers fresh replay. Exact APIs/verdict rules live in [CONTRACTS](../plan/CONTRACTS.md). [ADR 0003](decisions/0003-risk-coverage-statistical-contract.md) and [ADR 0009](decisions/0009-worker-loss-invalidates-statistical-run.md) explain the inference and worker-loss decisions.
 
 ## Target and assumptions
 
@@ -10,7 +10,7 @@ Population interpretation requires independent case outcomes sampled from the de
 
 `evidence_scope=demo` identifies authored examples. More demo cases or repeated replay cannot turn those examples into a population study. Setting `evidence_scope=iid`, locking hashes or using separate filenames cannot establish IID sampling, label truth or whether labels were withheld. Even a trusted lock digest does not authenticate responses or execution; internally consistent same-lock response rewrites remain possible, as described in the [trust boundary](threat-model.md).
 
-The pending demo uses different authored outcomes under the **same policy, threshold and limits**. Its prescribed correct/wrong choices are intended to produce PASS/BLOCK through the actual assessment; they are not model improvement, training or a paired-model experiment. [ADR 0013](decisions/0013-prespecified-synthetic-demo.md) contains the rules and explicitly separates planning calculations from product-run receipts. T50 must supply those receipts without hard-coded verdicts or metrics.
+The demo uses different authored outcomes under the **same policy, threshold and limits**. Its prespecified correct/wrong choices produce PASS/BLOCK through the actual assessment; they are not model improvement, training or a paired-model experiment. [ADR 0013](decisions/0013-prespecified-synthetic-demo.md) contains the rules and explicitly separates planning calculations from product-run receipts. [The independent CLI review](../plan/reviews/T50-02.md) records genuine pipeline counts, bounds and verdicts.
 
 ## Counts and intervals
 

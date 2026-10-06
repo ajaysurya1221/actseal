@@ -1,6 +1,12 @@
 # Actseal v0.1.0 release evidence checklist
 
-**PENDING — final release gates remain open.** Progress snapshot refreshed 6 October 2026: T00, T10 and full T30 are accepted; T10/T30 are merged. T20 is now accepted and merged at candidate b1eace7 (merge6d6d7c4); both hosted matrices pass (REVIEW T20-02). T40 evidence/replay is accepted at98297d5 and merged7a2939e (REVIEW T40-02); T50 CLI/demo and T60 acceptance remain pending. These task results do not establish integrated release completion. Read [STATE](STATE.md) for subsequent progress. This document does not change scope, contracts, ownership or authorization.
+**PENDING — T60 and final publication gates remain open.** T00 through T50 are
+accepted and merged. [T50 ACCEPT](reviews/T50-02.md) binds candidate286ae67,
+root127 unit/8 installed-wheel tests and both green hosted matrices with identical
+evidence. [Native CLI integration](reports/T70-native.md) completed at434c682:
+lock0, verifyBLOCK1 and matching replayBLOCK1, with all128 cases ABSTAINing under
+the unchanged threshold. These completed checks do not replace final T60/release
+verification. [STATE](STATE.md) is the operational ledger.
 
 Every gate below remains unchecked until its evidence is attached to `plan/reports/T70.md` and `plan/FINAL_REPORT.md`, with the reviewed candidate SHA, exact command, exit code, platform, pass/fail/skip counts and artifact/run location. A task REPORT alone is supplied evidence; Codex's independent REVIEW and required green CI authorize acceptance. Never use foundation CI, a numeric/provider-only milestone, an upstream model probe or collected tests as a substitute for final product checks.
 
@@ -11,7 +17,7 @@ Available task evidence: [T10 ACCEPT](reviews/T10-02.md) covers candidate `9bdac
 | PLAN publication group | Required evidence and exact check block | Publication gate / current state |
 |---|---|---|
 | 1. Runnable product | T50 REPORT/ACCEPT; installed-wheel console and module receipt; real bad BLOCK/fixed PASS plus both replays; README commands and measured ≤60-second fixture workflow with prerequisites; T30 accepted native adapter receipt. Blocks A, B, C. | PENDING: integrated CLI/demo/wheel and final-candidate receipt applicability. Accepted macOS/Linux native product results now exist; earlier upstream feasibility alone remains insufficient. |
-| 2. Correctness | T00–T60 ACCEPT on identified commits; independent oracles/policy/fault/integrity/CLI/acceptance suites; all four Linux/macOS × Python3.12/3.13 release-candidate jobs green. Blocks A, D; explicit ADR0009 assertions below. | PENDING: T40/T50/T60 and final integrated checks. T10/T20/T30 are accepted. No skipped packaging/demo job counts as release coverage. |
+| 2. Correctness | T00–T60 ACCEPT on identified commits; independent oracles/policy/fault/integrity/CLI/acceptance suites; all four Linux/macOS × Python3.12/3.13 release-candidate jobs green. Blocks A, D; explicit ADR0009 assertions below. | PENDING: T60 and final integrated checks. T00 through T50 are accepted. No skipped packaging/demo job counts as release coverage. |
 | 3. Distribution and licenses | Public repository; Apache-2.0 LICENSE/actual reuse NOTICE; committed resolved lock; stdlib core; corrected official Linux CPU graph and license inventory; wheel/sdist contents and hashes. Blocks E, G. | PENDING: final artifact/graph audit. OSI-compatible runtime dependencies must be checked on the resolved graph, not inferred from torch's top-level license. |
 | 4. Documentation and privacy | README, CHANGELOG, CONTRIBUTING, SECURITY, architecture/statistical/trust/provider/quickstart docs; placeholder-only `.env.example`; reviewed tracked/release inventory; launch remains draft. Blocks F and claim review. | PENDING: final docs against executed product behavior; secrets/private-original exclusion. Do not read or print `.env` values. |
 | 5. Release receipt | Accepted candidate; immutable v0.1.0 tag; non-draft GitHub release with matching wheel/sdist; FINAL_REPORT's shipped/planned comparison, research deviations, known limits, actual checks, incremental spend and next three steps. Block G. | PENDING: publish only after groups 1–4. No PyPI upload or public promotional message is required. |
@@ -29,7 +35,7 @@ uv run --frozen ruff format --check .
 uv run --frozen mypy --strict src tests
 uv run --frozen pytest -m "not integration and not packaging"
 uv build --no-sources
-uv run --frozen pytest -m packaging tests/packaging
+uv run --frozen pytest -m packaging
 uv run --frozen pre-commit run --all-files
 git diff --check
 ```
@@ -42,7 +48,7 @@ git diff --check
 
 ```bash
 uv build --no-sources
-uv run --frozen pytest -m packaging tests/packaging/test_wheel.py
+uv run --frozen pytest -m packaging
 uv run --frozen pytest tests/unit/test_cli.py tests/unit/test_runner.py tests/acceptance
 ```
 
@@ -65,9 +71,9 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya pytest -m i
 - [ ] Actual cached-native test runs rather than skipping; receipt records OS/Python, model revision, weights hash, runtime pins, CPU execution, warnings and worker cleanup. Preserve the published checkpoint calibration caveat.
 - [ ] Record the verified macOS and Ubuntu/Python 3.12.3 native environments separately from artifact metadata and ordinary CI. Do not infer native Python 3.13, broader hardware support or performance from those bounded receipts.
 - [ ] Product ordinary tests verify truncation preflight, full native envelope/usage checks, timeout termination/join, unavailable-after-worker-loss and no silent restart/device fallback. Offline environment flags alone are not proof of OS network isolation.
-- [ ] **Pending final native CLI integration smoke:** after T50 acceptance, run the real CLI `lock` → `verify` → `replay` using T50's committed synthetic support-triage inputs and the pinned cached Laya snapshot. Use `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`, with the documented Laya/offline options for lock and verify. Capture the exact candidate, committed input paths, commands, exit codes, model/runtime identity, output bundle identity and replay result. This checks the provider factory and runner integration in addition to the accepted direct-adapter tests.
+- [ ] **Completed native CLI integration smoke:** [T70-native](reports/T70-native.md) records the actual run. For reproduction, run the real CLI `lock` → `verify` → `replay` using T50's committed synthetic support-triage inputs and the pinned cached Laya snapshot. Use `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`, with the documented Laya/offline options for lock and verify. Capture the exact candidate, committed input paths, commands, exit codes, model/runtime identity, output bundle identity and replay result. This checks the provider factory and runner integration in addition to the accepted direct-adapter tests.
 
-The exact native CLI command transcript will be filled after T50 fixes and validates its input paths; no guessed filenames or run result are supplied here. Preserve the actual statistical status, including BLOCK or INCONCLUSIVE, and require replay to reproduce it. Do not change the policy/data or retry until PASS to make this smoke look successful. Preserve and investigate any ERROR according to the contract. This is a bounded integration check on authored synthetic inputs, not a model-quality, hardware or latency benchmark; it remains unrun and unchecked.
+The exact executed native CLI transcript is in REPORT T70-native. Preserve the actual statistical status, including BLOCK or INCONCLUSIVE, and require replay to reproduce it. Do not change the policy/data or retry until PASS to make this smoke look successful. Preserve and investigate any ERROR according to the contract. This is a bounded integration check on authored synthetic inputs, not a model-quality, hardware or latency benchmark; its independent receipt preserves the actual BLOCK result.
 
 ## D — ADR0009 and hosted CI
 
@@ -91,7 +97,7 @@ gh api "repos/ajaysurya1221/actseal/commits/$actseal_candidate_sha/check-runs" -
 ```
 
 - [ ] All four required Linux/macOS Python3.12/3.13 jobs complete successfully on the exact reviewed SHA; record URLs. Do not inherit a prior commit's green status.
-- [ ] Inspect logs: real clean-wheel acceptance and fixture reproduction execute; their current existence guards must not silently bypass release coverage. Compare demo digests across runs/platforms and resolve discrepancies.
+- [ ] Inspect logs: real clean-wheel acceptance and fixture reproduction execute; the former existence guards were removed by accepted T50 and must not return. Compare demo digests across runs/platforms and resolve discrepancies.
 - [ ] Workflow still uses pinned actions/uv, push and PR triggers, read-only permissions, locked tooling and no secret/model-download requirement for ordinary CI.
 
 ## E — artifacts, graph and licenses
@@ -140,4 +146,4 @@ gh release view v0.1.0 --repo ajaysurya1221/actseal --json tagName,isDraft,isPre
 - [ ] Release asset hashes match the audited local artifacts. Record stable release/run links and final REVIEW ACCEPT in T70/FINAL_REPORT.
 - [ ] All preceding gates have receipts or a user-approved recorded scope change. A missing required gate means release remains pending; a missing optional Linux inference receipt means no Linux-inference claim, not an invented test result.
 
-Open prerequisites at this update: T50 installed demo/CLI, T60 adversarial acceptance, final-candidate applicability of the existing macOS/Linux native receipts, final-candidate four-job CI, final docs/artifact/license/privacy audit, release tag/assets and FINAL_REPORT. T10, T20 and full T30 acceptance are established; no final release gate is checked and no release success is asserted.
+Open prerequisites: T60 adversarial acceptance, final-candidate CI and artifact/claim checks, immutable tag/assets and public-URL verification. T00 through T50 and native CLI integration have independent receipts. Final rebuilt archives and publication still require their own evidence; no release success is asserted.

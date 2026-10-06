@@ -12,7 +12,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 ## Current state
 
 - Planning artifacts: complete; 119 material claims and all 18 candidate dispositions recorded.
-- Product implementation: T00 through T50 accepted and merged; T60 acceptance is next.
+- Product implementation: T00 through T50 accepted and merged; T60 acceptance candidate passed 104 tests; two test gaps require correction.
 - Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
 - Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
 - Preflight: source statistics suite passed in a separate verification lane;
@@ -29,7 +29,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | T30 providers/faults | Claude C | ACCEPT / MERGED | 8b1efd6 (merge 87d2cd1) |
 | T40 evidence/replay | Claude B | ACCEPT / MERGED | 98297d5 (merge 7a2939e) |
 | T50 CLI/demo | Claude A | ACCEPT / MERGED | 286ae67 (merge7e696c5) |
-| T60 acceptance | Claude C | READY | none |
+| T60 acceptance | Claude C | REVISE | 55c8568 |
 | T70 publication | Codex | WAITING_FOR_T60 | none |
 
 ## Resume pointers
@@ -112,3 +112,13 @@ and the root installed-wheel run. Native CLI integration remains T70 work.
 Final cumulative Claude meter $19.152133; actual incremental paid API spend $0.
 T60 may add explicitly marked installed-wheel acceptance tests; CI's packaging
 selection now covers every packaging marker, including tests/acceptance.
+
+T60 dispatched from434c682 in .worktrees/t60. Actual Claude session
+1db0e662-15be-406c-9bde-d95c97306735, claude-fable-5-1/high, acceptEdits,
+process-local automatic memory disabled. Root native CLI check at434c682 is
+complete: lock0, verifyBLOCK1, replayBLOCK1; all128 ABSTAIN under unchanged0.90
+threshold, no provider failures, all six faults correct. REPORT T70-native records
+actual identities and bounds; this synthetic input result is not model quality.
+T60 and final release gates remain open.
+
+T60 candidate 55c85682c23c82668b9bf37b8011638889048482 is REVISE in REVIEW T60-01: inject the first fault to prove continuation and retain independent lock/verify guard receipts. Root passed104 acceptance tests11.22s and owned lint/format/mypy. Small evidence-wording corrections also required. Claude session1db0e662-15be-406c-9bde-d95c97306735 will resume; cumulative subscription meter14.212899, incremental paid API0.

@@ -5,63 +5,86 @@
 Report a vulnerability privately through
 [GitHub's advisory form](https://github.com/ajaysurya1221/actseal/security/advisories/new).
 Include the affected commit/version, a minimal reproduction and the observed
-impact. Do not include credentials or private evaluation data. Development main
-is currently the only supported line; no release has yet passed acceptance.
+impact. Do not include credentials or private evaluation data. Security fixes
+target current main and the latest v0.1.x release.
 
-## System and scope
+## System and trust boundary
 
 Actseal is a local Python library and CLI for frozen categorical decision
 policies, finite-sample risk/coverage assessment, deterministic provider-fault
-tests, and data-only offline replay. It provides no network service, multi-tenant
-hosting, OS isolation or application execution capability. The core is stdlib
-Python; local Laya inference is optional and runs in a child process.
+tests and offline replay. The core uses the standard library. Optional pinned
+Laya CPU inference runs in a child process; Actseal provides no hosted service,
+OS sandbox or application-action executor.
 
-## Trust boundaries
+Contracts, labels, responses and bundle files are untrusted for parsing and
+resource use. Replay must not execute bundled code, restore environments,
+import live providers or contact a network. The installed implementation,
+interpreter and host are trusted. The integrating application must protect its
+expected policy identity and honor the evaluated policy's dispositions.
 
-The caller supplies a contract, labels and provider data. All are untrusted for
-parsing and resource use. Evidence bundles are untrusted files; replay must not
-import or execute bundled content, restore environments, import live providers,
-or contact a network. The installed Actseal implementation, interpreter and host
-are trusted. An expected lock hash must come from a separately trusted channel
-when provenance matters; hashes inside a bundle alone establish consistency.
-
-The caller is responsible for label truth, the declared sampling process, and
-using the verified policy in its application. A model response is data and never
-authorizes execution by itself. Raw captured bodies and case text may be private;
-the caller must review them before sharing a bundle.
+A separately trusted expected lock digest anchors the **locked identity only**.
+It does not authenticate provider responses, authorship, execution, labels or
+sampling history. A digest kept beside an untrusted bundle is not an independent
+trust channel. Even with an unchanged trusted lock, an author can replace
+responses and recompute internally consistent outcomes, verdicts and hashes.
+That coherent rewrite is outside v1's authenticity assurance; no signature,
+remote attestation or tamperproof attempt ledger is provided.
 
 ## Required invariants
 
-- Strict bounded parsing rejects unsupported schemas, duplicate keys, nonfinite
-  values, incomplete inventories, symlinks and unexpected bundle files.
-- Every scheduled case has exactly one terminal record. Failed or abstained
-  cases stay in the coverage denominator. Corruption takes ERROR precedence.
-- Assessment and replay reconstruct requests, normalize captured responses,
-  evaluate policy and recompute bounds; neither trusts an archived PASS.
-- Unknown/disallowed choices cannot ACT. Provider or identity failures ESCALATE.
-  Low-confidence choices ABSTAIN. v1 performs no cloud or autonomous fallback.
-- Provider workers respect deadlines and are closed. Credentials, headers and
-  arbitrary exception text are excluded from recorded errors and identities.
+- Strict bounded parsing rejects unsupported schemas, duplicate keys, invalid
+  numeric values, incomplete inventories, symlinks and unexpected bundle files.
+- Every scheduled case has exactly one terminal record. Abstentions, denials,
+  escalations and nonfatal failures remain in a valid run's coverage denominator.
+  Invalid evidence takes ERROR precedence; its zero verdict counts do not erase
+  retained diagnostic records.
+- Assessment and replay reconstruct requests, normalize captures, apply policy,
+  validate canonical fault evidence and recompute bounds. Stored PASS or merely
+  matching checksums are insufficient.
+- Policy order is explicit: any fallback flag ESCALATEs first; otherwise an
+  unknown-choice failure DENYs, other provider/identity failures ESCALATE,
+  disallowed choices DENY, and selected probability below threshold ABSTAINs.
+  Only the remaining allowed choice ACTs. v1 performs no automatic fallback.
+- Native startup is bounded at 120 seconds; normal evidence-collection requests
+  use exactly 30.0 seconds. Timeout/death/unusable IPC invalidates the worker;
+  no silent restart or replacement sample is permitted. Regular Laya
+  timeout/unavailable invalidates the statistical experiment as ERROR after
+  integrity validation. Canonical injected faults are separate.
+- Recorded error/identity metadata excludes credentials, authentication headers
+  and arbitrary exception text. Raw case text and provider bodies may still
+  contain caller-supplied private data and must be reviewed before sharing.
 
-These are requirements to verify, not evidence that implementation is correct.
+These invariants define reportable behavior. Task acceptance supports tested
+boundaries; it is not a claim of comprehensive security assurance.
 
-## Reportable findings and limits
+## Reportable defects and explicit limits
 
-Report a reachable violation of the invariants above: forged evidence accepted
-as valid, incorrect statistical verdicts, code execution during replay, escaped
-bundle paths, unbounded parsing, leaked credentials, or provider lifecycle bugs.
-Severity depends on the demonstrated impact and required caller privileges.
-There are no blanket exclusions for dependencies, local inputs or tests.
+Report reachable acceptance of **inconsistent** evidence as valid: for example,
+stored outcomes that disagree with reconstructed policy, incomplete case/fault
+inventories, invalid seals or a supplied expected-lock mismatch. Incorrect
+statistical verdicts, replay code execution, escaped bundle paths, unbounded
+parsing, error-message leaks and worker-lifecycle defects are also reportable.
+Severity depends on demonstrated impact and prerequisites. Dependencies, local
+inputs and tests have no blanket exemption from review.
 
-Self-authored evidence with consistently rewritten labels cannot prove those
-labels are true. An attacker who replaces both installed code and its trusted
-lock hash controls the trust base. A surrounding application can ignore Actseal's
-returned decision. Those are stated assurance boundaries, not findings against
-claims of universal containment. A parser or verification defect within those
-same paths remains reportable.
+Distinguish those validation defects from an internally coherent same-lock
+response rewrite, false labels or dishonest sampling history. Replay cannot
+establish their authenticity. A surrounding application may also ignore its
+returned decisions. A parser or validation defect within these same paths
+remains reportable; the limited authenticity claim is not an excuse to accept
+inconsistent evidence.
 
-The pinned Laya checkpoint has unvalidated calibration. Its confidence is not a
-security guarantee. Authored demos supply no population assurance. Statistical
-bounds require the prespecified sampling assumptions and do not establish
-distribution-shift robustness. See [contracts](plan/CONTRACTS.md) and
-[provider limitations](docs/providers.md).
+Bundle publication atomically refuses an existing destination using supported
+macOS/Linux system APIs. Unsupported native/filesystem support fails explicitly.
+This is not a power-loss durability guarantee or defense against a hostile
+process controlling ancestor directories or modifying files during/after checks.
+
+The pinned Laya checkpoint's calibration is unvalidated for user workloads.
+Authored demonstrations provide no population assurance. Statistical bounds
+require independent case outcomes under a fixed policy and operating regime
+over one prespecified attempt; they do not bound uptime, completion probability
+or distribution shift. Do not discard ERROR attempts and retry until PASS.
+
+See [trust boundaries](docs/threat-model.md),
+[statistical assumptions](docs/statistical-contract.md),
+[provider limits](docs/providers.md) and [exact contracts](plan/CONTRACTS.md).
