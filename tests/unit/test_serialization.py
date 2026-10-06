@@ -703,7 +703,7 @@ BAD_WIRE: list[tuple[str, str, tuple[Any, ...], object]] = [
     ("Bundle records object", "EvidenceBundle", ("records",), {}),
     ("Bundle lock scalar", "EvidenceBundle", ("lock",), HEX_A),
     ("Bundle deep nonfinite", "EvidenceBundle", ("lock", "contract", "limits", "alpha"), 1e400),
-    ("Identity provider unknown", "ModelIdentity", ("provider",), "jev"),
+    ("Identity provider unknown", "ModelIdentity", ("provider",), "unsupported"),
     ("Identity provider case", "ModelIdentity", ("provider",), "Fixture"),
     ("Identity provider empty", "ModelIdentity", ("provider",), ""),
     (

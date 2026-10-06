@@ -283,7 +283,7 @@ def _lock_schema_mutations() -> dict[str, Callable[[bytes], bytes]]:
 
     def unsupported_provider(data: bytes) -> bytes:
         value = json.loads(data)
-        value["model_identity"]["provider"] = "jev"
+        value["model_identity"]["provider"] = "unsupported"
         return compact(value) + b"\n"
 
     def bad_seal_syntax(data: bytes) -> bytes:
