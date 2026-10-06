@@ -12,7 +12,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 ## Current state
 
 - Planning artifacts: complete; 119 material claims and all 18 candidate dispositions recorded.
-- Product implementation: T00 accepted and merged as 86dbca0; parallel lanes are starting.
+- Product implementation: T00 accepted and merged as 86dbca0; parallel lanes active.
 - Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
 - Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
 - Preflight: source statistics suite passed in a separate verification lane;
@@ -24,9 +24,9 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 |---|---|---|---|
 | Planning package | Codex | COMPLETE | ee99eee plus documented amendments |
 | T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff (merge 86dbca0) |
-| T10 contract/policy | Claude A | RUNNING | none |
-| T20 statistics | Claude B | NUMERICAL_MILESTONE_RUNNING | none |
-| T30 providers/faults | Claude C | PROVIDER_MILESTONE_RUNNING | none |
+| T10 contract/policy | Claude A | ACCEPT / MERGED | 9bdac25 (merge 28be58d) |
+| T20 statistics | Claude B | NUMERICAL_VERIFIED_WAITING_FOR_T10_T30 | none |
+| T30 providers/faults | Claude C | PROVIDERS_ACCEPTED_FAULTS_RUNNING | milestone 17ed087, unmerged |
 | T40 evidence/replay | Claude B | WAITING_FOR_ACCEPTED_INTERFACES | none |
 | T50 CLI/demo | Claude A | WAITING_FOR_T10_T20_T30_T40 | none |
 | T60 acceptance | Claude C | WAITING_FOR_T50 | none |
@@ -51,7 +51,27 @@ The human approved the three hooks and standing routine execution on 2026-10-06.
 No pending permission question remains. Original scope/license/budget escalations
 and the release quality gates still apply; public launch messages remain drafts.
 
-Running: isolated Claude T10, T20 numerical and T30 provider milestones in parallel.
+T10 accepted at 9bdac251a76a22a30f8d3d5ab8b773e0200945a1 and merged through PR3
+as 28be58d. REVIEW T10-02 records 755 root-run tests, lint/format/mypy, independent
+regression probes and all eight hosted push/PR jobs green. All three original
+findings fixed; ADR0010 helpers are frozen. Claude cumulative subscription meter
+$12.1806425 is an estimate, not API billing.
+
+T30-02 fixes all four milestone findings. Root independently passed 243 unit
+tests in 4.12s, lint/format/mypy and 5 real cached-native Mac tests in 4.58s.
+Separate review confirms stalled-send timeout and malformed-IPC cleanup. Original
+REPORT preserved; corrective report acknowledges its earlier denial reroutes and
+does not repeat them. Cumulative subscription meter $17.69608775.
+Corrected provider milestone now ACCEPT at 17ed0875541ecfa6402991dc90e278beb2f4cc01
+in REVIEW T30-02. Both four-job CI matrices pass; native Linux run37439327535
+passes all 5 tests in 10.75s with Python3.12.3 and Torch2.14.1+cpu. T10 is now
+integrated and Claude is implementing the six faults (new receipt T30-03.md).
+No full T30 acceptance or merge until faults and exact candidate CI pass.
+
+T20 numerical milestone is
+verified: 159 tests independently pass; all four CI jobs green at 7df7600.
+PR2 stays draft/unmerged until full assessment acceptance. See T20-numeric-01.
+T20 Claude session completed at $5.43887825 estimated subscription usage.
 All three report actual model claude-fable-5-1; effort high was supplied at dispatch.
 Local process/session receipts are in ignored plan/dispatch/active-lanes.json.
 ADR0009/CHANGE_LOG correct permanent-worker-loss statistical dependence before

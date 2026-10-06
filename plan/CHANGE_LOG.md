@@ -73,3 +73,30 @@ changed; T20/T30 specs amended before dispatch, T40/T50 inherit the contract.
 This is a correctness correction to research-derived failure semantics, not scope
 expansion. The human's standing approval covers routine execution; original
 material scope, license and budget escalation conditions remain.
+
+## 2026-10-06 — T10 bounded I/O and shared helper review
+
+ADR0010 accepts four small shared helpers before downstream use: read_input_text,
+case_digest, lock_digest and parse_lock. Exact signatures/semantics are frozen in
+CONTRACTS section 3. The existing reader/lock limits are clarified at allocation
+and canonical wire boundaries, including terminal LF. Standalone validation must
+check cross-split IDs already visible in inventories. No new dependency, feature
+or shared record change. T10-01 is REVISE for three independently reproduced
+defects; the earlier 738 passing tests do not establish these missing invariants.
+
+## 2026-10-06 — T30 provider review and downstream packet consistency
+
+ADR0011 approves the package marker and request/timeout helpers and explicitly
+caps aggregate fixture input at128MiB. T30-01 requires deadline, malformed-IPC,
+Linux CPU-test and fixture-bound repairs despite235 passing unit/5 native Mac
+tests. T40/T50 packet wording now explicitly matches ADR0009 worker-loss ERROR,
+complete diagnostics and synthetic-fault exclusion, and the ADR0010 helpers.
+This prevents stale generic failure wording from overriding the frozen contract.
+
+## 2026-10-06 — acceptance packet clarification
+
+T60 now explicitly distinguishes regular Laya worker-loss diagnostic ERROR from
+nonfatal denominator failures, matching ADR0009. A nonblocking T30 test-quality
+follow-up requires an actually injected policy violation while retaining all six
+campaign results; the current straight-line implementation already continues.
+This corrects the advertised test coverage without changing the product contract.

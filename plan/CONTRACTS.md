@@ -120,6 +120,16 @@ def validate_inputs(
     verification_jsonl: str,
 ) -> tuple[Case, ...]: ...
 def evaluate(outcome: Outcome, policy: LockedPolicy) -> PolicyDecision: ...
+
+
+# Shared bounded I/O in contract.py; MAX_JSON_BYTES = 128 * 1024 * 1024.
+def read_input_text(path: Path, *, limit: int = MAX_JSON_BYTES) -> str: ...
+
+
+# Shared wire/digest helpers in locking.py.
+def case_digest(case: Case) -> str: ...
+def lock_digest(lock: PlanLock) -> str: ...
+def parse_lock(text: str) -> PlanLock: ...
 ```
 
 `contract.py` owns parsing; `locking.py` owns locks and input checks; `policy.py`
@@ -161,6 +171,20 @@ Path-based readers decode raw bytes as strict UTF-8 without universal-newline
 translation; CRLF bytes remain distinct from LF bytes. Re-encoding the supplied
 text must recover the exact input bytes used for the raw-input hashes.
 
+`read_input_text` validates a plain positive integer limit at most MAX_JSON_BYTES,
+reads at most limit+1 bytes before rejecting oversized input, and strictly decodes
+UTF-8. Invalid limits/encoding/size raise SchemaError; OS errors propagate.
+`case_digest` hashes the canonical serialized case. `lock_digest` hashes the
+canonical serialized lock with only its own sha256 omitted; neither adds LF.
+`parse_lock` performs strict structural decoding without validating or changing
+the recorded seal. Its input limit includes all supplied bytes. Callers must also
+call validate_lock. Creation and validation enforce that the canonical lock wire
+form, including its one terminal LF, fits 32 MiB. validate_lock also rejects
+cross-split IDs using the two inventories, even when the seal is correct. Full
+cross-split state checks require the raw inputs and remain in validate_inputs.
+Apply cheap character-count rejection before allocating UTF-8 copies of oversized
+in-memory input. These helpers do not change the frozen record schema (ADR0010).
+
 Threshold selection is external and precedes lock creation; v1 does no fitting.
 Lock creation binds the contract, model identity, both raw inputs/inventories,
 current implementation fingerprint and all six fault specifications below.
@@ -192,6 +216,9 @@ def normalize(
 ) -> Outcome: ...
 
 
+def request_sha256(request: DecisionRequest) -> str: ...
+
+
 class FixtureModel:
     def __init__(self, responses: Path) -> None: ...
 
@@ -207,9 +234,19 @@ def fault_capture(lock: PlanLock, spec: FaultSpec) -> tuple[DecisionRequest, Cap
 Protocol is in `adapters/base.py`; implementations in `adapters/fixture.py` and
 `adapters/laya.py`. Pure `normalization.py` must import no model/client libraries;
 replay uses it without importing adapters. The protocol itself is dependency-free.
+The shared request_sha256 helper lives in normalization.py and hashes the canonical
+serialized DecisionRequest without LF. Constants for the prescribed versions,
+tolerances and budgets are permitted conveniences. adapters/__init__.py is an
+empty package marker. validate_timeout in adapters/fixture.py is a shared adapter
+helper: `validate_timeout(timeout_s: object) -> float`; it rejects bool, nonnumbers,
+nonfinite/nonpositive values and float conversion overflow with SchemaError.
 
 Fixture file format: JSONL rows `{case_id, body_json, failure_code, warnings}`;
 body_json is a string, not an embedded JSON object. Exactly one body/failure.
+The complete fixture file is at most 128 MiB, with a bounded read of at most that
+limit+1 before decoding, hashing or row parsing; each row remains at most 1 MiB.
+This aggregate fixture ceiling is explicit in ADR0011. It does not impose an
+additional fixture-row count limit or change the dataset case-count limit.
 No fixture model identity is accepted from the file. Derive identity provider=fixture,
 model=recorded-choice-v1, revision=SHA256(raw file), artifact_hashes=((responses,
 file_hash),), adapter_version=1, normalizer_version=1, runtime=(). Unknown or duplicate
