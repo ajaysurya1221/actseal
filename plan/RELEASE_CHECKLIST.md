@@ -65,6 +65,9 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya pytest -m i
 - [ ] Actual cached-native test runs rather than skipping; receipt records OS/Python, model revision, weights hash, runtime pins, CPU execution, warnings and worker cleanup. Preserve the published checkpoint calibration caveat.
 - [ ] Record the verified macOS and Ubuntu/Python 3.12.3 native environments separately from artifact metadata and ordinary CI. Do not infer native Python 3.13, broader hardware support or performance from those bounded receipts.
 - [ ] Product ordinary tests verify truncation preflight, full native envelope/usage checks, timeout termination/join, unavailable-after-worker-loss and no silent restart/device fallback. Offline environment flags alone are not proof of OS network isolation.
+- [ ] **Pending final native CLI integration smoke:** after T50 acceptance, run the real CLI `lock` → `verify` → `replay` using T50's committed synthetic support-triage inputs and the pinned cached Laya snapshot. Use `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`, with the documented Laya/offline options for lock and verify. Capture the exact candidate, committed input paths, commands, exit codes, model/runtime identity, output bundle identity and replay result. This checks the provider factory and runner integration in addition to the accepted direct-adapter tests.
+
+The exact native CLI command transcript will be filled after T50 fixes and validates its input paths; no guessed filenames or run result are supplied here. Preserve the actual statistical status, including BLOCK or INCONCLUSIVE, and require replay to reproduce it. Do not change the policy/data or retry until PASS to make this smoke look successful. Preserve and investigate any ERROR according to the contract. This is a bounded integration check on authored synthetic inputs, not a model-quality, hardware or latency benchmark; it remains unrun and unchecked.
 
 ## D — ADR0009 and hosted CI
 
