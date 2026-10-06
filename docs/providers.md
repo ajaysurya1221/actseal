@@ -1,6 +1,6 @@
 # Providers: native Laya reference and normalization
 
-Status: implementation contract and verified upstream feasibility, 6 October 2026. The upstream smoke described here is complete; it does not imply that Actseal's adapter has been implemented or accepted. [Frozen contracts](../plan/CONTRACTS.md) govern the product boundary.
+Status: implementation contract, historical upstream feasibility and a verified Actseal provider/normalizer milestone, 6 October 2026. Candidate `17ed0875541ecfa6402991dc90e278beb2f4cc01` passed native product tests on macOS and Linux; its receipt is below. Full T30 remains PARTIAL while the fault campaign is integrated, and release acceptance remains pending. [Frozen contracts](../plan/CONTRACTS.md) govern the product boundary.
 
 ## Reference runtime
 
@@ -115,7 +115,7 @@ Keep one resident native model per spawned worker process. Synchronous Torch cal
 
 Separate model preparation/download from measured evaluation. Cached execution sets `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`; these are library settings, **not a network firewall**. Replay never imports or invokes the provider. Model loading is not included in the 60-second fixture quickstart.
 
-## Verification receipt
+## Historical upstream feasibility receipt
 
 On 6 October 2026, the planner executed the upstream package through `uv run --no-project --python 3.12 --with 'laya==0.3.28'` from a temporary working directory. No Actseal source was run. The host reported Apple M5 Pro, 24 GiB RAM, macOS 26.6.2 arm64, Python 3.12.13. CPU threads were fixed at four.
 
@@ -128,6 +128,26 @@ On 6 October 2026, the planner executed the upstream package through `uv run --n
 | Exit status and answer | 0 / billing | 0 / identical billing answer |
 
 The peak RSS values are whole-process measurements from `resource.getrusage`, not model weight sizes. One request establishes basic hardware/installation/cache feasibility on this host. It does not establish general accuracy, p95 latency, Linux compatibility, deterministic inference across devices, or memory bounds for arbitrary requests. Only byte-preserving replay of captured evidence has a cross-run determinism requirement. Provider benchmark claims require their own repeated protocol.
+
+## Verified Actseal provider milestone
+
+On **6 October 2026**, root independently reviewed and tested candidate **`17ed0875541ecfa6402991dc90e278beb2f4cc01`**. [REVIEW T30-02](../plan/reviews/T30-02.md) records **ACCEPT for the provider/normalizer milestone only**, with **full T30 PARTIAL**. This is product-adapter evidence, separate from the upstream feasibility probe above.
+
+| Check | Environment | Observed result |
+| --- | --- | --- |
+| Root provider/normalizer unit rerun | macOS, Python 3.12.13 | 243 passed in 4.12 s. |
+| Root cached-native Actseal adapter rerun | macOS, Python 3.12.13, pinned native stack | 5 passed in 4.58 s. |
+| [Linux native workflow](https://github.com/ajaysurya1221/actseal/actions/runs/37439327535) | Ubuntu, Python 3.12.3, laya 0.3.28, torch 2.14.1+cpu | 5 cached-offline product tests passed in 10.75 s. |
+
+For Linux, the exact checkpoint revision was downloaded in a separate preparation step. Product tests then ran with `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`; those library flags are not an OS network sandbox. The native command was:
+
+```bash
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya pytest -m integration tests/integration/test_laya.py
+```
+
+At the same candidate, all four ordinary Linux/macOS Python 3.12/3.13 jobs passed in [push CI](https://github.com/ajaysurya1221/actseal/actions/runs/37439252390) and [PR CI](https://github.com/ajaysurya1221/actseal/actions/runs/37439282488). These jobs do not extend native inference coverage to Python 3.13. Root also independently checked targeted lint, formatting and strict typing; [VERIFICATION](../plan/VERIFICATION.md#product-adapter-milestone--6-october-2026) preserves the receipt provenance.
+
+The recorded times are whole test-suite elapsed times, not latency benchmarks. The milestone verifies the tested native paths without establishing broader hardware support, model accuracy, calibration or deployment reliability. The canonical fault campaign, full T30 review, later integration and exact-release-candidate checks still need their own results. No release is asserted here.
 
 ## Jev: optional and deferred to v2
 

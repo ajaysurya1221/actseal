@@ -26,7 +26,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff (merge 86dbca0) |
 | T10 contract/policy | Claude A | ACCEPT / MERGED | 9bdac25 (merge 28be58d) |
 | T20 statistics | Claude B | NUMERICAL_VERIFIED_WAITING_FOR_T10_T30 | none |
-| T30 providers/faults | Claude C | CORRECTED_MILESTONE_LOCAL_VERIFIED | none |
+| T30 providers/faults | Claude C | PROVIDERS_ACCEPTED_FAULTS_RUNNING | milestone 17ed087, unmerged |
 | T40 evidence/replay | Claude B | WAITING_FOR_ACCEPTED_INTERFACES | none |
 | T50 CLI/demo | Claude A | WAITING_FOR_T10_T20_T30_T40 | none |
 | T60 acceptance | Claude C | WAITING_FOR_T50 | none |
@@ -61,9 +61,11 @@ T30-02 fixes all four milestone findings. Root independently passed 243 unit
 tests in 4.12s, lint/format/mypy and 5 real cached-native Mac tests in 4.58s.
 Separate review confirms stalled-send timeout and malformed-IPC cleanup. Original
 REPORT preserved; corrective report acknowledges its earlier denial reroutes and
-does not repeat them. Linux native acceptance remains pending. Next: integrate
-accepted T10 and current docs into idle T30, begin hosted milestone verification,
-and resume the real fault campaign. Cumulative subscription meter $17.69608775.
+does not repeat them. Cumulative subscription meter $17.69608775.
+Corrected provider milestone now ACCEPT at 17ed0875541ecfa6402991dc90e278beb2f4cc01
+in REVIEW T30-02. Both four-job CI matrices pass; native Linux run37439327535
+passes all 5 tests in 10.75s with Python3.12.3 and Torch2.14.1+cpu. T10 is now
+integrated and Claude is implementing the six faults (new receipt T30-03.md).
 No full T30 acceptance or merge until faults and exact candidate CI pass.
 
 T20 numerical milestone is

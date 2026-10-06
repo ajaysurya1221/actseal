@@ -25,22 +25,22 @@ GitHub Actions use immutable commit pins selected and license-checked by the pla
 | [actions/checkout](https://github.com/actions/checkout) | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` | [MIT](https://github.com/actions/checkout/blob/3d3c42e5aac5ba805825da76410c181273ba90b1/LICENSE) |
 | [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) | v10.2.0 | `c18668ad3cf93ea998bef934396af7bb5c839dc7` | [MIT](https://github.com/astral-sh/setup-uv/blob/c18668ad3cf93ea998bef934396af7bb5c839dc7/LICENSE) |
 
-These source pins are not evidence that a hosted workflow has run. Hosted Linux/macOS green checks remain release acceptance conditions.
+Source pins alone are not execution evidence. The provider milestone below has green hosted Linux/macOS jobs at its exact candidate; green checks on the final release candidate remain a separate acceptance condition.
 
 ## Tested optional Laya stack
 
-The following versions resolved together on macOS arm64 and completed the CPU and cached-offline native smoke in [providers](providers.md). Freeze this tested combination when generating the product lockfile, with the Linux CPU wheel selection specified below.
+The following versions resolved together on macOS arm64 and completed the original CPU/cached-offline upstream smoke in [providers](providers.md). The later Actseal provider milestone also passed native product tests on macOS and the Linux CPU variant, as recorded below. Preserve this tested combination and the platform-specific wheel selection in the lockfile.
 
 | Package | Version | License evidence |
 | --- | --- | --- |
 | Laya | 0.3.28 | [Apache-2.0 source LICENSE](https://github.com/NandhaKishorM/laya/blob/v0.3.28/LICENSE); [exact PyPI metadata](https://pypi.org/pypi/laya/0.3.28/json). |
-| Torch | 2.14.1 on tested macOS; 2.14.1+cpu selected for Linux | Installed macOS wheel license files and metadata: Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, BSL-1.0, MIT; [version metadata](https://pypi.org/pypi/torch/2.14.1/json). Linux CPU wheel metadata declares the same expression; its runtime is not yet tested. Do not label the entire distribution with just one of these licenses. |
+| Torch | 2.14.1 on tested macOS; 2.14.1+cpu on tested Ubuntu/Python 3.12.3 | Installed macOS wheel license files and metadata: Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, BSL-1.0, MIT; [version metadata](https://pypi.org/pypi/torch/2.14.1/json). Linux CPU wheel metadata declares the same expression; the candidate-specific native runtime receipt is below. Do not label the entire distribution with just one of these licenses. |
 | Transformers | 5.18.0 | Installed Apache-2.0 LICENSE; [version metadata](https://pypi.org/pypi/transformers/5.18.0/json), [upstream license](https://github.com/huggingface/transformers/blob/main/LICENSE). |
 | huggingface-hub | 1.33.0 | Installed Apache-2.0 LICENSE; [version metadata](https://pypi.org/pypi/huggingface-hub/1.33.0/json), [upstream license](https://github.com/huggingface/huggingface_hub/blob/main/LICENSE). The resolver selected this compatible version; registry-latest 2.1.1 was not used. |
 | Safetensors | 0.8.0 | Apache-2.0 verified by reading `safetensors-0.8.0.dist-info/licenses/LICENSE` in the installed wheel. The PyPI `license` field was null; the Apache classifier alone was not the final check. [Version metadata](https://pypi.org/pypi/safetensors/0.8.0/json). |
 | NumPy | 2.5.3 | Installed LICENSE and bundled notice files read; metadata declares BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0. [Version metadata](https://pypi.org/pypi/numpy/2.5.3/json). |
 
-The [Laya project manifest](https://github.com/NandhaKishorM/laya/blob/v0.3.28/pyproject.toml) declares Torch/Transformers/Safetensors/HF Hub/NumPy dependencies and Python >=3.10. It does not require MLX. The native compatibility check used Python 3.12.13 on macOS arm64; Linux native compatibility remains an integration check.
+The [Laya project manifest](https://github.com/NandhaKishorM/laya/blob/v0.3.28/pyproject.toml) declares Torch/Transformers/Safetensors/HF Hub/NumPy dependencies and Python >=3.10. It does not require MLX. The original native compatibility check used Python 3.12.13 on macOS arm64. Later product tests establish the specific macOS and Ubuntu/Python 3.12.3 paths below, not every supported interpreter or machine.
 
 Laya 0.3.28 was uploaded to PyPI on **5 October 2026 at 18:05:12 UTC**. Its wheel SHA256 is `a1493cff474c0a5d84861db55c0c5c9b17f1db8561e458764da9a322dc542a88`. The research's 0.3.24 recommendation is superseded deliberately: 0.3.28 fixes published-wheel packaging and additional calibration/runtime defects. See the [release](https://github.com/NandhaKishorM/laya/releases/tag/v0.3.28).
 
@@ -82,7 +82,15 @@ The [3.12 metadata](https://download.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp31
 
 Keep macOS on PyPI to preserve the tested Python 3.12 arm64 wheel: `torch-2.14.1-cp312-cp312-macosx_14_0_arm64.whl`, 127,307,099 bytes, SHA256 `420dbf314c180ee4b86e9bc00aee5746a7d6e5bacdd7df925af671ed393f0b2e`. The CPU index serves a differently hashed macOS artifact, so an all-platform index switch would change the tested binary.
 
-**Verified:** CPU artifact availability, published hashes, license declarations, declared dependency metadata, and the corrected resolution in the final T00 lock audited below. That lock has no CUDA/NVIDIA/Triton package and retains the tested macOS hash. **Pending:** Linux installation and live Laya runtime acceptance. Earlier direct metadata requests to some `download-r2.pytorch.org` index links returned HTTP 403, while equivalent `download.pytorch.org` requests returned HTTP 200; the later lock resolves to the official CPU registry, but successful locking is not a Linux runtime test. Linux live tests remain a release gate; this check does not extend support to other Linux architectures or libc variants.
+**Verified:** CPU artifact availability, published hashes, license declarations, declared dependency metadata, and the corrected resolution in the final T00 lock audited below. That lock has no CUDA/NVIDIA/Triton package and retains the tested macOS hash. Earlier direct metadata requests to some `download-r2.pytorch.org` index links returned HTTP 403, while equivalent `download.pytorch.org` requests returned HTTP 200. Successful locking was not itself a Linux runtime test; the later native product workflow below supplies that separate evidence for its exact candidate/environment. Full T30 integration and final-release checks remain pending. No support claim extends to other Linux architectures or libc variants from these checks.
+
+## Verified provider milestone on macOS and Linux
+
+On **6 October 2026**, the parent orchestrator independently accepted the corrected provider/normalizer milestone at **`17ed0875541ecfa6402991dc90e278beb2f4cc01`**, recorded in [REVIEW T30-02](../plan/reviews/T30-02.md). Root reran 243 provider/normalizer unit tests in **4.12 s** and five cached-native product tests on macOS/Python 3.12.13 in **4.58 s**, plus targeted lint, formatting and strict typing. Both [push CI](https://github.com/ajaysurya1221/actseal/actions/runs/37439252390) and [PR CI](https://github.com/ajaysurya1221/actseal/actions/runs/37439282488) passed all four Linux/macOS Python 3.12/3.13 matrix jobs at that candidate; those ordinary jobs are distinct from native inference.
+
+The separate [Linux native workflow](https://github.com/ajaysurya1221/actseal/actions/runs/37439327535) succeeded at the same candidate. Its logs confirm Ubuntu, Python **3.12.3**, **laya 0.3.28** and **torch 2.14.1+cpu** installed from the frozen graph. The pinned checkpoint snapshot was prepared in a separate step, then **five cached-offline Actseal product tests passed in 10.75 s**. This updates the earlier metadata-only Linux status with actual installation/inference evidence.
+
+These are test-suite elapsed times, not per-request latency or throughput measurements. The receipt verifies the tested product adapter paths; it establishes neither broad hardware support nor model quality/calibration. **Full T30 remains PARTIAL** while the fault campaign is integrated; no release acceptance follows from this milestone. The exact commands and provenance are appended to [VERIFICATION](../plan/VERIFICATION.md#product-adapter-milestone--6-october-2026).
 
 ## Weights and immutable artifacts
 
@@ -176,7 +184,7 @@ Every third-party record was checked against its exact-version PyPI JSON endpoin
 
 **Audit result:** no unresolved missing, ambiguous, or proprietary package-level license remains in this inspected lock. No `cuda*`, `nvidia*`, or Triton package is present. The macOS Python 3.12 Torch wheel retains SHA256 `420dbf314c180ee4b86e9bc00aee5746a7d6e5bacdd7df925af671ed393f0b2e`; Linux Torch resolves to the official CPU registry and `2.14.1+cpu`. This establishes the corrected resolution recorded in the lock; this audit did not execute a Linux installation or inference.
 
-This is an exact-version declaration and selected license-file audit, not an exhaustive audit of every file embedded in every platform wheel. Keep compound expressions and applicable notices intact when redistributing dependencies. Any changed locked version, source, or license must be rechecked; an unresolved declaration or incompatible license blocks publication of the affected dependency path. Linux installation, native model execution, and hosted CI remain separate pending acceptance checks.
+This is an exact-version declaration and selected license-file audit, not an exhaustive audit of every file embedded in every platform wheel. Keep compound expressions and applicable notices intact when redistributing dependencies. Any changed locked version, source, or license must be rechecked; an unresolved declaration or incompatible license blocks publication of the affected dependency path. The separate provider milestone above now records Linux installation/native execution and hosted CI. Final task integration and release-candidate checks must still pass; historical license auditing is not their substitute.
 
 ## Changes and release gate
 

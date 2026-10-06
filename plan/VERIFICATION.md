@@ -1,6 +1,6 @@
-# Actseal preflight verification receipt
+# Actseal verification receipts
 
-Recorded **2026-10-06**, Asia/Kolkata. This is a pre-implementation/source-feasibility receipt. It is **not** proof that Actseal product tests, packaging, CI, or release acceptance pass.
+Original preflight recorded **2026-10-06**, Asia/Kolkata. The historical sections below record pre-implementation/source feasibility, not product acceptance. A separate [product adapter milestone](#product-adapter-milestone--6-october-2026) is appended with its exact candidate and execution scope; it does not establish full T30 or release acceptance.
 
 ## Provenance legend
 
@@ -90,3 +90,30 @@ At this receipt's creation, the following are **NOT RUN / NOT ESTABLISHED** for 
 5. Public repository creation, green hosted CI, accepted product commits, release tag, and published release.
 
 The earlier feasibility work was read-only with respect to product source and the audited public repositories; it was not filesystem-write-free, because disposable environments and model/cache artifacts may have been populated. This authorized documentation step creates the planning/ADR files. Future execution evidence must be added with its command, revision, environment, result, and provenance rather than retroactively describing this preflight as product acceptance. The authoritative interfaces are in [CONTRACTS](CONTRACTS.md).
+
+## Product adapter milestone — 6 October 2026
+
+**SUPPLIED RECEIPT — parent orchestrator, corroborated by the locally read [REVIEW T30-02](reviews/T30-02.md).** The documentation author did not rerun these product tests. This appended receipt updates the historical not-yet-established list above for the specifically identified provider milestone; it does not retrospectively broaden the preflight or claim full product/release acceptance.
+
+Exact provider candidate: **`17ed0875541ecfa6402991dc90e278beb2f4cc01`**. Root's verdict is **ACCEPT for the corrected provider/normalizer milestone only; full T30 remains PARTIAL** pending the canonical fault campaign and final integration checks.
+
+Root independently ran the following commands on macOS/Python **3.12.13**, after inspecting the corrected candidate:
+
+```bash
+uv run --frozen pytest tests/unit/test_providers.py tests/unit/test_normalization.py
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya pytest -m integration tests/integration/test_laya.py
+```
+
+The unit command passed **243 tests in 4.12 s**; the cached-native command passed **5 tests in 4.58 s**. Root also reported passing targeted Ruff lint/format and strict mypy, including the native integration test source. These are root's independent results; they do not overwrite the executor's earlier, correctly recorded denied/unrun native command.
+
+All four ordinary Linux/macOS Python **3.12/3.13** jobs passed at this exact candidate in [push run 37439252390](https://github.com/ajaysurya1221/actseal/actions/runs/37439252390) and [PR run 37439282488](https://github.com/ajaysurya1221/actseal/actions/runs/37439282488).
+
+The separate [native Linux run 37439327535](https://github.com/ajaysurya1221/actseal/actions/runs/37439327535) also succeeded at the same candidate. Root checked the logs: **Ubuntu, Python 3.12.3, laya 0.3.28 and torch 2.14.1+cpu** were installed from the frozen graph. Its install step was:
+
+```bash
+uv sync --frozen --group dev --extra laya
+```
+
+The workflow prepared `convaiinnovations/laya-typed-decisions` at revision `e929ae5cf69bc34259cd2f95c9e91145b818b1f0` separately using the fixed five-artifact allowlist. It then ran the native pytest command above with both offline environment flags; **all 5 product tests passed in 10.75 s**. This establishes actual installation/native product execution for that Linux environment, replacing a metadata-only availability claim. The workflow specification is [native.yml](../.github/workflows/native.yml); immutable execution evidence is the linked run.
+
+**Limits:** the timings are elapsed test-suite durations, not inference benchmarks. These receipts do not establish native Python 3.13 execution, every Linux architecture/libc, arbitrary memory/latency bounds, model accuracy/calibration or deployment reliability. Library offline flags do not establish OS network isolation. Full T30 fault integration, evidence/replay/CLI/demo acceptance, final packaging, final-candidate CI and release publication require their own receipts. Existing historical reports and reviews remain unchanged.
