@@ -1,0 +1,128 @@
+{"case_id": "fixed-v-000", "state": "Ticket FIXED-V-000: I was charged twice for invoice 1000; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-001", "state": "Ticket FIXED-V-001: The app crashes on launch since update 1001.", "expected_label": "technical"}
+{"case_id": "fixed-v-002", "state": "Ticket FIXED-V-002: We need a quote for 1002 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-003", "state": "Ticket FIXED-V-003: My refund for order 1003 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-004", "state": "Ticket FIXED-V-004: Login returns error 1004 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-005", "state": "Ticket FIXED-V-005: Does plan 1005 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-006", "state": "Ticket FIXED-V-006: The receipt for payment 1006 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-007", "state": "Ticket FIXED-V-007: Export job 1007 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-008", "state": "Ticket FIXED-V-008: Can we trial the enterprise tier before contract 1008 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-009", "state": "Ticket FIXED-V-009: Please update the card on file before invoice 1009 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-010", "state": "Ticket FIXED-V-010: Notifications stopped arriving on device 1010.", "expected_label": "technical"}
+{"case_id": "fixed-v-011", "state": "Ticket FIXED-V-011: What discount applies when ordering 1011 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-012", "state": "Ticket FIXED-V-012: I was charged twice for invoice 1012; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-013", "state": "Ticket FIXED-V-013: The app crashes on launch since update 1013.", "expected_label": "technical"}
+{"case_id": "fixed-v-014", "state": "Ticket FIXED-V-014: We need a quote for 1014 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-015", "state": "Ticket FIXED-V-015: My refund for order 1015 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-016", "state": "Ticket FIXED-V-016: Login returns error 1016 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-017", "state": "Ticket FIXED-V-017: Does plan 1017 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-018", "state": "Ticket FIXED-V-018: The receipt for payment 1018 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-019", "state": "Ticket FIXED-V-019: Export job 1019 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-020", "state": "Ticket FIXED-V-020: Can we trial the enterprise tier before contract 1020 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-021", "state": "Ticket FIXED-V-021: Please update the card on file before invoice 1021 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-022", "state": "Ticket FIXED-V-022: Notifications stopped arriving on device 1022.", "expected_label": "technical"}
+{"case_id": "fixed-v-023", "state": "Ticket FIXED-V-023: What discount applies when ordering 1023 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-024", "state": "Ticket FIXED-V-024: I was charged twice for invoice 1024; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-025", "state": "Ticket FIXED-V-025: The app crashes on launch since update 1025.", "expected_label": "technical"}
+{"case_id": "fixed-v-026", "state": "Ticket FIXED-V-026: We need a quote for 1026 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-027", "state": "Ticket FIXED-V-027: My refund for order 1027 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-028", "state": "Ticket FIXED-V-028: Login returns error 1028 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-029", "state": "Ticket FIXED-V-029: Does plan 1029 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-030", "state": "Ticket FIXED-V-030: The receipt for payment 1030 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-031", "state": "Ticket FIXED-V-031: Export job 1031 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-032", "state": "Ticket FIXED-V-032: Can we trial the enterprise tier before contract 1032 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-033", "state": "Ticket FIXED-V-033: Please update the card on file before invoice 1033 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-034", "state": "Ticket FIXED-V-034: Notifications stopped arriving on device 1034.", "expected_label": "technical"}
+{"case_id": "fixed-v-035", "state": "Ticket FIXED-V-035: What discount applies when ordering 1035 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-036", "state": "Ticket FIXED-V-036: I was charged twice for invoice 1036; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-037", "state": "Ticket FIXED-V-037: The app crashes on launch since update 1037.", "expected_label": "technical"}
+{"case_id": "fixed-v-038", "state": "Ticket FIXED-V-038: We need a quote for 1038 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-039", "state": "Ticket FIXED-V-039: My refund for order 1039 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-040", "state": "Ticket FIXED-V-040: Login returns error 1040 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-041", "state": "Ticket FIXED-V-041: Does plan 1041 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-042", "state": "Ticket FIXED-V-042: The receipt for payment 1042 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-043", "state": "Ticket FIXED-V-043: Export job 1043 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-044", "state": "Ticket FIXED-V-044: Can we trial the enterprise tier before contract 1044 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-045", "state": "Ticket FIXED-V-045: Please update the card on file before invoice 1045 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-046", "state": "Ticket FIXED-V-046: Notifications stopped arriving on device 1046.", "expected_label": "technical"}
+{"case_id": "fixed-v-047", "state": "Ticket FIXED-V-047: What discount applies when ordering 1047 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-048", "state": "Ticket FIXED-V-048: I was charged twice for invoice 1048; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-049", "state": "Ticket FIXED-V-049: The app crashes on launch since update 1049.", "expected_label": "technical"}
+{"case_id": "fixed-v-050", "state": "Ticket FIXED-V-050: We need a quote for 1050 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-051", "state": "Ticket FIXED-V-051: My refund for order 1051 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-052", "state": "Ticket FIXED-V-052: Login returns error 1052 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-053", "state": "Ticket FIXED-V-053: Does plan 1053 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-054", "state": "Ticket FIXED-V-054: The receipt for payment 1054 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-055", "state": "Ticket FIXED-V-055: Export job 1055 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-056", "state": "Ticket FIXED-V-056: Can we trial the enterprise tier before contract 1056 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-057", "state": "Ticket FIXED-V-057: Please update the card on file before invoice 1057 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-058", "state": "Ticket FIXED-V-058: Notifications stopped arriving on device 1058.", "expected_label": "technical"}
+{"case_id": "fixed-v-059", "state": "Ticket FIXED-V-059: What discount applies when ordering 1059 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-060", "state": "Ticket FIXED-V-060: I was charged twice for invoice 1060; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-061", "state": "Ticket FIXED-V-061: The app crashes on launch since update 1061.", "expected_label": "technical"}
+{"case_id": "fixed-v-062", "state": "Ticket FIXED-V-062: We need a quote for 1062 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-063", "state": "Ticket FIXED-V-063: My refund for order 1063 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-064", "state": "Ticket FIXED-V-064: Login returns error 1064 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-065", "state": "Ticket FIXED-V-065: Does plan 1065 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-066", "state": "Ticket FIXED-V-066: The receipt for payment 1066 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-067", "state": "Ticket FIXED-V-067: Export job 1067 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-068", "state": "Ticket FIXED-V-068: Can we trial the enterprise tier before contract 1068 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-069", "state": "Ticket FIXED-V-069: Please update the card on file before invoice 1069 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-070", "state": "Ticket FIXED-V-070: Notifications stopped arriving on device 1070.", "expected_label": "technical"}
+{"case_id": "fixed-v-071", "state": "Ticket FIXED-V-071: What discount applies when ordering 1071 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-072", "state": "Ticket FIXED-V-072: I was charged twice for invoice 1072; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-073", "state": "Ticket FIXED-V-073: The app crashes on launch since update 1073.", "expected_label": "technical"}
+{"case_id": "fixed-v-074", "state": "Ticket FIXED-V-074: We need a quote for 1074 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-075", "state": "Ticket FIXED-V-075: My refund for order 1075 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-076", "state": "Ticket FIXED-V-076: Login returns error 1076 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-077", "state": "Ticket FIXED-V-077: Does plan 1077 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-078", "state": "Ticket FIXED-V-078: The receipt for payment 1078 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-079", "state": "Ticket FIXED-V-079: Export job 1079 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-080", "state": "Ticket FIXED-V-080: Can we trial the enterprise tier before contract 1080 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-081", "state": "Ticket FIXED-V-081: Please update the card on file before invoice 1081 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-082", "state": "Ticket FIXED-V-082: Notifications stopped arriving on device 1082.", "expected_label": "technical"}
+{"case_id": "fixed-v-083", "state": "Ticket FIXED-V-083: What discount applies when ordering 1083 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-084", "state": "Ticket FIXED-V-084: I was charged twice for invoice 1084; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-085", "state": "Ticket FIXED-V-085: The app crashes on launch since update 1085.", "expected_label": "technical"}
+{"case_id": "fixed-v-086", "state": "Ticket FIXED-V-086: We need a quote for 1086 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-087", "state": "Ticket FIXED-V-087: My refund for order 1087 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-088", "state": "Ticket FIXED-V-088: Login returns error 1088 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-089", "state": "Ticket FIXED-V-089: Does plan 1089 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-090", "state": "Ticket FIXED-V-090: The receipt for payment 1090 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-091", "state": "Ticket FIXED-V-091: Export job 1091 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-092", "state": "Ticket FIXED-V-092: Can we trial the enterprise tier before contract 1092 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-093", "state": "Ticket FIXED-V-093: Please update the card on file before invoice 1093 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-094", "state": "Ticket FIXED-V-094: Notifications stopped arriving on device 1094.", "expected_label": "technical"}
+{"case_id": "fixed-v-095", "state": "Ticket FIXED-V-095: What discount applies when ordering 1095 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-096", "state": "Ticket FIXED-V-096: I was charged twice for invoice 1096; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-097", "state": "Ticket FIXED-V-097: The app crashes on launch since update 1097.", "expected_label": "technical"}
+{"case_id": "fixed-v-098", "state": "Ticket FIXED-V-098: We need a quote for 1098 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-099", "state": "Ticket FIXED-V-099: My refund for order 1099 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-100", "state": "Ticket FIXED-V-100: Login returns error 1100 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-101", "state": "Ticket FIXED-V-101: Does plan 1101 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-102", "state": "Ticket FIXED-V-102: The receipt for payment 1102 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-103", "state": "Ticket FIXED-V-103: Export job 1103 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-104", "state": "Ticket FIXED-V-104: Can we trial the enterprise tier before contract 1104 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-105", "state": "Ticket FIXED-V-105: Please update the card on file before invoice 1105 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-106", "state": "Ticket FIXED-V-106: Notifications stopped arriving on device 1106.", "expected_label": "technical"}
+{"case_id": "fixed-v-107", "state": "Ticket FIXED-V-107: What discount applies when ordering 1107 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-108", "state": "Ticket FIXED-V-108: I was charged twice for invoice 1108; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-109", "state": "Ticket FIXED-V-109: The app crashes on launch since update 1109.", "expected_label": "technical"}
+{"case_id": "fixed-v-110", "state": "Ticket FIXED-V-110: We need a quote for 1110 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-111", "state": "Ticket FIXED-V-111: My refund for order 1111 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-112", "state": "Ticket FIXED-V-112: Login returns error 1112 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-113", "state": "Ticket FIXED-V-113: Does plan 1113 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-114", "state": "Ticket FIXED-V-114: The receipt for payment 1114 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-115", "state": "Ticket FIXED-V-115: Export job 1115 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-v-116", "state": "Ticket FIXED-V-116: Can we trial the enterprise tier before contract 1116 renews?", "expected_label": "sales"}
+{"case_id": "fixed-v-117", "state": "Ticket FIXED-V-117: Please update the card on file before invoice 1117 is due.", "expected_label": "billing"}
+{"case_id": "fixed-v-118", "state": "Ticket FIXED-V-118: Notifications stopped arriving on device 1118.", "expected_label": "technical"}
+{"case_id": "fixed-v-119", "state": "Ticket FIXED-V-119: What discount applies when ordering 1119 licences?", "expected_label": "sales"}
+{"case_id": "fixed-v-120", "state": "Ticket FIXED-V-120: I was charged twice for invoice 1120; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-v-121", "state": "Ticket FIXED-V-121: The app crashes on launch since update 1121.", "expected_label": "technical"}
+{"case_id": "fixed-v-122", "state": "Ticket FIXED-V-122: We need a quote for 1122 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-v-123", "state": "Ticket FIXED-V-123: My refund for order 1123 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-v-124", "state": "Ticket FIXED-V-124: Login returns error 1124 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-v-125", "state": "Ticket FIXED-V-125: Does plan 1125 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-v-126", "state": "Ticket FIXED-V-126: The receipt for payment 1126 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-v-127", "state": "Ticket FIXED-V-127: Export job 1127 never finishes and shows no progress.", "expected_label": "technical"}

@@ -24,6 +24,9 @@ classifiers = [
   "Typing :: Typed",
 ]
 
+[project.scripts]
+actseal = "actseal.cli:main"
+
 [project.optional-dependencies]
 # Tested native stack from docs/dependencies.md (6 October 2026). Exact pins only.
 # Linux requires the official CPU build so no CUDA/NVIDIA/Triton packages resolve;
@@ -69,6 +72,7 @@ packages = ["src/actseal"]
 only-include = [
   "src/actseal",
   "tests",
+  "examples/support_triage",
   "pyproject.toml",
   "uv.lock",
   "README.md",
