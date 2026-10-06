@@ -22,8 +22,8 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 
 | Task | Owner | State | Accepted commit |
 |---|---|---|---|
-| Planning package | Codex | IN_PROGRESS | none |
-| T00 foundation | Claude A | RUNNING | none |
+| Planning package | Codex | COMPLETE | ee99eee plus documented amendments |
+| T00 foundation | Claude A | REVISE | none |
 | T10 contract/policy | Claude A | WAITING_FOR_T00 | none |
 | T20 statistics | Claude B | WAITING_FOR_T00 | none |
 | T30 providers/faults | Claude C | WAITING_FOR_T00 | none |
@@ -51,6 +51,14 @@ are published. No product release or green product CI is claimed. Claude's
 permission layer denied creating the sensitive .pre-commit-config.yaml in its
 non-interactive session; explicit approval for the three proposed local hooks is
 pending with the user. Other product work continues.
+
+T00 initial REPORT is PARTIAL. Codex independently repeated sync, Ruff lint/format,
+strict mypy, both owned test files (485 passed) and build. Constructor probes still
+accepted invalid normalized distributions, unsupported providers and zero-case
+PASS, and numeric overflow escaped SchemaError. Linux CUDA/proprietary resolution,
+generic JSON cap and sdist contents also require correction. No product has been
+accepted or merged. Initial Claude meter: $9.3913315 estimated usage, not a billed
+API charge; actual incremental paid API spend remains $0 on the Max subscription.
 
 ## Budget and scope
 

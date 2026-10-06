@@ -80,6 +80,10 @@ def implementation_fingerprint() -> str: ...
 
 `T` is a TypeVar over supported record classes. No arbitrary class import or
 instantiation. Union outcomes use an explicit `kind: 'answer' | 'failure'` tag.
+On the wire, artifact_hashes and runtime are JSON objects with sorted unique
+string keys. Probabilities are ordered arrays of [label, number] pairs. Other
+tuple fields are arrays. These representations decode to the exact tuple-based
+public types; no mutable JSON containers survive the boundary.
 Canonical JSON is UTF-8, ensure_ascii=False, sorted keys, compact separators,
 allow_nan=False, no terminal newline. Wire files add one LF after each canonical
 JSON object. Deeply bounded strict parsing rejects duplicate JSON keys, nonfinite
@@ -149,6 +153,9 @@ or more than 10,000 rows. Reject exact repeated state texts within or across spl
 and intersecting IDs. This catches literal leakage, not semantic overlap or false
 claims about independence. Preserve UTF-8 state text without case/whitespace repair.
 Hash whole raw JSONL bytes plus each canonical case in ordered inventories.
+Path-based readers decode raw bytes as strict UTF-8 without universal-newline
+translation; CRLF bytes remain distinct from LF bytes. Re-encoding the supplied
+text must recover the exact input bytes used for the raw-input hashes.
 
 Threshold selection is external and precedes lock creation; v1 does no fitting.
 Lock creation binds the contract, model identity, both raw inputs/inventories,

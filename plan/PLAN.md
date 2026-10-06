@@ -63,6 +63,13 @@ All versions below are verified sprint pins. [dependencies.md](../docs/dependenc
 
 All four portfolio repositories are public and independently pinned. Their source checkouts, histories and frozen artifacts remain untouched. Private shared-brain code is not copied. Small project-local state/report/review files implement the requested shared LTM instead. No proprietary dependency is present in the core; Jev's service terms are relevant only to deferred v2.
 
+Dependency review corrected the Linux distribution choice: use
+`torch==2.14.1+cpu` with the official explicit CPU index, retaining PyPI
+`torch==2.14.1` on macOS. The default Linux PyPI graph pulled proprietary NVIDIA
+libraries and is rejected. The corrected lock must omit that graph. Official
+Python3.12/3.13 Linux x86_64/glibc>=2.28 wheel availability and metadata licenses
+were verified; Linux inference remains a separately reported runtime check.
+
 ## Lanes, ownership and dependency order
 
 Use four lanes: three Claude implementation lanes plus Codex continuous verification. A task gets one branch or reviewable commit series. Do not switch a shared checkout beneath another executor; use isolated task worktrees when branch separation is needed. Root Codex owns dispatch/setup/branch integration and `plan/STATE.md`. Every executor is told it is not alone and must not revert other owners' changes. Product/test ownership is exact in each TASK.

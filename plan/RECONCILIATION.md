@@ -147,7 +147,7 @@ Every matrix row carries the original claimant/citation/date, the other research
 | S16 | A: recursive ARCI/evalopt CI gate; B: independent deterministic tests | disagree | R02/R03; ESTIMATE assurance architecture | a fails→b no benefit shown→c direct lint/type/test/oracle/replay checks. |
 | S17 | Both: seeded failures and replay validate boundary behavior; §Tests | agree | Design requirement; source invariants R02/R03 VERIFIED, Actseal pending | a+V adopt bounded acceptance tests; not already-shipped evidence. |
 
-### Delivery, cost, roadmap and current instruction overrides — P01–P24
+### Delivery, cost, roadmap and current instruction overrides — P01–P25
 
 | ID | Material claim / original citation and source date | Other researcher | Independent evidence / status | Resolution and disposition |
 |---|---|---|---|---|
@@ -175,6 +175,7 @@ Every matrix row carries the original claimant/citation/date, the other research
 | P22 | B name decision-contract availability unknown; §Open questions | A different name | User selected Actseal; availability UNVERIFIED in this audit | a fails→b names not evidence→c none→d user names Actseal; actual publishing identifier checks separate. |
 | P23 | B six-field task template; §Repo structure | A different task layout | Current user's TASK/REPORT/REVIEW format | User format overrides both; every task retains exact required fields. |
 | P24 | A two implementation lanes; B seven lanes; §Work breakdown | disagree | User2–4 independent lanes; ESTIMATE scheduling | a fails→b no measured throughput→c 2–4 frozen-owner lanes plus continuous verification; Claude-only product work. |
+| P25 | New T00 dependency audit: PyPI torch2.14.1 Linux resolution pulls cuda-toolkit/nvidia-cublas13.1.1.3 with LicenseRef-NVIDIA-Proprietary; neither research supplied a distro-variant citation. Observation 2026-10-06. | A silent; B silent | [L05](SOURCES.md#l05--linux-torch-distribution-correction), PyPI and official PyTorch CPU metadata/uv docs checked 2026-10-06 by model-audit lane; VERIFIED default-graph license conflict and cp312/cp313 Linux x86-64 CPU metadata availability/direct requirements. Corrected uv resolution and live Linux runtime NOT RUN at observation. | a no shared variant claim→b dated metadata establishes incompatible default graph→c hard OSS constraint rejects default Linux GPU resolution; require explicit official torch2.14.1+cpu Linux markers/index, preserve tested macOS PyPI2.14.1→d not needed for this corrective implementation choice. Corrected lock/transitive license and Linux execution remain acceptance gates, not assumed facts. |
 
 ## All candidate dispositions
 
@@ -211,7 +212,7 @@ Scores and net-new shares below are the researchers' estimates, retained for acc
 ## Adopted limits and remaining verification
 
 1. **No unsupported security or statistical guarantee.** Actseal checks a defined application policy against declared evidence; it does not sandbox agents, authenticate labels or prove production safety. Published model probabilities are not assumed calibrated. No Newcombe, baseline, slice or multi-stage assurance is added without a specified sampling/multiplicity contract.
-2. **Open and reproducible core.** The native pinned Laya CPU path ran locally; a fixture path must remain model-free. Jev is optional future work under `JEV_API_KEY`. No service is required. Final Linux/package/CI checks and the actual Actseal port are still future execution evidence.
+2. **Open and reproducible core.** The native pinned Laya CPU path ran locally; a fixture path must remain model-free. Jev is optional future work under `JEV_API_KEY`. No service is required. P25 rejects the proprietary dependencies in the default Linux GPU resolution and requires an explicitly selected official CPU build; metadata availability is verified, but corrected lock/transitive license and Linux execution checks remain pending at that observation. Final Linux/package/CI checks and the actual Actseal port require their own execution evidence.
 3. **Public reuse only.** All four portfolio repositories are public; retain their actual Apache/MIT notices. The private shared-brain protocol is not copied. Preserve ARCI's frozen files and use only the audited minimal statistical primitives/invariants.
 4. **Scope and publication honesty.** Scores, reuse percentages and delivery/adoption goals remain estimates. Every UNVERIFIED fact is non-load-bearing. Reopen verification if it becomes required. Claims about the demo must use measured outputs; research's illustrative 200-ticket numbers are not results.
 5. **Source preservation and ownership.** Keep the two full research originals local/untracked. This reconciliation and SOURCES are authored summaries, not private source dumps. Task owners and acceptance gates live in PLAN/tasks; no code or release success is asserted by these documents.

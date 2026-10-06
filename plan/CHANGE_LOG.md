@@ -35,3 +35,18 @@ was verified against Laya0.3.28 source and a fresh offline smoke. The canonical
 fault generator wraps Laya answers in a synthetic zero-usage envelope. No provider
 interface or product scope changes. Added explicit record-local normalized mass,
 provider-domain, overflow and verdict-count invariants from the T00 static review.
+
+## 2026-10-06 — T00 dependency and wire review
+
+Initial Linux PyPI Torch resolution pulled proprietary NVIDIA packages. This is
+a release blocker under the OSS constraint. Verified official Linux x86_64 CPU
+wheels replace that resolution: torch==2.14.1+cpu in published optional dependency
+metadata and a Linux-only explicit CPU index in uv. macOS retains tested PyPI
+torch==2.14.1. Corrected resolution and runtime checks are still required; metadata
+availability alone does not establish Linux inference compatibility.
+
+Approved the executor's explicit wire layout before freezing: artifact_hashes and
+runtime are JSON objects; probabilities retain ordered pair arrays; other tuples
+are arrays. Supporting constants, a read-only question.labels property and the
+PEP695 Outcome alias are accepted conveniences, not added product scope. All
+reported schema/size/license findings remain mandatory fixes before T00 ACCEPT.
