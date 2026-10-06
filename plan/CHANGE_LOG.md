@@ -165,3 +165,11 @@ T00–T70 ACCEPT. Tag83fd04a, audited wheel/sdist and exact public-wheel demo/re
 No mandatory scope cut. Final receipts are appended on main after publication, preserving
 the fixed tag/assets and their pre-publication report snapshot. Jev/hosting/PyPI and public
 launch posting remain deferred. See REPORT T70, REVIEW T70-02 and FINAL_REPORT.
+
+## 2026-10-06 — optional PyPI publication workflow
+
+User-requested follow-up adds main-only manual Trusted Publishing for the reviewed
+v0.1.0 wheel/sdist, SHA-pinned actions and assets, existing CI identity checks and
+Twine metadata validation. Separate OIDC publication job; default is validation
+only. ADR0014 records the decision and tooling licenses. Original release scope
+and artifact identities remain unchanged; actual PyPI upload is not performed.
