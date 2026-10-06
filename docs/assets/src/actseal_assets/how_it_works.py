@@ -2,7 +2,8 @@
 
 Five stage groups in the approved order, each stating what goes in and what
 comes out: the frozen policy and labelled inputs become one lock; provider
-answers become ACT, ABSTAIN, ESCALATE or DENY decisions; risk and coverage
+answers for the verification cases, plus six synthetic (pure, no inference)
+fault scenarios, become ACT, ABSTAIN, ESCALATE or DENY decisions; risk and coverage
 bounds plus fault rules become one verdict paired with its exit code; the
 lock, answers, decisions and verdict become one bounded evidence bundle; and
 replay recomputes the verdict from that bundle offline with no model call.
@@ -131,8 +132,8 @@ STAGES: tuple[Stage, ...] = (
         "Run",
         (
             Item(("provider answers",)),
-            Item(("every locked case",)),
-            Item(("+ 6 fault scenarios",)),
+            Item(("verification cases",)),
+            Item(("+ 6 synthetic faults",)),
             Item(("ACT", "ABSTAIN", "ESCALATE", "DENY"), ACCENT, ARROW),
         ),
     ),
@@ -178,8 +179,9 @@ TITLE = "How Actseal works: freeze, run, verify, seal, replay"
 DESC = (
     "Five stages in order. Freeze turns the frozen policy, the labelled inputs "
     "and the model identity into one lock. Run collects provider answers for "
-    "every locked case plus six fault scenarios and turns each into a decision: "
-    "ACT, ABSTAIN, ESCALATE or DENY. Verify applies risk and coverage bounds "
+    "the locked verification cases and evaluates six synthetic fault scenarios, "
+    "turning each into a decision: ACT, ABSTAIN, ESCALATE or DENY. Verify "
+    "applies risk and coverage bounds "
     "and the fault rules to reach one verdict with its exit code: PASS 0, "
     "BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes the lock, answers, "
     "decisions and verdict into one bounded evidence bundle. Replay recomputes "

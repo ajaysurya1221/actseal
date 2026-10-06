@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg aria-labelledby="title desc" height="400" role="img" viewBox="0 0 1600 400" width="1600" xmlns="http://www.w3.org/2000/svg">
   <title id="title">How Actseal works: freeze, run, verify, seal, replay</title>
-  <desc id="desc">Five stages in order. Freeze turns the frozen policy, the labelled inputs and the model identity into one lock. Run collects provider answers for every locked case plus six fault scenarios and turns each into a decision: ACT, ABSTAIN, ESCALATE or DENY. Verify applies risk and coverage bounds and the fault rules to reach one verdict with its exit code: PASS 0, BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes the lock, answers, decisions and verdict into one bounded evidence bundle. Replay recomputes the verdict from that bundle offline, with no model call and no provider loaded. The lock command performs Freeze, the verify command performs Run, Verify and Seal, and the replay command performs Replay.</desc>
+  <desc id="desc">Five stages in order. Freeze turns the frozen policy, the labelled inputs and the model identity into one lock. Run collects provider answers for the locked verification cases and evaluates six synthetic fault scenarios, turning each into a decision: ACT, ABSTAIN, ESCALATE or DENY. Verify applies risk and coverage bounds and the fault rules to reach one verdict with its exit code: PASS 0, BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes the lock, answers, decisions and verdict into one bounded evidence bundle. Replay recomputes the verdict from that bundle offline, with no model call and no provider loaded. The lock command performs Freeze, the verify command performs Run, Verify and Seal, and the replay command performs Replay.</desc>
   <rect fill="#ffffff" height="400" width="1600" x="0" y="0"/>
   <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="stage-freeze">
     <rect fill="#f6f8fa" height="292" rx="10" stroke="#d0d7de" stroke-width="2" width="288" x="20" y="24"/>
@@ -19,8 +19,8 @@
     <text fill="#1f2328" font-size="34" font-weight="bold" x="352" y="74"><tspan fill="#0969da">2</tspan> <tspan dx="6">Run</tspan></text>
     <line stroke="#d0d7de" stroke-width="2" x1="352" x2="612" y1="90" y2="90"/>
     <text fill="#24292f" font-size="26" x="352" y="124">provider answers</text>
-    <text fill="#24292f" font-size="26" x="352" y="158">every locked case</text>
-    <text fill="#24292f" font-size="26" x="352" y="192">+ 6 fault scenarios</text>
+    <text fill="#24292f" font-size="26" x="352" y="158">verification cases</text>
+    <text fill="#24292f" font-size="26" x="352" y="192">+ 6 synthetic faults</text>
     <text fill="#0969da" font-size="26" x="352" y="226">→ ACT · ABSTAIN</text>
     <text fill="#0969da" font-size="26" x="352" y="260">ESCALATE · DENY</text>
     <line stroke="#0969da" stroke-width="3" x1="629" x2="641" y1="170" y2="170"/>

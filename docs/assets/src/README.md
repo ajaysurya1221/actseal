@@ -113,8 +113,9 @@ bracket row) and `how-it-works-mobile-light.svg` /
 `how-it-works-mobile-dark.svg` (720 wide, stages stacked vertically, the
 command written under each stage heading; height derived from the wrapped
 content). Each stage states its inputs and, after an arrow, its output:
-policy + labelled inputs → lock; provider answers → ACT · ABSTAIN · ESCALATE
-· DENY; bounds and fault rules → verdict with exit code; lock, answers,
+policy + labelled inputs → lock; provider answers for the verification cases
+plus six synthetic faults → ACT · ABSTAIN · ESCALATE · DENY; bounds and
+fault rules → verdict with exit code; lock, answers,
 decisions and verdict → bounded evidence bundle; replay recomputes the
 verdict offline with no model call. Module names, file inventories and hashes
 are deliberately absent from this overview (they belong to the architecture
