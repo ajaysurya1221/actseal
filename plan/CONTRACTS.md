@@ -436,7 +436,9 @@ Do not merely return archived verdict. An unsupported implementation is ERROR,
 not best-effort migration. Before strict lock decoding succeeds, ERROR uses
 scope=demo and a 64-zero lock digest sentinel. After decoding, retain its scope/hash
 for diagnostics even when later checks fail; never use the expected external digest
-as the observed identity. Python argument-type misuse may raise SchemaError.
+as the observed identity. Invalid Python call arguments (wrong types, a malformed
+expected digest or a NUL-bearing path) may raise SchemaError; invalid bundle
+evidence returns ERROR. The CLI maps these argument errors to exit code 3.
 Source label truth and fully re-authored evidence remain
 outside the assurance claim; external trusted lock hashes anchor identity only.
 

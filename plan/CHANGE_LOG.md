@@ -123,3 +123,10 @@ ADR0013 fixes the T50 synthetic data rules before implementation: two128-case
 runs, same threshold/limits, zero versus32 authored wrong accepted decisions.
 Planning bounds establish expected behavior only; actual receipts must come from
 the installed product. No population, training or paired-model comparison claim.
+
+## 2026-10-06 — invalid API argument clarification
+
+ADR0012/CONTRACTS now explicitly include malformed expected digests and NUL paths
+alongside wrong Python types in the SchemaError argument boundary. Invalid bundle
+contents still return an ERROR verdict. This records T40's reviewed path fix and
+existing digest validation; no schema, signature or verdict semantics change.
