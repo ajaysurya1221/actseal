@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tarfile
 import types
 from pathlib import Path
 
@@ -256,6 +257,25 @@ def test_real_build_validates_then_verifies(
     for item in result:
         (copy / item.filename).write_bytes((real_dist / item.filename).read_bytes())
     assert tool.verify_distributions(copy, version, sums) == result
+
+
+@pytest.mark.packaging
+def test_sdist_contains_the_helpers_required_by_its_release_tests(
+    tool: types.ModuleType, real_dist: Path
+) -> None:
+    version = tool.agreed_version(ROOT)
+    with tarfile.open(real_dist / names(version)[1], "r:gz") as archive:
+        for relative in (
+            "tools/check_release.py",
+            ".github/workflows/publish-pypi.yml",
+            "tests/release/release_support.py",
+        ):
+            member = archive.getmember(f"actseal-{version}/{relative}")
+            assert member.isfile(), relative
+            source = archive.extractfile(member)
+            assert source is not None, relative
+            with source:
+                assert source.read() == (ROOT / relative).read_bytes(), relative
 
 
 @pytest.mark.packaging

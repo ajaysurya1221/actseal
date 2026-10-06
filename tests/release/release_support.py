@@ -49,7 +49,10 @@ IN_TOTO = "https://in-toto.io/Statement/v1"
 ASSET_OUTPUTS = (
     "hero-light.svg",
     "hero-dark.svg",
-    "how-it-works.svg",
+    "how-it-works-light.svg",
+    "how-it-works-dark.svg",
+    "how-it-works-mobile-light.svg",
+    "how-it-works-mobile-dark.svg",
     "architecture.svg",
     "social.png",
 )

@@ -429,7 +429,7 @@ def write_receipt_tree(root: Path, tool: types.ModuleType) -> dict[str, object]:
     write_json(root / tool.RECEIPT_PATHS["release_receipt"], receipt)
     notes = [
         f"# Actseal {VERSION}",
-        f"![how-it-works]({RAW}/how-it-works.svg)",
+        f"![how-it-works]({RAW}/how-it-works-light.svg)",
         f"https://pypi.org/project/actseal/{VERSION}/",
         *(f"- `{name}` sha256 `{sha256_hex(files[name].read_bytes())}`" for name in names(VERSION)),
     ]
@@ -754,6 +754,23 @@ def test_assets_gate_requires_every_required_output(tool: types.ModuleType, tmp_
     (tmp_path / "docs" / "assets" / "social.png").write_bytes(png_bytes(1280, 640))
     (tmp_path / "docs" / "assets" / "hero-dark.svg").write_text("not svg\n", encoding="utf-8")
     assert "hero-dark.svg is not an SVG" in failure(tool, tmp_path, "assets")
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "how-it-works-light.svg",
+        "how-it-works-dark.svg",
+        "how-it-works-mobile-light.svg",
+        "how-it-works-mobile-dark.svg",
+    ],
+)
+def test_assets_gate_rejects_each_missing_workflow_variant(
+    tool: types.ModuleType, tmp_path: Path, name: str
+) -> None:
+    write_release_tree(tmp_path)
+    (tmp_path / "docs" / "assets" / name).unlink()
+    assert f"docs/assets/{name}" in failure(tool, tmp_path, "assets")
 
 
 def test_assets_gate_fails_when_the_renderer_reports_errors(

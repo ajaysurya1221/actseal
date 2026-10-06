@@ -110,7 +110,12 @@ RENDERER_RELATIVE = "docs/assets/src/render.py"
 DEFAULT_RENDERER = "uv run --frozen --group assets python docs/assets/src/render.py"
 RELEASE_ASSETS: dict[str, tuple[str, ...]] = {
     "hero": ("hero-light.svg", "hero-dark.svg"),
-    "how-it-works": ("how-it-works.svg",),
+    "how-it-works": (
+        "how-it-works-light.svg",
+        "how-it-works-dark.svg",
+        "how-it-works-mobile-light.svg",
+        "how-it-works-mobile-dark.svg",
+    ),
     "architecture": ("architecture.svg",),
     "social": ("social.png",),
 }
