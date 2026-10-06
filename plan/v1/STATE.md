@@ -29,7 +29,7 @@ Codex is the sole writer of STATE, TODO and REVIEW records. Claude writes its ta
 | 04 | Claude C | Quota-interrupted draft;221 independent tests/eight mutations pass; unsafe --workdir cleanup requires repair; further harness permission pending |
 | 05–06 | Claude B | Pending03 and explicit provisional-provider integration amendment; no Jev calls |
 | 07–08 | Claude D | Pending approved dependencies; example/docs |
-| 09 | Codex/Claude | Bounded implementation ACCEPTe6c967a4;284 independent tests; final schema/asset integration and hosted rehearsal pending |
+| 09 | Codex/Claude | e6c967a4 bounded repair ACCEPT; new09R4 strict receipt findings require repair; ordinary asset-CI glue addeda09b69f; final assets/rehearsal pending |
 | 10 | Claude V | ACCEPT030ef840; PR13 all8checks green and merged6ad1e91 |
 | 11 | Claude V | Pinned font/tool download exception pending |
 | 12 | Claude V | REVISE6ede9eab;231 independent tests pass; missing labelled-input/provider-answer/bounded-bundle meaning; rendered review incomplete |
@@ -54,7 +54,9 @@ Worktree prefix is `/Users/ajay/.codex/worktrees/`. Earlier57407/25815/58170 are
 - PR14 reviewed d626cb41ec574b13f6f8a4aec08df5a53530fc7f received independent ACCEPT, all8 CI checks in37508086795/37508160613, and mergedb5a387acb8aabb5747c274f0720ab156cfa69c1e.
 - Core84079e9 independently passed2519 core tests51.54s,14 packaging5.22s and hooks. Runtime fingerprinta5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642 unchanged during02R2.02R3 changes only normative docs/ADR/report; dependent source interfaces remain frozen.
 - PR15 final0595512 passed eight checks in37509866430/37509873427 and mergedcef6c4742f5b8e78e9aff54e49a516722d53b629. Core stability is integrated.
+- PR16 checkpoint e3bff308 independently ACCEPTed, passed eight checks in37512276493/37512436466 and merged594b8be5e5c6cdee85210f15be5e50b15c4b194f.
 - Interrupted03/04 drafts are preserved with SHA256 inventories under `/tmp/actseal-v1-orchestration/{03,04}-quota-interrupted-draft/`; draft reviews retain all failures and permission history. No unfinished work was reverted.
+- Task09 branch incorporated accepted main inca3d6bc6 and adds ordinary push/PR asset checks ina09b69f. Independent284 release tests pass12.01s after integration; asset typing and workflow checks pass. The bootstrap renderer still reports zero actual assets, not release completeness. Final strict receipt schema work is in09R4-request; no product source was written by Codex.
 
 ## Blockers and next action
 

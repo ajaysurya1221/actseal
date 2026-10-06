@@ -45,3 +45,17 @@ Task10 is accepted and merged at6ad1e91 after exact-head eight-job CI. Task12 no
 ## V1-010 — Strict stable formats and opt-in additions
 
 Final normative review found Task02 docs permit additive JSON fields despite strict unknown-field rejection. Clarify that existing strict schema versions/default receipt shapes stay unchanged through1.x; additive formats or engines require separately versioned explicit opt-in interfaces preserving existing stable behavior. This tightens documentation to the approved stability promise; no runtime/schema change. ClaudeA owns the two normative docs and ADR0015 for this correction; all dependent source contracts stay frozen.
+
+## V1-011 — Atomic experimental-provider wiring
+
+Before Task05 dispatch, assign ClaudeB these narrow shared-file deltas together: admit `jev` in `records.PROVIDERS`; implement its pure normalization profile; emit Jev-native envelopes for the existing six canonical faults; and add an explicit fail-loud `runner.open_model` guard for an admitted but unregistered provider before any Laya import/construction. The existing non-fixture branch otherwise silently routes a newly admitted provider to Laya. Actual experimental CLI/runner registration remains Task19.
+
+ClaudeB also temporarily owns only the matching ModelIdentity provider enum in `docs/schemas/{lock,captured-outcome,decision-record,fault-result,cli-receipt}.schema.json`, profile wording in `docs/schemas/README.md`, additive tests, and the three existing invalid-provider sentinel replacements in record/normalization/runner unit tests. `jev` can no longer stand for an unsupported provider in those tests. Keep the separate `open_model("jev")` rejection until Task19 and prove no Laya import/construction. No other lane edits those shared files concurrently.
+
+Fields, schema versions, public signatures, six fault IDs/order/dispositions, fixture/Laya behavior and policy/statistical semantics remain frozen. Cloud identity has an empty artifact-hash tuple and a fixed configured vendor target; returned version is a vendor claim, not a weight attestation. Identity cannot mutate after a response. This is integration required by the approved experimental adapter, not a wider policy model. No live calls are authorized in Task05.
+
+## V1-012 — Freeze the release receipt before promising version1
+
+Task09's remaining schema work includes exact build, postpublication and final release receipt shapes. Independent probes at e6c967a4 found duplicate decisive keys and nonfinite numbers accepted by the helper. Repair decoding/encoding and recursive field/type validation before the schema is published. Retain all existing artifact, source, workflow, official-index and attestation-identity checks. A JSON Schema cannot detect duplicate keys already discarded during decoding.
+
+Claude's Task09 ownership expands to the three release-related JSON schemas, their schema-index entries, release-format/promotion documentation and a release-promotion ADR. Use the already-approved development-only jsonschema validator for real generated-receipt fixtures with a local nonfetching registry. The helper's clean-container commands remain stdlib-only and do not import product code. Inspection-only/local-fixture outputs stay explicitly unpromotable; do not weaken the official release profile. This completes the approved version1 receipt promise; it is not a new runtime dependency or new release feature.

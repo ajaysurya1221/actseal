@@ -19,4 +19,4 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work: preserve03/04 drafts and record independent reviews while Claude quota resets at01:50 IST.02 core and10 toolchain are merged.09 implementation has bounded ACCEPT, with final asset/schema integration and hosted rehearsal pending.12 needs a content revision. Asset-download and exact local-check permission requests remain pending. All handles are terminal; see STATE.md before resuming.
+Current work:03/04 drafts are preserved and reviewed; Claude quota resets at01:50 IST.02 core and10 toolchain are merged.09 has an additional strict receipt repair queued, plus final asset/schema integration and hosted rehearsal.12 needs a content revision. Asset-download and exact local-check permission requests remain pending. All handles are terminal; see STATE.md before resuming. INTEGRATION_CHECKLIST.md records final fingerprint, archived-evidence and packaged-registry checks.
