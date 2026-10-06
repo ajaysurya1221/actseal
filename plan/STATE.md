@@ -12,7 +12,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 ## Current state
 
 - Planning artifacts: complete; 119 material claims and all 18 candidate dispositions recorded.
-- Product implementation: T00 accepted and merged as 86dbca0; parallel lanes are starting.
+- Product implementation: T00 accepted and merged as 86dbca0; parallel lanes active.
 - Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
 - Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
 - Preflight: source statistics suite passed in a separate verification lane;
@@ -24,7 +24,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 |---|---|---|---|
 | Planning package | Codex | COMPLETE | ee99eee plus documented amendments |
 | T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff (merge 86dbca0) |
-| T10 contract/policy | Claude A | RUNNING | none |
+| T10 contract/policy | Claude A | REVISE_T10_01 | none |
 | T20 statistics | Claude B | NUMERICAL_VERIFIED_WAITING_FOR_T10_T30 | none |
 | T30 providers/faults | Claude C | PROVIDER_MILESTONE_RUNNING | none |
 | T40 evidence/replay | Claude B | WAITING_FOR_ACCEPTED_INTERFACES | none |
@@ -51,7 +51,13 @@ The human approved the three hooks and standing routine execution on 2026-10-06.
 No pending permission question remains. Original scope/license/budget escalations
 and the release quality gates still apply; public launch messages remain drafts.
 
-Running: isolated Claude T10 and T30 provider work. T20 numerical milestone is
+T10 initial self-report DONE; independent review T10-01 requires three fixes:
+bounded reads, consistent lock wire-size limits and standalone cross-split ID
+checks. Root passed all four commands (738 tests), then reproduced each defect.
+ADR0010 freezes the approved shared I/O/digest helpers before downstream use.
+Next: resume T10 for fixes and a new immutable report T10-02.md.
+
+Running: isolated Claude T30 provider work. T20 numerical milestone is
 verified: 159 tests independently pass; all four CI jobs green at 7df7600.
 PR2 stays draft/unmerged until full assessment acceptance. See T20-numeric-01.
 T20 Claude session completed at $5.43887825 estimated subscription usage.
