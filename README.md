@@ -1,9 +1,5 @@
 # Actseal
 
-**Release preparation:** T50 is accepted; final adversarial acceptance and
-publication remain pending. The v0.1.0 wheel URL below is the planned release
-asset and is not available yet.
-
 **Decision contracts you can replay.**
 
 If your application uses a model to choose an action, a confidence score alone

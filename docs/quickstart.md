@@ -1,9 +1,5 @@
 # Actseal quickstart
 
-**Release preparation:** T50 is accepted; final adversarial acceptance and
-publication remain pending. The v0.1.0 wheel URL below is the planned release
-asset and is not available yet.
-
 Use Actseal to freeze an application decision policy, evaluate its accepted
 errors and coverage, and retain evidence you can inspect without rerunning a
 model. The packaged fixture demonstration exercises that complete path with
@@ -75,8 +71,9 @@ Python 3.12.13 reference environment. [REVIEW T50-02](../plan/reviews/T50-02.md)
 accepts `286ae67e252ecbb77e9c330ebe1f66cc375bfbab`; it merged as `7e696c5`.
 Tested candidate wheel SHA-256:
 `b3633a3a0d2977d1250b0cf3a4e0078903744ec181d977ccce82013f85ad6128`.
-Final documentation changes wheel metadata, so the release artifact must receive
-its own identity/installation receipt. No public-download timing is claimed.
+This is the T50 candidate artifact, not the final release artifact. See the
+[release report](../plan/FINAL_REPORT.md) for final artifact and installation
+receipts. This timing does not measure a public download.
 
 ACT means the policy permits the provider's selected label: it is allowed and
 its normalized probability meets the threshold. It is not a statement that the
@@ -199,7 +196,8 @@ That native result used one fixed attempt without policy tuning or retry.
 Zero accepted cases do not establish zero risk; they leave risk unestimated.
 The test exercises integration on authored inputs, not model accuracy or a
 general latency benchmark. See the [provider receipt](providers.md#native-cli-integration-receipt)
-for exact identities. Final release/T60 gates remain pending.
+for exact identities and the [release report](../plan/FINAL_REPORT.md) for the
+final publication checks.
 
 Native collection fixes startup at 120 seconds and normal requests at 30 seconds,
 with no deadline override. Worker loss retains scheduled diagnostic records but

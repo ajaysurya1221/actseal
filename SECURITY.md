@@ -5,8 +5,8 @@
 Report a vulnerability privately through
 [GitHub's advisory form](https://github.com/ajaysurya1221/actseal/security/advisories/new).
 Include the affected commit/version, a minimal reproduction and the observed
-impact. Do not include credentials or private evaluation data. During release preparation, fixes land on current main. The v0.1.x release line
-will be supported after publication.
+impact. Do not include credentials or private evaluation data. Security fixes
+target current main and the latest v0.1.x release.
 
 ## System and trust boundary
 
