@@ -32,6 +32,13 @@ Protocol:
 Module import loads no adapter: the fixture adapter is imported only inside
 the fixture branch of :func:`open_model` and the Laya adapter only inside the
 Laya branch, so ``replay`` works with optional libraries absent.
+
+``records.PROVIDERS`` admits every provider a serialized identity may name,
+including the experimental ``jev`` adapter (plan/v1/CHANGE_LOG.md V1-011).
+:func:`open_model` constructs only the providers registered in
+``_REGISTERED_PROVIDERS``; an admitted but unregistered provider fails loudly
+before any adapter import, so it can never be routed to Laya by omission.
+Experimental registration is a separate, explicit integration step (Task 19).
 """
 
 from __future__ import annotations
@@ -98,6 +105,10 @@ DEMO_EXPECTED: Final[dict[str, str]] = {"bad": "BLOCK", "fixed": "PASS"}
 
 _FILE_MODE: Final = 0o644
 _LF: Final = b"\n"
+#: Providers this runner can construct. Deliberately narrower than
+#: ``records.PROVIDERS``: an admitted provider without an explicit branch here
+#: is rejected by :func:`open_model` instead of falling through to Laya.
+_REGISTERED_PROVIDERS: Final[frozenset[str]] = frozenset({"fixture", "laya"})
 
 ModelFactory = Callable[[], "DecisionModel"]
 
@@ -110,7 +121,12 @@ ModelFactory = Callable[[], "DecisionModel"]
 def open_model(provider: str, *, responses: Path | None, offline: bool) -> DecisionModel:
     """Build the requested provider; adapters are imported only inside their branch."""
     if provider not in PROVIDERS:
-        raise SchemaError("provider: must be fixture or laya")
+        raise SchemaError("provider: unsupported value")
+    if provider not in _REGISTERED_PROVIDERS:
+        # Admitted for serialized identities (for example the experimental Jev
+        # adapter) but not registered with this runner: fail before importing or
+        # constructing any adapter. Never route an unknown provider to Laya.
+        raise SchemaError("provider: admitted for records but not registered with the runner")
     if provider == "fixture":
         if responses is None:
             raise SchemaError("responses: required for the fixture provider")
@@ -259,7 +275,7 @@ def verify_run(
     """
     _check_new_path("destination", destination)
     if provider not in PROVIDERS:
-        raise SchemaError("provider: must be fixture or laya")
+        raise SchemaError("provider: unsupported value")
     lock = _read_lock(lock_path)
     calibration = read_input_text(calibration_path)
     verification = read_input_text(verification_path)

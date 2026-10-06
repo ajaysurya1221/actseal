@@ -93,7 +93,11 @@ _SHA256_HEX: Final = re.compile(r"[0-9a-f]{64}")
 _MIN_ALPHA: Final = 1e-6
 _PAIR_LENGTH: Final = 2
 MASS_TOLERANCE: Final = 1e-12
-PROVIDERS: Final[frozenset[str]] = frozenset({"fixture", "laya"})
+#: Providers a serialized ``ModelIdentity`` may name. ``fixture`` and ``laya`` are
+#: the stable CLI choices; ``jev`` is the PROVISIONAL experimental cloud adapter
+#: (plan/v1/CHANGE_LOG.md V1-011) and is admitted here so its evidence can be
+#: recorded, normalized and replayed. Admission is not runner/CLI registration.
+PROVIDERS: Final[frozenset[str]] = frozenset({"fixture", "laya", "jev"})
 
 _R = TypeVar("_R")
 
