@@ -29,9 +29,9 @@ Codex alone writes STATE, TODO, CHANGE_LOG and REVIEW receipts. Claude writes pr
 | 04 | Scoped ACCEPT732914d;252focused/31independent safety/2816core; PR21 eight jobs green; full repaired mutation harness pending |
 | 05 | Isolated mocked/offline preparation from212a1d6 under V1-021; original acceptance/native/live gates retained |
 | 06 | Collection supplement independently accepted as planning only; implementation/concrete preregistration not approved; no calls |
-| 07 | b7a0b54 REVISE;07R2 source-only strict archive repair running; example/temp test execution permission pending |
-| 08 | Independent reference preparation under V1-018; final README/example/media dependencies retained |
-| 09 | Schemas350cfc0 and CI glue9fb5fb5 scoped ACCEPT; PR18 exact-head ordinary CI running; final assets/authorized rehearsal pending |
+| 07 | Source-only ACCEPT277d8e2 strict archive repair; independentownedlint/types pass; example/temp test execution permission pending |
+| 08 | Scoped ACCEPT08a3bdc;89independent+parentdocschecks; cleanmainmerge300cba1a; fullREADME/P1/example dependencies retained |
+| 09 | Schemas350cfc0 and CI glue1b52076 scoped ACCEPT; PR18 exact1b52076 tenjobs green; final assets/authorized rehearsal pending |
 | 10 | ACCEPT030ef840; PR13 eight jobs green, merged6ad1e91 |
 | 11 | Source-only ACCEPT6ae0c09; parent226visual tests/hooks/asset typing and independent33focused pass; authentic font/assets/render/blind review pending |
 | 12 | Semantic/source ACCEPTf712dae;236tests/four SVG regeneration checks; PR22 eight jobs green; actual rendered review pending |
@@ -43,8 +43,8 @@ Codex alone writes STATE, TODO, CHANGE_LOG and REVIEW receipts. Claude writes pr
 | Task | Claude session | Handle | Worktree suffix |
 | --- | --- | --- | --- |
 | 05 running | 50efd940-2c54-4c5f-ab0b-cd8cfbbc22aa | 86306 | actseal-v1-jev/not-yet-named |
-| 07R2 source-only running | eeb42150-bc57-422f-8406-8b15797a9027 | 44069 | actseal-v1-core/not-yet-named |
-| 08 references running | 59a17d7b-61f6-4e7a-a4fc-2964bd4463eb | 63371 | actseal-v1-docs/not-yet-named |
+| 07R3 terminal | eeb42150-bc57-422f-8406-8b15797a9027 | 94522 | actseal-v1-core/not-yet-named |
+| 08R2 terminal | 59a17d7b-61f6-4e7a-a4fc-2964bd4463eb | 91054 | actseal-v1-docs/not-yet-named |
 | 11R terminal | f3f4a433-fd6f-4b98-a084-a5a4996d858b | 50008 | actseal-v1-hero/not-yet-named |
 | 09R5 terminal | b3ff94c7-3730-4f74-8c97-51ca08412f31 | 78919 | actseal-v1-release/not-yet-named |
 | 03R2 terminal | da80547c-fab0-4926-8c79-3a6d66f6b7b3 | 4164 | actseal-v1-baseline/not-yet-named |
@@ -58,6 +58,8 @@ Prefix `/Users/ajay/.codex/worktrees/`. Task02's worktree now belongs to07. Curr
 1. Configured Claude `Bash(curl:*)` denial: scoped exception for official pinned font/asciinema/agg/resvg downloads is unanswered. No alternate download/settings bypass.
 2. Cached Laya native check, repaired full mutation harness and actual local SVG preview were denied in noninteractive execution. Explicit scoped approval pending. Earlier checks performed before discovery stay historical receipts. The separate browser local-file navigation denial is not bypassed.
 3. Task07 checkout-local temporary-directory creation was auto-denied. The executor subsequently used default temp execution outside the requested scoped procedure. Preserve it as executor observation, not independent acceptance. A third scoped approval request is pending; no further example/test/temp preparation, only source/lint/type repair.
+
+4. Task05 Read of tracked `.env.example` was denied by configured permissions. A scoped placeholder-only read/update request is pending; actual `.env` and credentials are excluded. No alternate read/edit path is authorized.
 
 No JEV_API_KEY was exported in the parent environment at last presence-only check; no secret file was read. Task05 uses mocked keys only. Task06 requires reviewed concrete preregistration before live collection.
 
@@ -75,4 +77,8 @@ See INTEGRATION_CHECKLIST.md for final source fingerprint/registry approval, exa
 
 The pypi environment permits v* tags plus main, requires ajaysurya1221 review and allows solo-maintainer self-review. Notify the human when an actual deployment waits; never remove this gate. Ordinary green CI is not full native, mutation, visual or publish acceptance.
 
-Next: independently review07's source repair and08 references; continue05 offline implementation and09 permitted CI checks. Preserve all pending permissions and original full-task gates.
+Next: review08 repairs; continue05 offline implementation and09 permitted CI checks.07 execution remains pending scoped approval. Preserve all pending permissions and original full-task gates.
+
+Checkpoint08 merged through PR24 atd58018a7c2b6b680f2550b48ed30dd7592d35a15: reviewedcc7165718553bb2176a851f52bb184ebe37fd7e9 independently ACCEPTed; eight hosted jobs37531792257/37531830569 passed. Hero preparation draftPR25 at5f3fee5b061647d953a2648c3441d6f3fc6e07e7 is a clean main merge preserving all reviewed source/test bytes; full visual gate remains pending.
+
+Latest scoped receipts: PR18 exact1b5207664e3214ca43ae31765381e2ab70b12cdc passed ten source/assets jobs37531987286/37531996218. PR25 exact5f3fee5b061647d953a2648c3441d6f3fc6e07e7 passed eight source jobs37531990156/37532026935. NeitherfullTask09noractualheroacceptance isestablished. Task05 preliminarycorewiring review found no materialsource defect; V1-022retrospectivelyratifiesfour boundedownership deviations. Transport/schema/conformance completion remainsinprogress.
