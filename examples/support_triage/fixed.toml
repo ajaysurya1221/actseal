@@ -1,0 +1,22 @@
+schema_version = 1
+name = "support-triage-fixed"
+evidence_scope = "demo"
+population = "Authored support-routing demonstration whose recorded answers all equal the authored labels; demo evidence only, no deployment or population claim"
+
+[question]
+question_id = "department"
+instructions = "Select the department responsible for this ticket."
+options = [
+  {label = "billing", description = "Payments, invoices and refunds"},
+  {label = "technical", description = "Errors, outages and technical support"},
+  {label = "sales", description = "Purchasing, quotes and plan questions"},
+]
+
+[policy]
+allowed_labels = ["billing", "technical", "sales"]
+threshold = 0.90
+
+[risk]
+max_risk = 0.05
+min_coverage = 0.50
+alpha = 0.05

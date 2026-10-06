@@ -1,0 +1,12 @@
+{"case_id": "fixed-c-000", "state": "Ticket FIXED-C-000: I was charged twice for invoice 1000; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "fixed-c-001", "state": "Ticket FIXED-C-001: The app crashes on launch since update 1001.", "expected_label": "technical"}
+{"case_id": "fixed-c-002", "state": "Ticket FIXED-C-002: We need a quote for 1002 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "fixed-c-003", "state": "Ticket FIXED-C-003: My refund for order 1003 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "fixed-c-004", "state": "Ticket FIXED-C-004: Login returns error 1004 after a password reset.", "expected_label": "technical"}
+{"case_id": "fixed-c-005", "state": "Ticket FIXED-C-005: Does plan 1005 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "fixed-c-006", "state": "Ticket FIXED-C-006: The receipt for payment 1006 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "fixed-c-007", "state": "Ticket FIXED-C-007: Export job 1007 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "fixed-c-008", "state": "Ticket FIXED-C-008: Can we trial the enterprise tier before contract 1008 renews?", "expected_label": "sales"}
+{"case_id": "fixed-c-009", "state": "Ticket FIXED-C-009: Please update the card on file before invoice 1009 is due.", "expected_label": "billing"}
+{"case_id": "fixed-c-010", "state": "Ticket FIXED-C-010: Notifications stopped arriving on device 1010.", "expected_label": "technical"}
+{"case_id": "fixed-c-011", "state": "Ticket FIXED-C-011: What discount applies when ordering 1011 licences?", "expected_label": "sales"}
