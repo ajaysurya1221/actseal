@@ -17,20 +17,27 @@ recorded-response fixture in this directory, which stands in for a model.
   journal to equal the authored expectations;
 * for every committed recorded run under ``recorded/``: requires its
   ``PRODUCER.json`` to describe its ``lock.json``, its bundle to pass the
-  structural and hash checks, its inputs to equal the current authored inputs,
-  its ``records.jsonl``/``faults.jsonl`` bytes and verdict (apart from the lock
-  seal) to equal the fresh run, and its offline replay to equal its recorded
-  verdict when the producer implementation is the running one or a
-  registry-approved compatible one. A recorded run from a different, unapproved
-  implementation is reported as not replayable here and left untouched;
-* requires at least one recorded run to replay under the running
-  implementation. When none does, produce a separately identified fresh run
-  with ``--record``; never rewrite or reseal an existing one.
+  structural and hash checks, its archived lock to be internally valid (seal,
+  frozen fault inventory, case inventories; checked explicitly, independent of
+  implementation compatibility), its inputs to equal the current authored
+  inputs, and its ``records.jsonl``/``faults.jsonl`` bytes and verdict (apart
+  from the lock seal) to equal the fresh run. Its compatibility status is then
+  established explicitly from the packaged registry: ``exact`` (producer
+  fingerprint is the running one), ``approved`` (producer and running
+  fingerprints are both registered for the lock's engine) or ``unapproved``.
+  An exact or approved run must replay to exactly its recorded verdict. An
+  unapproved run must replay to exactly the compatibility ``ERROR``
+  (``integrity.lock``), is reported as not replayable here and is left
+  untouched; any other replay result is an error, never a compatibility note;
+* requires at least one exact or approved recorded run. When none exists,
+  produce a separately identified fresh run with ``--record``; never rewrite or
+  reseal an existing one, and never edit the registry from here.
 
-``--route`` replays the compatible recorded run, opens the gate and routes the
-tickets, printing each disposition and the queue journal. ``--record`` writes
-a new run directory (``PRODUCER.json``, ``lock.json``, ``evidence/``) and
-refuses an existing destination.
+``--route`` replays the first exact or approved recorded run, requires the
+replay to equal its recorded verdict, opens the gate and routes the tickets,
+printing each disposition and the queue journal. ``--record`` writes a new
+run directory (``PRODUCER.json``, ``lock.json``, ``evidence/``) and refuses
+an existing destination.
 """
 
 from __future__ import annotations
@@ -42,14 +49,15 @@ import sys
 import tempfile
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import TextIO
+from typing import Literal, TextIO
 
 from gate import ActionGate, Disposition, GateClosedError, LocalQueue, Ticket, route_all
 
 import actseal
 from actseal.adapters.fixture import FixtureModel
+from actseal.compatibility import CompatibilityRegistry, load_registry
 from actseal.contract import read_input_text
-from actseal.errors import ActsealError, SchemaError
+from actseal.errors import ActsealError, IntegrityError, SchemaError
 from actseal.evidence import (
     FAULTS_FILE,
     RECORDS_FILE,
@@ -57,7 +65,7 @@ from actseal.evidence import (
     decode_document,
     read_bundle_files,
 )
-from actseal.locking import parse_lock
+from actseal.locking import FAULT_INVENTORY, case_digest, lock_digest, parse_lock
 from actseal.policy import (
     REASON_ALLOWED,
     REASON_DISALLOWED_CHOICE,
@@ -77,9 +85,12 @@ __all__ = [
     "PRODUCER_FILE",
     "PRODUCER_FORMAT",
     "RECORDED_DIR",
+    "CompatibilityStatus",
     "FreshRun",
     "Producer",
     "check",
+    "check_archived_lock",
+    "compatibility_status",
     "load_producer",
     "load_tickets",
     "main",
@@ -126,6 +137,9 @@ FINGERPRINT_PREFIX = 12
 EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_USAGE = 2
+
+#: How a recorded run relates to the running implementation (plan E, rules 2-3).
+CompatibilityStatus = Literal["exact", "approved", "unapproved"]
 
 #: Authored expectation for every run-time ticket: (action, reason, queue written to).
 EXPECTED_DISPOSITIONS: dict[str, tuple[Action, str, str | None]] = {
@@ -358,6 +372,49 @@ def _recorded_lock(run_dir: Path, producer: Producer) -> PlanLock:
     return lock
 
 
+def check_archived_lock(lock: PlanLock) -> None:
+    """Internal validity of an archived lock, independent of implementation compatibility.
+
+    ``validate_lock`` folds replay-engine compatibility into one check, so an
+    unapproved producer and a corrupt archive would both surface as the same
+    ``integrity.lock`` replay reason. This repeats the compatibility-free parts
+    explicitly: the self-seal, the frozen six-scenario fault inventory, the
+    verification inventory against its cases, unique state texts and disjoint
+    split ids. Nothing is resealed; a defect is :class:`IntegrityError`.
+    """
+    if lock_digest(lock) != lock.sha256:
+        raise IntegrityError("lock.sha256: archived self-seal does not match the lock contents")
+    if lock.fault_inventory != FAULT_INVENTORY:
+        raise IntegrityError("lock.fault_inventory: not the frozen six-scenario inventory")
+    expected = tuple((case.case_id, case_digest(case)) for case in lock.verification_cases)
+    recorded = tuple((ref.case_id, ref.sha256) for ref in lock.verification_inventory)
+    if expected != recorded:
+        raise IntegrityError("lock.verification_inventory: does not match the archived cases")
+    states = [case.state for case in lock.verification_cases]
+    if len(set(states)) != len(states):
+        raise IntegrityError("lock.verification_cases: duplicate state text")
+    calibration_ids = {ref.case_id for ref in lock.calibration_inventory}
+    if any(ref.case_id in calibration_ids for ref in lock.verification_inventory):
+        raise IntegrityError("lock.verification_inventory: id also present in calibration")
+
+
+def compatibility_status(
+    producer: Producer, *, registry: CompatibilityRegistry | None = None
+) -> CompatibilityStatus:
+    """Classify a producer explicitly: exact running source, registry-approved pair, or neither."""
+    running = implementation_fingerprint()
+    if producer.implementation_sha256 == running:
+        return "exact"
+    approved = load_registry() if registry is None else registry
+    engine = producer.replay_engine_version
+    if (
+        approved.engine_for(producer.implementation_sha256) == engine
+        and approved.engine_for(running) == engine
+    ):
+        return "approved"
+    return "unapproved"
+
+
 def _check_reproduction(
     name: str, recorded: dict[str, bytes], fresh: FreshRun, report: Report
 ) -> None:
@@ -371,34 +428,43 @@ def _check_reproduction(
         report.error(f"{name}: verdict differs from the fresh run beyond the lock seal")
 
 
-def _check_replay(name: str, run_dir: Path, producer: Producer, report: Report) -> bool:
-    """Replay the recorded bundle; return whether it replays under this implementation."""
+def _check_replay(
+    name: str, run_dir: Path, producer: Producer, status: CompatibilityStatus, report: Report
+) -> bool:
+    """Replay the recorded bundle against its established status; return whether it is usable."""
     recorded_verdict = decode_document(
         VERDICT_FILE, read_bundle_files(run_dir / EVIDENCE_DIRECTORY)[VERDICT_FILE], Verdict
     )
     replayed = replay(run_dir / EVIDENCE_DIRECTORY, expected_lock_sha256=producer.lock_sha256)
-    running = implementation_fingerprint()
-    if replayed == recorded_verdict:
-        how = "exact" if producer.implementation_sha256 == running else "registry-approved"
-        report.ok(f"{name}: replay equals the recorded {replayed.status} ({how} implementation)")
-        return True
-    if producer.implementation_sha256 == running:
-        report.error(f"{name}: replay {replayed.status} {replayed.reasons} differs from the record")
+    if status != "unapproved":
+        if replayed == recorded_verdict:
+            report.ok(
+                f"{name}: replay equals the recorded {replayed.status} ({status} implementation)"
+            )
+            return True
+        report.error(
+            f"{name}: replay {replayed.status} {replayed.reasons} differs from the record "
+            f"({status} implementation)"
+        )
         return False
-    incompatible = (
+    # The archive itself was validated explicitly above, so the only acceptable
+    # outcome for an unapproved producer is the compatibility ERROR and nothing else.
+    expected_error = (
         replayed.status == "ERROR"
         and replayed.reasons == (REASON_LOCK,)
         and replayed.lock_sha256 == producer.lock_sha256
     )
-    if incompatible:
+    if expected_error:
         report.info(
-            f"{name}: not replayable under the running implementation "
-            f"(producer {producer.implementation_sha256[:FINGERPRINT_PREFIX]}, "
-            f"running {running[:FINGERPRINT_PREFIX]}, no registry approval); bytes preserved"
+            f"{name}: not replayable under the running implementation (producer "
+            f"{producer.implementation_sha256[:FINGERPRINT_PREFIX]}, running "
+            f"{implementation_fingerprint()[:FINGERPRINT_PREFIX]}, unapproved pair; archive "
+            "seal and inventories verified); bytes preserved"
         )
         return False
     report.error(
-        f"{name}: replay {replayed.status} {replayed.reasons} is not the compatibility ERROR"
+        f"{name}: replay {replayed.status} {replayed.reasons} is not the compatibility ERROR "
+        "expected for an unapproved producer"
     )
     return False
 
@@ -408,8 +474,10 @@ def check_recorded(run_dir: Path, fresh: FreshRun, report: Report) -> bool:
     name = f"recorded/{run_dir.name}"
     try:
         producer = load_producer(run_dir)
-        _recorded_lock(run_dir, producer)
+        lock = _recorded_lock(run_dir, producer)
+        check_archived_lock(lock)
         recorded = read_bundle_files(run_dir / EVIDENCE_DIRECTORY)
+        status = compatibility_status(producer)
     except (ActsealError, OSError) as exc:
         report.error(f"{name}: {exc}")
         return False
@@ -417,7 +485,7 @@ def check_recorded(run_dir: Path, fresh: FreshRun, report: Report) -> bool:
         report.error(f"{name}: authored inputs changed since this run was recorded")
         return False
     _check_reproduction(name, recorded, fresh, report)
-    return _check_replay(name, run_dir, producer, report)
+    return _check_replay(name, run_dir, producer, status, report)
 
 
 # --------------------------------------------------------------------------- #
@@ -507,22 +575,35 @@ def check(out: TextIO, recorded_root: Path = RECORDED_DIR) -> int:
         compatible = sum(check_recorded(run_dir, fresh, report) for run_dir in runs)
     if runs and compatible == 0:
         report.error(
-            "recorded: no recorded run replays under the running implementation; "
-            "produce a separately identified fresh run with --record"
+            "recorded: no exact or registry-approved recorded run replays under the running "
+            "implementation; produce a separately identified fresh run with --record"
         )
     out.write(f"action_gate --check: {report.errors} error(s)\n")
     return EXIT_OK if report.errors == 0 else EXIT_FAILED
 
 
 def route(out: TextIO, recorded_root: Path = RECORDED_DIR) -> int:
+    """Route the tickets through the first recorded run whose supported replay succeeds."""
     running = implementation_fingerprint()
     for run_dir in recorded_runs(recorded_root):
         producer = load_producer(run_dir)
-        if producer.implementation_sha256 != running:
-            continue
         lock = _recorded_lock(run_dir, producer)
+        check_archived_lock(lock)
+        status = compatibility_status(producer)
+        if status == "unapproved":
+            out.write(
+                f"recorded/{run_dir.name}: unapproved producer "
+                f"{producer.implementation_sha256[:FINGERPRINT_PREFIX]}; not used\n"
+            )
+            continue
+        recorded_verdict = decode_document(
+            VERDICT_FILE, read_bundle_files(run_dir / EVIDENCE_DIRECTORY)[VERDICT_FILE], Verdict
+        )
         verdict = replay(run_dir / EVIDENCE_DIRECTORY, expected_lock_sha256=producer.lock_sha256)
-        out.write(f"recorded/{run_dir.name}: replayed {_describe(verdict)}\n")
+        out.write(f"recorded/{run_dir.name}: replayed {_describe(verdict)} ({status})\n")
+        if verdict != recorded_verdict:
+            out.write(f"recorded/{run_dir.name}: replay differs from the recorded verdict\n")
+            return EXIT_FAILED
         try:
             gate = _open_gate(lock, verdict, producer.lock_sha256)
         except GateClosedError as exc:
@@ -538,8 +619,9 @@ def route(out: TextIO, recorded_root: Path = RECORDED_DIR) -> int:
         out.write(f"queue journal: {list(queue.journal)}\n")
         return EXIT_OK
     out.write(
-        f"no recorded run matches the running implementation ({running[:FINGERPRINT_PREFIX]}); "
-        "record one with --record DIRECTORY --source-commit SHA\n"
+        "no exact or registry-approved recorded run matches the running implementation "
+        f"({running[:FINGERPRINT_PREFIX]}); record one with "
+        "--record DIRECTORY --source-commit SHA\n"
     )
     return EXIT_FAILED
 
