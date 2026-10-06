@@ -4,14 +4,17 @@ Three test trees use this module:
 
 * ``tests/unit/test_providers.py`` imports the fixture rows and the fake worker;
 * ``tests/conformance`` runs the shared behavioural checks below against every
-  provider profile (recorded fixture and the fake-worker Laya double);
+  provider profile (recorded fixture, the fake-worker Laya double and the
+  experimental Jev adapter over a stdlib fake connection);
 * ``tests/integration/test_laya.py`` applies the same close-lifecycle check to
   the real pinned model.
 
 The checks are plain functions over the public ``DecisionModel`` protocol, so a
 misbehaving adapter (or a deliberately wrong test double) fails with an
 ``AssertionError`` rather than being routed around. Nothing here imports the
-native stack: the Laya double is a stdlib script speaking the worker protocol.
+native stack: the Laya double is a stdlib script speaking the worker protocol,
+and the Jev double never opens a socket (its connection factory is a fake and
+its only API key is a mocked string that is never read from the environment).
 """
 
 from __future__ import annotations
@@ -22,7 +25,7 @@ import inspect
 import json
 import math
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any, Final, Literal, Protocol
 
@@ -32,6 +35,8 @@ from actseal.adapters.base import DecisionModel
 from actseal.adapters.fixture import FixtureModel
 from actseal.adapters.laya import ADAPTER_VERSION, ARTIFACT_HASHES, MODEL_ID, REVISION, LayaModel
 from actseal.errors import SchemaError
+from actseal.experimental.providers import jev as jev_module
+from actseal.experimental.providers.jev import JevModel
 from actseal.normalization import NORMALIZER_VERSION, normalize, request_sha256
 from actseal.records import (
     FAILURE_CODES,
@@ -295,6 +300,11 @@ class ProviderProfile(Protocol):
         """Warnings the provider prepends to every capture (setup-time warnings)."""
         ...
 
+    @property
+    def evidence_only_fields(self) -> tuple[str, ...]:
+        """Field names in ``valid_raw_body`` that normalization never uses but must survive."""
+        ...
+
     def open(
         self,
         *,
@@ -354,6 +364,10 @@ def _inner_answer_text(question: ChoiceQuestion, *, newline: str) -> str:
     return "".join(parts)
 
 
+#: Optional inner-answer fields the fixture and Laya normalizers ignore but keep as evidence.
+IGNORED_ANSWER_FIELDS: Final[tuple[str, ...]] = ("action", "answer_confidence")
+
+
 class FixtureProfile:
     """Recorded-response adapter: no transport, close is a no-op, bodies are verbatim."""
 
@@ -361,6 +375,7 @@ class FixtureProfile:
     after_close: Lifecycle = "usable"
     after_timeout: Lifecycle = "usable"
     load_warnings: tuple[str, ...] = ()
+    evidence_only_fields = IGNORED_ANSWER_FIELDS
 
     def __init__(self, directory: Path) -> None:
         self._directory = directory
@@ -426,6 +441,7 @@ class FakeLayaProfile:
     after_close: Lifecycle = "unavailable"
     after_timeout: Lifecycle = "unavailable"
     load_warnings = FAKE_LOAD_WARNINGS
+    evidence_only_fields = IGNORED_ANSWER_FIELDS
 
     def __init__(self, script: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         self._script = script
@@ -479,7 +495,140 @@ class FakeLayaProfile:
         return child_pid(model)
 
 
-PROFILE_NAMES: Final[tuple[str, ...]] = ("fixture", "laya-fake")
+# --------------------------------------------------------------------------- #
+# Fake Jev connection (stdlib only; the adapter's http.client seam)
+# --------------------------------------------------------------------------- #
+
+JEV_MOCK_KEY: Final = "mock-jev-key-for-conformance-only"
+JEV_TIMEOUT: Final = "timeout"
+
+
+class _JevFakeResponse:
+    def __init__(self, status: int, body: bytes) -> None:
+        self.status = status
+        self._body = body
+
+    def read(self, amt: int) -> bytes:
+        chunk, self._body = self._body[:amt], self._body[amt:]
+        return chunk
+
+
+class _JevFakeConnection:
+    """One scripted exchange: a status and body, or a socket timeout on ``request``."""
+
+    def __init__(self, script: tuple[str | int, bytes], log: list[dict[str, object]]) -> None:
+        self._script = script
+        self._log = log
+
+    def request(self, method: str, url: str, body: bytes, headers: Mapping[str, str]) -> None:
+        self._log.append({"method": method, "url": url, "body": bytes(body), **dict(headers)})
+        if self._script[0] == JEV_TIMEOUT:
+            raise TimeoutError("fake socket timeout")
+
+    def getresponse(self) -> _JevFakeResponse:
+        status, body = self._script
+        assert isinstance(status, int)
+        return _JevFakeResponse(status, body)
+
+    def close(self) -> None:
+        return
+
+
+class _JevFakeConnect:
+    """Hands out scripted connections in order, repeating the last one indefinitely."""
+
+    def __init__(self, scripts: list[tuple[str | int, bytes]]) -> None:
+        self._scripts = scripts
+        self.log: list[dict[str, object]] = []
+
+    def __call__(self, timeout: float) -> _JevFakeConnection:
+        del timeout
+        script = self._scripts.pop(0) if len(self._scripts) > 1 else self._scripts[0]
+        return _JevFakeConnection(script, self.log)
+
+
+class JevProfile:
+    """Experimental Jev adapter over a fake connection: no socket, no worker, no key read.
+
+    Successful bodies travel through the adapter's real HTTPS exchange and
+    bounded reader (so verbatim capture is tested for real); scripted failure
+    codes are injected at the exchange seam, exactly as the Laya double injects
+    them at the worker reply, because an honest transport cannot produce every
+    frozen code. Jev has no worker: ``worker_alive`` reports whether the
+    transport is still open so the shared close checks can assert it is shut.
+    """
+
+    name = "jev-fake"
+    after_close: Lifecycle = "unavailable"
+    after_timeout: Lifecycle = "usable"
+    load_warnings: tuple[str, ...] = ()
+    #: Validated for shape only; their values never reach the outcome.
+    evidence_only_fields = ("usage", "input_tokens", "output_tokens")
+
+    def open(
+        self,
+        *,
+        body: str | None = None,
+        failure: str | None = None,
+        warnings: tuple[str, ...] = (),
+        case_ids: tuple[str, ...] = DEFAULT_CASE_IDS,
+    ) -> DecisionModel:
+        del case_ids  # the fake connection answers every case alike
+        if (body is None) == (failure is None):
+            raise ValueError("exactly one of body/failure is required")
+        if body is not None:
+            inner = jev_module._HttpsExchange(
+                JEV_MOCK_KEY, _JevFakeConnect([(200, body.encode("utf-8"))])
+            )
+
+            def exchange(payload: bytes, timeout: float) -> jev_module._Reply:
+                reply = inner(payload, timeout)
+                return jev_module._Reply(reply.body, reply.failure, (*reply.warnings, *warnings))
+
+            return JevModel._with_exchange(exchange)
+        assert failure is not None
+
+        def scripted(payload: bytes, timeout: float) -> jev_module._Reply:
+            del payload, timeout
+            return jev_module._Reply(None, failure, warnings)
+
+        return JevModel._with_exchange(scripted)
+
+    def open_timing_out(self, question: ChoiceQuestion) -> tuple[DecisionModel, float]:
+        connect = _JevFakeConnect(
+            [(JEV_TIMEOUT, b""), (200, self.valid_raw_body(question).encode("utf-8"))]
+        )
+        return JevModel._with_exchange(jev_module._HttpsExchange(JEV_MOCK_KEY, connect)), 5.0
+
+    def preserved(self, raw: str) -> str:
+        return raw
+
+    def valid_raw_body(self, question: ChoiceQuestion) -> str:
+        probabilities = _probabilities(question, selected=question.labels[0])
+        pairs = " ,  ".join(f'"{label}" : {value!r}' for label, value in probabilities.items())
+        inner = (
+            '{ "type" : "choice" ,  "confidence": 0.25, '
+            f'"choice":"{question.labels[0]}",  "probabilities" : {{ {pairs} }} }}'
+        )
+        return (
+            '{ "usage" : {"input_tokens": 59, "output_tokens": 0},  '
+            f'"answers" : {{ "{question.question_id}" : {inner} }}, "model":"jev-1.13.0" }}'
+        )
+
+    def requests_sent(self, model: DecisionModel) -> int:
+        assert isinstance(model, JevModel)
+        return model._attempts
+
+    def worker_alive(self, model: DecisionModel) -> bool | None:
+        assert isinstance(model, JevModel)
+        return not model._closed
+
+    def worker_pid(self, model: DecisionModel) -> int | None:
+        assert isinstance(model, JevModel)
+        return None
+
+
+PROFILE_NAMES: Final[tuple[str, ...]] = ("fixture", "laya-fake", "jev-fake")
 
 
 def build_profile(name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ProviderProfile:
@@ -487,6 +636,8 @@ def build_profile(name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
         return FixtureProfile(tmp_path)
     if name == "laya-fake":
         return FakeLayaProfile(write_fake_worker(tmp_path, monkeypatch), monkeypatch)
+    if name == "jev-fake":
+        return JevProfile()
     raise ValueError(f"unknown provider profile: {name}")
 
 
