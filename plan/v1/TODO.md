@@ -19,4 +19,6 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work:05 mocked Jev implementation and final independent review.07 strictactivearchive repair and08 references have scoped source ACCEPT; full execution/dependency/media gates remain pending.09 schemas/CIglue have scoped ACCEPT and exact-head ten green jobs.11 source-onlyhero has scoped ACCEPT and eight green jobs. Native03, fullmutation04, actualvisual11/12, Task07 test/temp operation and Task05 .env.example access remain approval-blocked. INTEGRATION_CHECKLIST.md retains all packaging/registry/docs gates; no publication approval is inferred.
+Current work:06 offline benchmark preparation from independently accepted05 source;14 recording procedure repair. Jev repaired transport passed3,001parent core tests and separate6outline checks; draftPR28 hostedCI pending.08R3 has eightgreen jobs. Full03native,04mutation,07example and actualvisual gates remain permission-blocked; .env.example access also pending. No v1 tag or publication.
+
+Next gate: independently review06 concrete preregistration before any live dispatch; review14 repaired procedure without running actual package/recorder. Full requirements and cut deadlines remain unchanged.
