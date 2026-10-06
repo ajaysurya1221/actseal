@@ -1,6 +1,9 @@
 # Actseal v1 trust boundaries
 
-**Core accepted through T40; final acceptance and release pending.** [T40's review](../plan/reviews/T40-02.md) records implemented evidence/replay checks and hosted macOS/Linux verification. CLI integration and T60's independent acceptance work remain pending. This document defines the assurance boundary, not a comprehensive security audit. Exact rules are in [CONTRACTS](../plan/CONTRACTS.md); final gates remain in the [release checklist](../plan/RELEASE_CHECKLIST.md).
+This document defines the assurance boundary, not a comprehensive security audit.
+[T40](../plan/reviews/T40-02.md) and [T50](../plan/reviews/T50-02.md) record tested
+replay and CLI boundaries. Exact rules live in [CONTRACTS](../plan/CONTRACTS.md);
+release verification is recorded in the [final report](../plan/FINAL_REPORT.md).
 
 Actseal's intended protected result is a reproducible decision about a supplied, frozen application policy and its recorded evidence. Its evaluator does not execute application actions. The integrating application must protect the expected policy identity, verify its intended PASS and use the same evaluator/system at runtime. Parsing an arbitrary submitted lock must not make that lock authoritative.
 
@@ -26,7 +29,7 @@ Replay must make no network call, import no provider/model module and execute no
 
 Fresh replay checks the lock, manifests, raw inputs, ordered inventories, request hashes, recorded normalizations/actions and the final verdict. Unsupported implementation identity is ERROR. A deliberately captured malformed provider body can be valid failure evidence; damaged outer structure or inconsistent reconstruction is a different ERROR.
 
-Before strict lock decoding succeeds, ERROR diagnostics use `evidence_scope=demo` and a 64-zero `lock_sha256` sentinel for unknown identity. After structural decoding, retain the decoded scope/hash even if later validation fails; retaining these values does not trust them. Never copy an expected external lock digest into the observed-identity field. ERROR counts remain zero and intervals `[0,1]`; reasons identify invariants without echoing payloads. Invalid evidence returns a verdict. Wrong Python argument types, malformed expected digests or NUL-bearing paths may raise `SchemaError` before filesystem effects; the pending CLI integration must map these to exit 3.
+Before strict lock decoding succeeds, ERROR diagnostics use `evidence_scope=demo` and a 64-zero `lock_sha256` sentinel for unknown identity. After structural decoding, retain the decoded scope/hash even if later validation fails; retaining these values does not trust them. Never copy an expected external lock digest into the observed-identity field. ERROR counts remain zero and intervals `[0,1]`; reasons identify invariants without echoing payloads. Invalid evidence returns a verdict. Wrong Python argument types, malformed expected digests or NUL-bearing paths may raise `SchemaError` before filesystem effects; the CLI maps these to exit 3.
 
 Under [ADR 0009](decisions/0009-worker-loss-invalidates-statistical-run.md), a complete infrastructure-invalidated bundle is diagnostic evidence. Replaying it must preserve ERROR; it cannot certify uptime, completion probability or a result conditioned on successful completion.
 
@@ -40,8 +43,8 @@ A model/card license, a selected threshold and a PASS are not general applicatio
 
 ## Sensitive data and local operation
 
-States, labels and raw model bodies may contain sensitive data. Only reviewed synthetic fixtures belong in the public demo; review generated bundles before sharing. The pending [ADR 0013 demo](decisions/0013-prespecified-synthetic-demo.md) uses the same policy against different authored outputs; it makes no model-repair or deployment-performance claim. Captures exclude credentials, authorization headers and arbitrary exception text; bounded errors identify fields/invariants without echoing source values.
+States, labels and raw model bodies may contain sensitive data. Only reviewed synthetic fixtures belong in the public demo; review generated bundles before sharing. The [ADR 0013 demo](decisions/0013-prespecified-synthetic-demo.md) uses the same policy against different authored outputs; it makes no model-repair or deployment-performance claim. Captures exclude credentials, authorization headers and arbitrary exception text; bounded errors identify fields/invariants without echoing source values.
 
 Fixture/demo/replay require no key. Optional local-model preparation is separate from offline evaluation; Hugging Face offline flags are library settings, not a network firewall. Jev and actual fallback execution remain outside v1. A recorded fallback flag always removes ACT authority.
 
-Accepted core checks cover rehashed semantic inconsistencies, inventory/fault validation, filesystem bounds, provider-free/network-free replay and diagnostic worker-loss ERROR. T60's independent acceptance, CLI/packaging integration and final release-candidate checks remain required. Passing tests supports their tested boundaries, not an unbounded security claim.
+Accepted core checks cover rehashed semantic inconsistencies, inventory/fault validation, filesystem bounds, provider-free/network-free replay and diagnostic worker-loss ERROR. CLI/packaging checks include fresh installed execution; independent adversarial and final release checks are recorded separately. Passing tests supports their tested boundaries, not an unbounded security claim.

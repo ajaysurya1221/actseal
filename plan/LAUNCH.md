@@ -1,24 +1,101 @@
 # Actseal launch draft
 
-**DRAFT / NOT FOR PUBLICATION — 6 October 2026.** v0.1.0 is not complete. T00 foundation is accepted; the product lanes are in progress. The text below describes release targets, not verified shipped capabilities. Keep this marker until the [release evidence checklist](RELEASE_CHECKLIST.md) is complete and Codex reviews the final wording. Public posting requires its own explicit instruction.
+**DRAFT / NOT FOR PUBLICATION — 6 October 2026.** Prepared for plan/LAUNCH.md.
+Tasks T00–T50 are accepted; T50 `286ae67` merged as `7e696c5`. Root also executed
+the native CLI at `434c682`, preserving its BLOCK result. T60 and final
+publication gates remain pending; the public wheel URL is not yet available.
+Public posting requires a separate explicit instruction. Relative links target
+the eventual plan/LAUNCH.md location.
 
 ## Proposed post
 
-I'm building Actseal for developers who need to decide when a categorical model output may trigger an application action.
+I'm building Actseal for developers whose applications turn categorical model
+answers into actions. It freezes the policy and labelled cases, checks
+accepted-action error and coverage, exercises six provider-failure scenarios,
+and saves evidence that can be replayed without calling the model.
 
-The v0.1.0 target is a small Python tool that freezes a decision policy, its labelled verification cases and model identity, then checks accepted-action error and coverage against declared limits. The release is intended to include six deterministic provider-failure scenarios and a data-only evidence bundle that can be re-evaluated offline.
+The accepted T50 installed-wheel candidate demonstrates the **same policy against
+two sets of authored support-triage answers**. One has 32 wrong accepted answers
+out of 128 and produces BLOCK. The other has zero out of 128 and produces PASS.
+Both evidence bundles replay to their original verdicts. These are two synthetic
+fixture runs, not a trained or repaired model and not a population benchmark.
+INCONCLUSIVE remains a separate outcome when valid evidence is insufficient.
 
-The planned first demo uses authored support-routing fixtures: an intentionally bad policy should produce BLOCK, a sufficient corrected fixture should produce PASS, and insufficient evidence should remain INCONCLUSIVE. Actual outputs and a timed, installed-wheel quickstart will replace this description only after the release checks pass.
+The Python core requires no model library, key or hosted service. A separate
+native Laya CLI check on those synthetic inputs ABSTAINed on all 128 cases at
+the frozen threshold and BLOCKed for low coverage. Replay preserved that result;
+no policy tuning or retry turned it into PASS. That checks the integration,
+not population performance. The statistical interpretation requires independent
+case outcomes over one fixed, prespecified attempt; it does not certify worker
+uptime or completion probability.
 
-The core is intended to run without model libraries, keys or a hosted service, with a separately tested optional local Laya CPU adapter. The statistical claim concerns independent case outcomes under one fixed, prespecified attempt. It makes no claim about persistent-worker uptime or run-completion probability. Worker loss must invalidate the statistical run; retrying until PASS is outside the protocol.
+Replay makes policy evidence inspectable. Even a trusted lock cannot authenticate
+rewritten responses under that same lock or prove inference, labels or sampling
+history. Actseal does not enforce another application's actions.
 
-Actseal's evidence is intended to make a specific policy decision inspectable. It cannot prove label truth, authenticate wholly rewritten evidence or enforce an application's actions. The synthetic demo will not establish production reliability.
+Repository: [ajaysurya1221/actseal](https://github.com/ajaysurya1221/actseal).
+The verified v0.1.0 release link and final installed-wheel quickstart are pending.
 
-Repository: [ajaysurya1221/actseal](https://github.com/ajaysurya1221/actseal). The release link, demonstrated result and final quickstart remain pending verification.
+## Candidate receipt for editorial review
+
+Root's 6 October corrected installed-wheel receipt records the following actual
+results, accepted in [REVIEW T50-02](reviews/T50-02.md) at
+`286ae67e252ecbb77e9c330ebe1f66cc375bfbab`, merged as `7e696c5`. These remain
+**candidate evidence only**; do not silently promote them to the final release
+artifact or add a cold-download performance claim.
+
+| Observation | Bad authored answers | Fixed authored answers |
+|---|---|---|
+| Verdict | BLOCK | PASS |
+| ACT / scheduled | 128 / 128 | 128 / 128 |
+| Wrong ACT / ACT | 32 / 128 | 0 / 128 |
+| Risk interval | [0.1687604663492846, 0.346264539835876] | [0.0, 0.033655210093607835] |
+| Coverage interval | [0.9663447899063922, 1.0] | [0.9663447899063922, 1.0] |
+| Fresh module replay | BLOCK / exit 1 | PASS / exit 0 |
+
+The installed console demo exited 0. Root measured wall time **0.170645 seconds**
+after a separately measured **0.046136-second cached environment/install step**.
+This is one candidate fixture execution, not an inference, general-hardware or
+fresh GitHub-download benchmark. Preserve the final platform/runtime and setup
+boundary when replacing it with the final release receipt.
+
+Internal receipt: `plan/local-receipts/T50-02-installed.json` (not a public release
+artifact). Recorded candidate base: `3e51ca2dacd5e05d96768208710c7fdb3ce118f0`;
+this is a base reference, not an assertion that all candidate changes were
+committed at that SHA. Actual tested wheel SHA-256:
+`b3633a3a0d2977d1250b0cf3a4e0078903744ec181d977ccce82013f85ad6128`.
+
+The separate native CLI receipt at
+`434c682352d19e64c6349cb5a7aac44fa7554156` used macOS 26.6.2 arm64,
+Python 3.12.13, uv 0.12.5, the pinned cached model and both offline library flags.
+Lock exited 0 in 6.445306 s; verify returned BLOCK/1 in 13.820518 s; replay returned
+the same BLOCK/1 in 0.092522 s. All 128 outcomes were ABSTAIN, with no provider
+failures, risk [0, 1] and coverage [0, 0.033655210093607835]. Reasons:
+`coverage.below_minimum` and `risk.no_accepted_cases`. All six faults matched;
+warning counts were 128 retained calibration warnings and 27 renormalizations.
+There was one fixed attempt with no tuning or retry. Risk is unestimated when
+ACT count is zero; the result is not zero-error model performance.
+
+Native implementation fingerprint:
+`cd3a0976cf7886616f1fdf565c914f30d0c82cac530e7b9ffc4119e3a90300a7`.
+Native lock:
+`9abbd4b0ef47bb05efff1df1d4d5deb974b40ee72be49b6afe806665367d4267`.
+Internal receipt: `plan/local-receipts/T70-native-434c682/receipt.json`.
+These elapsed times exclude prior model/runtime preparation and are not general
+latency claims. Final release identity, T60 and publication remain pending.
 
 ## Required edits before publication
 
-- Replace future-tense capability statements only where the release candidate has a corresponding ACCEPT review, green required CI and executed receipt.
-- Add the verified v0.1.0 release link and exact installed-wheel quickstart; include only measured demo results and timing with prerequisites/platform stated.
-- Recheck the wording against [ADR 0009](../docs/decisions/0009-worker-loss-invalidates-statistical-run.md), the statistical/trust docs and the final shipped scope. Do not add uptime, completion-probability, calibrated-checkpoint, security-sandbox, adoption or quantitative “10×” claims.
-- Preserve this as a draft until the user explicitly requests public posting. Preparing a GitHub release does not authorize a social or community message.
+- Complete the [release checklist](RELEASE_CHECKLIST.md), including T60,
+  final required CI and artifact audit. Preserve T50/native receipts and verify
+  their applicability if source/runtime identity changes.
+- Replace candidate language only with the corresponding accepted final receipts.
+  Add the verified release URL and public-wheel command after checking that exact
+  asset. Keep runtime/package preparation separate from measured fixture execution.
+- Recheck the post against the [final report](FINAL_REPORT.md),
+  [ADR0009](../docs/decisions/0009-worker-loss-invalidates-statistical-run.md) and
+  [ADR0013](../docs/decisions/0013-prespecified-synthetic-demo.md). Keep the two-run,
+  same-policy distinction; do not add model-repair, calibrated-checkpoint,
+  production-reliability, adoption, security-sandbox or quantitative “10×” claims.
+- Keep this document a draft until the user explicitly requests posting. A GitHub
+  release does not authorize a social or community message.

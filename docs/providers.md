@@ -6,7 +6,171 @@ Status: full T30 accepted at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7` and merg
 
 The v1 live-model path uses the optional Laya dependency. The fixture quickstart and evidence replay require no model or credentials. The reference is one categorical question, one explicitly selected checkpoint, CPU FP32, four Torch threads, and eager inference. Automatic model routing, MLX conversion, quantization, compilation, and alternate device promotion are outside this reference.
 
-Verified upstream calls:
+| Reference path | Compatibility and evidence boundary |
+|---|---|
+| Core fixture/replay | No third-party runtime dependency; ordinary product CI covers macOS/Linux with Python 3.12 and 3.13. Evidence publication requires the supported native filesystem operation. |
+| Native macOS | arm64, pinned PyPI Torch wheel tagged macOS 14.0 or later; actual native receipts use Python 3.12.13. The wheel tag is a binary requirement, not proof of testing every macOS version. |
+| Native Linux | x86_64, glibc >=2.28, official Torch CPU distribution; actual native receipt uses Ubuntu/Python 3.12.3. Python 3.13 wheel availability was checked, but native inference on 3.13 was not established by that check. |
+
+The native receipts do not establish Intel Mac, Linux ARM, musl, Windows or GPU
+support. There is no automatic device or model substitution. Exact stack pins:
+Laya 0.3.28; Torch 2.14.1 on macOS / 2.14.1+cpu on Linux; Transformers 5.18.0;
+huggingface-hub 1.33.0; Safetensors 0.8.0; NumPy 2.5.3. See
+[dependencies](dependencies.md) for the full locked graph and notices.
+
+## Prepare the native stack and checkpoint
+
+The supported native installation uses this repository's committed uv lock and
+platform-specific CPU source configuration. From a checkout of the reviewed
+release commit, with uv 0.12.5 installed, run:
+
+```bash
+uv sync --frozen --python 3.12 --group dev --extra laya
+```
+
+Do not substitute a bare wheel-extra or PyPI-only installation on Linux:
+standard wheel metadata preserves `torch==2.14.1+cpu`, but installers do not
+inherit the repository's `tool.uv.sources` CPU-index mapping. Without an explicit
+CPU source, installation should fail rather than resolve proprietary CUDA
+packages. [The dependency guide](dependencies.md#linux-cpu-selection-and-rejected-cuda-dependencies)
+explains this distinction. The fixture GitHub-wheel quickstart needs no extra.
+
+Download the five pinned public artifacts once, separately from evaluation:
+
+```bash
+uv run --frozen --python 3.12 --extra laya python - <<'PY'
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id="convaiinnovations/laya-typed-decisions",
+    revision="e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+    allow_patterns=[
+        "model.safetensors",
+        "encoder/config.json",
+        "rl_agent_config.json",
+        "tokenizer/tokenizer.json",
+        "tokenizer/tokenizer_config.json",
+    ],
+)
+PY
+```
+
+This preparation accesses the model repository and requires space for the
+optional packages, cache and 842,609,220-byte weight file. The adapter verifies
+the expected artifact hashes before loading; the complete hash table is in
+[dependencies](dependencies.md#weights-and-immutable-artifacts). An existing
+offline environment must permit this explicit preparation step; do not confuse
+a cache miss with successful offline inference.
+
+## Lock, verify and replay with cached Laya
+
+Root executed these lock/verify/replay operations using T50's committed synthetic
+support-triage inputs at candidate `434c682`; the [receipt below](#native-cli-integration-receipt)
+records the actual BLOCK outcome. The commands here use a fresh temporary parent
+instead of root's receipt directory. Inputs remain `evidence_scope=demo` even
+when a real model supplies the answers. Final release acceptance is still pending.
+
+Create only the parent working directory; the lock file and evidence destination
+must be new:
+
+```bash
+actseal_native_root=$(mktemp -d "${TMPDIR:-/tmp}/actseal-laya.XXXXXX")
+```
+
+```bash
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya actseal lock \
+  --contract examples/support_triage/fixed.toml \
+  --calibration examples/support_triage/fixed_calibration.jsonl \
+  --verification examples/support_triage/fixed_verification.jsonl \
+  --provider laya --offline --out "$actseal_native_root/lock.json" --json
+```
+
+```bash
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya actseal verify \
+  --lock "$actseal_native_root/lock.json" \
+  --calibration examples/support_triage/fixed_calibration.jsonl \
+  --verification examples/support_triage/fixed_verification.jsonl \
+  --provider laya --offline --out "$actseal_native_root/evidence" --json
+```
+
+Inspect the verification status and exit code before continuing. BLOCK (1) and
+INCONCLUSIVE (2) are legitimate results; do not adjust the policy or retry until
+PASS. ERROR (3) needs investigation. Setup failure may leave no bundle; a complete
+worker-loss bundle is diagnostic ERROR. When a bundle exists, replay it as a
+separate command even if verification did not return 0:
+
+```bash
+uv run --frozen --extra laya actseal replay "$actseal_native_root/evidence" --json
+```
+
+Replay needs no native provider or model library and must preserve the original
+verdict. Append `--expected-lock-sha256` with a separately trusted lock digest
+when checking an externally supplied bundle. That digest anchors lock identity,
+not the authenticity of response records or actual execution. Offline library
+flags configure cached inference; they are not an OS network firewall.
+
+## Native CLI integration receipt
+
+On 6 October, root independently executed the real CLI at candidate
+`434c682352d19e64c6349cb5a7aac44fa7554156`, following T50's
+[ACCEPT](../plan/reviews/T50-02.md) at
+`286ae67e252ecbb77e9c330ebe1f66cc375bfbab`, merged as `7e696c5`.
+Environment: macOS 26.6.2 arm64, Python 3.12.13, uv 0.12.5; CPU FP32/four threads,
+eager backend, compile=False, fast=False, max_len=1024/head_max_len=256. Exact
+model/runtime pins and all five artifact hashes matched the reference above.
+Both `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1` were set; model preparation
+was already complete and is excluded from these step times.
+
+| Step | Actual outcome | Wall seconds |
+|---|---|---:|
+| `lock` | exit 0; 12 calibration and 128 verification cases; demo scope | 6.445306 |
+| `verify` | BLOCK / exit 1; all 128 ABSTAIN; 0 ACT; 0 provider failures | 13.820518 |
+| `replay` with expected lock digest | Same BLOCK / exit 1, counts, reasons and bounds | 0.092522 |
+
+Risk is **[0, 1]**, unestimated because no case ACTed. Coverage is
+**[0, 0.033655210093607835]**; its upper bound is below the frozen 0.50 minimum.
+Reasons are `coverage.below_minimum` and `risk.no_accepted_cases`. Zero wrong
+accepted cases here is not an accuracy result or a risk estimate of zero.
+All six fault actions matched their expected dispositions. The warnings summary
+preserved 128 occurrences of the upstream calibration warning and 27 occurrences
+of `normalize.renormalized`; the former are per-record retained warning counts,
+not 128 distinct loads. There was no threshold tuning, restart or retry until PASS.
+
+Implementation fingerprint:
+`cd3a0976cf7886616f1fdf565c914f30d0c82cac530e7b9ffc4119e3a90300a7`.
+Observed lock digest:
+`9abbd4b0ef47bb05efff1df1d4d5deb974b40ee72be49b6afe806665367d4267`.
+Public [native CLI receipt](../plan/reports/T70-native.md) records commands and bundle hashes; raw local captures remain ignored.
+Root replay supplied that lock digest; callers must use the digest belonging to
+their own intended lock, not copy this run's value as a universal expectation.
+
+This is a successful execution/replay check that preserves an unsatisfied
+application contract. The authored inputs provide no population guarantee,
+model-quality benchmark or general hardware/latency result. It does not replace
+T60 or final release-candidate/publication checks. The replay command retains
+`--extra laya` to mirror the recorded environment, but replay itself never
+imports or invokes the provider and does not require that extra.
+
+## Public Python boundaries
+
+Use the documented submodules; the package root exports records/errors and
+serialization helpers, not every callable:
+
+| Import | Public boundary |
+|---|---|
+| `from actseal.adapters.base import DecisionModel` | `identity() -> ModelIdentity`; `decide(request, *, timeout_s) -> CapturedOutcome`; `close() -> None`. |
+| `from actseal.policy import evaluate` | `evaluate(outcome: Outcome, policy: LockedPolicy) -> PolicyDecision`. The application must supply its trusted frozen policy and honor the result. |
+| `from actseal.replay import replay` | `replay(bundle: Path, *, expected_lock_sha256: str \| None = None) -> Verdict`. Invalid evidence returns ERROR; invalid Python arguments may raise `SchemaError`. |
+
+Direct provider calls collect raw captures. They do not by themselves execute
+the locked collection/assessment protocol or certify a policy. The CLI/runner
+owns the fixed evidence-collection deadlines; arbitrary low-level timeouts are
+not equivalent evidence. Full record shapes are in [CONTRACTS](../plan/CONTRACTS.md).
+
+## Upstream reference calls
+
+These historical upstream calls document the native integration. They are not
+a replacement for Actseal's preflight, capture, normalization or assessment:
 
 ```python
 import laya
@@ -111,7 +275,7 @@ The pinned [model card](https://huggingface.co/convaiinnovations/laya-typed-deci
 
 Both smoke runs emitted this upstream warning: the `choice:11+` temperature is changed from `0.10058280825614929` to `0.5`. Preserve and surface the warning even when the current question has fewer options. Record actual runtime fallback and device state; a warning must not vanish into a successful result.
 
-Keep one resident native model per spawned worker process. Synchronous Torch calls do not provide cancellable request deadlines; a thread timeout leaves inference running. Initialize the model once, signal readiness within the frozen 120-second startup limit, serialize requests over a data-only channel, and let the parent enforce a finite positive request deadline (default 30 seconds). On a timeout the parent terminates, kills if necessary, and joins its own worker before reporting failure; no late answer may satisfy another request. Later calls on that model object return unavailable; recovery requires a new model object. Do not claim this lifecycle has been implemented merely because native inference passed the smoke.
+The accepted adapter keeps one resident native model per spawned worker process. Synchronous Torch calls do not provide cancellable request deadlines; a thread timeout alone would leave inference running. Startup has a fixed 120-second bound. The evidence-collection protocol passes exactly 30.0 seconds for every normal request, with no CLI/environment/runner override; the low-level `DecisionModel.decide` parameter is a separate raw-capture interface. On a timeout the parent terminates, kills if necessary, and joins its worker before reporting failure; no late answer may satisfy another request. Later calls on that model object remain unavailable. The accepted assessment treats a regular Laya timeout/unavailable as `infrastructure.worker_invalidated` after complete integrity checks, retaining scheduled records as diagnostic evidence. Do not restart within an attempt, replace cases or discard failed attempts until one passes. Canonical injected faults are separate from this rule. See [ADR0008](decisions/0008-fixed-collection-deadlines.md) and [ADR0009](decisions/0009-worker-loss-invalidates-statistical-run.md); the native CLI receipt above is distinct from final release acceptance.
 
 Separate model preparation/download from measured evaluation. Cached execution sets `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`; these are library settings, **not a network firewall**. Replay never imports or invokes the provider. Model loading is not included in the 60-second fixture quickstart.
 
