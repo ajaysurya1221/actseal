@@ -23,3 +23,7 @@ Hosted CI runs 37494066475 and 37494420609 rejected only the line wrapping of a 
 ## V1-005 — Autonomous Claude CLI orchestration authorized
 
 The latest human goal explicitly says: "Call Claude Code via CLI and handle the Orchestration" and authorizes autonomous continuation while AFK. This replaces the earlier manual-session restriction only. Claude Code Fable 5.1/high still writes all product code, product docs, tests and visual assets; Codex reviews and gates. Existing ownership, normal permission controls, no-secret rules, immutable approval text and publication approvals remain in force. No alternate provider or API billing is authorized by this amendment.
+
+## V1-006 — Task 09 implementation delegation and supplied-wheel acceptance
+
+Codex retains release ownership and independent review, delegating Task09 CI/packaging implementation to Claude CLI for parallel throughput. Its exclusive scope includes an ACTSEAL_TEST_WHEEL absolute-path override in tests/packaging/test_wheel.py and tests/acceptance/test_acceptance_wheel_receipts.py. The override must fail on invalid inputs and must never rebuild the supplied wheel; default source-CI behavior and existing assertions remain unchanged. This closes the audit's tested-artifact promotion gap, not a relaxation of acceptance. Codex handles hosted rehearsal, environment changes, merging and publication.
