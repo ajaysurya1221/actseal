@@ -66,7 +66,15 @@ intervals; otherwise `total > 0`, and `PASS` requires `accepted > 0`.
 
 **CLI receipt.** `exit_code` follows `status` (`PASS` 0, `BLOCK` 1,
 `INCONCLUSIVE` 2, `ERROR` 3); `ok` is `exit_code == 0`. `demo.exit_code` is 0
-only when both runs are `as_expected`.
+only when both runs are `as_expected`. The shared `BundlePayload` definition
+(verdict fields, `failures`, `warnings`, `faults`) carries no command-level
+field: `exit_code`, `ok` and `out` belong to the `verify` receipt itself, and a
+nested demo run has none of them.
+
+These schemas are exercised by `tests/unit/test_schema_validation.py`, which
+validates real product output (every bundle file, both demo runs and every CLI
+receipt variant including error paths) with a Draft 2020-12 validator over a
+local, non-fetching registry of these files.
 
 **Compatibility registry.** Keys are exact fingerprints; duplicate keys are
 rejected by the strict parser; the file is at most 1 MiB.

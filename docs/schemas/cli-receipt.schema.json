@@ -122,31 +122,32 @@
         "out": { "type": "string" }
       }
     },
-    "VerifyPayload": {
+    "BundlePayload": {
+      "description": "Verdict fields plus failure/warning counts and fault actions for one evidence bundle; shared by the verify receipt and each nested demo run. Command-level fields (exit_code, ok, out) are NOT part of it.",
       "allOf": [
         { "$ref": "#/$defs/VerdictFields" },
         {
           "type": "object",
-          "required": ["failures", "warnings", "faults", "exit_code", "ok"],
+          "required": ["failures", "warnings", "faults"],
           "properties": {
             "failures": { "$ref": "#/$defs/Counts" },
             "warnings": { "$ref": "#/$defs/Counts" },
-            "faults": { "$ref": "#/$defs/Faults" },
-            "exit_code": { "$ref": "#/$defs/ExitCode" },
-            "ok": { "type": "boolean" }
+            "faults": { "$ref": "#/$defs/Faults" }
           }
         }
       ]
     },
     "VerifyReceipt": {
       "allOf": [
-        { "$ref": "#/$defs/VerifyPayload" },
+        { "$ref": "#/$defs/BundlePayload" },
         {
           "type": "object",
-          "required": ["schema_version", "command", "out"],
+          "required": ["schema_version", "command", "exit_code", "ok", "out"],
           "properties": {
             "schema_version": { "const": 1 },
             "command": { "const": "verify" },
+            "exit_code": { "$ref": "#/$defs/ExitCode" },
+            "ok": { "type": "boolean" },
             "out": { "type": "string" }
           }
         }
@@ -182,7 +183,7 @@
     },
     "DemoRun": {
       "allOf": [
-        { "$ref": "#/$defs/VerifyPayload" },
+        { "$ref": "#/$defs/BundlePayload" },
         {
           "type": "object",
           "required": [

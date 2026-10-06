@@ -45,8 +45,10 @@ explicit experimental CLI flag and may change in any release.
 The console script `actseal` and `python -m actseal` are STABLE. Commands are
 exactly `lock`, `verify`, `replay` and `demo`. Every command accepts `--json`.
 Abbreviated long options are rejected by the root parser and by every
-subcommand (`--ou` is never `--out`). `--version` and `-h`/`--help` at the root
-and at every command remain text output.
+subcommand (`--ou` is never `--out`). `--version` is a root-only option
+(`actseal --version`; `actseal COMMAND --version` is a usage error, `ERROR` 3).
+`-h`/`--help` is accepted at the root and at every command. Both remain text
+output.
 
 | Command | Required | Optional |
 |---|---|---|
@@ -54,7 +56,7 @@ and at every command remain text output.
 | `verify` | `--lock PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out DIRECTORY` | `--responses PATH`, `--offline`, `--json` |
 | `replay` | `DIRECTORY` (positional bundle directory) | `--expected-lock-sha256 HEX`, `--json` |
 | `demo` | `--out NEW_DIRECTORY` | `--json` |
-| root | | `--version`, `-h`/`--help` |
+| root | | `--version` (root only), `-h`/`--help` |
 
 Provider rules: `fixture` requires `--responses`; `laya` forbids it; `--offline`
 is accepted by both. The stable provider choices are `fixture` and `laya`. A
@@ -81,9 +83,9 @@ the exact variants are published in
 |---|---|
 | any error | `schema_version`, `command`, `exit_code` (3), `ok` (false), `status` (`"ERROR"`), `error` (sanitized message) |
 | `lock` | `exit_code` (0), `ok`, `lock_sha256`, `implementation_sha256`, `replay_engine_version`, `evidence_scope`, `contract`, `model_identity` {`provider`, `model`, `revision`, `adapter_version`, `normalizer_version`}, `verification_cases`, `calibration_cases`, `out` |
-| `verify` | verdict fields (`status`, `reasons`, `total`, `accepted`, `errors`, `risk` {`lower`, `upper`}, `coverage` {`lower`, `upper`}, `evidence_scope`, `lock_sha256`), `failures` (code to count), `warnings` (code to count), `faults` (scenario id to {`action`, `expected_action`}), `exit_code`, `ok`, `out` |
+| `verify` | the bundle payload (verdict fields `status`, `reasons`, `total`, `accepted`, `errors`, `risk` {`lower`, `upper`}, `coverage` {`lower`, `upper`}, `evidence_scope`, `lock_sha256`, plus `failures` (code to count), `warnings` (code to count), `faults` (scenario id to {`action`, `expected_action`})) and the command-level fields `exit_code`, `ok`, `out` |
 | `replay` | verdict fields, `exit_code`, `ok`, `bundle`, `expected_lock_sha256` (string or null), `notes` (array of advisory strings; contains the legacy guidance for actseal 0.1.0 evidence, otherwise empty) |
-| `demo` | `exit_code`, `ok`, `status` (`PASS` or `ERROR`), `evidence_scope` (`demo`), `demo_only` (true), `note`, `out`, `duration_s`, `runs` {`bad`, `fixed`} each holding the `verify` payload plus `expected_status`, `as_expected`, `lock`, `evidence`, `replay` (verdict object) and `replay_matches` |
+| `demo` | `exit_code`, `ok`, `status` (`PASS` or `ERROR`), `evidence_scope` (`demo`), `demo_only` (true), `note`, `out`, `duration_s`, `runs` {`bad`, `fixed`} each holding the bundle payload (verdict fields, `failures`, `warnings`, `faults`; no `exit_code`, `ok` or `out` of its own) plus `expected_status`, `as_expected`, `lock`, `evidence`, `replay` (verdict object) and `replay_matches` |
 
 ## Python surface
 

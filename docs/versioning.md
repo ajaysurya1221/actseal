@@ -10,8 +10,8 @@ Actseal follows `MAJOR.MINOR.PATCH`.
 
 | Change | Allowed in |
 |---|---|
-| Bug fixes that preserve every STABLE behaviour | patch |
-| New commands, new optional flags with defaults, new JSON fields, new constants, new engines or registry entries | minor |
+| Bug fixes that preserve every STABLE behaviour; reviewed compatibility registry entries approving an exact released source fingerprint for an existing engine | patch |
+| New commands, new optional flags with defaults, new JSON fields, new constants, new engines | minor |
 | Removal of a STABLE name or flag, an incompatible change to a STABLE behaviour or schema, a new required constructor field | 2.0 only |
 
 Stable 1.x schemas and semantics remain supported throughout 1.x. A STABLE
@@ -79,6 +79,12 @@ lowercase 64-hex source SHA-256>": "<engine>"}}`. Approval of an entry requires:
 - review and acceptance recorded in the release plan. Codex approves the final
   1.0.0 runtime hash at integration (Task 19); the registry is empty until
   then, and the exact-source path works with an empty registry.
+
+Because every source change, including a patch release, changes the
+fingerprint, a reviewed entry approving an exact released fingerprint for an
+existing engine may ship in a patch release. A new engine is a minor release.
+Approval is always explicit and per fingerprint; there is no wildcard, range or
+"all patches of" form.
 
 The registry is trusted verifier configuration. It does not authenticate any
 bundle, response or execution; it states which implementations a verifier is
