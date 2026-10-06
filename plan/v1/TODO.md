@@ -19,6 +19,8 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work:06 offline benchmark preparation from independently accepted05 source;14 recording procedure repair. Jev repaired transport passed3,001parent core tests and separate6outline checks; draftPR28 hostedCI pending.08R3 has eightgreen jobs. Full03native,04mutation,07example and actualvisual gates remain permission-blocked; .env.example access also pending. No v1 tag or publication.
+Current work: Task15 source/test repair64b8e03 has scoped ACCEPT and250 parent visual checks; its draft CI is pending. Task08 ADR repairs eb21e87 have scoped ACCEPT and eight green hosted jobs. Task14 procedure and Task05 offline transport also have eight green jobs. No actual social PNG or v1 publication exists.
 
-Next gate: independently review06 concrete preregistration before any live dispatch; review14 repaired procedure without running actual package/recorder. Full requirements and cut deadlines remain unchanged.
+Task06 is stopped after retrying denied public-cache access; the deviation and scoped approval request remain open. Native03, mutation04, example07, actual visuals and tracked .env.example access also remain approval-blocked.
+
+Next gate: preserve these receipts in checkpoint11, independently review it and verify its exact-head CI. Do not promote source-only acceptance to full-task acceptance.

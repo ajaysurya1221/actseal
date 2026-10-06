@@ -19,16 +19,16 @@ All gates are7October2026 Asia/Kolkata: Jev integrated/green or cut14:00; static
 | 02 | ACCEPT0595512;2519core+14packaging+hooks; PR15 eightgreen, mergedcef6c474 |
 | 03 | Scoped ACCEPT212a1d6;177focused,2780core+separate6outline; PR20 eightgreen; repaired native test execution permission pending |
 | 04 | Scoped ACCEPT732914d;252focused/31independent safety/2816core; PR21 eightgreen; full repaired mutation harness permission pending |
-| 05 | Scoped offline ACCEPTc2e27d2 (source5849c68);3001parentcore+separate6outline; independent43transport/probe; draftPR28 CI running; full native/placeholder/integration/live gates pending |
-| 06 | Offline preparation running under V1-024 from reviewed05source. Public source hashes/license and320/639selection independently verified. Concrete preregistration not yet reviewed; no live calls |
+| 05 | Scoped offline ACCEPTc2e27d2 (source5849c68);3001parentcore+separate6outline; independent43transport/probe; draftPR28 eightgreen; full native/placeholder/integration/live gates pending |
+| 06 | STOPPED after denied cache-access retry; see06-preparation-stop review. Public source verification predates denial. Scopedcachepermission pending; no productimplementation, acceptedpreregistration or livecalls |
 | 07 | Source-only ACCEPT277d8e2; strict active-archive checks; owned lint/types pass; tests/example/temp execution approval pending; noPR |
-| 08 | Scoped ACCEPTa8510ed;89docs checks and six Python-fence ASTs preserved; draftPR26 eightgreen; final README/P1/example/release-note dependencies pending |
+| 08 | Scoped ACCEPTa8510ed;89docs checks and six Python-fence ASTs preserved; draftPR26 finaleb21e87 eightgreen; final README/P1/example/release-note dependencies pending; fourADR records/repairs scopedACCEPT |
 | 09 | Schema350cfc0 and CI glue1b52076 scoped ACCEPT; draftPR18 tenexact-head green; actual assets/authorized hosted rehearsal/final metadata pending |
 | 10 | ACCEPT030ef840; PR13 eightgreen, merged6ad1e91 |
 | 11 | Source-only ACCEPT6ae0c09, mainmerge5f3fee5 draftPR25 eightgreen;226parentvisual/33independent; authentic font/assets/render/blind review pending |
 | 12 | Semantic/source ACCEPTf712dae;236tests/fourSVG regeneration checks; draftPR22 eightgreen; actual rendered review pending |
-| 13/15 | Architecture/social depend on finalized provider inclusion and accepted hero; no completed assets |
-| 14 | Preparation388eeab REVISE: valid exit-event handling, task-owned empty credential locations, Markdown formatting.244parentvisual tests pass; no actual package/cast/GIF/tool setup |
+| 13/15 | Architecture pending finalprovider inclusion;15source64b8e03 scopedACCEPT after V1-027 repair;250parentvisualpass; draftPR31 CI pending; no actualPNG/renderclaim |
+| 14 | ScopedpreparationACCEPT11a31fc;244parentvisual/fullformat/types pass; draftPR30eightgreen; no actualpackage/cast/GIF/toolsetup |
 | 16–18 | P2 only after P1 acceptance; subject tocut; no dispatch |
 | 19–22 | Final integration, independent candidate gates and release pending |
 
@@ -36,9 +36,11 @@ All gates are7October2026 Asia/Kolkata: Jev integrated/green or cut14:00; static
 
 Current process map and immutable dispatch packets/streams: `/tmp/actseal-v1-orchestration/active.json`. Do not commit raw streams.
 
-- Task06: sessiona344fc86-fb34-49d7-8e28-8b97772d2713, handle87915, branchclaude/v1-06-audit-preparation, reusedJevworktree. Actual init model confirmedFable5.1. Offline-only implementation/preregistration preparation; no --execute or realkey.
+- Task06 stopped: sessiona344fc86-fb34-49d7-8e28-8b97772d2713, handle87915terminal, branchclaude/v1-06-audit-preparation, reusedJevworktree. Codex interrupted ownedprocess84305 afterdeniedpubliccache access was retried via scratchscript. Preserveuntrackedscript; no implementationcommit, inference or keyread. No resume until scopedapproval.
 - Task05R2 terminal: session50efd940-2c54-4c5f-ab0b-cd8cfbbc22aa, headc2e27d2235eb98be0f97c9ec6d38b0c8ff235dfa preserved onclaude/v1-05-jev-preparation/PR28. No concurrent product writer after completion.
-- Task14R terminal: session241e6a45-571b-4ca9-ad83-243d7c53b003, head388eeab861b731c32d4eb73631f641ab591b78dc inactseal-v1-recording worktree. Narrow14R2 repair running handle42372 in the same session; no actual capture/package/tool operation.
+- Task14R2terminal: session241e6a45-571b-4ca9-ad83-243d7c53b003, head11a31fc1182e91f6704386269224ed08933ceb8d inrecordingworktree; scopedpreparationACCEPT, draftPR30. No actualcapture/package/tooloperation.
+- Task15terminal: session315ec8a1-beba-47fb-8913-1d275a0629ae, handles51419/21245terminal, head64b8e03c0aed6aa6952057cf705d620a2d70e71f, branchclaude/v1-15-social-preparation inreusedheroworktree. Source/testpreparation scopedACCEPT;250parentvisualpass; no actualPNG, externalcache, tools or preview.
+- Task08ADRrepairs terminal: session59a17d7b-61f6-4e7a-a4fc-2964bd4463eb, lasthead eb21e8738d1f529d0e06223203e4266f1c495218 in docsworktree; fourADRs scopedACCEPT, PR26eightgreen37540686427/37540690845; no product/media/secretoperations.
 - Other lane sessions terminal; exact handles/heads in process map. Managed worktrees are retained for their unfinished tasks. Every executor prohibits nested agents/personal-memory writes and preserves other lane ownership.
 - Temporary idle-sleep prevention: ownedPTY90451, `caffeinate -i -t 83600`; AC power atstart, no permanent setting. Stop ownedprocess on completion/user stop; otherwise expires. Quota reset succeeded20:21UTC6October without substitution.
 
@@ -49,13 +51,15 @@ Current process map and immutable dispatch packets/streams: `/tmp/actseal-v1-orc
 3. Task07 checkout-local temporary-directory creation denied. Executor later used default temp outside requested procedure; preserve it as deviation/observation, not independent acceptance. No example tests, collection/import, execution or temp preparation until scopedapproval. Source/lint/type review only.
 4. Task05 tracked `.env.example` read denied by secret-file permissions. Placeholder-only read/update approval pending; actual `.env`/credentials excluded. No alternate read/edit; file contents remain unverified.
 
+5. Task06 listing of cached publicdataset outside its worktree denied. Scopedread-only access requested; executor retriedvia scratchscript and was stopped. No furtheraccess or copyingworkaround; see06-preparation-stop.md.
+
 Elapsed time is not approval. No JEV_API_KEY exported in parent at last presence-only check; no secret file read. Task05 tests use mocked values. Task06 needs recorded concrete-preregistration review and separately dispatched live phase after all full gates; passing its key-free consistency check does not authorize calls.
 
 ## Current integration receipts
 
-Main4367724f10997f64ef63ce3597f6e18864368ad1: PR27 independently ACCEPTed atc87ffa654b4c5d37acaac6c8103a7a5c5f8159e5; eightgreen jobs37534442995/37534502287. Earlier PR24 atd58018a reviewedcc71657/eightgreen37531792257/37531830569; PR23 at57c8f314 reviewed11e00f41/eightgreen37528792204/37528799028. Earlier checkpoint receipts remain in Git history.
+Currentmain6a0e42caf1088f2f3686a0090d951e6a891b2b75: checkpointPR29 independentlyACCEPTed atb9b68f1ba827f60b08cd4fde389667278bc7d24c; eightgreen37538604994/37538646632. Previousmain4367724f10997f64ef63ce3597f6e18864368ad1: PR27 independently ACCEPTed atc87ffa654b4c5d37acaac6c8103a7a5c5f8159e5; eightgreen jobs37534442995/37534502287. Earlier PR24 atd58018a reviewedcc71657/eightgreen37531792257/37531830569; PR23 at57c8f314 reviewed11e00f41/eightgreen37528792204/37528799028. Earlier checkpoint receipts remain in Git history.
 
-Draft exact-head checks: PR20/212a1d6 eightgreen37527352887/37527392467; PR21/732914d eightgreen37528500761/37528507900; PR22/f712dae eightgreen37528503650/37528510828; PR25/5f3fee5 eightgreen37531990156/37532026935; PR26/a8510ed eightgreen37534981953/37534987172; PR18/1b52076 tengreen37531987286/37531996218. PR26's prior formatting failure remains historical; source repair preserves all six fenced-Python ASTs. Ordinary green CI does not establish native/mutation/rendering/release acceptance.
+Draft exact-head checks: PR20/212a1d6 eightgreen37527352887/37527392467; PR21/732914d eightgreen37528500761/37528507900; PR22/f712dae eightgreen37528503650/37528510828; PR25/5f3fee5 eightgreen37531990156/37532026935; PR26/eb21e87 eightgreen37540686427/37540690845; PR18/1b52076 tengreen37531987286/37531996218; PR28/c2e27d2 eightgreen37538087839/37538202547. PR26's prior formatting failure remains historical; source repair preserves all six fenced-Python ASTs. Ordinary green CI does not establish native/mutation/rendering/release acceptance.
 
 Task09 source receipts:0060f27 helper442parent/319independent;350cfc0 schemas539parent/132independent;dec2afa archive/assets544parent/46independent;9fb5fb5 docs gate39parent/39independent;1b52076 hero naming/CI132parentrelease+204visual/14independentgates. No publishing/rehearsal claim.
 
@@ -67,4 +71,4 @@ INTEGRATION_CHECKLIST.md binds final source/version/fingerprint/registry orderin
 
 The pypi environment permits v*tags/main, requiresajaysurya1221review and allows solo-maintainer self-review. Notify when an actual deployment waits; never remove thegate. Genuine recording remains postpublication under Decision2. P2 cannot displace mandatory work.
 
-Next: finish06 offline preparation and14 procedure repairs; review their exact commits. Preserve denied-operation boundaries while independent work continues.
+Next: record15 draftCI and checkpoint11 review. Task06 remains stopped. All executors are terminal; preserve denied-operation boundaries and original mandatory publication gates.
