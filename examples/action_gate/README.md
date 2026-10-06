@@ -33,6 +33,11 @@ No gold label is needed at run time: a ticket row has exactly `ticket_id` and
 `text`, and `expected_label` never enters a `DecisionRequest` or the fixture
 file. Labelled `Case` fixtures exist only in the evaluation data below.
 
+Before normalization the gate checks that the capture is bound to the exact
+request it sent (`capture.request_sha256 == request_sha256(request)`). A
+same-identity capture for a different ticket, whatever it says, is
+`RequestBindingError`: nothing is evaluated and nothing is enqueued.
+
 ## Files
 
 | File | Kind | Role |
@@ -59,12 +64,14 @@ verification of the authored data (lock, verify, replay) agrees with itself;
 the gate opens on that fresh lock and verdict and routes the eight tickets to
 exactly the authored dispositions with exactly the three `ACT` tickets in the
 queue journal; and every recorded run under `recorded/` passes the checks in
-the next section, with at least one replaying under the running
-implementation.
+the next section, with at least one exact or registry-approved run replaying
+under the running implementation.
 
-`--route` replays the recorded run that matches the running implementation,
-opens the gate on the replayed verdict and prints each ticket's disposition and
-the queue journal.
+`--route` takes the first recorded run whose producer is the running
+implementation or a registry-approved compatible one, replays it, requires the
+replay to equal the recorded verdict, opens the gate on the replayed verdict
+and prints each ticket's disposition and the queue journal. Unapproved runs
+are listed as not used.
 
 ## The eight tickets
 
@@ -124,22 +131,29 @@ inputs. The directory name is the fingerprint prefix. The bytes under
 
 For every recorded run, `--check` requires that `PRODUCER.json` describes its
 `lock.json`, that the bundle passes the structural and hash checks, that the
-recorded inputs are the committed inputs, that `records.jsonl`,
-`faults.jsonl` and the verdict (apart from the lock seal) equal a fresh run,
-and then replays it offline:
+archived lock is internally valid (self-seal, frozen fault inventory, case
+inventories, unique states, disjoint splits; checked explicitly and
+independently of implementation compatibility, without resealing anything),
+that the recorded inputs are the committed inputs, and that `records.jsonl`,
+`faults.jsonl` and the verdict (apart from the lock seal) equal a fresh run.
+It then establishes the run's compatibility status explicitly from the
+packaged registry and replays it offline:
 
-- producer fingerprint equals the running one: replay must equal the recorded
-  verdict (`[ok] ... exact implementation`);
-- producer and running fingerprints are both registered for the engine in the
-  packaged compatibility registry: replay must equal the recorded verdict
-  (`[ok] ... registry-approved implementation`);
-- otherwise the replay is exactly the compatibility `ERROR`
-  (`integrity.lock`), which `--check` reports as `[info] ... not replayable
-  under the running implementation ... bytes preserved` and tolerates as long
-  as at least one recorded run replays.
+- `exact`: the producer fingerprint is the running one. Replay must equal the
+  recorded verdict (`[ok] ... (exact implementation)`).
+- `approved`: producer and running fingerprints are both registered for the
+  lock's engine. Replay must equal the recorded verdict
+  (`[ok] ... (approved implementation)`).
+- `unapproved`: neither. Because the archive itself was already validated,
+  the only acceptable replay is exactly the compatibility `ERROR`
+  (`integrity.lock`), reported as `[info] ... not replayable under the
+  running implementation ... bytes preserved` and tolerated as long as at
+  least one exact or approved run exists.
 
-Any other difference is an `[error]`. When no recorded run replays under the
-running implementation, `--check` fails and asks for a fresh run:
+Any other replay result, including an `integrity.lock` caused by a corrupt
+archived seal, is an `[error]`; a generic replay failure is never relabelled
+as a compatibility notice. When no exact or approved run exists, `--check`
+fails and asks for a fresh run:
 
 ```bash
 uv run --frozen python examples/action_gate/run.py --record examples/action_gate/recorded/<new fingerprint prefix> --source-commit <40-hex commit>
@@ -165,9 +179,14 @@ something this example can grant.
   frozen engine. It does not prove who produced the bundle, that a model was
   called, that labels are true or that the application enforced anything at
   run time (see `docs/threat-model.md`).
-- A provider exception or a queue failure propagates and stops routing at
-  that ticket; nothing is retried, skipped or downgraded to another path, and
-  the failing ticket is never enqueued.
+- A provider exception, a binding failure or a queue failure propagates and
+  stops routing at that ticket; nothing is retried, skipped or downgraded to
+  another path, and no disposition is produced for it. Provider and binding
+  failures happen before any effect. A queue operation that raises may have
+  performed its write first (the example's enqueue-then-raise test shows the
+  entry retained); handling that partial effect is the application's
+  responsibility as the queue's owner. The example adds no transaction or
+  compensation machinery.
 
 Regenerate the data with `python examples/action_gate/generate_data.py DIRECTORY`
 (it refuses to overwrite existing files) and compare with this directory; any
