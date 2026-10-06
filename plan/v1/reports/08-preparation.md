@@ -155,6 +155,11 @@ commands, pushes, merges.
 
 ## Spend
 
-- API/credits: none (no model or API calls).
-- Subscription meter: one Claude Code session; wall time approximately
-  40 minutes of tool activity. No separate billing was used.
+- API/credits (live provider usage): none. No model or API calls were made.
+- Claude subscription: one Claude Code CLI session. This report originally
+  stated "wall time approximately 40 minutes of tool activity"; that figure
+  was an estimate and was wrong. The measured stream-08 result recorded by
+  Codex is `duration_ms` 963689 (about 16 m 03.689 s) and `duration_api`
+  901046 ms. The subscription/billing meter consumption is unknown.
+  Correction recorded in [REPORT 08R](08R.md); the original wording is kept
+  here for history.
