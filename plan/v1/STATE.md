@@ -25,8 +25,8 @@ Codex is the sole writer of this state and REVIEW records. Executors write their
 | Task | Owner | Status |
 | --- | --- | --- |
 | 00 | Codex | ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8 |
-| 01 | Codex | ACCEPT after 01R: independent 2302 passed incl. native; PR #10 CI pending |
-| 02 | Claude A | Ready after accepted 01R integration; dispatch supplement being prepared |
+| 01 | Codex | ACCEPT after 01R: independent 2302 passed incl. native; PR #10 merged at aaaf6c9 |
+| 02 | Claude A | RUNNING Claude session 55bc88af-619e-4aff-97ac-4d7c42d31418 in core worktree |
 | 03–08 | Claude B/C/D | Waiting for frozen Task 02 contracts and specified dependencies |
 | 09 | Codex | Prerequisites ACCEPT and merged via PR #9 at e4bf59a; RUNNING Claude session b3ff94c7-3730-4f74-8c97-51ca08412f31 for publication workflow hardening |
 | 10 | Claude V | RUNNING Claude session 6d75b60a-06d9-4a39-a69b-fbe105277f4a in visuals worktree |
@@ -35,12 +35,24 @@ Codex is the sole writer of this state and REVIEW records. Executors write their
 
 ## Accepted commits and reports
 
-Task 00 ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8. The original complete baseline produced 2300 passes and two shared-process failures; that historical attempt is retained. Task 01R at d4bb8475ab5f6d9756bcfde1c2942a6dbb14d9c9 repaired the isolation checks and received independent ACCEPT: all 2302 tests, including native inference and packaging, passed in 57.79 seconds. PR #10 awaits green hosted CI and merge. Historical v0.1 reports remain unchanged.
+Task 00 ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8. The original complete baseline produced 2300 passes and two shared-process failures; that historical attempt is retained. Task 01R at d4bb8475ab5f6d9756bcfde1c2942a6dbb14d9c9 repaired the isolation checks and received independent ACCEPT: all 2302 tests, including native inference and packaging, passed in 57.79 seconds. PR #10 passed all eight push/PR matrix jobs and merged at aaaf6c97a551b1ec8a9166e652ed2dc0779f7af3. Historical v0.1 reports remain unchanged.
 
 ## Next action
 
-Monitor the existing Claude09 and Claude10 processes; do not relaunch them. Merge accepted Task01R only after exact-head PR #10 checks are green, then launch Task02 once from that integrated source. Task01R is finished and must not be dispatched again. Claude CLI orchestration is authorized; no other product implementer or billing substitution is permitted.
+Monitor the existing Task02, Task09 and Task10 Claude processes; do not relaunch them. Read completed REPORTs/diffs, independently run checks, record ACCEPT/REVISE, then merge only with exact-head hosted CI green. Task01R is finished and merged. After Task02 ACCEPT, launch03/04 and prepare07; after10 ACCEPT launch11. Normal permission controls and no-secret rules remain in force.
 
 ## Latest integration receipt
 
 PR #9 head 8d368593b9ff8a8fde786e10088e963de6c03eea received independent ACCEPT and all eight push/PR matrix jobs passed (runs 37495186182 and 37495194314). Merge commit e4bf59ae98f6eaee22556ec14d32969f53c52d1c. This state-only checkpoint is on codex/v1-execution-state pending its next reviewed integration; it does not change product code.
+
+## Live execution handles — revalidate, never assume terminal
+
+| Task | Claude session | Tool exec handle | Worktree |
+| --- | --- | --- | --- |
+| 02 | 55bc88af-619e-4aff-97ac-4d7c42d31418 | 39528 | /Users/ajay/.codex/worktrees/actseal-v1-core/not-yet-named |
+| 09 | b3ff94c7-3730-4f74-8c97-51ca08412f31 | 82253 | /Users/ajay/.codex/worktrees/actseal-v1-release/not-yet-named |
+| 10 | 6d75b60a-06d9-4a39-a69b-fbe105277f4a | 14887 | /Users/ajay/.codex/worktrees/actseal-v1-visuals/not-yet-named |
+
+All run claude-fable-5-1 with effort high and normal acceptEdits controls. Local prompts/stream logs/status are under /tmp/actseal-v1-orchestration; do not commit raw session logs. Tool handles were confirmed live after dispatch. Observation timeouts are not terminal results. No Task02/09/10 REPORT has yet been accepted.
+
+The pypi environment now permits v* tags plus existing main, requires reviewer ajaysurya1221 and permits solo-maintainer self-review. No release tag or package upload was attempted. JEV_API_KEY is not exported in the current Codex process; no secret file was inspected. Claude's configured curl deny rule blocked asset-fetch attempts; no permission rule was removed. Record any asset setup still needed in Task10's report.
