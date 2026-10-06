@@ -9,13 +9,15 @@ from typing import Any
 
 import pytest
 
+from actseal.adapters.fixture import FixtureModel
 from actseal.compatibility import SUPPORTED_ENGINES
+from actseal.contract import parse_contract
 from actseal.evidence import BUNDLE_FILES, decode_document, read_bundle_files
 from actseal.locking import parse_lock, validate_lock
 from actseal.records import Verdict
-from actseal.replay import REASON_LOCK, replay
+from actseal.replay import replay
 from actseal.serialization import implementation_fingerprint
-from examples.examples_support import RECORDED_DIR, read_json, sha256_hex
+from examples.examples_support import EXAMPLE_DIR, RECORDED_DIR, read_json, sha256_hex
 
 
 def recorded_dirs() -> list[Path]:
@@ -66,35 +68,32 @@ def test_recorded_records_faults_and_verdict_reproduce_from_the_inputs(
     assert recorded_verdict.status == run.load_producer(run_dir).verdict_status
 
 
-def test_at_least_one_recorded_run_replays_under_the_running_implementation(
-    run: ModuleType,
+@pytest.mark.parametrize("run_dir", recorded_dirs(), ids=lambda path: path.name)
+def test_archived_contract_and_fixture_identity_are_the_frozen_ones(run_dir: Path) -> None:
+    lock = parse_lock((run_dir / "lock.json").read_text(encoding="utf-8"))
+    assert lock.contract == parse_contract(EXAMPLE_DIR / "contract.toml")
+    assert lock.model_identity == FixtureModel(EXAMPLE_DIR / "responses.jsonl").identity()
+
+
+@pytest.mark.parametrize("run_dir", recorded_dirs(), ids=lambda path: path.name)
+def test_every_active_recorded_run_replays_to_its_archived_verdict(
+    run: ModuleType, run_dir: Path
 ) -> None:
-    running = implementation_fingerprint()
-    compatible = 0
-    for run_dir in recorded_dirs():
-        producer = run.load_producer(run_dir)
-        # Archive validity is established explicitly, independent of compatibility.
-        run.check_archived_lock(parse_lock((run_dir / "lock.json").read_text(encoding="utf-8")))
-        recorded = decode_document(
-            "verdict.json", read_bundle_files(run_dir / "evidence")["verdict.json"], Verdict
-        )
-        replayed = replay(run_dir / "evidence", expected_lock_sha256=producer.lock_sha256)
-        status = run.compatibility_status(producer)
-        if producer.implementation_sha256 == running:
-            assert status == "exact"
-            assert replayed == recorded, run_dir.name
-            validate_lock(parse_lock((run_dir / "lock.json").read_text(encoding="utf-8")))
-            compatible += 1
-        elif status == "approved":
-            assert replayed == recorded, run_dir.name
-            compatible += 1
-        else:
-            # A foreign, unapproved producer: exactly the compatibility ERROR and nothing else.
-            assert status == "unapproved"
-            assert replayed.status == "ERROR", run_dir.name
-            assert replayed.reasons == (REASON_LOCK,), run_dir.name
-            assert replayed.lock_sha256 == producer.lock_sha256
-    assert compatible >= 1, (
-        "no recorded run replays under this implementation; record a fresh one with "
-        "`run.py --record` instead of editing an existing run"
+    """V1-020: core replay owns general validation; each active archive must replay non-ERROR.
+
+    A run whose producer is neither the running implementation nor a
+    registry-approved pair fails here. That is the intended signal: record a
+    separately identified fresh run with ``run.py --record`` or obtain a
+    reviewed compatibility decision; never edit, reseal or move the archive.
+    """
+    producer = run.load_producer(run_dir)
+    recorded = decode_document(
+        "verdict.json", read_bundle_files(run_dir / "evidence")["verdict.json"], Verdict
     )
+    replayed = replay(run_dir / "evidence", expected_lock_sha256=producer.lock_sha256)
+    assert replayed.status != "ERROR", (run_dir.name, replayed.reasons)
+    assert replayed == recorded, run_dir.name
+    validate_lock(parse_lock((run_dir / "lock.json").read_text(encoding="utf-8")))
+    if producer.implementation_sha256 != implementation_fingerprint():
+        # Only a reviewed registry entry on both sides can make this pass.
+        assert producer.replay_engine_version in SUPPORTED_ENGINES

@@ -20,6 +20,8 @@ from examples.examples_support import (
     RECORDED_DIR,
     REPO_ROOT,
     RUN_SCRIPT,
+    change_threshold,
+    corrupt_dataset,
     corrupt_seal,
     foreign_copy,
     read_json,
@@ -32,6 +34,7 @@ HEX_E = "e" * 64
 HEX_F = "f" * 64
 COMMIT = "0123456789abcdef0123456789abcdef01234567"
 ENGINE = "actseal-choice-v1"
+PACKAGED_REGISTRY = REPO_ROOT / "src" / "actseal" / "compatibility_registry.json"
 
 
 def approve(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, *fingerprints: str) -> Path:
@@ -45,10 +48,41 @@ def approve(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, *fingerprints: str)
     return path
 
 
+def forbid_queue_operations(run: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make any routing (the only path to a queue operation) fail the test loudly."""
+
+    def forbidden(*args: object, **kwargs: object) -> None:
+        del args, kwargs
+        raise AssertionError("a queue operation was attempted")
+
+    monkeypatch.setattr(run, "route_all", forbidden)
+
+
+def snapshot(run_dir: Path) -> dict[str, bytes]:
+    return {str(p.relative_to(run_dir)): p.read_bytes() for p in run_dir.rglob("*") if p.is_file()}
+
+
 def committed_run() -> Path:
     runs = sorted(path for path in RECORDED_DIR.iterdir() if path.is_dir())
     assert runs
     return runs[0]
+
+
+def assert_refused(run: ModuleType, root: Path, *fragments: str) -> str:
+    """``--check`` and ``--route`` both fail, mention every fragment and perform no queue effect."""
+    out = io.StringIO()
+    assert run.check(out, recorded_root=root) == 1
+    text = out.getvalue()
+    for fragment in fragments:
+        assert fragment in text, (fragment, text)
+    assert "[info] routing: skipped; no queue operation while any active archive fails" in text
+    assert "[ok] routing" not in text
+    out = io.StringIO()
+    assert run.route(out, recorded_root=root) == 1
+    assert "route refused:" in out.getvalue()
+    assert "no queue operation was performed" in out.getvalue()
+    assert "queue journal" not in out.getvalue()
+    return text
 
 
 def test_check_passes_on_the_committed_example(run: ModuleType) -> None:
@@ -132,160 +166,198 @@ def test_help_exits_zero(run: ModuleType, capsys: pytest.CaptureFixture[str]) ->
     assert "--record DIRECTORY" in capsys.readouterr().out
 
 
-def test_foreign_producer_run_is_reported_not_replayed_and_not_rewritten(
-    run: ModuleType, tmp_path: Path
+@pytest.mark.parametrize("beside_valid_run", [False, True], ids=["alone", "beside-valid"])
+def test_unapproved_foreign_archive_fails_with_no_queue_effect_and_preserved_bytes(
+    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, beside_valid_run: bool
 ) -> None:
+    """V1-020: an unsupported active archive fails --check and --route, even beside a valid run."""
     root = tmp_path / "recorded"
     root.mkdir()
-    # Named to sort before the committed run so --route visibly skips it first.
-    foreign = root / "000000000000"
+    foreign = root / "000000000000"  # sorts first, so it would be routed if tolerated
     seal = foreign_copy(committed_run(), foreign, HEX_0)
-    before = {p.name: p.read_bytes() for p in (foreign / "evidence").iterdir()}
-    out = io.StringIO()
-    assert run.check(out, recorded_root=root) == 1
-    text = out.getvalue()
-    assert "[info] recorded/000000000000: not replayable under the running implementation" in text
-    assert "unapproved pair; archive seal and inventories verified); bytes preserved" in text
-    assert "[error] recorded: no exact or registry-approved recorded run replays" in text
-    assert {p.name: p.read_bytes() for p in (foreign / "evidence").iterdir()} == before
+    if beside_valid_run:
+        shutil.copytree(committed_run(), root / committed_run().name)
+    before = snapshot(root)
+    forbid_queue_operations(run, monkeypatch)
+    text = assert_refused(
+        run,
+        root,
+        "[error] recorded/000000000000: replay ERROR ['integrity.lock'] does not reproduce the "
+        "recorded PASS",
+        "producer 000000000000 is not supported by the running implementation",
+        "(no registry approval); bytes preserved",
+    )
+    assert "[info] recorded/000000000000" not in text  # never a benign notice
+    if beside_valid_run:
+        assert f"[ok] recorded/{committed_run().name}: replay equals the recorded PASS" in text
+    assert snapshot(root) == before
     assert read_json(foreign / "PRODUCER.json")["lock_sha256"] == seal
-    # With a compatible run beside it the foreign run is tolerated and the check passes.
-    shutil.copytree(committed_run(), root / committed_run().name)
-    out = io.StringIO()
-    assert run.check(out, recorded_root=root) == 0
-    assert "[info] recorded/000000000000: not replayable" in out.getvalue()
-    out = io.StringIO()
-    assert run.route(out, recorded_root=root) == 0
-    assert "recorded/000000000000: unapproved producer 000000000000; not used" in out.getvalue()
-    assert f"recorded/{committed_run().name}: replayed PASS" in out.getvalue()
-    assert "(exact)" in out.getvalue()
+    assert read_json(PACKAGED_REGISTRY) == {"schema_version": 1, "implementations": {}}
 
 
-def test_route_without_a_compatible_run_fails_with_guidance(
-    run: ModuleType, tmp_path: Path
-) -> None:
-    root = tmp_path / "recorded"
-    root.mkdir()
-    foreign_copy(committed_run(), root / "ffffffffffff", HEX_F)
-    out = io.StringIO()
-    assert run.route(out, recorded_root=root) == 1
-    assert "no exact or registry-approved recorded run matches" in out.getvalue()
-    assert "--record DIRECTORY --source-commit SHA" in out.getvalue()
-
-
-def test_invalid_archived_seal_fails_the_check_beside_a_valid_current_run(
-    run: ModuleType, tmp_path: Path
-) -> None:
-    """A corrupt archive is an error, never relabelled as a harmless compatibility notice."""
-    root = tmp_path / "recorded"
-    root.mkdir()
-    shutil.copytree(committed_run(), root / committed_run().name)
-    broken = root / "ffffffffffff"
-    foreign_copy(committed_run(), broken, HEX_F)
-    corrupt_seal(broken, HEX_E)
-    # Every ordinary hash agrees and the producer identity describes the lock;
-    # replay would still say exactly ``integrity.lock``, as for an unapproved producer.
-    assert replay(broken / "evidence", expected_lock_sha256=HEX_E).reasons == ("integrity.lock",)
-    out = io.StringIO()
-    assert run.check(out, recorded_root=root) == 1
-    text = out.getvalue()
-    assert "[error] recorded/ffffffffffff: lock.sha256: archived self-seal does not match" in text
-    assert "not replayable" not in text
-    assert f"[ok] recorded/{committed_run().name}: replay equals the recorded PASS (exact" in text
-    out = io.StringIO()
-    assert run.route(out, recorded_root=root) == 0  # the valid current run is used
-
-
-def test_invalid_archived_seal_with_the_running_fingerprint_fails_too(
-    run: ModuleType, tmp_path: Path
-) -> None:
-    root = tmp_path / "recorded"
-    root.mkdir()
-    broken = root / committed_run().name
-    shutil.copytree(committed_run(), broken)
-    corrupt_seal(broken, HEX_E)
-    out = io.StringIO()
-    assert run.check(out, recorded_root=root) == 1
-    assert "archived self-seal does not match" in out.getvalue()
-
-
-def test_registry_approved_archive_is_checked_and_routed(
+def test_dual_approved_foreign_archive_passes_check_and_route(
     run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """An archive from a foreign producer that the registry pairs with the running source."""
+    """Both fingerprints registered for the engine: core replay accepts, so does the example."""
     root = tmp_path / "recorded"
     root.mkdir()
     foreign = root / "ffffffffffff"
     seal = foreign_copy(committed_run(), foreign, HEX_F)
-    before = {p.name: p.read_bytes() for p in (foreign / "evidence").iterdir()}
-    producer = run.load_producer(foreign)
-    assert run.compatibility_status(producer) == "unapproved"
+    before = snapshot(root)
     registry = approve(monkeypatch, tmp_path, HEX_F, implementation_fingerprint())
-    assert run.compatibility_status(producer) == "approved"
     out = io.StringIO()
     assert run.check(out, recorded_root=root) == 0
     text = out.getvalue()
     assert (
-        "[ok] recorded/ffffffffffff: replay equals the recorded PASS (approved implementation)"
-        in text
+        "[ok] recorded/ffffffffffff: replay equals the recorded PASS "
+        "(registry-approved implementation)" in text
     )
-    assert "not replayable" not in text
+    assert "[ok] routing: queue journal holds exactly the 3 ACT tickets" in text
     out = io.StringIO()
     assert run.route(out, recorded_root=root) == 0
     assert "recorded/ffffffffffff: replayed PASS" in out.getvalue()
-    assert "(approved)" in out.getvalue()
     assert (
         "queue journal: [('billing', 'T-1001'), ('technical', 'T-1002'), ('sales', 'T-1003')]"
         in out.getvalue()
     )
-    # Nothing was rewritten: not the archive, not the producer record, not the registry.
-    assert {p.name: p.read_bytes() for p in (foreign / "evidence").iterdir()} == before
+    # Nothing was rewritten: not the archive, not the producer record, not any registry.
+    assert snapshot(root) == before
     assert read_json(foreign / "PRODUCER.json")["lock_sha256"] == seal
     assert registry.read_text(encoding="utf-8") == registry_text(
         {HEX_F: ENGINE, implementation_fingerprint(): ENGINE}
     )
-    assert read_json(
-        EXAMPLE_DIR.parents[1] / "src" / "actseal" / "compatibility_registry.json"
-    ) == {
-        "schema_version": 1,
-        "implementations": {},
-    }
+    assert read_json(PACKAGED_REGISTRY) == {"schema_version": 1, "implementations": {}}
 
 
-def test_one_sided_registration_does_not_approve(
-    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("registered", ["producer", "running"])
+def test_one_sided_registration_fails_check_and_route(
+    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, registered: str
 ) -> None:
     root = tmp_path / "recorded"
     root.mkdir()
     foreign_copy(committed_run(), root / "ffffffffffff", HEX_F)
-    approve(monkeypatch, tmp_path, HEX_F)  # the running fingerprint is not registered
-    assert run.compatibility_status(run.load_producer(root / "ffffffffffff")) == "unapproved"
-    out = io.StringIO()
-    assert run.check(out, recorded_root=root) == 1
-    assert "not replayable under the running implementation" in out.getvalue()
-    out = io.StringIO()
-    assert run.route(out, recorded_root=root) == 1
+    approve(
+        monkeypatch, tmp_path, HEX_F if registered == "producer" else implementation_fingerprint()
+    )
+    before = snapshot(root)
+    forbid_queue_operations(run, monkeypatch)
+    assert_refused(
+        run,
+        root,
+        "[error] recorded/ffffffffffff: replay ERROR ['integrity.lock'] does not reproduce",
+    )
+    assert snapshot(root) == before
 
 
-def test_damaged_or_mismatched_runs_fail_the_check(run: ModuleType, tmp_path: Path) -> None:
+def test_root_and_bundle_lock_mismatch_fails(
+    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The root lock.json must be the bundle's lock.json byte for byte."""
+    root = tmp_path / "recorded"
+    root.mkdir()
+    mismatched = root / committed_run().name
+    shutil.copytree(committed_run(), mismatched)
+    other = tmp_path / "other"
+    foreign_copy(committed_run(), other, HEX_F)
+    # A different, internally valid lock at the root; PRODUCER.json describes that root lock.
+    shutil.copyfile(other / "lock.json", mismatched / "lock.json")
+    shutil.copyfile(other / "PRODUCER.json", mismatched / "PRODUCER.json")
+    forbid_queue_operations(run, monkeypatch)
+    assert_refused(
+        run,
+        root,
+        f"[error] recorded/{committed_run().name}: lock.json: root copy differs from the bundle",
+    )
+
+
+def test_rehashed_dataset_corruption_fails(
+    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An archived dataset edited and rehashed so ordinary hashes agree is still refused."""
+    root = tmp_path / "recorded"
+    root.mkdir()
+    corrupted = root / committed_run().name
+    shutil.copytree(committed_run(), corrupted)
+    corrupt_dataset(corrupted)
+    forbid_queue_operations(run, monkeypatch)
+    assert_refused(
+        run,
+        root,
+        f"[error] recorded/{committed_run().name}: verification.jsonl: bundle dataset differs "
+        "from the committed input",
+    )
+
+
+def test_consistently_changed_foreign_policy_fails_even_when_approved(
+    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A foreign archive with a different frozen policy is refused before replay is consulted."""
+    root = tmp_path / "recorded"
+    root.mkdir()
+    foreign = root / "ffffffffffff"
+    foreign_copy(committed_run(), foreign, HEX_F)
+    change_threshold(foreign, 0.5)
+    approve(monkeypatch, tmp_path, HEX_F, implementation_fingerprint())
+    before = snapshot(root)
+    forbid_queue_operations(run, monkeypatch)
+    assert_refused(
+        run,
+        root,
+        "[error] recorded/ffffffffffff: lock.contract: differs from the frozen contract.toml",
+    )
+    assert snapshot(root) == before
+
+
+@pytest.mark.parametrize("fingerprint", [None, HEX_F], ids=["running-producer", "foreign-producer"])
+def test_invalid_archived_seal_fails_beside_a_valid_current_run(
+    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fingerprint: str | None
+) -> None:
+    """A corrupt archive is an error reported by the core replay, never tolerated."""
+    root = tmp_path / "recorded"
+    root.mkdir()
+    shutil.copytree(committed_run(), root / committed_run().name)
+    broken = root / "ffffffffffff"
+    if fingerprint is None:
+        shutil.copytree(committed_run(), broken)
+    else:
+        foreign_copy(committed_run(), broken, fingerprint)
+    corrupt_seal(broken, HEX_E)
+    assert replay(broken / "evidence", expected_lock_sha256=HEX_E).reasons == ("integrity.lock",)
+    forbid_queue_operations(run, monkeypatch)
+    text = assert_refused(
+        run,
+        root,
+        "[error] recorded/ffffffffffff: replay ERROR ['integrity.lock'] does not reproduce the "
+        "recorded PASS",
+    )
+    assert f"[ok] recorded/{committed_run().name}: replay equals the recorded PASS (exact" in text
+
+
+def test_damaged_or_mismatched_runs_fail_the_check(
+    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     root = tmp_path / "recorded"
     root.mkdir()
     damaged = root / "damaged"
     shutil.copytree(committed_run(), damaged)
     records = damaged / "evidence" / "records.jsonl"
     records.write_bytes(records.read_bytes().replace(b'"choice":"billing"', b'"choice":"sales"', 1))
-    out = io.StringIO()
-    assert run.check(out, recorded_root=root) == 1
-    assert "[error] recorded/damaged:" in out.getvalue()
+    forbid_queue_operations(run, monkeypatch)
+    assert_refused(run, root, "[error] recorded/damaged:")
     # Rehashed so ordinary hashes agree: records now differ from the fresh run and replay objects.
     rehash_bundle(damaged / "evidence")
-    out = io.StringIO()
-    assert run.check(out, recorded_root=root) == 1
-    assert "records.jsonl differs from the fresh run" in out.getvalue()
-    assert "differs from the record" in out.getvalue()
+    assert_refused(
+        run,
+        root,
+        "[error] recorded/damaged: records.jsonl differs from the fresh run",
+        "[error] recorded/damaged: replay ERROR",
+        "does not reproduce the recorded PASS",
+    )
 
 
-def test_stale_inputs_fail_the_check(run: ModuleType, tmp_path: Path) -> None:
+def test_stale_inputs_fail_the_check(
+    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     root = tmp_path / "recorded"
     root.mkdir()
     stale = root / "stale"
@@ -297,18 +369,19 @@ def test_stale_inputs_fail_the_check(run: ModuleType, tmp_path: Path) -> None:
     (stale / "PRODUCER.json").write_text(
         json.dumps(producer, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    out = io.StringIO()
-    assert run.check(out, recorded_root=root) == 1
-    assert (
-        "[error] recorded/stale: authored inputs changed since this run was recorded"
-        in out.getvalue()
+    forbid_queue_operations(run, monkeypatch)
+    assert_refused(
+        run,
+        root,
+        "[error] recorded/stale: producer.inputs: differ from the committed authored inputs",
     )
 
 
-def test_empty_recorded_root_fails_the_check(run: ModuleType, tmp_path: Path) -> None:
-    out = io.StringIO()
-    assert run.check(out, recorded_root=tmp_path / "missing") == 1
-    assert "[error] recorded: no recorded run under recorded/" in out.getvalue()
+def test_empty_recorded_root_fails_check_and_route(
+    run: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    forbid_queue_operations(run, monkeypatch)
+    assert_refused(run, tmp_path / "missing", "[error] recorded: no recorded run under recorded/")
 
 
 def test_example_imports_only_public_actseal_names() -> None:

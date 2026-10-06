@@ -4,6 +4,11 @@ The example lives outside the ``actseal`` package and is imported by path, so
 these tests run in the default core environment with no key, model or
 network. The modules are loaded once per session and typed as ``ModuleType``;
 their attributes are therefore ``Any`` in the tests.
+
+The archive forgeries below (``foreign_copy``, ``rewrite_lock``,
+``corrupt_seal``, ``corrupt_dataset``) rewrite *copies* of the committed run
+under a test's temporary directory. They exist to prove what the example's
+check refuses; the committed recording is never touched.
 """
 
 from __future__ import annotations
@@ -13,6 +18,7 @@ import importlib
 import json
 import shutil
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
 
@@ -62,6 +68,12 @@ def read_json(path: Path) -> dict[str, object]:
     return value
 
 
+def write_producer(run_dir: Path, producer: dict[str, object]) -> None:
+    (run_dir / "PRODUCER.json").write_text(
+        json.dumps(producer, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
 def rehash_bundle(bundle: Path) -> None:
     """Rewrite ``manifest.json`` so every ordinary per-file hash is consistent again."""
     files = {
@@ -74,62 +86,82 @@ def rehash_bundle(bundle: Path) -> None:
     (bundle / "manifest.json").write_bytes(canonical(manifest) + b"\n")
 
 
-def write_producer(run_dir: Path, producer: dict[str, object]) -> None:
-    (run_dir / "PRODUCER.json").write_text(
-        json.dumps(producer, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+def rewrite_lock(
+    run_dir: Path,
+    mutate: Callable[[dict[str, object]], None] | None = None,
+    *,
+    seal: str | None = None,
+) -> str:
+    """Rewrite a copied run's lock consistently and return the new seal.
 
-
-def corrupt_seal(run_dir: Path, seal: str) -> None:
-    """Replace the archived lock's own seal (root and bundle copies) with ``seal``.
-
-    The verdict, manifest and ``PRODUCER.json`` are rewritten to agree, so
-    every ordinary hash check passes and only the self-seal is wrong. The
-    producer fingerprint is left as it is.
+    ``mutate`` edits the decoded lock document; the lock is then resealed
+    (or given the literal ``seal``), written to both the root and the bundle,
+    the verdict's ``lock_sha256`` and the manifest are rewritten to agree, and
+    ``PRODUCER.json`` is updated to the new seal and producer fingerprint. Every
+    ordinary hash check passes afterwards; only semantic checks can object.
     """
     evidence = run_dir / "evidence"
     lock = read_json(evidence / "lock.json")
-    lock["sha256"] = seal
-    lock_bytes = canonical(lock) + b"\n"
+    if mutate is not None:
+        mutate(lock)
+    unsealed = {key: value for key, value in lock.items() if key != "sha256"}
+    new_seal = sha256_hex(canonical(unsealed)) if seal is None else seal
+    lock_bytes = canonical({**unsealed, "sha256": new_seal}) + b"\n"
     (evidence / "lock.json").write_bytes(lock_bytes)
     (run_dir / "lock.json").write_bytes(lock_bytes)
     verdict = read_json(evidence / "verdict.json")
-    verdict["lock_sha256"] = seal
+    verdict["lock_sha256"] = new_seal
     (evidence / "verdict.json").write_bytes(canonical(verdict) + b"\n")
     rehash_bundle(evidence)
     producer = read_json(run_dir / "PRODUCER.json")
-    producer["lock_sha256"] = seal
+    producer["lock_sha256"] = new_seal
+    producer["implementation_sha256"] = lock["implementation_sha256"]
     write_producer(run_dir, producer)
-
-
-def registry_text(entries: dict[str, str]) -> str:
-    return json.dumps({"schema_version": 1, "implementations": entries})
+    return new_seal
 
 
 def foreign_copy(run_dir: Path, destination: Path, fingerprint: str) -> str:
     """Copy a recorded run as if a different implementation had produced it.
 
-    The lock is resealed with ``fingerprint`` as its producer, the verdict and
-    manifest are rehashed to match and ``PRODUCER.json`` is updated, so every
-    ordinary integrity check passes and only replay-engine compatibility can
-    object. Returns the new lock seal. This is a test forgery of provenance,
-    which is exactly what the example's check must refuse to replay.
+    The lock is resealed with ``fingerprint`` as its producer and everything
+    else is rewritten to agree, so only replay-engine compatibility can
+    object. This is a test forgery of provenance; it returns the new seal.
     """
     shutil.copytree(run_dir, destination)
-    evidence = destination / "evidence"
-    lock = read_json(evidence / "lock.json")
-    lock["implementation_sha256"] = fingerprint
-    unsealed = {key: value for key, value in lock.items() if key != "sha256"}
-    seal = sha256_hex(canonical(unsealed))
-    lock_bytes = canonical({**unsealed, "sha256": seal}) + b"\n"
-    (evidence / "lock.json").write_bytes(lock_bytes)
-    (destination / "lock.json").write_bytes(lock_bytes)
-    verdict = read_json(evidence / "verdict.json")
-    verdict["lock_sha256"] = seal
-    (evidence / "verdict.json").write_bytes(canonical(verdict) + b"\n")
-    rehash_bundle(evidence)
-    producer = read_json(destination / "PRODUCER.json")
-    producer["implementation_sha256"] = fingerprint
-    producer["lock_sha256"] = seal
-    write_producer(destination, producer)
-    return seal
+
+    def set_producer(lock: dict[str, object]) -> None:
+        lock["implementation_sha256"] = fingerprint
+
+    return rewrite_lock(destination, set_producer)
+
+
+def corrupt_seal(run_dir: Path, seal: str) -> None:
+    """Give the archived lock a wrong self-seal while every ordinary hash still agrees."""
+    rewrite_lock(run_dir, seal=seal)
+
+
+def change_threshold(run_dir: Path, threshold: float) -> str:
+    """Consistently change the archived policy threshold (lock, verdict, manifest, producer)."""
+
+    def set_threshold(lock: dict[str, object]) -> None:
+        contract = lock["contract"]
+        assert isinstance(contract, dict)
+        policy = contract["policy"]
+        assert isinstance(policy, dict)
+        policy["threshold"] = threshold
+
+    return rewrite_lock(run_dir, set_threshold)
+
+
+def corrupt_dataset(run_dir: Path) -> None:
+    """Alter one archived verification state text and rehash the manifest to match."""
+    path = run_dir / "evidence" / "verification.jsonl"
+    data = path.read_bytes()
+    altered = data.replace(b"Ticket GATE-V-000:", b"Ticket GATE-V-000 (edited):", 1)
+    assert altered != data
+    path.write_bytes(altered)
+    rehash_bundle(run_dir / "evidence")
+
+
+def registry_text(entries: dict[str, str]) -> str:
+    return json.dumps({"schema_version": 1, "implementations": entries})
