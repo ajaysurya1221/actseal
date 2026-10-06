@@ -23,16 +23,18 @@ All gates are7October2026 Asia/Kolkata: Jev integrated/green or cut14:00; static
 | 06 | STOPPED after denied cache-access retry; see06-preparation-stop review. Public source verification predates denial. Scopedcachepermission pending; no productimplementation, acceptedpreregistration or livecalls |
 | 07 | Source-only ACCEPT277d8e2; strict active-archive checks; owned lint/types pass; tests/example/temp execution approval pending; noPR |
 | 08 | Scoped ACCEPTa8510ed;89docs checks and six Python-fence ASTs preserved; draftPR26 finaleb21e87 eightgreen; final README/P1/example/release-note dependencies pending; fourADR records/repairs scopedACCEPT |
-| 09 | Schema350cfc0 and CI glue1b52076 scoped ACCEPT; draftPR18 tenexact-head green; actual assets/authorized hosted rehearsal/final metadata pending |
+| 09 | Schema350cfc0 and CI glue1b52076 scoped ACCEPT; draftPR18 tenexact-head green; actual assets/authorized hosted rehearsal/final metadata pending; localCIprovisioningbdedc1e scopedACCEPT64parent/41independent, unpushed |
 | 10 | ACCEPT030ef840; PR13 eightgreen, merged6ad1e91 |
 | 11 | Source-only ACCEPT6ae0c09, mainmerge5f3fee5 draftPR25 eightgreen;226parentvisual/33independent; authentic font/assets/render/blind review pending |
 | 12 | Semantic/source ACCEPTf712dae;236tests/fourSVG regeneration checks; draftPR22 eightgreen; actual rendered review pending |
-| 13/15 | Architecture pending finalprovider inclusion;15source64b8e03 scopedACCEPT after V1-027 repair;250parentvisualpass; draftPR31 CI pending; no actualPNG/renderclaim |
+| 13/15 | Architecture source2e2a7b2 scopedACCEPT under V1-028;286parentvisual/50independent; finalprovider inclusion/registration/render gates remain.15source64b8e03 scopedACCEPT after V1-027 repair;250parentvisualpass; draftPR31 eightgreen37541511143/37541558976; no actualPNG/renderclaim |
 | 14 | ScopedpreparationACCEPT11a31fc;244parentvisual/fullformat/types pass; draftPR30eightgreen; no actualpackage/cast/GIF/toolsetup |
 | 16–18 | P2 only after P1 acceptance; subject tocut; no dispatch |
 | 19–22 | Final integration, independent candidate gates and release pending |
 
 ## Live sessions — inspect before resuming
+
+Task13 is terminal: session9e0493aa-2bfb-4994-ba43-4dc5638e725b, handle99421, branchclaude/v1-13-architecture-preparation at2e2a7b220d401f5899df08bf41a6cff60769f11b from reviewed workflowf712dae. Source/unit scopedACCEPT; no inventory/output/preview or final inclusion decision. Elapsed1,527,700ms. All executor processes are now terminal.
 
 Current process map and immutable dispatch packets/streams: `/tmp/actseal-v1-orchestration/active.json`. Do not commit raw streams.
 
@@ -41,6 +43,7 @@ Current process map and immutable dispatch packets/streams: `/tmp/actseal-v1-orc
 - Task14R2terminal: session241e6a45-571b-4ca9-ad83-243d7c53b003, head11a31fc1182e91f6704386269224ed08933ceb8d inrecordingworktree; scopedpreparationACCEPT, draftPR30. No actualcapture/package/tooloperation.
 - Task15terminal: session315ec8a1-beba-47fb-8913-1d275a0629ae, handles51419/21245terminal, head64b8e03c0aed6aa6952057cf705d620a2d70e71f, branchclaude/v1-15-social-preparation inreusedheroworktree. Source/testpreparation scopedACCEPT;250parentvisualpass; no actualPNG, externalcache, tools or preview.
 - Task08ADRrepairs terminal: session59a17d7b-61f6-4e7a-a4fc-2964bd4463eb, lasthead eb21e8738d1f529d0e06223203e4266f1c495218 in docsworktree; fourADRs scopedACCEPT, PR26eightgreen37540686427/37540690845; no product/media/secretoperations.
+- Codex Task09 localCIprovisioning branchcodex/v1-09-ci-provisioning-preparation atbdedc1e has independent scopedACCEPT. DO NOT PUSH until scopedtool-download permission resolves; ordinary CI would run those downloads. OriginalPR18/head1b52076 remains unchanged.
 - Other lane sessions terminal; exact handles/heads in process map. Managed worktrees are retained for their unfinished tasks. Every executor prohibits nested agents/personal-memory writes and preserves other lane ownership.
 - Temporary idle-sleep prevention: ownedPTY90451, `caffeinate -i -t 83600`; AC power atstart, no permanent setting. Stop ownedprocess on completion/user stop; otherwise expires. Quota reset succeeded20:21UTC6October without substitution.
 
@@ -57,7 +60,7 @@ Elapsed time is not approval. No JEV_API_KEY exported in parent at last presence
 
 ## Current integration receipts
 
-Currentmain6a0e42caf1088f2f3686a0090d951e6a891b2b75: checkpointPR29 independentlyACCEPTed atb9b68f1ba827f60b08cd4fde389667278bc7d24c; eightgreen37538604994/37538646632. Previousmain4367724f10997f64ef63ce3597f6e18864368ad1: PR27 independently ACCEPTed atc87ffa654b4c5d37acaac6c8103a7a5c5f8159e5; eightgreen jobs37534442995/37534502287. Earlier PR24 atd58018a reviewedcc71657/eightgreen37531792257/37531830569; PR23 at57c8f314 reviewed11e00f41/eightgreen37528792204/37528799028. Earlier checkpoint receipts remain in Git history.
+Currentmain0348fa0d1fe02016b7224c8424353d80b4ad6df2: checkpointPR32 independently ACCEPTed atd48cafd39100e9be8aca9984b511d0e03ba73f78; eightgreen37541637750/37541680885. Previousmain6a0e42caf1088f2f3686a0090d951e6a891b2b75: checkpointPR29 independentlyACCEPTed atb9b68f1ba827f60b08cd4fde389667278bc7d24c; eightgreen37538604994/37538646632. Previousmain4367724f10997f64ef63ce3597f6e18864368ad1: PR27 independently ACCEPTed atc87ffa654b4c5d37acaac6c8103a7a5c5f8159e5; eightgreen jobs37534442995/37534502287. Earlier PR24 atd58018a reviewedcc71657/eightgreen37531792257/37531830569; PR23 at57c8f314 reviewed11e00f41/eightgreen37528792204/37528799028. Earlier checkpoint receipts remain in Git history.
 
 Draft exact-head checks: PR20/212a1d6 eightgreen37527352887/37527392467; PR21/732914d eightgreen37528500761/37528507900; PR22/f712dae eightgreen37528503650/37528510828; PR25/5f3fee5 eightgreen37531990156/37532026935; PR26/eb21e87 eightgreen37540686427/37540690845; PR18/1b52076 tengreen37531987286/37531996218; PR28/c2e27d2 eightgreen37538087839/37538202547. PR26's prior formatting failure remains historical; source repair preserves all six fenced-Python ASTs. Ordinary green CI does not establish native/mutation/rendering/release acceptance.
 
@@ -71,4 +74,4 @@ INTEGRATION_CHECKLIST.md binds final source/version/fingerprint/registry orderin
 
 The pypi environment permits v*tags/main, requiresajaysurya1221review and allows solo-maintainer self-review. Notify when an actual deployment waits; never remove thegate. Genuine recording remains postpublication under Decision2. P2 cannot displace mandatory work.
 
-Next: record15 draftCI and checkpoint11 review. Task06 remains stopped. All executors are terminal; preserve denied-operation boundaries and original mandatory publication gates.
+Next: finish Task13 draft CI and checkpoint12 receipt review. All executors are terminal; Task09 provisioning must remain local. Remaining full-task work requires the pending approvals. Task06 is stopped; preserve original publication gates.
