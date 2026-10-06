@@ -90,6 +90,8 @@ jobs:
         run: uv sync --frozen --group dev --group assets
       - name: Type-check the asset tooling
         run: uv run --frozen mypy --strict docs/assets/src
+      - name: Test the asset tooling with authoring dependencies installed
+        run: uv run --frozen --group assets pytest tests/visual
       - name: Validate every committed asset and README image reference
         # Planned renderers are reported, not counted as completed assets.
         # The publication workflow separately requires every static P1 asset.

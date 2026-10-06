@@ -773,6 +773,18 @@ def test_assets_gate_rejects_each_missing_workflow_variant(
     assert f"docs/assets/{name}" in failure(tool, tmp_path, "assets")
 
 
+@pytest.mark.parametrize(
+    "name",
+    ["hero-light.svg", "hero-dark.svg", "hero-mobile-light.svg", "hero-mobile-dark.svg"],
+)
+def test_assets_gate_rejects_each_missing_hero_variant(
+    tool: types.ModuleType, tmp_path: Path, name: str
+) -> None:
+    write_release_tree(tmp_path)
+    (tmp_path / "docs" / "assets" / name).unlink()
+    assert f"docs/assets/{name}" in failure(tool, tmp_path, "assets")
+
+
 def test_assets_gate_fails_when_the_renderer_reports_errors(
     tool: types.ModuleType, tmp_path: Path
 ) -> None:

@@ -103,13 +103,18 @@ PNG_IHDR_OFFSET = 16
 PNG_IHDR_END = 24
 COMMAND_TIMEOUT_S = 600.0
 # Required static assets by renderer name, with the outputs declared in the
-# accepted Task 10 inventory (docs/assets/src/actseal_assets/inventory.py).
+# reviewed figure inventories (docs/assets/src/actseal_assets/inventory.py).
 # ``demo`` is the approved post-PyPI exception and is deliberately absent.
 ASSET_DIR = "docs/assets"
 RENDERER_RELATIVE = "docs/assets/src/render.py"
 DEFAULT_RENDERER = "uv run --frozen --group assets python docs/assets/src/render.py"
 RELEASE_ASSETS: dict[str, tuple[str, ...]] = {
-    "hero": ("hero-light.svg", "hero-dark.svg"),
+    "hero": (
+        "hero-light.svg",
+        "hero-dark.svg",
+        "hero-mobile-light.svg",
+        "hero-mobile-dark.svg",
+    ),
     "how-it-works": (
         "how-it-works-light.svg",
         "how-it-works-dark.svg",
