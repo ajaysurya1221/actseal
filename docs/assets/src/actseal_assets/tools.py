@@ -4,20 +4,27 @@
 per-platform SHA-256. Binaries live in a cache outside the repository; the
 cache path comes from ``ACTSEAL_ASSET_TOOLS`` or defaults to
 ``~/.cache/actseal-assets``. ``verified_binary`` re-hashes a cached tool
-against the pin every time, before anything executes it. fontTools is never
-downloaded here: its pin is checked against the committed ``uv.lock``.
+against the pin every time, before anything executes it. For archived tools
+the pinned archive itself is retained in the cache; verification re-hashes
+the archive, re-extracts the member and compares it byte for byte with the
+cached executable, so receipts are records and never trust anchors.
+fontTools is never downloaded here: its pin is checked against the committed
+``uv.lock``.
 """
 
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import math
 import os
 import platform
 import re
 import subprocess
+import tarfile
 import tomllib
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -228,12 +235,49 @@ def cached_binary_path(tool: Tool, artifact: Artifact) -> Path:
     return cache_dir() / f"{tool.name}-{tool.version}" / Path(name).name
 
 
-def verified_binary(root: Path, tool: Tool, platform_name: str | None = None) -> Path:
-    """Return the cached binary after re-verifying its SHA-256 against the pin.
+def cached_archive_path(tool: Tool, artifact: Artifact) -> Path:
+    """Where the pinned archive is retained beside its extracted member."""
+    return cache_dir() / f"{tool.name}-{tool.version}" / Path(artifact.filename).name
 
-    Direct downloads are compared with the manifest. Archive members are
-    compared with the extraction hash in the setup receipt, whose archive hash
-    must in turn match the manifest pin.
+
+def extract_member(data: bytes, filename: str, member: str) -> bytes:
+    """Return exactly one archive member whose basename equals ``member``."""
+    candidates: list[tuple[str, bytes]] = []
+    try:
+        if filename.endswith(".zip"):
+            with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                candidates.extend(
+                    (info.filename, archive.read(info))
+                    for info in archive.infolist()
+                    if not info.is_dir() and Path(info.filename).name == member
+                )
+        elif filename.endswith((".tar.gz", ".tgz")):
+            with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
+                for info in archive.getmembers():
+                    if info.isfile() and Path(info.name).name == member:
+                        handle = archive.extractfile(info)
+                        if handle is not None:
+                            candidates.append((info.name, handle.read()))
+        else:
+            msg = f"{filename}: unsupported archive type"
+            raise ToolError(msg)
+    except (zipfile.BadZipFile, tarfile.TarError, OSError, EOFError) as exc:
+        msg = f"{filename}: cannot read archive: {exc}"
+        raise ToolError(msg) from exc
+    if len(candidates) != 1:
+        found = ", ".join(name for name, _ in candidates) or "none"
+        msg = f"{filename}: expected exactly one member named {member!r}, found {found}"
+        raise ToolError(msg)
+    return candidates[0][1]
+
+
+def verified_binary(root: Path, tool: Tool, platform_name: str | None = None) -> Path:  # noqa: ARG001 - root kept for call-site symmetry with font checks
+    """Return the cached binary after re-verifying it against the manifest pin.
+
+    Direct downloads are hashed and compared with the pinned SHA-256. Archive
+    members are bound to the pin by re-hashing the retained archive, extracting
+    the pinned member again and comparing those bytes with the cached
+    executable. Receipts are never consulted.
     """
     if tool.kind != "binary":
         msg = f"{tool.name} is not a binary tool"
@@ -247,20 +291,36 @@ def verified_binary(root: Path, tool: Tool, platform_name: str | None = None) ->
     if not path.is_file():
         msg = f"{tool.name} {tool.version} is not cached at {path}; run setup_tools.py"
         raise ToolError(msg)
-    actual = sha256_path(path)
-    expected = artifact.sha256
-    if artifact.member is not None:
-        receipt = load_receipt(receipt_path(root, tool, key))
-        if receipt.get("archive_sha256") != artifact.sha256:
-            msg = f"{tool.name}: receipt archive hash does not match the manifest pin"
+    if artifact.member is None:
+        actual = sha256_path(path)
+        if actual != artifact.sha256:
+            msg = (
+                f"{tool.name} at {path}: sha256 {actual[:12]}… does not match "
+                f"pinned {artifact.sha256[:12]}…"
+            )
             raise ToolError(msg)
-        extracted = receipt.get("extracted_sha256")
-        if not isinstance(extracted, str):
-            msg = f"{tool.name}: receipt lacks extracted_sha256"
-            raise ToolError(msg)
-        expected = extracted
-    if actual != expected:
-        msg = f"{tool.name} at {path}: sha256 {actual[:12]}… does not match pinned {expected[:12]}…"
+        return path
+    archive = cached_archive_path(tool, artifact)
+    if not archive.is_file():
+        msg = (
+            f"{tool.name} {tool.version}: pinned archive {archive.name} is not retained "
+            f"beside {path}; run setup_tools.py"
+        )
+        raise ToolError(msg)
+    archive_bytes = archive.read_bytes()
+    actual_archive = sha256_bytes(archive_bytes)
+    if actual_archive != artifact.sha256:
+        msg = (
+            f"{tool.name} archive {archive}: sha256 {actual_archive[:12]}… does not match "
+            f"pinned {artifact.sha256[:12]}…"
+        )
+        raise ToolError(msg)
+    member = extract_member(archive_bytes, artifact.filename, artifact.member)
+    if path.read_bytes() != member:
+        msg = (
+            f"{tool.name} at {path}: executable bytes differ from member "
+            f"{artifact.member!r} of the pinned archive"
+        )
         raise ToolError(msg)
     return path
 

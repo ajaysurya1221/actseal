@@ -5,7 +5,8 @@ author the files under `docs/assets/`; none of them is linked into, vendored
 in or required by the published package. Exact pins, source commits, download
 URLs and SHA-256 digests are in [`tools.toml`](tools.toml). `setup_tools.py`
 verifies each download against that digest before installing it, and
-`render.py` re-verifies a cached binary before every execution.
+`render.py` re-verifies a cached binary before every execution (for archived
+tools by re-hashing the retained archive and re-extracting the member).
 
 | Tool | Version | License | Use | Distribution in this repository |
 |---|---|---|---|---|

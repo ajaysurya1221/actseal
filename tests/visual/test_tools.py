@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import importlib
+import io
 import json
+import stat
 import sys
+import tarfile
+import zipfile
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import pytest
 
@@ -144,33 +150,136 @@ def test_verified_binary_requires_cache_and_matching_hash(
         kit.tools.verified_binary(tmp_path, agg, "linux-x86_64")
 
 
-def test_archive_members_are_verified_through_the_receipt(
+MEMBER = b"#!/bin/sh\necho resvg\n"
+RESVG_MAC_PIN = "06440eb5aa14a28cbfc7e40ae39e1ffa71adc051b89fbaa913b4f1d9b905d09f"
+RESVG_LINUX_PIN = "fa8c26495a187e592c501db15bf9e8a9fdc051d4b2b336b39703d5b59f912b9d"
+
+
+def _zip_with(members: dict[str, bytes]) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, data in members.items():
+            archive.writestr(name, data)
+    return buffer.getvalue()
+
+
+def _targz_with(members: dict[str, bytes]) -> bytes:
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as archive:
+        for name, data in members.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            archive.addfile(info, io.BytesIO(data))
+    return buffer.getvalue()
+
+
+def _resvg_pinned_to(
+    kit: ModuleType, tmp_path: Path, archive: bytes, *, platform_name: str = "darwin-arm64"
+) -> Any:
+    pin = RESVG_MAC_PIN if platform_name == "darwin-arm64" else RESVG_LINUX_PIN
+    path = _manifest_with(tmp_path, {pin: kit.tools.sha256_bytes(archive)})
+    return kit.tools.load_manifest(path)["resvg"]
+
+
+def test_archive_member_is_bound_to_the_retained_pinned_archive(
     kit: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv(kit.tools.CACHE_ENV, str(tmp_path / "cache"))
-    manifest = kit.tools.load_manifest(MANIFEST)
-    resvg = manifest["resvg"]
+    archive = _zip_with({"resvg-macos-arm64/resvg": MEMBER, "resvg-macos-arm64/README": b"r"})
+    resvg = _resvg_pinned_to(kit, tmp_path, archive)
     artifact = resvg.artifact_for("darwin-arm64")
     binary = kit.tools.cached_binary_path(resvg, artifact)
+    retained = kit.tools.cached_archive_path(resvg, artifact)
     binary.parent.mkdir(parents=True)
-    binary.write_bytes(b"resvg-binary")
+
+    # Forged executable plus a coherent receipt, but no retained archive.
+    forged = b"#!/bin/sh\necho evil\n"
+    binary.write_bytes(forged)
     receipt = kit.tools.receipt_path(tmp_path, resvg, "darwin-arm64")
-    with pytest.raises(kit.tools.ToolError, match="cannot read receipt"):
-        kit.tools.verified_binary(tmp_path, resvg, "darwin-arm64")
     receipt.parent.mkdir(parents=True)
-    receipt.write_text(json.dumps({"archive_sha256": "0" * 64}), encoding="utf-8")
-    with pytest.raises(kit.tools.ToolError, match="receipt archive hash does not match"):
-        kit.tools.verified_binary(tmp_path, resvg, "darwin-arm64")
     receipt.write_text(
         json.dumps(
             {
                 "archive_sha256": artifact.sha256,
-                "extracted_sha256": kit.tools.sha256_bytes(b"resvg-binary"),
+                "extracted_sha256": kit.tools.sha256_bytes(forged),
             }
         ),
         encoding="utf-8",
     )
+    with pytest.raises(kit.tools.ToolError, match=r"pinned archive .* is not retained"):
+        kit.tools.verified_binary(tmp_path, resvg, "darwin-arm64")
+
+    # Retained archive that does not match the pin.
+    retained.write_bytes(_zip_with({"resvg": forged}))
+    with pytest.raises(kit.tools.ToolError, match=r"archive .* does not match pinned"):
+        kit.tools.verified_binary(tmp_path, resvg, "darwin-arm64")
+
+    # Pinned archive present, executable still forged: bytes must differ.
+    retained.write_bytes(archive)
+    with pytest.raises(kit.tools.ToolError, match="executable bytes differ from member 'resvg'"):
+        kit.tools.verified_binary(tmp_path, resvg, "darwin-arm64")
+
+    # Correct executable derived from the pinned archive passes, receipt or not.
+    binary.write_bytes(MEMBER)
+    receipt.unlink()
     assert kit.tools.verified_binary(tmp_path, resvg, "darwin-arm64") == binary
+
+    # Corrupting the retained archive afterwards is caught on the next verification.
+    retained.write_bytes(archive + b"\x00")
+    with pytest.raises(kit.tools.ToolError, match=r"archive .* does not match pinned"):
+        kit.tools.verified_binary(tmp_path, resvg, "darwin-arm64")
+
+
+def test_tar_archive_member_verification(
+    kit: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv(kit.tools.CACHE_ENV, str(tmp_path / "cache"))
+    archive = _targz_with({"resvg-linux-x86_64/resvg": MEMBER})
+    resvg = _resvg_pinned_to(kit, tmp_path, archive, platform_name="linux-x86_64")
+    artifact = resvg.artifact_for("linux-x86_64")
+    binary = kit.tools.cached_binary_path(resvg, artifact)
+    binary.parent.mkdir(parents=True)
+    binary.write_bytes(MEMBER)
+    kit.tools.cached_archive_path(resvg, artifact).write_bytes(archive)
+    assert kit.tools.verified_binary(tmp_path, resvg, "linux-x86_64") == binary
+
+
+def test_extract_member_requires_exactly_one_match(kit: ModuleType) -> None:
+    extract = kit.tools.extract_member
+    assert extract(_zip_with({"a/resvg": MEMBER}), "x.zip", "resvg") == MEMBER
+    assert extract(_targz_with({"resvg": MEMBER}), "x.tar.gz", "resvg") == MEMBER
+    with pytest.raises(
+        kit.tools.ToolError, match="expected exactly one member named 'resvg', found none"
+    ):
+        extract(_zip_with({"other": b"x"}), "x.zip", "resvg")
+    with pytest.raises(kit.tools.ToolError, match="found a/resvg, b/resvg"):
+        extract(_zip_with({"a/resvg": b"1", "b/resvg": b"2"}), "x.zip", "resvg")
+    with pytest.raises(kit.tools.ToolError, match="unsupported archive type"):
+        extract(b"", "x.7z", "resvg")
+    with pytest.raises(kit.tools.ToolError, match="cannot read archive"):
+        extract(b"not a zip", "x.zip", "resvg")
+    with pytest.raises(kit.tools.ToolError, match="cannot read archive"):
+        extract(b"not a tar", "x.tar.gz", "resvg")
+
+
+def test_setup_install_retains_the_archive_and_verifies(
+    kit: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv(kit.tools.CACHE_ENV, str(tmp_path / "cache"))
+    setup = importlib.import_module("setup_tools")
+    archive = _zip_with({"resvg": MEMBER})
+    resvg = _resvg_pinned_to(kit, tmp_path, archive)
+    artifact = resvg.artifact_for("darwin-arm64")
+    record = setup.install_binary(resvg, artifact, archive)
+    assert record["archive_sha256"] == artifact.sha256
+    assert record["extracted_sha256"] == kit.tools.sha256_bytes(MEMBER)
+    assert Path(record["archive_retained"]).read_bytes() == archive
+    installed = Path(record["installed"])
+    assert installed.read_bytes() == MEMBER
+    assert installed.stat().st_mode & stat.S_IXUSR
+    assert kit.tools.verified_binary(tmp_path, resvg, "darwin-arm64") == installed
+    with pytest.raises(kit.tools.ToolError, match="does not match pinned"):
+        setup.verify(archive + b"x", artifact)
 
 
 def test_agg_command_keeps_speed_one_and_idle_limit_beyond_duration(kit: ModuleType) -> None:

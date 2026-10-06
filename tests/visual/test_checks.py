@@ -88,6 +88,45 @@ def test_raw_tokens_outside_the_tree_are_caught(kit: ModuleType) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "encoded",
+    [
+        "u&#114;l(https://example.com/p.svg#paint)",
+        "u&#x72;l(#paint)",
+        "&#117;rl( #paint )",
+        "U R L(#paint)",
+        "java&#115;cript:alert(1)",
+        "ht&#116;ps://example.com/x.png",
+    ],
+)
+def test_encoded_resource_syntax_in_attributes_is_rejected(kit: ModuleType, encoded: str) -> None:
+    text = probe_bytes(kit).decode().replace('fill="#1f6feb"', f'fill="{encoded}"').encode()
+    errors = kit.checks.check_svg(text, make_output(kit))
+    assert any("contains forbidden resource syntax" in error for error in errors), errors
+
+
+def test_encoded_resource_syntax_in_text_is_rejected(kit: ModuleType) -> None:
+    text = (
+        probe_bytes(kit)
+        .decode()
+        .replace("A probe figure for tests.", "See u&#114;l(https://x) and @imp&#111;rt y")
+        .encode()
+    )
+    errors = kit.checks.check_svg(text, make_output(kit))
+    assert "<desc> text contains forbidden resource syntax 'url('" in errors
+    assert "<desc> text contains forbidden resource syntax '@import'" in errors
+
+
+def test_prose_schemes_in_text_are_allowed(kit: ModuleType) -> None:
+    text = (
+        probe_bytes(kit)
+        .decode()
+        .replace("A probe figure for tests.", "Recorded data: 128 cases; file: none.")
+        .encode()
+    )
+    assert kit.checks.check_svg(text, make_output(kit)) == []
+
+
 def test_missing_title_or_desc_is_reported(kit: ModuleType) -> None:
     text = probe_bytes(kit).decode()
     without_desc = text.replace('  <desc id="desc">A probe figure for tests.</desc>\n', "")
@@ -119,13 +158,87 @@ def test_label_size_is_checked_at_display_width(kit: ModuleType) -> None:
     group.add("text", x=0, y=90, font_size=26).text("fine")
     group.add("text", x=0, y=90).text("unsized")
     joined = _joined(kit.checks.check_svg(_render(kit, root), make_output(kit)))
-    assert "'small' renders at 11.0px at display width; minimum is 14px" in joined
+    assert "'small' renders at 11.0px at display width (transform scale 1); minimum is 14px" in (
+        joined
+    )
     assert "'fine'" not in joined
-    assert "'unsized' has no numeric font-size" in joined
+    assert "'unsized' has no finite positive font-size" in joined
     native = make_output(kit, display_width=None)
     assert kit.checks.check_svg(_render(kit, root), native) == [
-        "<text> 'unsized' has no numeric font-size"
+        "<text> 'unsized' has no finite positive font-size"
     ]
+
+
+@pytest.mark.parametrize("raw", ["NaN", "inf", "-inf", "0", "-12", "1e400"])
+def test_non_finite_or_non_positive_font_size_is_rejected(kit: ModuleType, raw: str) -> None:
+    text = probe_bytes(kit).decode().replace('font-size="28"', f'font-size="{raw}"').encode()
+    errors = kit.checks.check_svg(text, make_output(kit))
+    assert f"<g> font-size '{raw}' is not a finite positive pixel size" in errors
+    assert "<text> 'probe' has no finite positive font-size" in errors
+
+
+@pytest.mark.parametrize(
+    ("transform", "expected"),
+    [
+        ("scale(0.01)", "renders at 0.2px"),
+        ("scale(1 0.25)", "renders at 3.9px"),
+        ("matrix(0.1 0 0 0.1 5 5)", "renders at 1.5px"),
+        ("translate(10 10) scale(0.5)", "renders at 7.7px"),
+    ],
+)
+def test_direct_text_transform_is_applied_to_label_size(
+    kit: ModuleType, transform: str, expected: str
+) -> None:
+    root = kit.svg.document(1600, 400, title="T", desc="D")
+    group = root.add("g", font_family="sans-serif", font_size=28)
+    group.add("text", x=0, y=50, transform=transform).text("shrunk")
+    joined = _joined(kit.checks.check_svg(_render(kit, root), make_output(kit)))
+    assert expected in joined
+    assert "'shrunk'" in joined
+
+
+def test_ancestor_transform_is_inherited_by_text(kit: ModuleType) -> None:
+    root = kit.svg.document(1600, 400, title="T", desc="D")
+    outer = root.add("g", transform="scale(0.5)")
+    inner = outer.add("g", transform="translate(3,4) scale(0.5)", font_family="monospace")
+    inner.add("text", x=0, y=50, font_size=30).text("nested")
+    inner.add("text", x=0, y=90, font_size=120).text("big enough")
+    joined = _joined(kit.checks.check_svg(_render(kit, root), make_output(kit)))
+    assert "'nested' renders at 4.1px at display width (transform scale 0.25)" in joined
+    assert "'big enough'" not in joined
+
+
+def test_length_preserving_transforms_pass(kit: ModuleType) -> None:
+    root = kit.svg.document(1600, 400, title="T", desc="D")
+    group = root.add("g", transform="translate(10, 20) rotate(45 5 5)", font_family="serif")
+    group.add("text", x=0, y=50, font_size=28, transform="rotate(-45)").text("kept")
+    assert kit.checks.check_svg(_render(kit, root), make_output(kit)) == []
+
+
+@pytest.mark.parametrize(
+    ("transform", "message"),
+    [
+        ("skewX(30)", "unsupported transform 'skewX(30)'"),
+        ("scale(NaN)", "non-finite transform argument"),
+        ("scale(0)", "degenerate transform 'scale(0)'"),
+        ("matrix(1 0 0)", "unsupported transform 'matrix(1 0 0)'"),
+        ("scale(1) garbage", "unsupported transform syntax 'garbage'"),
+        ("scale(a)", "non-numeric transform argument"),
+    ],
+)
+def test_unsupported_transforms_are_rejected(kit: ModuleType, transform: str, message: str) -> None:
+    root = kit.svg.document(1600, 400, title="T", desc="D")
+    root.add("g", transform=transform).add("rect", width=1, height=1)
+    joined = _joined(kit.checks.check_svg(_render(kit, root), make_output(kit)))
+    assert f"<g> transform: {message}" in joined
+
+
+def test_transform_scale_helper(kit: ModuleType) -> None:
+    assert kit.checks.transform_scale("") == 1.0
+    assert kit.checks.transform_scale("scale(2, 3)") == 2.0
+    assert kit.checks.transform_scale("matrix(0 1 -1 0 0 0)") == 1.0
+    assert kit.checks.transform_scale("scale(-0.5)") == 0.5
+    assert isinstance(kit.checks.transform_scale("skewY(1)"), str)
 
 
 def test_outlined_assets_reject_text(kit: ModuleType) -> None:
@@ -245,6 +358,46 @@ def test_cast_parse_errors(kit: ModuleType, data: bytes, message: str) -> None:
     errors = kit.checks.check_cast(data, min_seconds=None, max_seconds=None)
     assert len(errors) == 1
     assert message in errors[0]
+
+
+def test_cast_v2_times_must_not_go_backwards(kit: ModuleType) -> None:
+    data = _cast_v2((100.0, "a"), (30.0, "b"))
+    errors = kit.checks.check_cast(data, min_seconds=20, max_seconds=40)
+    assert errors == ["line 3: timestamp 30.0 precedes previous 100.0"]
+    assert kit.checks.parse_cast(_cast_v2((5.0, "a"), (5.0, "b"), (30.0, "c"))).duration == 30.0
+
+
+@pytest.mark.parametrize(
+    ("raw", "message"),
+    [
+        ("NaN", "line 2: invalid timestamp nan"),
+        ("Infinity", "line 2: invalid timestamp inf"),
+        ("-Infinity", "line 2: invalid timestamp -inf"),
+        ("1e400", "line 2: invalid timestamp inf"),
+        ("1" + "0" * 400, "cannot be represented"),
+        ("true", "line 2: invalid timestamp True"),
+        ('"30"', "line 2: invalid timestamp '30'"),
+    ],
+)
+@pytest.mark.parametrize("version", [2, 3])
+def test_cast_non_finite_timestamps_are_rejected(
+    kit: ModuleType, raw: str, message: str, version: int
+) -> None:
+    header = (
+        '{"version": 2, "width": 10, "height": 2}'
+        if version == 2
+        else '{"version": 3, "term": {"cols": 10, "rows": 2}}'
+    )
+    data = f'{header}\n[{raw}, "o", "x"]\n'.encode()
+    errors = kit.checks.check_cast(data, min_seconds=None, max_seconds=None)
+    assert len(errors) == 1
+    assert message in errors[0]
+
+
+def test_cast_v3_accumulation_overflow_is_an_error(kit: ModuleType) -> None:
+    data = _cast_v3((1e308, "a"), (1e308, "b"))
+    errors = kit.checks.check_cast(data, min_seconds=None, max_seconds=None)
+    assert errors == ["line 3: accumulated time overflowed to inf"]
 
 
 def test_check_output_dispatches_on_kind(kit: ModuleType) -> None:

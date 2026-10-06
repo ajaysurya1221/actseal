@@ -6,21 +6,20 @@ This is explicit setup, separate from unit tests, and the only place in the
 toolchain that touches the network. Fonts and the upstream font notice are
 placed under ``docs/assets/src/fonts``; binaries go to the cache directory
 (``ACTSEAL_ASSET_TOOLS`` or ``~/.cache/actseal-assets``) and are never
-committed. A receipt per tool and platform is written under
-``docs/assets/src/receipts`` with the verified hashes and source URLs only.
+committed. Archives are retained beside their extracted member so later
+verification can re-derive the executable from the pinned bytes. A receipt
+per tool and platform is written under ``docs/assets/src/receipts`` with the
+verified hashes and source URLs only; receipts are records, not trust anchors.
 """
 
 from __future__ import annotations
 
 import argparse
 import datetime as dt
-import io
 import json
 import stat
 import sys
-import tarfile
 import urllib.request
-import zipfile
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -63,34 +62,8 @@ def verify(data: bytes, artifact: tools.Artifact) -> str:
     return actual
 
 
-def extract_member(data: bytes, filename: str, member: str) -> bytes:
-    """Return exactly one archive member whose basename equals ``member``."""
-    candidates: list[tuple[str, bytes]] = []
-    if filename.endswith(".zip"):
-        with zipfile.ZipFile(io.BytesIO(data)) as archive:
-            candidates.extend(
-                (info.filename, archive.read(info))
-                for info in archive.infolist()
-                if not info.is_dir() and Path(info.filename).name == member
-            )
-    elif filename.endswith((".tar.gz", ".tgz")):
-        with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
-            for info in archive.getmembers():
-                if info.isfile() and Path(info.name).name == member:
-                    handle = archive.extractfile(info)
-                    if handle is not None:
-                        candidates.append((info.name, handle.read()))
-    else:
-        msg = f"{filename}: unsupported archive type"
-        raise tools.ToolError(msg)
-    if len(candidates) != 1:
-        found = ", ".join(name for name, _ in candidates) or "none"
-        msg = f"{filename}: expected exactly one member named {member!r}, found {found}"
-        raise tools.ToolError(msg)
-    return candidates[0][1]
-
-
 def install_binary(tool: tools.Tool, artifact: tools.Artifact, data: bytes) -> dict[str, object]:
+    """Install a verified download; archives are retained beside their member."""
     target = tools.cached_binary_path(tool, artifact)
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = data
@@ -100,8 +73,11 @@ def install_binary(tool: tools.Tool, artifact: tools.Artifact, data: bytes) -> d
         "sha256": tools.sha256_bytes(data),
     }
     if artifact.member is not None:
-        payload = extract_member(data, artifact.filename, artifact.member)
+        payload = tools.extract_member(data, artifact.filename, artifact.member)
+        archive = tools.cached_archive_path(tool, artifact)
+        archive.write_bytes(data)
         record["archive_sha256"] = record["sha256"]
+        record["archive_retained"] = str(archive)
         record["extracted_sha256"] = tools.sha256_bytes(payload)
     target.write_bytes(payload)
     target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)

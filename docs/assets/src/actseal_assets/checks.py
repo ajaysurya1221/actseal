@@ -9,6 +9,7 @@ recordings are parsed for duration, geometry and credential-looking text.
 from __future__ import annotations
 
 import json
+import math
 import re
 import struct
 import xml.etree.ElementTree as ET
@@ -58,7 +59,25 @@ FORBIDDEN_TOKENS = (
     "javascript:",
 )
 EXTERNAL_PREFIXES = ("http:", "https:", "//", "data:", "file:", "ftp:")
+# Checked on decoded attribute values and element text, so character
+# references such as ``u&#114;l(`` cannot smuggle a resource reference past
+# the raw-text scan above.
+FORBIDDEN_VALUE_TOKENS = (
+    "url(",
+    "javascript:",
+    "@import",
+    "@font-face",
+    "http:",
+    "https:",
+    "data:",
+    "file:",
+    "ftp:",
+)
+# Element text is prose; only CSS/script resource syntax is forbidden there.
+FORBIDDEN_TEXT_TOKENS = ("url(", "javascript:", "@import", "@font-face")
 XLINK_NS = "http://www.w3.org/1999/xlink"
+_TRANSFORM = re.compile(r"\s*([A-Za-z]+)\s*\(([^()]*)\)\s*,?")
+_TRANSFORM_SEPARATORS = re.compile(r"[\s,]+")
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 GIF_SIGNATURES = (b"GIF87a", b"GIF89a")
@@ -94,11 +113,66 @@ def _local(tag: str) -> tuple[str, str]:
 
 
 def _parse_px(value: str) -> float | None:
+    """A finite, positive pixel length; anything else is ``None``."""
     text = value.strip().lower().removesuffix("px").strip()
     try:
-        return float(text)
+        number = float(text)
     except ValueError:
         return None
+    if not math.isfinite(number) or number <= 0:
+        return None
+    return number
+
+
+def _squish(value: str) -> str:
+    """Lower-case with all whitespace removed, for token matching."""
+    return "".join(value.split()).lower()
+
+
+def _forbidden_value_tokens(
+    value: str, tokens: tuple[str, ...] = FORBIDDEN_VALUE_TOKENS
+) -> list[str]:
+    squished = _squish(value)
+    return [token for token in tokens if token in squished]
+
+
+def transform_scale(value: str) -> float | str:
+    """Minimum linear scale applied by an SVG ``transform`` list.
+
+    ``translate`` and ``rotate`` preserve lengths; ``scale`` and ``matrix`` are
+    reduced to their smallest axis factor. Skews and anything unparsable return
+    an error string so text size under them is never approximated.
+    """
+    position = 0
+    factor = 1.0
+    stripped = value.strip()
+    while position < len(stripped):
+        match = _TRANSFORM.match(stripped, position)
+        if match is None:
+            return f"unsupported transform syntax {stripped[position:]!r}"
+        position = match.end()
+        name = match.group(1)
+        raw_args = [arg for arg in _TRANSFORM_SEPARATORS.split(match.group(2).strip()) if arg]
+        try:
+            args = [float(arg) for arg in raw_args]
+        except ValueError:
+            return f"non-numeric transform argument in {match.group(0).strip()!r}"
+        if not all(math.isfinite(arg) for arg in args):
+            return f"non-finite transform argument in {match.group(0).strip()!r}"
+        if name == "translate" and len(args) in {1, 2}:
+            continue
+        if name == "rotate" and len(args) in {1, 3}:
+            continue
+        if name == "scale" and len(args) in {1, 2}:
+            step = min(abs(arg) for arg in args)
+        elif name == "matrix" and len(args) == 6:  # noqa: PLR2004 - matrix(a b c d e f)
+            step = min(math.hypot(args[0], args[1]), math.hypot(args[2], args[3]))
+        else:
+            return f"unsupported transform {match.group(0).strip()!r}"
+        if step <= 0:
+            return f"degenerate transform {match.group(0).strip()!r}"
+        factor *= step
+    return factor
 
 
 def check_svg(data: bytes, output: Output) -> list[str]:
@@ -158,15 +232,16 @@ def _check_root(root: ET.Element, output: Output) -> list[str]:
 class _Inherited:
     family: str | None
     size: float | None
+    scale: float
 
 
 def _check_tree(root: ET.Element, output: Output) -> list[str]:
     errors: list[str] = []
     seen_ids: set[str] = set()
-    scale = 1.0
+    display_scale = 1.0
     if output.display_width is not None and output.width:
-        scale = min(1.0, output.display_width / output.width)
-    stack: list[tuple[ET.Element, _Inherited]] = [(root, _Inherited(None, None))]
+        display_scale = min(1.0, output.display_width / output.width)
+    stack: list[tuple[ET.Element, _Inherited]] = [(root, _Inherited(None, None, 1.0))]
     while stack:
         element, inherited = stack.pop()
         namespace, name = _local(element.tag)
@@ -174,21 +249,51 @@ def _check_tree(root: ET.Element, output: Output) -> list[str]:
             errors.append(f"forbidden element <{name}>")
             continue
         errors.extend(_check_attributes(element, name, seen_ids))
-        current = _Inherited(
-            element.get("font-family", inherited.family),
-            _effective_size(element, inherited.size),
-        )
+        errors.extend(_check_element_text(element, name))
+        size, size_errors = _effective_size(element, name, inherited.size)
+        errors.extend(size_errors)
+        scale, scale_errors = _effective_scale(element, name, inherited.scale)
+        errors.extend(scale_errors)
+        current = _Inherited(element.get("font-family", inherited.family), size, scale)
         if name in {"text", "tspan"}:
-            errors.extend(_check_text(element, name, current, output, scale))
+            errors.extend(_check_text(element, name, current, output, display_scale))
         stack.extend((child, current) for child in reversed(list(element)))
     return errors
 
 
-def _effective_size(element: ET.Element, inherited: float | None) -> float | None:
+def _effective_size(
+    element: ET.Element, name: str, inherited: float | None
+) -> tuple[float | None, list[str]]:
     raw = element.get("font-size")
     if raw is None:
-        return inherited
-    return _parse_px(raw)
+        return inherited, []
+    parsed = _parse_px(raw)
+    if parsed is None:
+        return None, [f"<{name}> font-size {raw!r} is not a finite positive pixel size"]
+    return parsed, []
+
+
+def _effective_scale(element: ET.Element, name: str, inherited: float) -> tuple[float, list[str]]:
+    raw = element.get("transform")
+    if raw is None:
+        return inherited, []
+    result = transform_scale(raw)
+    if isinstance(result, str):
+        return inherited, [f"<{name}> transform: {result}"]
+    return inherited * result, []
+
+
+def _check_element_text(element: ET.Element, name: str) -> list[str]:
+    """Decoded text and tail content must not carry resource syntax."""
+    errors: list[str] = []
+    for part in (element.text, element.tail):
+        if not part:
+            continue
+        errors.extend(
+            f"<{name}> text contains forbidden resource syntax {token!r}"
+            for token in _forbidden_value_tokens(part, FORBIDDEN_TEXT_TOKENS)
+        )
+    return errors
 
 
 def _check_attributes(element: ET.Element, name: str, seen_ids: set[str]) -> list[str]:
@@ -207,6 +312,10 @@ def _check_attributes(element: ET.Element, name: str, seen_ids: set[str]) -> lis
                 errors.append(f"<{name}> href {value!r} is not a local fragment")
         if lowered.startswith(EXTERNAL_PREFIXES):
             errors.append(f"<{name}> attribute {key}={value!r} references an external resource")
+        errors.extend(
+            f"<{name}> attribute {key}={value!r} contains forbidden resource syntax {token!r}"
+            for token in _forbidden_value_tokens(value)
+        )
         if key == "id":
             if value in seen_ids:
                 errors.append(f"duplicate id {value!r}")
@@ -237,13 +346,13 @@ def _check_text(
                 "must end with a generic family"
             )
     if inherited.size is None:
-        errors.append(f"<{name}> {content!r} has no numeric font-size")
+        errors.append(f"<{name}> {content!r} has no finite positive font-size")
     else:
-        rendered = inherited.size * scale
-        if rendered < MIN_LABEL_PX:
+        rendered = inherited.size * inherited.scale * scale
+        if not math.isfinite(rendered) or rendered < MIN_LABEL_PX:
             errors.append(
-                f"<{name}> {content!r} renders at {rendered:.1f}px at display width; "
-                f"minimum is {MIN_LABEL_PX:g}px"
+                f"<{name}> {content!r} renders at {rendered:.1f}px at display width "
+                f"(transform scale {inherited.scale:g}); minimum is {MIN_LABEL_PX:g}px"
             )
     return errors
 
@@ -343,13 +452,36 @@ def parse_cast(data: bytes) -> CastInfo:
             msg = f"line {index}: event is not a three-element list"
             raise CastError(msg)
         stamp, code, payload = event
-        if isinstance(stamp, bool) or not isinstance(stamp, int | float) or stamp < 0:
-            msg = f"line {index}: invalid timestamp {stamp!r}"
-            raise CastError(msg)
-        clock = clock + float(stamp) if version == 3 else float(stamp)  # noqa: PLR2004
+        seconds = _cast_seconds(stamp, index)
+        if version == 3:  # noqa: PLR2004 - v3 stores intervals
+            clock += seconds
+            if not math.isfinite(clock):
+                msg = f"line {index}: accumulated time overflowed to {clock!r}"
+                raise CastError(msg)
+        else:
+            if seconds < clock:
+                msg = f"line {index}: timestamp {seconds!r} precedes previous {clock!r}"
+                raise CastError(msg)
+            clock = seconds
         if code == "o" and isinstance(payload, str):
             output.append(payload)
     return CastInfo(int(version), width, height, clock, len(lines) - 1, "".join(output))
+
+
+def _cast_seconds(stamp: object, index: int) -> float:
+    """A finite, non-negative event time; JSON NaN/Infinity and huge ints are rejected."""
+    if isinstance(stamp, bool) or not isinstance(stamp, int | float):
+        msg = f"line {index}: invalid timestamp {stamp!r}"
+        raise CastError(msg)
+    try:
+        seconds = float(stamp)
+    except OverflowError as exc:
+        msg = f"line {index}: timestamp {stamp!r} cannot be represented"
+        raise CastError(msg) from exc
+    if not math.isfinite(seconds) or seconds < 0:
+        msg = f"line {index}: invalid timestamp {stamp!r}"
+        raise CastError(msg)
+    return seconds
 
 
 def _cast_geometry(header: dict[str, object], version: int) -> tuple[int, int]:

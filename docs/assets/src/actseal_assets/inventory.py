@@ -8,6 +8,7 @@ as passed. Later tasks attach a renderer and finalize provisional dimensions.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -95,6 +96,12 @@ class Asset:
 
 OUTPUT_KINDS = frozenset({"svg", "png", "gif"})
 SOURCE_KINDS = frozenset({"cast"})
+# A committed file name: no directories, no leading dot, no traversal, ASCII only.
+PLAIN_FILENAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+)*$")
+
+
+def is_plain_filename(name: str) -> bool:
+    return bool(PLAIN_FILENAME.match(name)) and ".." not in name
 
 
 def _svg(path: str, width: int, height: int, *, outlined: bool = False) -> Output:
@@ -218,13 +225,13 @@ def validate_inventory(assets: tuple[Asset, ...] = ASSETS) -> list[str]:
                 errors.append(f"{asset.name}: unsupported output kind {output.kind!r}")
             if not output.path.endswith(f".{output.kind}"):
                 errors.append(f"{asset.name}: {output.path} does not end with .{output.kind}")
-            if "/" in output.path or output.path.startswith("."):
+            if not is_plain_filename(output.path):
                 errors.append(f"{asset.name}: output {output.path!r} must be a plain filename")
-        errors.extend(
-            f"{asset.name}: unsupported source kind {source.kind!r}"
-            for source in asset.sources
-            if source.kind not in SOURCE_KINDS
-        )
+        for source in asset.sources:
+            if source.kind not in SOURCE_KINDS:
+                errors.append(f"{asset.name}: unsupported source kind {source.kind!r}")
+            if not is_plain_filename(source.path):
+                errors.append(f"{asset.name}: source {source.path!r} must be a plain filename")
     if len(set(paths)) != len(paths):
         errors.append("duplicate output paths in inventory")
     return errors

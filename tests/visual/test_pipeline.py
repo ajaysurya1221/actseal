@@ -153,7 +153,20 @@ def test_readme_reference_to_declared_output_passes(kit: ModuleType, repo: Path)
     (repo / "README.md").write_text("![Probe](docs/assets/probe.svg)\n", encoding="utf-8")
     report = kit.pipeline.run(repo, mode="check", assets=(asset,))
     assert report.ok
-    assert _messages(report, "references") == ["1 local image reference(s) checked"]
+    assert _messages(report, "references") == ["1 image reference(s) checked"]
+
+
+def test_readme_reference_to_planned_asset_file_fails(kit: ModuleType, repo: Path) -> None:
+    planned = make_asset(kit, name="future", outputs=(make_output(kit, "future.svg"),))
+    (repo / "docs" / "assets" / "future.svg").write_bytes(probe_bytes(kit))
+    (repo / "README.md").write_text("![Future](docs/assets/future.svg)\n", encoding="utf-8")
+    report = kit.pipeline.run(repo, mode="check", assets=(planned,))
+    assert _errors(report) == [
+        (
+            "README.md:1: 'docs/assets/future.svg' belongs to unimplemented asset 'future' "
+            "(planned in Task 99)"
+        )
+    ]
 
 
 def test_implemented_asset_requiring_missing_tool_fails(
@@ -273,17 +286,109 @@ def test_real_inventory_is_structurally_valid(kit: ModuleType) -> None:
 
 
 def test_inventory_validation_catches_bad_declarations(kit: ModuleType) -> None:
+    source = kit.inventory.Source(path="../demo.cast", kind="cast")
     bad = (
         make_asset(kit, name="a", outputs=(make_output(kit, "x.svg", kind="png"),)),
         make_asset(kit, name="a", outputs=(make_output(kit, "sub/x.svg"),)),
-        make_asset(kit, name="b", outputs=()),
+        make_asset(kit, name="b", outputs=(), sources=(source,)),
     )
     assert kit.inventory.validate_inventory(bad) == [
         "duplicate asset names in inventory",
         "a: x.svg does not end with .png",
         "a: output 'sub/x.svg' must be a plain filename",
         "b: declares no outputs",
+        "b: source '../demo.cast' must be a plain filename",
     ]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "../escaped.svg",
+        "..\\escaped.svg",
+        ".hidden.svg",
+        "a/b.svg",
+        "x..svg",
+        "/abs.svg",
+        "é.svg",
+        "",
+    ],
+)
+def test_plain_filename_rejects_traversal_and_hidden_names(kit: ModuleType, name: str) -> None:
+    assert not kit.inventory.is_plain_filename(name)
+
+
+@pytest.mark.parametrize("name", ["hero-light.svg", "demo.gif", "social.png", "a_b.c.d"])
+def test_plain_filename_accepts_ordinary_names(kit: ModuleType, name: str) -> None:
+    assert kit.inventory.is_plain_filename(name)
+
+
+def test_invalid_declarations_abort_before_any_renderer_runs(kit: ModuleType, repo: Path) -> None:
+    calls: list[str] = []
+
+    def render(_context: Any) -> Mapping[str, bytes]:
+        calls.append("render")
+        return {"../escaped.svg": probe_bytes(kit)}
+
+    escaped = make_asset(kit, name="escape", outputs=(make_output(kit, "../escaped.svg"),))
+    escaped = kit.inventory.Asset(
+        name=escaped.name,
+        priority=escaped.priority,
+        task=escaped.task,
+        summary=escaped.summary,
+        outputs=escaped.outputs,
+        renderer=render,
+    )
+    good = _deterministic(kit)
+    for mode in ("write", "check"):
+        report = kit.pipeline.run(repo, mode=mode, assets=(good, escaped))
+        assert not report.ok
+        assert "escape: output '../escaped.svg' must be a plain filename" in _errors(report)
+        assert _errors(report)[-1] == (
+            "aborting before any renderer runs: 1 declaration error(s) above"
+        )
+        assert report.checked == []
+        assert report.written == []
+    assert calls == []
+    assert not (repo / "docs" / "escaped.svg").exists()
+    assert not (repo / "docs" / "assets" / "probe.svg").exists()
+
+
+def test_symlinked_output_is_never_followed(kit: ModuleType, repo: Path, tmp_path: Path) -> None:
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    victim = outside / "probe.svg"
+    victim.write_bytes(b"original")
+    asset_dir = repo / "docs" / "assets"
+    asset_dir.mkdir(parents=True, exist_ok=True)
+    (asset_dir / "probe.svg").symlink_to(victim)
+    asset = _deterministic(kit)
+    written = kit.pipeline.run(repo, mode="write", assets=(asset,))
+    assert _errors(written) == [
+        "docs/assets/probe.svg is a symlink; refusing to follow it; nothing written"
+    ]
+    assert victim.read_bytes() == b"original"
+    assert written.written == []
+    checked = kit.pipeline.run(repo, mode="check", assets=(asset,))
+    assert _errors(checked) == [
+        "docs/assets/probe.svg is a symlink; refusing to follow it; not compared"
+    ]
+
+
+def test_symlinked_asset_directory_is_refused(kit: ModuleType, repo: Path, tmp_path: Path) -> None:
+    outside = tmp_path / "elsewhere"
+    outside.mkdir()
+    (repo / "docs" / "assets").rename(repo / "docs" / "assets-real")
+    (repo / "docs" / "assets").symlink_to(outside, target_is_directory=True)
+    (repo / "docs" / "assets-real" / "src").rename(repo / "docs" / "assets" / "src")
+    asset = _deterministic(kit)
+    report = kit.pipeline.run(repo, mode="write", assets=(asset,))
+    errors = _errors(report)
+    assert errors[0].startswith("docs/assets resolves to ")
+    assert errors[0].endswith(", outside the repository; refusing to continue")
+    assert errors[-1] == "aborting before any renderer runs: 1 declaration error(s) above"
+    assert list(outside.iterdir()) == [outside / "src"]
+    assert report.written == []
 
 
 def test_mode_must_be_write_or_check(kit: ModuleType, repo: Path) -> None:

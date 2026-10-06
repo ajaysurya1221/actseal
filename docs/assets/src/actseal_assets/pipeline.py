@@ -6,6 +6,10 @@ them with the committed files. ``run(mode="write")`` does the same and then
 writes validated bytes. Planned assets without a renderer are reported as not
 implemented and never counted as passed. Global checks cover the tool
 manifest, the uv.lock pin, font attribution, README references and orphans.
+
+Invalid declarations abort the run before any renderer is called, and every
+write destination is re-resolved and confined to ``docs/assets`` (symlinks
+are refused) immediately before the bytes are written.
 """
 
 from __future__ import annotations
@@ -24,12 +28,16 @@ from .inventory import (
     Output,
     RenderContext,
     Source,
+    is_plain_filename,
     validate_inventory,
 )
 
 ERROR = "error"
 INFO = "info"
 OK = "ok"
+# Errors in these scopes describe the declarations themselves; no renderer may
+# run and nothing may be written while they stand.
+BLOCKING_SCOPES = frozenset({"inventory", "arguments"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -197,6 +205,42 @@ def _process_asset(
         _process_output(root, asset, output, rendered[output.path], report, write=write)
 
 
+def _asset_dir_problem(root: Path, *, create: bool) -> str | None:
+    """Reject a ``docs/assets`` directory that resolves outside the repository."""
+    asset_dir = root / ASSET_DIR
+    if create:
+        asset_dir.mkdir(parents=True, exist_ok=True)
+    if not asset_dir.is_dir():
+        return None
+    expected = root.resolve(strict=True) / ASSET_DIR
+    actual = asset_dir.resolve(strict=True)
+    if actual != expected or asset_dir.is_symlink():
+        return f"{ASSET_DIR} resolves to {actual}, outside the repository; refusing to continue"
+    return None
+
+
+def _contained_target(root: Path, filename: str) -> tuple[Path | None, str | None]:
+    """Resolve ``docs/assets/<filename>`` and refuse anything that escapes it.
+
+    Returns ``(path, None)`` when ``path`` is a regular file or does not exist,
+    and ``(None, reason)`` for a symlink or any resolution that leaves the
+    asset directory.
+    """
+    if not is_plain_filename(filename):
+        return None, f"{filename!r} is not a plain filename"
+    asset_dir = (root / ASSET_DIR).resolve(strict=True)
+    target = root / ASSET_DIR / filename
+    if target.is_symlink():
+        return None, f"{ASSET_DIR}/{filename} is a symlink; refusing to follow it"
+    if target.exists():
+        resolved = target.resolve(strict=True)
+        if resolved.parent != asset_dir or resolved.name != filename:
+            return None, f"{ASSET_DIR}/{filename} resolves outside {ASSET_DIR}"
+        if not resolved.is_file():
+            return None, f"{ASSET_DIR}/{filename} is not a regular file"
+    return target, None
+
+
 def _process_output(
     root: Path,
     asset: Asset,
@@ -214,15 +258,39 @@ def _process_output(
         if write:
             report.add(asset.name, ERROR, f"{label}: refusing to write an invalid output")
         return
-    target = root / ASSET_DIR / output.path
     if write:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(data)
-        report.written.append(output.path)
-        report.add(asset.name, OK, f"wrote {label} ({len(data)} bytes)")
+        _write_output(root, asset, output, data, report)
+    else:
+        _compare_output(root, asset, output, data, report)
+
+
+def _write_output(root: Path, asset: Asset, output: Output, data: bytes, report: Report) -> None:
+    label = f"{ASSET_DIR}/{output.path}"
+    dir_problem = _asset_dir_problem(root, create=True)
+    if dir_problem is not None:
+        report.add(asset.name, ERROR, dir_problem)
+        return
+    target, reason = _contained_target(root, output.path)
+    if target is None:
+        report.add(asset.name, ERROR, f"{reason}; nothing written")
+        return
+    target.write_bytes(data)
+    report.written.append(output.path)
+    report.add(asset.name, OK, f"wrote {label} ({len(data)} bytes)")
+
+
+def _compare_output(root: Path, asset: Asset, output: Output, data: bytes, report: Report) -> None:
+    label = f"{ASSET_DIR}/{output.path}"
+    missing = f"{label} is not committed; run render.py --write"
+    if not (root / ASSET_DIR).is_dir():
+        report.add(asset.name, ERROR, missing)
+        return
+    target, reason = _contained_target(root, output.path)
+    if target is None:
+        report.add(asset.name, ERROR, f"{reason}; not compared")
         return
     if not target.is_file():
-        report.add(asset.name, ERROR, f"{label} is not committed; run render.py --write")
+        report.add(asset.name, ERROR, missing)
         return
     committed = target.read_bytes()
     if committed != data:
@@ -236,6 +304,9 @@ def _global_checks(
 ) -> None:
     for problem in validate_inventory(assets):
         report.add("inventory", ERROR, problem)
+    dir_problem = _asset_dir_problem(root, create=False)
+    if dir_problem is not None:
+        report.add("inventory", ERROR, dir_problem)
     for problem in tools.validate_manifest(dict(manifest)):
         report.add("manifest", ERROR, problem)
     for tool in manifest.values():
@@ -256,7 +327,7 @@ def _global_checks(
     for problem in problems:
         report.add("references", ERROR, problem)
     if not problems:
-        report.add("references", OK, f"{checked} local image reference(s) checked")
+        report.add("references", OK, f"{checked} image reference(s) checked")
     for problem in references.check_orphans(root, assets):
         report.add("orphans", ERROR, problem)
 
@@ -285,6 +356,14 @@ def run(
         report.add("manifest", ERROR, str(exc))
         return report
     _global_checks(root, assets, manifest, report)
+    blocking = [f for f in report.findings if f.level == ERROR and f.scope in BLOCKING_SCOPES]
+    if blocking:
+        report.add(
+            "inventory",
+            ERROR,
+            f"aborting before any renderer runs: {len(blocking)} declaration error(s) above",
+        )
+        return report
     selected = [asset for asset in assets if not only or asset.name in only]
     for asset in selected:
         _process_asset(
