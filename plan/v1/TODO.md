@@ -5,7 +5,7 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 - [x] 00 Persist exact approval and decisions.
 - [x] 01 Run full baseline; retain two failures and native success.
 - [x] 01R repair and independent 2302-test verification ACCEPT; PR #10 merged with hosted CI green.
-- [ ] 02 Freeze stable public interfaces, schema versions and compatible replay.
+- [x] 02 Freeze stable public interfaces, schema versions and compatible replay; PR15 merged after eight green checks.
 - [ ] 03 Shared provider conformance and native fixture repair.
 - [ ] 04 Numerical boundary/properties/eight mutations.
 - [ ] 05–06 Optional experimental Jev and preregistered descriptive audit, subject to cut.
@@ -19,4 +19,4 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work: 01R is ACCEPT and merged. Claude02 and Claude09 are applying independent review findings in isolated worktrees. Task10CI is locally ACCEPT at 030ef840; PR13 awaits fresh hosted CI. After core02 ACCEPT, launch provider conformance03 and statistical verification04. Actual pinned asset downloads still await the requested exception; other lanes continue.
+Current work: preserve03/04 drafts and record independent reviews while Claude quota resets at01:50 IST.02 core and10 toolchain are merged.09 implementation has bounded ACCEPT, with final asset/schema integration and hosted rehearsal pending.12 needs a content revision. Asset-download and exact local-check permission requests remain pending. All handles are terminal; see STATE.md before resuming.
