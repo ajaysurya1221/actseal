@@ -1,0 +1,9 @@
+# REVIEW 02 — Final normative clarification
+
+PR15 at `84079e9017bb47c215ba1d7dba05ae44af6c4320` has local implementation ACCEPT, but hold merge for this documentation-only correction. Separate read-only review confirmed the contradiction; runtime source and schemas require no changes.
+
+**P1 — A strict stable schema cannot gain fields silently.** stability.md and versioning.md currently permit new JSON fields in a minor release, while the schemas reject unknown fields and promise compatible shapes throughout 1.x. Replace this with the approved stability-preserving rule: minor releases may add commands, constants or optional arguments whose defaults preserve existing behavior. Existing strict schema versions and default CLI receipt shapes do not gain fields. Additional formats or semantics require a separately versioned, explicitly opt-in interface preserving every existing stable surface. Stable removals/incompatible changes wait until2.0.
+
+A new engine in a minor release must be explicitly selected; preserve existing engines and their semantics/default behavior. Existing evidence is interpreted through its recorded engine, never reinterpreted under a newer engine. Reviewed exact-fingerprint registry entries remain permitted in patch releases.
+
+Own only docs/stability.md, docs/versioning.md, a new docs/decisions/0015-v1-stability-and-replay-compatibility.md, and REPORT02R3. The ADR records the already-approved public stability, strict format, legacy0.1 isolated replay, explicit exact-hash registry and latest-minor security-support choices; do not invent new behavior. Preserve original reports and schema/runtime/test bytes. Run pre-commit and diff check; no full product rerun needed for these prose changes. Commit without push. Codex will review and refresh exact-head CI.
