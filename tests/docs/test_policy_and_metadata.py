@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import importlib
 import re
 from importlib.metadata import distribution
 from pathlib import Path
 
 import pytest
 
+from actseal.records import PROVIDERS
 from docs.conftest import DOCS, ROOT
 
 SECURITY = ROOT / "SECURITY.md"
@@ -45,11 +47,26 @@ def test_zero_dependency_core_claim_is_stated_where_the_core_is_described() -> N
 
 
 def test_providers_doc_describes_jev_as_unshipped_and_experimental() -> None:
+    """Exact current behaviour: no Jev adapter is installed and the docs say so.
+
+    Integration follow-up (Task 19 inclusion decision): if Jev ships as a
+    PROVISIONAL provider, update providers/cli/python-api/faq and replace this
+    test with the experimental-flag behaviour; if it is cut, update only the
+    deadline sentence. Neither outcome is claimed here.
+    """
+    assert set(PROVIDERS) == {"fixture", "laya"}
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("actseal.experimental.providers.jev")
     text = _prose(DOCS / "providers.md")
     assert "## Jev: conditional experimental work, not shipped" in text
     assert "deferred to v2" not in text
     assert "the current source ships no Jev adapter" in text
     assert "--provider jev --experimental-provider" in text
+    for document in ("python-api.md", "faq.md"):
+        prose = _prose(DOCS / document)
+        assert "current stable providers" in prose, document
+        assert "In the v1.0 scope" in prose, document
+        assert "In 1.x the runner accepts only" not in prose, document
 
 
 def test_security_policy_support_rule_and_reportability_are_preserved() -> None:

@@ -122,6 +122,18 @@ def test_examples_run_in_order_against_a_fresh_demo(demo_workspace: Path) -> Non
     assert (demo_workspace / "recheck-evidence" / "verdict.json").is_file()
 
 
+def test_runtime_example_binds_the_request_first_and_refuses_foreign_captures() -> None:
+    """The documented live gate checks request binding first and proves the negative path."""
+    runtime = next(code for code in fences(GUIDE, "python") if "def route_ticket" in code)
+    binding = runtime.index("capture.request_sha256 != request_sha256(request)")
+    assert binding < runtime.index("normalize(capture")
+    assert binding < runtime.index("evaluate(")
+    assert "foreign = CapturedOutcome(request_sha256(other)" in runtime
+    refusal = 'raise AssertionError("a capture for another request must never be evaluated")'
+    assert refusal in runtime
+    assert runtime.count('assert executed == ["live-001->billing"]') == 3
+
+
 def test_examples_do_not_import_optional_or_private_names() -> None:
     for code in fences(GUIDE, "python"):
         assert "laya" not in code

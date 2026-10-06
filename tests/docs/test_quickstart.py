@@ -1,10 +1,9 @@
-"""The quickstart's three commands match the approved plan and the candidate package.
+"""The quickstart's three commands match the approved plan and the installed package.
 
-The PyPI commands cannot be executed here without a network download, and the
-published package is still 0.1.0 while 1.0.0 is a candidate. The executable
-check therefore runs the *equivalent* commands (``python -m actseal`` from the
-locked environment) against the checked-out package and reports that as
-candidate verification, not as a PyPI receipt.
+The PyPI commands cannot be executed here without a network download. The
+executable check therefore runs the *equivalent* commands (``python -m actseal``
+from the locked environment) against the checked-out package; that is a check
+of the promised behaviour, not a PyPI publication receipt (Tasks 20/14).
 """
 
 from __future__ import annotations
@@ -33,12 +32,22 @@ def test_three_commands_match_plan_section_d_verbatim() -> None:
     assert "\n".join(EXPECTED_COMMANDS) in plan_text
 
 
-def test_quickstart_does_not_claim_the_candidate_is_published() -> None:
+def test_quickstart_is_version_neutral_and_claims_no_publication_state() -> None:
+    """The page must stay correct before and after the 1.0.0 tag without edits."""
     text = QUICKSTART.read_text(encoding="utf-8")
-    assert "1.0.0 is a release candidate and is not yet on" in text
-    assert "actseal==1.0.0" not in text
-    assert "uvx --python 3.12 --from actseal==" not in text
+    for command in EXPECTED_COMMANDS:
+        assert "--from" not in command
+    stale_claims = (
+        "not yet on",
+        "release candidate",
+        "At the time of writing",
+        "currently published",
+    )
+    for stale in stale_claims:
+        assert stale not in text, stale
+    assert "--from" in text  # the exact-pin form is documented alongside the unpinned form
     assert "Windows is unsupported" in text
+    assert "stability.md" in text
 
 
 def _run(arguments: list[str], cwd: Path) -> tuple[int, dict[str, object]]:
