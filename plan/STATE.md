@@ -12,7 +12,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 ## Current state
 
 - Planning artifacts: complete; 119 material claims and all 18 candidate dispositions recorded.
-- Product implementation: T00, T10, T20, T30 and T40 accepted and merged; T50 is next.
+- Product implementation: T00 through T50 accepted and merged; T60 acceptance is next.
 - Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
 - Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
 - Preflight: source statistics suite passed in a separate verification lane;
@@ -28,8 +28,8 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | T20 statistics | Claude B | ACCEPT / MERGED | b1eace7 (merge 6d6d7c4) |
 | T30 providers/faults | Claude C | ACCEPT / MERGED | 8b1efd6 (merge 87d2cd1) |
 | T40 evidence/replay | Claude B | ACCEPT / MERGED | 98297d5 (merge 7a2939e) |
-| T50 CLI/demo | Claude A | REVISE | candidate046e4f6 |
-| T60 acceptance | Claude C | WAITING_FOR_T50 | none |
+| T50 CLI/demo | Claude A | ACCEPT / MERGED | 286ae67 (merge7e696c5) |
+| T60 acceptance | Claude C | READY | none |
 | T70 publication | Codex | WAITING_FOR_T60 | none |
 
 ## Resume pointers
@@ -103,3 +103,12 @@ Measured preflight API spend: $0. No Jev calls. No mandatory hosting. Subscripti
 billing uses the authenticated Max subscription; never silently switch to API billing. Escalate projected
 incremental spend >$100 or if delivery requires using 8 October as more than buffer.
 Optional Jev/Marketplace Action are excluded from the release critical path.
+
+T50 ACCEPT at286ae67e252ecbb77e9c330ebe1f66cc375bfbab, merged7e696c5 via PR6.
+REVIEW T50-02 records root127 unit tests/8 clean-wheel tests, exact task quality
+checks, corrected diagnostics/offline/worker-loss paths and all eight hosted jobs
+in37451569089/37451595664. All24-file demo inventories match across both matrices
+and the root installed-wheel run. Native CLI integration remains T70 work.
+Final cumulative Claude meter $19.152133; actual incremental paid API spend $0.
+T60 may add explicitly marked installed-wheel acceptance tests; CI's packaging
+selection now covers every packaging marker, including tests/acceptance.

@@ -45,7 +45,7 @@ jobs:
       - name: Build wheel and source distribution
         run: uv build --no-sources
       - name: Clean-wheel packaging acceptance
-        run: uv run --frozen pytest -m packaging tests/packaging
+        run: uv run --frozen pytest -m packaging
       - name: Reproduce fixture evidence
         shell: bash
         run: |

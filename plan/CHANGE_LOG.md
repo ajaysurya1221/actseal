@@ -137,3 +137,14 @@ ADR0007 now uses the documented process-local automatic-memory disable flag for
 controlled Claude dispatches. Project STATE/REPORT/REVIEW records remain the
 shared memory; existing private notes and global settings are preserved. This
 corrects an ownership mismatch observed during T50, not the product interface.
+
+## 2026-10-06 — T50 acceptance and full packaging selection
+
+T50 accepted at286ae67 (PR6, merge7e696c5); REVIEW T50-02 binds both green hosted
+matrices and equal cross-platform evidence. Root corrected only the packaging
+test's documentation about which invocations carry import/socket guards; test
+behavior is unchanged. To prevent future installed acceptance tests being
+silently excluded, CI now selects all packaging markers, not just tests/packaging.
+T60/T70 command specifications reflect that broader check. No public API,
+statistical rule, dependency or frozen fixture changes. T60 implementation has
+not started before its prerequisites were accepted.
