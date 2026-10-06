@@ -289,6 +289,7 @@ def verify(directory: Path, inputs: Path = EXAMPLE_DIR) -> FreshRun:
 def record(destination: Path, *, source_commit: str) -> Producer:
     """Produce one new recorded run and its producer identity; never overwrites."""
     _hex("source_commit", source_commit, COMMIT_HEX)
+    destination.parent.mkdir(parents=True, exist_ok=True)
     fresh = verify(destination)
     if fresh.replayed != fresh.bundle.verdict:
         raise RuntimeError("fresh replay does not equal the recorded verdict")
@@ -320,8 +321,8 @@ def load_producer(run_dir: Path) -> Producer:
         raise SchemaError("producer.verdict_status: unsupported value")
     uv_lock = value["uv_lock_sha256"]
     inputs = value["inputs"]
-    if type(inputs) is not dict or tuple(inputs) != INPUT_FILES:
-        raise SchemaError("producer.inputs: must list exactly the four input files in order")
+    if type(inputs) is not dict or set(inputs) != set(INPUT_FILES):
+        raise SchemaError("producer.inputs: must list exactly the four input files")
     _text("producer.note", value["note"])
     return Producer(
         PRODUCER_FORMAT,
@@ -333,8 +334,8 @@ def load_producer(run_dir: Path) -> Producer:
         _hex("producer.source_commit", value["source_commit"], COMMIT_HEX),
         None if uv_lock is None else _hex("producer.uv_lock_sha256", uv_lock, SHA256_HEX),
         tuple(
-            (name, _hex(f"producer.inputs.{name}", digest, SHA256_HEX))
-            for name, digest in inputs.items()
+            (name, _hex(f"producer.inputs.{name}", inputs[name], SHA256_HEX))
+            for name in INPUT_FILES
         ),
     )
 
@@ -490,7 +491,7 @@ def _describe(verdict: Verdict) -> str:
 # --------------------------------------------------------------------------- #
 
 
-def check(out: TextIO) -> int:
+def check(out: TextIO, recorded_root: Path = RECORDED_DIR) -> int:
     report = Report(out)
     with tempfile.TemporaryDirectory(prefix="actseal-action-gate-") as temporary:
         fresh = verify(Path(temporary) / "fresh")
@@ -500,7 +501,7 @@ def check(out: TextIO) -> int:
         else:
             report.error("fresh replay differs from the fresh verdict")
         check_routing(fresh, report)
-        runs = recorded_runs()
+        runs = recorded_runs(recorded_root)
         if not runs:
             report.error("recorded: no recorded run under recorded/")
         compatible = sum(check_recorded(run_dir, fresh, report) for run_dir in runs)
@@ -513,9 +514,9 @@ def check(out: TextIO) -> int:
     return EXIT_OK if report.errors == 0 else EXIT_FAILED
 
 
-def route(out: TextIO) -> int:
+def route(out: TextIO, recorded_root: Path = RECORDED_DIR) -> int:
     running = implementation_fingerprint()
-    for run_dir in recorded_runs():
+    for run_dir in recorded_runs(recorded_root):
         producer = load_producer(run_dir)
         if producer.implementation_sha256 != running:
             continue
