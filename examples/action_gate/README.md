@@ -61,17 +61,16 @@ uv run --frozen pytest tests/examples
 
 `--check` exits 0 only when all of the following hold: a fresh offline
 verification of the authored data (lock, verify, replay) agrees with itself;
-the gate opens on that fresh lock and verdict and routes the eight tickets to
-exactly the authored dispositions with exactly the three `ACT` tickets in the
-queue journal; and every recorded run under `recorded/` passes the checks in
-the next section, with at least one exact or registry-approved run replaying
-under the running implementation.
+every active recorded run under `recorded/` passes the checks in the next
+section; and, only then, the gate opens on the fresh lock and verdict and
+routes the eight tickets to exactly the authored dispositions with exactly the
+three `ACT` tickets in the queue journal. When any archive fails, the routing
+demonstration is skipped: no queue operation happens.
 
-`--route` takes the first recorded run whose producer is the running
-implementation or a registry-approved compatible one, replays it, requires the
-replay to equal the recorded verdict, opens the gate on the replayed verdict
-and prints each ticket's disposition and the queue journal. Unapproved runs
-are listed as not used.
+`--route` performs the same fresh verification and archive checks and refuses
+before any queue operation when anything fails. Otherwise it replays the
+first recorded run, opens the gate on the replayed verdict and prints each
+ticket's disposition and the queue journal.
 
 ## The eight tickets
 
@@ -129,41 +128,39 @@ run was produced from, the `uv.lock` hash and the SHA-256 of the four authored
 inputs. The directory name is the fingerprint prefix. The bytes under
 `evidence/` are exactly what `verify` published; nothing was edited afterwards.
 
-For every recorded run, `--check` requires that `PRODUCER.json` describes its
-`lock.json`, that the bundle passes the structural and hash checks, that the
-archived lock is internally valid (self-seal, frozen fault inventory, case
-inventories, unique states, disjoint splits; checked explicitly and
-independently of implementation compatibility, without resealing anything),
-that the recorded inputs are the committed inputs, and that `records.jsonl`,
-`faults.jsonl` and the verdict (apart from the lock seal) equal a fresh run.
-It then establishes the run's compatibility status explicitly from the
-packaged registry and replays it offline:
+For every active recorded run (amendment V1-020), the example checks only
+what is specific to it:
 
-- `exact`: the producer fingerprint is the running one. Replay must equal the
-  recorded verdict (`[ok] ... (exact implementation)`).
-- `approved`: producer and running fingerprints are both registered for the
-  lock's engine. Replay must equal the recorded verdict
-  (`[ok] ... (approved implementation)`).
-- `unapproved`: neither. Because the archive itself was already validated,
-  the only acceptable replay is exactly the compatibility `ERROR`
-  (`integrity.lock`), reported as `[info] ... not replayable under the
-  running implementation ... bytes preserved` and tolerated as long as at
-  least one exact or approved run exists.
+- `PRODUCER.json` describes the root `lock.json` (seal, producer fingerprint,
+  replay engine);
+- the root `lock.json` equals the bundle's `lock.json` byte for byte;
+- the archived contract equals the frozen `contract.toml` and the archived
+  model identity equals the current fixture identity;
+- the bundle's datasets and the producer's recorded input hashes equal the
+  committed authored inputs;
+- `records.jsonl`, `faults.jsonl` and the verdict (apart from the lock seal)
+  equal a fresh run.
 
-Any other replay result, including an `integrity.lock` caused by a corrupt
-archived seal, is an `[error]`; a generic replay failure is never relabelled
-as a compatibility notice. When no exact or approved run exists, `--check`
-fails and asks for a fresh run:
+Everything general is owned by the core `replay`: bundle structure and
+hashes, the lock seal, replay-engine compatibility through the packaged
+registry (exact running source, or producer and running fingerprints both
+registered for the engine), inventories and semantics. Each active run must
+replay to a non-`ERROR` verdict equal to its archived verdict
+(`[ok] ... (exact implementation)` or `(registry-approved implementation)`).
+Anything else is an `[error]`, whether the archive is damaged or its producer
+is simply not supported by the running implementation, and it fails `--check`
+and `--route` even beside a valid run. Nothing is skipped as benign, and
+nothing is rewritten, resealed, moved or auto-approved. When an archive is not
+supported, record a separately identified fresh run:
 
 ```bash
 uv run --frozen python examples/action_gate/run.py --record examples/action_gate/recorded/<new fingerprint prefix> --source-commit <40-hex commit>
 ```
 
-A fresh run is a separately identified directory. Never edit, reseal or
-replace an existing recorded run; an earlier run from a different
-implementation stays in place as the evidence it was. Registry approval of a
-historical fingerprint is a reviewed change to the packaged registry, not
-something this example can grant.
+Whether an older archive is then excluded from the active set or approved in
+the packaged registry is a reviewed decision outside this example (the
+release integration carries an explicit compatibility review); the archive's
+bytes stay as recorded in either case.
 
 ## Where the trust actually sits
 
