@@ -35,12 +35,18 @@ installation time is reported separately from the fixture execution; the demo
 itself uses no model, API key or optional library, and the replays call no
 inference service.
 
-**Version note.** These commands resolve the latest published Actseal. At the
-time of writing that is 0.1.0; 1.0.0 is a release candidate and is not yet on
-PyPI. The commands above are the 1.x form tested in CI against the candidate
-package. The measured timing and output receipt for the published 1.0.0
-package will be recorded after publication; until then the
-[0.1.0 release report](../plan/FINAL_REPORT.md) holds the previous receipts.
+**Which release runs.** Unpinned, `uvx` resolves the latest Actseal release
+published on PyPI. To run one specific release, add `--from` with an exact
+pin, for example `uvx --python 3.12 --from "actseal==1.0.0" actseal demo
+--out ./actseal-demo`; the replay commands then take the same `--from`. The
+commands, exit codes and JSON receipt shapes above are stable for every 1.x
+release under the [stability manifest](stability.md), and security fixes
+target the latest 1.x minor at its latest patch under the
+[versioning policy](versioning.md). Evidence written by actseal 0.1.0 is not
+converted by 1.x; the [migration guide](migration.md) describes the isolated
+pinned replay path. Measured installation and demo timings are recorded in
+each release's report, not here, and are measurements rather than
+performance promises.
 
 ## What the demo writes
 

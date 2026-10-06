@@ -112,11 +112,14 @@ exits 1, as expected.
 
 ## Can I use my own provider?
 
-The 1.x stable providers are `fixture` (recorded responses) and `laya` (the
-optional pinned native CPU adapter). `ModelIdentity.provider` accepts only
-those two, so a provider of your own cannot be sealed into a lock through the
-stable runner. A Jev transport is conditional experimental work and would ship
-only under an explicit experimental flag; see [providers](providers.md).
+The current stable providers are `fixture` (recorded responses) and `laya`
+(the optional pinned native CPU adapter). In the v1.0 scope
+`ModelIdentity.provider` accepts only those two, so a provider of your own
+cannot be sealed into a lock through the stable runner today. A later 1.x
+release may add a provider as an additive, explicitly selected option. A Jev
+transport is conditional experimental preparation, not shipped, and would be
+selectable only under an explicit experimental flag; see
+[providers](providers.md).
 
 ## Does Actseal run on Windows?
 

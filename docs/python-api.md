@@ -178,9 +178,17 @@ to `PASS`; that is a property of the synthetic demo, not a model result.
 ### Reuse the locked policy at runtime
 
 An application that deploys a policy should load the lock it verified,
-validate it, normalize each live capture against the locked identity and
-evaluate with the locked policy. The application owns what happens next:
-Actseal returns a decision, it does not execute or block anything.
+validate it, **bind each capture to the request it is deciding**, normalize
+the capture against the locked identity and evaluate with the locked policy.
+The application owns what happens next: Actseal returns a decision, it does
+not execute or block anything.
+
+Binding is the caller's job. `normalize` takes no request parameter, so it
+cannot tell whether a capture answers the request in hand; the runner builds
+each capture from its own request, and assessment and replay re-check every
+recorded `request_sha256` against the locked case. A live gate must do the
+same check itself, before normalization and before any action, and fail
+closed when it does not hold.
 
 ```python
 from pathlib import Path
@@ -189,30 +197,61 @@ from actseal.contract import read_input_text
 from actseal.locking import MAX_LOCK_BYTES, parse_lock, validate_lock
 from actseal.normalization import normalize, request_sha256
 from actseal.policy import evaluate
-from actseal.records import CapturedOutcome, DecisionRequest
+from actseal.records import CapturedOutcome, DecisionRequest, PolicyDecision
 
 lock = parse_lock(read_input_text(Path("recheck.lock.json"), limit=MAX_LOCK_BYTES))
 validate_lock(lock)
-
 question = lock.contract.question
+policy = lock.contract.policy
+identity = lock.model_identity
+
+executed: list[str] = []  # the application's own queue; Actseal never touches it
+
+
+def route_ticket(request: DecisionRequest, capture: CapturedOutcome) -> PolicyDecision:
+    """Application-owned gate: bind, normalize, evaluate, then act only on ACT."""
+    if capture.request_sha256 != request_sha256(request):
+        # The capture answers some other request. Fail closed: no normalization,
+        # no policy evaluation, no application action.
+        raise ValueError("capture does not bind the request being decided")
+    decision = evaluate(normalize(capture, question, identity), policy)
+    if decision.action == "ACT":
+        executed.append(f"{request.case_id}->{decision.choice}")
+    # ABSTAIN, DENY and ESCALATE are the application's explicit non-execution paths.
+    return decision
+
+
 request = DecisionRequest("live-001", "Ticket LIVE-001: my invoice shows a duplicate charge.", question)
-capture = CapturedOutcome(
-    request_sha256(request),
-    lock.model_identity,
-    '{"type": "choice", "choice": "billing", "probabilities": {"billing": 0.95, "technical": 0.03, "sales": 0.02}}',
-    None,
-    (),
-    False,
-)
-outcome = normalize(capture, question, lock.model_identity)
-decision = evaluate(outcome, lock.contract.policy)
-assert decision.action == "ACT" and decision.choice == "billing"
+body = '{"type": "choice", "choice": "billing", "probabilities": {"billing": 0.95, "technical": 0.03, "sales": 0.02}}'
+bound = CapturedOutcome(request_sha256(request), identity, body, None, (), False)
+decision = route_ticket(request, bound)
+assert (decision.action, decision.choice) == ("ACT", "billing")
+assert executed == ["live-001->billing"]
+
+other = DecisionRequest("live-002", "Ticket LIVE-002: the app crashes on launch.", question)
+foreign = CapturedOutcome(request_sha256(other), identity, body, None, (), False)
+try:
+    route_ticket(request, foreign)
+except ValueError:
+    pass
+else:
+    raise AssertionError("a capture for another request must never be evaluated")
+assert executed == ["live-001->billing"]  # nothing ran for the foreign capture
+
+low_body = '{"type": "choice", "choice": "billing", "probabilities": {"billing": 0.6, "technical": 0.3, "sales": 0.1}}'
+low = CapturedOutcome(request_sha256(request), identity, low_body, None, (), False)
+assert route_ticket(request, low).action == "ABSTAIN"
+assert executed == ["live-001->billing"]  # ABSTAIN executed nothing
 ```
 
-The capture here is hand-written to show the record shapes. In production the
-capture comes from a `DecisionModel.decide` call against the same identity the
-lock recorded; a different identity normalizes to `identity_mismatch` and
-escalates.
+The captures here are hand-written to show the record shapes. In production
+each capture comes from one `DecisionModel.decide(request, ...)` call made by
+the application for that same request, against the identity the lock
+recorded. A capture with a different identity normalizes to
+`identity_mismatch` and escalates; a capture for a different request is
+refused before normalization. The exception path is application code too: it
+may route to the application's escalation handling, but it must not evaluate
+or execute.
 
 ### Read a bundle and recompute its verdict
 
@@ -238,17 +277,39 @@ raises `SchemaError` only for wrong Python argument shapes.
 ### Canonical encoding and digests
 
 ```python
+from pathlib import Path
+
 from actseal import Interval, Verdict, canonical_json, from_data, sha256_bytes, to_data
+from actseal.contract import read_input_text
+from actseal.locking import MAX_LOCK_BYTES, case_digest, lock_digest, parse_lock
 
 verdict = Verdict("BLOCK", ("risk.exceeds_limit",), 128, 128, 32, Interval(0.168, 0.347), Interval(0.966, 1.0), "demo", "a" * 64)
 data = to_data(verdict)
 assert from_data(Verdict, data) == verdict
-digest = sha256_bytes(canonical_json(data))
-assert len(digest) == 64
+assert len(sha256_bytes(canonical_json(data))) == 64
+
+lock = parse_lock(read_input_text(Path("recheck.lock.json"), limit=MAX_LOCK_BYTES))
+# Record digests are computed over the canonical encoding.
+assert lock_digest(lock) == lock.sha256
+assert case_digest(lock.verification_cases[0]) == lock.verification_inventory[0].sha256
+# Raw-input and fixture identities hash the supplied file bytes as they are.
+inputs = Path("actseal-demo/inputs")
+assert sha256_bytes((inputs / "fixed_calibration.jsonl").read_bytes()) == lock.calibration_sha256
+assert sha256_bytes((inputs / "fixed_responses.jsonl").read_bytes()) == lock.model_identity.revision
 ```
 
-`canonical_json` produces the byte form every digest is computed over: UTF-8,
-sorted keys, compact separators, no NaN or Infinity, no terminal newline.
+`canonical_json` (UTF-8, sorted keys, compact separators, no NaN or Infinity,
+no terminal newline) is the byte form of **record** digests: `case_digest`,
+`lock_digest`, `request_sha256`, the bundle manifest's self-seal and the map
+that `implementation_fingerprint` hashes. Other digests are over **raw bytes**
+exactly as supplied and are never re-encoded: `PlanLock.calibration_sha256`
+and `verification_sha256` are `sha256_bytes` of the raw JSONL text that
+`create_lock` received; each manifest file entry hashes the published file's
+bytes; the fixture identity's `revision` and `artifact_hashes` hash the raw
+fixture file; and the implementation fingerprint hashes each installed source
+file's bytes before canonically encoding the path-to-hash map. Preserving the
+raw bytes is what makes those identities meaningful, so a reader must not
+"normalize" them before hashing.
 
 ### Interval arithmetic
 
@@ -273,18 +334,22 @@ evidence; it never normalizes, retries, falls back or authorizes an action.
 `decide` returns a `CapturedOutcome` and never raises for a captured failure;
 setup problems raise `ProviderSetupError`.
 
-The two shipped providers are `FixtureModel(responses: Path)`, which replays a
-recorded JSONL file and derives its identity from that file's bytes, and
-`LayaModel(*, offline: bool = False)`, the optional pinned native CPU adapter
-described in [providers](providers.md). `open_model` builds either by name.
+The current stable providers are `FixtureModel(responses: Path)`, which
+replays a recorded JSONL file and derives its identity from that file's bytes,
+and `LayaModel(*, offline: bool = False)`, the optional pinned native CPU
+adapter described in [providers](providers.md). `open_model` builds either by
+name.
 
-In 1.x the runner accepts only these two: `ModelIdentity.provider` must be
-`fixture` or `laya`, and `verify_run` requires the requested provider to equal
-the locked one. A class of your own can satisfy the protocol for typing and for
-tests, but it cannot be sealed into a lock or collected against through the
-stable runner. Calling `decide` directly produces raw captures; it does not
-execute the locked collection protocol, which the runner owns together with
-its fixed deadlines.
+In the v1.0 scope the runner accepts exactly these two: today
+`ModelIdentity.provider` accepts `fixture` or `laya`, and `verify_run` requires
+the requested provider to equal the locked one. A class of your own can satisfy
+the protocol for typing and for tests, but it cannot be sealed into a lock or
+collected against through the stable runner. Calling `decide` directly
+produces raw captures; it does not execute the locked collection protocol,
+which the runner owns together with its fixed deadlines. A later 1.x release
+may add a provider only as an additive, explicitly selected option under the
+[versioning policy](versioning.md); an experimental Jev transport is
+conditional preparation and is not shipped (see [providers](providers.md)).
 
 ## Errors
 
