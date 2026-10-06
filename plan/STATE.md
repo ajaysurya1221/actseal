@@ -43,17 +43,17 @@ dispatch; never assume a status inherited from memory is still current.
 
 No authentication blocker remains. Public repository:
 https://github.com/ajaysurya1221/actseal. Draft foundation PR:
-https://github.com/ajaysurya1221/actseal/pull/1. Candidate dd47d2e595ec5fc01eaac7be6c62c838826891d5
-contains product commit 56073a700ba5e019e96d0c7d6b103332a7d87249 and documentation formatting only.
-Root independently passed all six T00 commands (551 tests, lint/format, mypy,
-sync and build). Hosted Linux/macOS Python3.12/3.13 at run37432682697 passes all
+https://github.com/ajaysurya1221/actseal/pull/1. Candidate af116adbebbfc30ddcc4bc2fe209c91e665a0991
+includes the Unicode correction a70f7c1 and synchronized documentation receipts.
+Root independently passed all six T00 commands (587 tests, lint/format, mypy,
+sync and build). Hosted Linux/macOS Python3.12/3.13 at run37433262328 passes all
 implemented checks except Repository hooks: its config file is absent.
 
-REVIEW T00-03 requires rejecting unpaired Unicode surrogates in record constructors
-before canonical serialization. Prior parser, domain-validation, CPU-only Linux
-dependency and packaging findings are fixed. Claude revision04 is next; it may
-edit records/tests and write a new receipt only. Product lanes T10/T20/T30 still
-wait for T00 ACCEPT and green CI. Shared types are not yet frozen by acceptance.
+REVIEW T00-04 closes the Unicode constructor finding. All known T00 product
+findings are fixed, including parser, domain validation, CPU-only Linux dependency
+resolution and packaging. Claude revision04 has completed; no executor is running.
+The sole immediate blocker is the pending hook approval. T10/T20/T30 still wait
+for T00 ACCEPT and green CI. Shared types are not yet frozen by acceptance.
 
 Claude's permission layer denied creating sensitive .pre-commit-config.yaml
 because its non-interactive session has no approval surface. The one pending
@@ -62,7 +62,7 @@ check, and strict mypy. Do not retry or route around that write without approval
 Raw local dispatch receipts remain ignored under plan/dispatch.
 
 Claude session25979d71-e2c8-4a20-932b-a18022ec31c7, actual model claude-fable-5-1,
-effort high. Cumulative meter after revision03: $14.0396135 estimated subscription
+effort high. Cumulative meter after revision04: $15.7246075 estimated subscription
 usage, not a billed API charge. Incremental paid API spend remains $0 on Max.
 
 ## Budget and scope
