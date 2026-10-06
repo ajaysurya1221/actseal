@@ -13,6 +13,8 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import how_it_works
+
 ASSET_DIR = "docs/assets"
 SOURCE_DIR = "docs/assets/src"
 FONT_DIR = "docs/assets/src/fonts"
@@ -104,19 +106,32 @@ def is_plain_filename(name: str) -> bool:
     return bool(PLAIN_FILENAME.match(name)) and ".." not in name
 
 
-def _svg(path: str, width: int, height: int, *, outlined: bool = False) -> Output:
+def _svg(
+    path: str,
+    width: int,
+    height: int,
+    *,
+    outlined: bool = False,
+    display_width: int = README_DISPLAY_WIDTH,
+) -> Output:
     return Output(
         path=path,
         kind="svg",
         width=width,
         height=height,
-        display_width=README_DISPLAY_WIDTH,
+        display_width=display_width,
         outlined=outlined,
     )
 
 
-# Heights other than the hero and social preview are provisional; the task
-# that implements each figure finalizes them together with its renderer.
+def _mobile_svg(path: str, width: int, height: int) -> Output:
+    """A vertical variant displayed in a 360 CSS px column."""
+    return _svg(path, width, height, display_width=MOBILE_DISPLAY_WIDTH)
+
+
+# Heights other than the hero, how-it-works and social preview are
+# provisional; the task that implements each figure finalizes them together
+# with its renderer.
 ASSETS: tuple[Asset, ...] = (
     Asset(
         name="hero",
@@ -134,7 +149,29 @@ ASSETS: tuple[Asset, ...] = (
         priority="P1",
         task="12",
         summary="Freeze, Run, Verify, Seal, Replay with decisions, verdicts and exit codes.",
-        outputs=(_svg("how-it-works.svg", 1600, 560),),
+        outputs=(
+            _svg(
+                "how-it-works-light.svg",
+                how_it_works.DESKTOP_WIDTH,
+                how_it_works.DESKTOP_HEIGHT,
+            ),
+            _svg(
+                "how-it-works-dark.svg",
+                how_it_works.DESKTOP_WIDTH,
+                how_it_works.DESKTOP_HEIGHT,
+            ),
+            _mobile_svg(
+                "how-it-works-mobile-light.svg",
+                how_it_works.MOBILE_WIDTH,
+                how_it_works.mobile_height(),
+            ),
+            _mobile_svg(
+                "how-it-works-mobile-dark.svg",
+                how_it_works.MOBILE_WIDTH,
+                how_it_works.mobile_height(),
+            ),
+        ),
+        renderer=how_it_works.render,
     ),
     Asset(
         name="architecture",

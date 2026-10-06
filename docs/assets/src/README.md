@@ -104,6 +104,26 @@ pin; for archived tools (resvg) the pinned archive is retained in the cache,
 re-hashed, its member re-extracted and compared byte for byte with the cached
 executable.
 
+## How-it-works figure (Task 12)
+
+`actseal_assets/how_it_works.py` renders four outputs from one content table:
+`how-it-works-light.svg` and `how-it-works-dark.svg` (1600×400, five
+horizontal stages Freeze → Run → Verify → Seal → Replay plus a command
+bracket row) and `how-it-works-mobile-light.svg` /
+`how-it-works-mobile-dark.svg` (720 wide, stages stacked vertically, the
+command folded into each stage label; height derived from the wrapped
+content). Light and dark differ only in colour. Desktop labels are 26 units
+(14.3 px at the 880 px README column) with 34-unit headings; mobile labels
+are 30 units (15 px at 360 px) with 44-unit headings.
+
+Text uses `Helvetica, Arial, Liberation Sans, sans-serif`, three
+metric-compatible faces that resolve on macOS, Windows and Linux before the
+generic fallback. Every line is measured against Helvetica advance widths
+with an 8 % safety factor (10 % more for bold); a phrase that would not fit
+its column, or a canvas that would overflow 400 units, makes the renderer
+raise instead of shrinking anything. Decision and verdict runs wrap greedily
+on ` · ` separators, so the same phrases pack differently per canvas.
+
 ## Adding a figure
 
 1. Implement `render(context) -> {output path: bytes}` for the asset, building
