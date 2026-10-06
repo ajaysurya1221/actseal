@@ -23,3 +23,18 @@ The private shared-brain repository informed coordination principles only. Its i
 ## Operational state
 
 The user has authorized implementation; there is no pending planning-permission question. Executor authentication failure is an operational blocker, not a reason to silently replace the requested executor/model or to request approval already given. Verify the requested model/settings through the available Claude mechanism before dispatch and report any unresolved mismatch. [DECISIONS](../../plan/DECISIONS.md) records user choices; [VERIFICATION](../../plan/VERIFICATION.md) separates actual preflight evidence from future product checks.
+
+## Controlled-dispatch memory clarification — 6 October 2026
+
+T50's raw receipt revealed automatic Claude notes written outside its owned
+worktree paths. They are private executor notes, not shared acceptance authority
+or release content. Preserve existing user-local notes; do not copy them into the
+repository or rewrite them as task work. From T50's corrective dispatch onward,
+set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` for that process only and instruct the
+executor to write only its owned REPORT. Global Claude settings stay unchanged.
+
+The [official environment reference](https://code.claude.com/docs/en/env-vars)
+and [memory documentation](https://code.claude.com/docs/en/memory), checked on
+6 October 2026, document that this setting disables automatic memory creation
+and loading. The explicit Git-backed STATE/contracts/reports/reviews remain the
+shared long-term memory. This setting does not bypass or relax permissions.

@@ -28,7 +28,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | T20 statistics | Claude B | ACCEPT / MERGED | b1eace7 (merge 6d6d7c4) |
 | T30 providers/faults | Claude C | ACCEPT / MERGED | 8b1efd6 (merge 87d2cd1) |
 | T40 evidence/replay | Claude B | ACCEPT / MERGED | 98297d5 (merge 7a2939e) |
-| T50 CLI/demo | Claude A | READY_TO_DISPATCH | none |
+| T50 CLI/demo | Claude A | REVISE | candidate046e4f6 |
 | T60 acceptance | Claude C | WAITING_FOR_T50 | none |
 | T70 publication | Codex | WAITING_FOR_T60 | none |
 
@@ -83,7 +83,15 @@ mypy, independent filesystem and semantic probes, and all eight hosted jobs gree
 in runs37447161362/37447188177. Real exclusive publication executes on both OSes.
 CLI packaging/demo remain unrun T50 gates. Both REPORTs are preserved. Claude
 session a02c2248-c36b-496c-b941-e4b806cc5247 completed; final cumulative subscription
-meter $18.21350825, not paid API billing. Root will dispatch T50 from integrated main.
+meter $18.21350825, not paid API billing. T50 dispatched from integrated base b7f725e in .worktrees/t50.
+Claude session61e69351-ebca-4990-bdc8-89b7915a3b79, modelclaude-fable-5-1/high,
+acceptEdits; current Max authentication rechecked. Root owns console metadata and
+CI guard removal, both completed on the candidate. No new dependencies approved.
+REVIEW T50-01 requires sanitized usage, complete failure summaries, fixture
+--offline compatibility and a genuinely healthy Laya pre-failure test case. Root
+passed114 unit tests/8 clean-wheel tests plus exact lint/format/types/build/help.
+Initial Claude meter $14.9410545 is subscription usage only. Future dispatches
+disable automatic memory per ADR0007; only the Git-backed shared state is authoritative.
 
 T00 Claude session25979d71-e2c8-4a20-932b-a18022ec31c7 completed. Model was
 claude-fable-5-1/high. Cumulative meter $15.7246075 estimated subscription usage,
