@@ -11,6 +11,8 @@ shape, not live captures; nothing here is a model-quality claim.
 from __future__ import annotations
 
 import http.client
+import inspect
+import io
 import json
 import os
 import ssl
@@ -19,7 +21,7 @@ import sys
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from test_evidence import make_bundle, make_lock, record_for
@@ -55,7 +57,7 @@ from actseal.records import (
 )
 from actseal.serialization import canonical_json, from_data, strict_json_loads, to_data
 from conftest import make_question, make_request
-from provider_support import INVALID_TIMEOUTS, independent_request_digest
+from provider_support import INVALID_TIMEOUTS
 
 MOCK_KEY = "mock-jev-key-SECRETMARKER-not-a-real-credential"
 ROOT = Path(__file__).resolve().parents[2]
@@ -72,6 +74,9 @@ class Script:
 
     status: int = 200
     body: bytes = b""
+    #: Declared unread fixed-length bytes reported after the body is drained
+    #: (``None`` = close-delimited/chunked framing, as ``HTTPResponse.length``).
+    length: int | None = None
     raise_on_connect: BaseException | None = None
     raise_on_request: BaseException | None = None
     raise_on_response: BaseException | None = None
@@ -94,6 +99,7 @@ class FakeResponse:
         self._sent = sent
         self._script = script
         self.status = script.status
+        self.length = script.length
         self._buffer = script.body
 
     def read(self, amt: int) -> bytes:
@@ -102,6 +108,85 @@ class FakeResponse:
             raise self._script.raise_on_read
         chunk, self._buffer = self._buffer[:amt], self._buffer[amt:]
         return chunk
+
+
+# --------------------------------------------------------------------------- #
+# Real ``http.client.HTTPResponse`` fed from memory (no socket): genuine framing
+# --------------------------------------------------------------------------- #
+
+
+class _MemorySocket:
+    """The one method ``HTTPResponse`` needs from a socket: ``makefile``."""
+
+    def __init__(self, raw: bytes) -> None:
+        self._file = io.BytesIO(raw)
+
+    def makefile(self, mode: str, *args: object, **kwargs: object) -> io.BytesIO:
+        del mode, args, kwargs
+        return self._file
+
+
+def real_response(raw_http: bytes) -> http.client.HTTPResponse:
+    response = http.client.HTTPResponse(cast(Any, _MemorySocket(raw_http)), method="POST")
+    response.begin()
+    return response
+
+
+class RealResponseConnection:
+    """A connection whose ``getresponse`` is a genuine ``HTTPResponse`` over bytes."""
+
+    def __init__(self, raw_http: bytes, log: list[Sent], timeout: float) -> None:
+        self._raw = raw_http
+        self._log = log
+        self._timeout = timeout
+        self.response: http.client.HTTPResponse | None = None
+        self.closed = 0
+
+    def request(self, method: str, url: str, body: bytes, headers: Mapping[str, str]) -> None:
+        self._log.append(Sent(method, url, bytes(body), dict(headers), self._timeout))
+
+    def getresponse(self) -> http.client.HTTPResponse:
+        self.response = real_response(self._raw)
+        return self.response
+
+    def close(self) -> None:
+        self.closed += 1
+
+
+class RealResponseConnect:
+    def __init__(self, raw_http: bytes) -> None:
+        self._raw = raw_http
+        self.log: list[Sent] = []
+        self.connections: list[RealResponseConnection] = []
+
+    def __call__(self, timeout: float) -> RealResponseConnection:
+        connection = RealResponseConnection(self._raw, self.log, timeout)
+        self.connections.append(connection)
+        return connection
+
+
+def fixed_length_http(body: bytes, *, declared: int | None = None, status: str = "200 OK") -> bytes:
+    length = len(body) if declared is None else declared
+    head = (
+        f"HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {length}\r\n\r\n"
+    )
+    return head.encode("ascii") + body
+
+
+def chunked_http(pieces: list[bytes], *, terminated: bool = True) -> bytes:
+    head = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+    head += b"Transfer-Encoding: chunked\r\n\r\n"
+    frame = b"".join(f"{len(piece):x}\r\n".encode("ascii") + piece + b"\r\n" for piece in pieces)
+    return head + frame + (b"0\r\n\r\n" if terminated else b"")
+
+
+def close_delimited_http(body: bytes) -> bytes:
+    return b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n" + body
+
+
+def model_over_http(raw_http: bytes, key: str = MOCK_KEY) -> tuple[JevModel, RealResponseConnect]:
+    connect = RealResponseConnect(raw_http)
+    return JevModel._with_exchange(jev_module._HttpsExchange(key, connect)), connect
 
 
 class FakeConnection:
@@ -241,7 +326,7 @@ def test_identity_is_fixed_cloud_target_with_empty_artifact_hashes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv(API_KEY_ENV, raising=False)
-    model = JevModel(offline=True)
+    model, _ = model_over(ok(jev_body(make_question())))
     identity = model.identity()
     assert identity == ModelIdentity(
         "jev",
@@ -283,25 +368,31 @@ def test_identity_never_mutates_from_a_response_claiming_another_model() -> None
 # --------------------------------------------------------------------------- #
 
 
-def test_offline_setup_reads_no_environment_and_makes_no_request(
+def test_offline_setup_is_rejected_before_any_environment_read_or_transport(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def tripwire() -> str:
+    """PLAN E line 352: offline/missing-key setup is rejected without a request."""
+    reads: list[str] = []
+
+    def key_tripwire() -> str:
+        reads.append("environment")
         raise AssertionError("JEV_API_KEY was read in offline mode")
 
-    monkeypatch.setattr(jev_module, "_api_key_from_environment", tripwire)
-    model = JevModel(offline=True)
-    capture = model.decide(make_request(), timeout_s=5.0)
-    assert capture.failure_code == "unavailable"
-    assert capture.warnings == ("jev.unavailable:offline",)
-    assert capture.body_json is None
-    assert capture.request_sha256 == independent_request_digest(make_request())
-    assert model._attempts == 0
-    assert normalize(capture, make_question(), model.identity()) == ProviderFailure(
-        "unavailable", ("jev.unavailable:offline",), False
-    )
-    model.close()
-    assert model.decide(make_request(), timeout_s=5.0).failure_code == "unavailable"
+    def connect_tripwire(timeout: float) -> jev_module._Connection:
+        reads.append(f"connect:{timeout}")
+        raise AssertionError("a transport was constructed in offline mode")
+
+    monkeypatch.setattr(jev_module, "_api_key_from_environment", key_tripwire)
+    monkeypatch.setattr(jev_module, "_default_connect", connect_tripwire)
+    monkeypatch.setenv(API_KEY_ENV, MOCK_KEY)  # even a valid key does not make offline usable
+    with pytest.raises(ProviderSetupError) as excinfo:
+        JevModel(offline=True)
+    assert str(excinfo.value).startswith("offline:")
+    assert MOCK_KEY not in str(excinfo.value)
+    assert reads == []
+    # The keyword keeps its frozen signature and default; offline=False is the only usable mode.
+    signature = str(inspect.signature(JevModel.__init__))
+    assert signature == "(self, *, offline: 'bool' = False) -> 'None'"
 
 
 @pytest.mark.parametrize(
@@ -411,7 +502,8 @@ def test_decide_sends_exactly_one_post_with_the_fixed_headers_and_closes() -> No
         "Accept": "application/json",
     }
     assert sent.timeout == 12.5
-    assert sent.read_amounts == [MAX_RESPONSE_BYTES + 1]
+    # Bounded pieces until end of stream: one piece with the body, one empty piece.
+    assert sent.read_amounts == [jev_module._READ_CHUNK, jev_module._READ_CHUNK]
     assert sent.closed == 1
     assert capture.body_json == jev_body(question)
     assert capture.failure_code is None
@@ -710,10 +802,151 @@ def test_oversized_body_is_malformed_after_a_bounded_read() -> None:
     assert capture.failure_code == "malformed_response"
     assert capture.warnings == ("jev.body_oversized",)
     assert capture.body_json is None
-    assert connect.log[0].read_amounts == [MAX_RESPONSE_BYTES + 1]
+    piece = jev_module._READ_CHUNK
+    # Reading stops as soon as the cap is exceeded: at most cap + one piece is ever consumed.
+    assert set(connect.log[0].read_amounts) == {piece}
+    assert len(connect.log[0].read_amounts) * piece <= MAX_RESPONSE_BYTES + piece
     huge, connect = model_over(ok(b"y" * (4 * MAX_RESPONSE_BYTES)))
     huge.decide(make_request(), timeout_s=5.0)
-    assert connect.log[0].read_amounts == [MAX_RESPONSE_BYTES + 1]  # never more than the bound
+    assert len(connect.log[0].read_amounts) * piece <= MAX_RESPONSE_BYTES + piece
+    # A declared fixed length far above the cap changes nothing: actual bytes decide.
+    declared, connect = model_over(Script(200, b"z" * (MAX_RESPONSE_BYTES + 1), length=10**9))
+    assert declared.decide(make_request(), timeout_s=5.0).warnings == ("jev.body_oversized",)
+
+
+def test_fixed_length_body_ending_early_is_unavailable_not_a_capture() -> None:
+    """The scripted double: a short body with declared bytes still unread (``length`` > 0)."""
+    body = jev_body(make_question()).encode("utf-8")
+    model, connect = model_over(Script(200, body, length=10))
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code == "unavailable"
+    assert capture.warnings == ("jev.transport:incomplete_body",)
+    assert capture.body_json is None
+    assert connect.log[0].closed == 1
+    outcome = normalize(capture, make_question(), model.identity())
+    assert evaluate(outcome, make_lock().contract.policy).action == "ESCALATE"
+
+
+# --------------------------------------------------------------------------- #
+# Genuine HTTP framing through http.client.HTTPResponse (REVIEW 05 finding 2)
+# --------------------------------------------------------------------------- #
+
+
+def test_real_response_complete_fixed_length_body_is_captured_exactly() -> None:
+    body = jev_body(make_question()).encode("utf-8")
+    model, connect = model_over_http(fixed_length_http(body))
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code is None
+    assert capture.body_json == body.decode("utf-8")
+    response = connect.connections[0].response
+    assert response is not None
+    assert response.length == 0
+    assert response.isclosed()
+    assert connect.connections[0].closed == 1
+    outcome = normalize(capture, make_question(), model.identity())
+    assert isinstance(outcome, ChoiceAnswer)
+
+
+@pytest.mark.parametrize("missing", [1, 10, 1000])
+def test_real_response_premature_eof_on_fixed_length_body_is_unavailable(missing: int) -> None:
+    """The reviewer's reproduction: declared length exceeds the delivered complete JSON."""
+    body = jev_body(make_question()).encode("utf-8")
+    model, connect = model_over_http(fixed_length_http(body, declared=len(body) + missing))
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code == "unavailable"
+    assert capture.warnings == ("jev.transport:incomplete_body",)
+    assert capture.body_json is None
+    response = connect.connections[0].response
+    assert response is not None
+    assert response.length == missing  # declared bytes that never arrived
+    assert connect.connections[0].closed == 1
+    assert len(connect.connections) == 1  # no retry
+    decision = evaluate(
+        normalize(capture, make_question(), model.identity()), make_lock().contract.policy
+    )
+    assert decision.action == "ESCALATE"
+    assert decision.reason == "provider.unavailable"
+
+
+def test_real_response_complete_chunked_body_is_captured_exactly() -> None:
+    body = jev_body(make_question()).encode("utf-8")
+    pieces = [body[:7], body[7:50], body[50:]]
+    model, connect = model_over_http(chunked_http(pieces))
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code is None
+    assert capture.body_json == body.decode("utf-8")
+    response = connect.connections[0].response
+    assert response is not None
+    assert response.chunked is True
+    assert response.isclosed()
+
+
+@pytest.mark.parametrize(
+    "frame",
+    [
+        chunked_http([b'{"model": "jev-1.13.0", "answers": {}, "usage": {}}'], terminated=False),
+        chunked_http([b'{"model": "jev-1.13.0"', b', "answers": {}}'], terminated=False),
+        b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n40\r\n{"model": "jev',
+    ],
+    ids=["missing-terminator", "two-chunks-no-terminator", "truncated-inside-chunk"],
+)
+def test_real_response_truncated_chunked_body_is_unavailable(frame: bytes) -> None:
+    model, connect = model_over_http(frame)
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code == "unavailable"
+    assert capture.warnings == ("jev.transport:IncompleteRead",)
+    assert capture.body_json is None
+    assert connect.connections[0].closed == 1
+
+
+def test_real_response_close_delimited_body_is_complete_at_end_of_stream() -> None:
+    body = jev_body(make_question()).encode("utf-8")
+    model, connect = model_over_http(close_delimited_http(body))
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code is None
+    assert capture.body_json == body.decode("utf-8")
+    response = connect.connections[0].response
+    assert response is not None
+    assert response.length is None
+    assert response.will_close is True
+
+
+@pytest.mark.parametrize(
+    "frame",
+    [
+        fixed_length_http(b"x" * (MAX_RESPONSE_BYTES + 1)),
+        fixed_length_http(b"x" * (MAX_RESPONSE_BYTES + 5), declared=4 * MAX_RESPONSE_BYTES),
+        chunked_http([b"y" * 300_000, b"y" * 300_000, b"y" * 300_000, b"y" * 300_000]),
+        close_delimited_http(b"z" * (2 * MAX_RESPONSE_BYTES)),
+    ],
+    ids=["fixed-over-cap", "declared-far-over-delivered-over", "chunked-over-cap", "close-over"],
+)
+def test_real_response_over_cap_is_oversized_whatever_the_declared_length(frame: bytes) -> None:
+    model, connect = model_over_http(frame)
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code == "malformed_response"
+    assert capture.warnings == ("jev.body_oversized",)
+    assert capture.body_json is None
+    assert connect.connections[0].closed == 1
+
+
+def test_real_response_exactly_at_cap_is_complete() -> None:
+    body = b" " * MAX_RESPONSE_BYTES
+    model, _ = model_over_http(fixed_length_http(body))
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code is None
+    assert capture.body_json == body.decode("utf-8")
+
+
+def test_real_response_non_200_status_is_mapped_without_reading_the_body() -> None:
+    body = b'{"error": "rate limited"}'
+    model, connect = model_over_http(fixed_length_http(body, status="429 Too Many Requests"))
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code == "rate_limit"
+    assert capture.warnings == ("jev.http:429",)
+    response = connect.connections[0].response
+    assert response is not None
+    assert response.length == len(body)  # nothing of the error body was consumed
 
 
 @pytest.mark.parametrize("raw", [b"\xff\xfe", b'{"model": "\xc3"}', b"\xed\xa0\x80"])
@@ -722,7 +955,107 @@ def test_invalid_utf8_body_is_malformed(raw: bytes) -> None:
     capture = model.decide(make_request(), timeout_s=5.0)
     assert capture.failure_code == "malformed_response"
     assert capture.warnings == ("jev.body_not_utf8",)
-    assert capture.body_json is None
+    model, _ = model_over_http(fixed_length_http(raw))
+    assert model.decide(make_request(), timeout_s=5.0).warnings == ("jev.body_not_utf8",)
+
+
+# --------------------------------------------------------------------------- #
+# Credential echo in a successful body (REVIEW 05 finding 1)
+# --------------------------------------------------------------------------- #
+
+
+def _json_u_escape(text: str) -> str:
+    return "".join(f"\\u{ord(character):04x}" for character in text)
+
+
+ECHO_KEY = 'mock/echo"key\\SECRETMARKER'  # printable ASCII with the JSON-special characters
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        ECHO_KEY,
+        '{"error": "Bearer ' + ECHO_KEY + '"}',
+        json.dumps({"model": MODEL, "answers": {"department": ECHO_KEY}, "usage": {}}),
+        json.dumps({"echo": ECHO_KEY}),  # json.dumps escapes the quote and backslash
+        '{"echo": "' + _json_u_escape(ECHO_KEY) + '"}',
+        '{"echo": "' + _json_u_escape(ECHO_KEY).upper().replace("\\U", "\\u") + '"}',
+        '{"echo": "' + ECHO_KEY[:9] + _json_u_escape(ECHO_KEY[9:]) + '"}',
+        '{"echo": "' + json.dumps(_json_u_escape(ECHO_KEY))[1:-1] + '"}',  # escaped twice
+        "prefix " + _json_u_escape(ECHO_KEY) + " suffix",  # not even JSON
+        _json_u_escape(json.dumps(ECHO_KEY)[1:-1]),
+    ],
+    ids=[
+        "literal",
+        "in-error-string",
+        "in-valid-envelope",
+        "json-dumps-escaped",
+        "all-u-escaped",
+        "upper-hex-u-escaped",
+        "partly-u-escaped",
+        "double-escaped",
+        "non-json-text",
+        "u-escaped-short-escapes",
+    ],
+)
+def test_successful_body_echoing_the_credential_fails_closed(body: str) -> None:
+    for build in (
+        lambda raw: model_over(ok(raw), key=ECHO_KEY),
+        lambda raw: model_over_http(fixed_length_http(raw.encode("utf-8")), key=ECHO_KEY),
+    ):
+        model, _ = build(body)
+        capture = model.decide(make_request(), timeout_s=5.0)
+        assert capture.failure_code == "malformed_response"
+        assert capture.warnings == ("jev.credential_echo",)
+        assert capture.body_json is None
+        serialized = json.dumps(to_data(capture)) + repr(capture) + repr(model._exchange)
+        assert "SECRETMARKER" not in serialized
+        assert ECHO_KEY not in serialized
+        outcome = normalize(capture, make_question(), model.identity())
+        assert outcome == ProviderFailure("malformed_response", ("jev.credential_echo",), False)
+        assert evaluate(outcome, make_lock().contract.policy).action == "ESCALATE"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        jev_body(make_question()),
+        RAW_NONCANONICAL,
+        "{",
+        '{"echo": "' + ECHO_KEY[:-1] + '"}',  # one character short of the key
+        '{"echo": "' + ECHO_KEY[1:] + '"}',
+        '{"echo": "' + ECHO_KEY.lower() + '"}',
+        '{"echo": "Bearer mock-other-key-SECRETMARKER"}',  # another secret-looking string
+        '{"echo": "' + _json_u_escape(ECHO_KEY[:-1]) + '"}',
+    ],
+    ids=["valid", "noncanonical", "invalid-json", "prefix", "suffix", "case", "other", "u-prefix"],
+)
+def test_bodies_without_the_credential_are_still_captured_verbatim(body: str) -> None:
+    """Control: detection is exact-key only; ordinary bodies, even invalid JSON, are untouched."""
+    model, _ = model_over(ok(body), key=ECHO_KEY)
+    capture = model.decide(make_request(), timeout_s=5.0)
+    assert capture.failure_code is None
+    assert capture.body_json == body
+
+
+def test_credential_detection_helpers_are_exact_and_bounded() -> None:
+    assert jev_module._echoes_credential(ECHO_KEY, ECHO_KEY)
+    assert jev_module._echoes_credential(_json_u_escape(ECHO_KEY), ECHO_KEY)
+    assert not jev_module._echoes_credential(ECHO_KEY[:-1], ECHO_KEY)
+    assert jev_module._unescape_json(r"A\"\\\/\n") == 'A"\\/\n'
+    assert jev_module._unescape_json(r"\x41 \u00zz") == r"\x41 \u00zz"  # not JSON escapes
+    # Up to three nested levels of JSON escaping are resolved; a fourth is not claimed.
+    assert jev_module._UNESCAPE_PASSES == 3
+    nested = ECHO_KEY
+    for level in range(1, 5):
+        nested = _json_u_escape(nested)  # each pass adds one level (backslash -> \)
+        detected = jev_module._echoes_credential(nested, ECHO_KEY)
+        assert detected is (level <= 3), level
+    # No claim about other encodings: a base64 form of the key is not detected.
+    import base64  # noqa: PLC0415 - documenting the stated limit, not a product path
+
+    encoded = base64.b64encode(ECHO_KEY.encode("ascii")).decode("ascii")
+    assert not jev_module._echoes_credential('{"echo": "' + encoded + '"}', ECHO_KEY)
 
 
 def test_scripted_reply_with_an_unknown_failure_code_is_rejected_by_the_record() -> None:
@@ -812,8 +1145,14 @@ def test_key_never_enters_identity_captures_warnings_or_errors(
 # --------------------------------------------------------------------------- #
 
 
+def _never(payload: bytes, timeout: float) -> jev_module._Reply:
+    del payload, timeout
+    raise AssertionError("no exchange expected")
+
+
 def jev_identity() -> ModelIdentity:
-    return JevModel(offline=True).identity()
+    """The adapter's fixed identity, obtained without environment or transport."""
+    return JevModel._with_exchange(_never).identity()
 
 
 def recorded_bundle() -> tuple[Any, list[str]]:
@@ -962,10 +1301,15 @@ def test_adapter_import_performs_no_network_process_or_environment_access() -> N
         "        return super().get(key, default)\n"
         "os.environ = Env(os.environ)\n"
         "import actseal.experimental.providers.jev as jev\n"
-        "model = jev.JevModel(offline=True)\n"
+        "from actseal.errors import ProviderSetupError\n"
+        "try:\n"
+        "    jev.JevModel(offline=True)\n"
+        "    outcome = 'constructed'\n"
+        "except ProviderSetupError as exc:\n"
+        "    outcome = 'rejected' if str(exc).startswith('offline:') else 'other'\n"
         "loaded = sorted(m.split('.')[0] for m in sys.modules if m.split('.')[0] in "
         "('laya', 'torch', 'transformers', 'huggingface_hub', 'safetensors', 'numpy'))\n"
-        "print(loaded, model.identity().provider)\n"
+        "print(loaded, outcome)\n"
     )
     result = subprocess.run(  # noqa: S603 - fixed interpreter and literal script, no user input
         [sys.executable, "-I", "-W", "error", "-c", script],
@@ -976,7 +1320,7 @@ def test_adapter_import_performs_no_network_process_or_environment_access() -> N
         env={**os.environ, "JEV_API_KEY": "must-not-be-read-at-import"},
     )
     assert result.returncode == 0, result.stderr[-2000:]
-    assert result.stdout.strip() == "[] jev"
+    assert result.stdout.strip() == "[] rejected"
 
 
 def test_wrong_model_response_is_detected_by_replace_not_argmax() -> None:

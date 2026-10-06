@@ -506,6 +506,7 @@ JEV_TIMEOUT: Final = "timeout"
 class _JevFakeResponse:
     def __init__(self, status: int, body: bytes) -> None:
         self.status = status
+        self.length: int | None = None  # close-delimited framing: complete at end of stream
         self._body = body
 
     def read(self, amt: int) -> bytes:

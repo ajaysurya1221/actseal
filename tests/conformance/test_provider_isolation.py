@@ -5,8 +5,9 @@ A fresh ``sys.executable -I`` child installs socket and process blockers
 adapter), so an import-time connection or spawn would raise. The child then
 proves the blockers are live (``LayaModel._spawn`` is refused), that no optional
 root entered ``sys.modules``, that the package came from this checkout, that a
-fixture ``decide`` needs neither, and that an offline ``JevModel`` reads no
-key and captures ``unavailable`` without any connection attempt.
+fixture ``decide`` needs neither, that ``JevModel(offline=True)`` is rejected
+as a setup error before any key read or connection attempt (plan/v1/PLAN.md
+section E), and that the non-offline path reads the key before any socket.
 """
 
 from __future__ import annotations
@@ -76,6 +77,7 @@ import actseal.experimental.providers.jev
 from pathlib import Path
 from actseal.adapters.fixture import FixtureModel
 from actseal.adapters.laya import LayaModel
+from actseal.errors import ProviderSetupError
 from actseal.experimental.providers.jev import JevModel
 from actseal.records import ChoiceQuestion, DecisionRequest, Option
 
@@ -109,9 +111,20 @@ question = ChoiceQuestion(
 request = DecisionRequest("v-001", "Refund not received after cancellation.", question)
 capture = model.decide(request, timeout_s=30.0)
 model.close()
-jev = JevModel(offline=True)
-jev_capture = jev.decide(request, timeout_s=30.0)
-jev.close()
+try:
+    JevModel(offline=True)
+    jev_offline = "constructed"
+except ProviderSetupError as exc:
+    jev_offline = "ProviderSetupError:" + str(exc).split(":")[0]
+except Blocked as exc:
+    jev_offline = "Blocked:" + str(exc)
+try:
+    JevModel()
+    jev_online = "constructed"
+except Blocked as exc:
+    jev_online = "Blocked:" + str(exc)  # the key read happens first, before any socket
+except ProviderSetupError as exc:
+    jev_online = "ProviderSetupError:" + str(exc).split(":")[0]
 print(json.dumps({
     "actseal_file": actseal.__file__,
     "laya_file": actseal.adapters.laya.__file__,
@@ -124,10 +137,8 @@ print(json.dumps({
     "body_json": capture.body_json,
     "failure_code": capture.failure_code,
     "provider": capture.identity.provider,
-    "jev_provider": jev_capture.identity.provider,
-    "jev_failure_code": jev_capture.failure_code,
-    "jev_warnings": list(jev_capture.warnings),
-    "jev_request_sha256": jev_capture.request_sha256,
+    "jev_offline": jev_offline,
+    "jev_online": jev_online,
 }))
 print("provider-isolation-ok")
 """
@@ -156,10 +167,8 @@ def test_adapters_import_without_transport_worker_or_native_stack(tmp_path: Path
         == ACTSEAL_SOURCE_ROOT / "experimental" / "providers" / "jev.py"
     )
     assert report["loaded"] == []
-    assert report["jev_provider"] == "jev"
-    assert report["jev_failure_code"] == "unavailable"
-    assert report["jev_warnings"] == ["jev.unavailable:offline"]
-    assert report["jev_request_sha256"] == report["request_sha256"]
+    assert report["jev_offline"] == "ProviderSetupError:offline"  # no key read, no socket
+    assert report["jev_online"] == "Blocked:key read"  # the key is read before any socket
     assert report["spawn_blocked"] is True, "the process blocker must be live"
     assert report["socket_blocked"] is True, "the socket blocker must be live"
     assert report["provider"] == "fixture"

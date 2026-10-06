@@ -18,13 +18,15 @@ Fixed execution profile (frozen before any live collection):
   recorded in captures (``request_sha256``) is unchanged. No case id, gold
   label or evaluation metadata is sent: byte-identical states produce
   byte-identical bodies while ``request_sha256`` still differs by case id.
-* Credentials: the constructor reads only ``JEV_API_KEY`` from the process
-  environment, validates that it is a nonempty printable ASCII token and keeps
-  it solely inside the transport's ``Authorization`` header. The key never
-  enters identity, captures, warnings, exceptions or diagnostics. ``offline=True``
-  reads nothing, performs no request, and every ``decide`` returns
-  ``unavailable``. A missing or malformed key raises
-  :class:`ProviderSetupError` before any request.
+* Setup (plan/v1/PLAN.md section E: "reject offline/missing-key setup without
+  a request"): ``JevModel(offline=True)`` raises :class:`ProviderSetupError`
+  before any environment read or transport construction; this adapter has no
+  offline mode (the Laya adapter's cached-offline behaviour is a different,
+  local matter). Otherwise the constructor reads only ``JEV_API_KEY``,
+  validates that it is a nonempty printable ASCII token and keeps it solely
+  inside the transport's ``Authorization`` header. A missing or malformed key
+  raises :class:`ProviderSetupError` before any request. The key never enters
+  identity, captures, warnings, exceptions or diagnostics.
 * One attempt per ``decide``: no retry, no redirect following, no fallback.
   ``http.client.HTTPSConnection`` with the default TLS context and the caller's
   ``timeout_s`` as the per-operation socket timeout. That bounds connect and
@@ -35,14 +37,27 @@ Fixed execution profile (frozen before any live collection):
   timeout is ``timeout``; connection, TLS and protocol errors are
   ``unavailable``; any other exception is ``provider_error`` with a bounded
   class-name warning. Error response bodies are never retained.
-* Successful bodies: at most ``MAX_RESPONSE_BYTES`` are read (actual bytes, not
-  the declared ``Content-Length``); more is ``malformed_response``
-  (``jev.body_oversized``), as is a body that is not valid UTF-8
-  (``jev.body_not_utf8``). Otherwise the decoded text is captured verbatim,
-  byte for byte, including invalid JSON, duplicate keys, a wrong answering
-  model or out-of-profile fields; the pure normalizer classifies those
-  (``actseal.normalization``, Jev profile) and replay repeats that
-  classification without importing this module.
+* Successful bodies are read to the end of their HTTP framing in bounded
+  pieces. Reading stops as soon as more than ``MAX_RESPONSE_BYTES`` actual
+  bytes have arrived, whatever ``Content-Length`` declares, and that is
+  ``malformed_response`` (``jev.body_oversized``). A fixed-length body whose
+  connection ends before the declared length, or a chunked body without its
+  terminator, is an incomplete transfer and therefore ``unavailable``
+  (``jev.transport:incomplete_body`` / ``jev.transport:IncompleteRead``); a
+  close-delimited body is complete at end of stream. A complete body that is
+  not valid UTF-8 is ``malformed_response`` (``jev.body_not_utf8``).
+* Credential echo: a complete, decodable body that contains the current API
+  key, literally or behind JSON string escapes (``\\uXXXX``, ``\\"``, ``\\\\``,
+  ``\\/`` and the other short escapes, unescaped up to three levels), is never
+  captured. It fails closed as ``malformed_response`` with the fixed warning
+  ``jev.credential_echo``; the body is not retained, redacted, logged or
+  repeated anywhere. This detects the actual key in those encodings only; it
+  makes no claim about arbitrary encrypted or otherwise encoded secrets.
+* Every other complete body is captured verbatim, byte for byte, including
+  invalid JSON, duplicate keys, a wrong answering model or out-of-profile
+  fields; the pure normalizer classifies those (``actseal.normalization``, Jev
+  profile) and replay repeats that classification without importing this
+  module.
 * Every connection is closed on every path. ``close`` is idempotent; after it
   every ``decide`` is ``unavailable`` and no request is made.
 
@@ -62,6 +77,7 @@ import http.client
 import json
 import os
 import platform
+import re
 import ssl
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -99,6 +115,21 @@ MAX_RESPONSE_BYTES: Final = 1024 * 1024
 
 _MAX_KEY_CHARS: Final = 4096
 _SUCCESS_STATUS: Final = 200
+#: Size of each bounded read of a successful body.
+_READ_CHUNK: Final = 65536
+#: JSON string escapes that can hide a credential in plain sight.
+_JSON_ESCAPE: Final = re.compile(r'\\(u[0-9a-fA-F]{4}|["\\/bfnrt])')
+_SHORT_ESCAPES: Final[Mapping[str, str]] = {
+    '"': '"',
+    "\\": "\\",
+    "/": "/",
+    "b": "\b",
+    "f": "\f",
+    "n": "\n",
+    "r": "\r",
+    "t": "\t",
+}
+_UNESCAPE_PASSES: Final = 3
 _SERVER_ERROR_RANGE: Final = range(500, 600)
 #: Frozen explicit status mapping; see the module docstring for class fallbacks.
 _STATUS_FAILURES: Final[Mapping[int, str]] = {
@@ -144,10 +175,18 @@ def request_body(request: DecisionRequest) -> bytes:
 
 
 class _Response(Protocol):
-    """The part of ``http.client.HTTPResponse`` the exchange uses."""
+    """The part of ``http.client.HTTPResponse`` the exchange uses.
+
+    ``length`` is the number of declared fixed-length bytes still unread
+    (``None`` for chunked or close-delimited framing), exactly as
+    ``HTTPResponse`` maintains it.
+    """
 
     @property
     def status(self) -> int: ...
+
+    @property
+    def length(self) -> int | None: ...
 
     def read(self, amt: int) -> bytes: ...
 
@@ -194,10 +233,13 @@ def _status_failure(status: int) -> tuple[str, tuple[str, ...]]:
 class _HttpsExchange:
     """One POST per call over a fresh connection; maps every outcome to a ``_Reply``.
 
-    The API key lives only in this object's header mapping.
+    The API key lives only in this object: in the header mapping it sends and
+    in the value it compares response bodies against. It is never formatted
+    into any reply, warning or exception.
     """
 
     def __init__(self, api_key: str, connect: _Connect) -> None:
+        self._key = api_key
         self._headers: Mapping[str, str] = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -211,13 +253,15 @@ class _HttpsExchange:
         except _StatusError as exc:
             code, warnings = _status_failure(exc.status)
             return _Reply(None, code, warnings)
+        except _IncompleteBodyError:
+            return _Reply(None, "unavailable", ("jev.transport:incomplete_body",))
         except TimeoutError:
             return _Reply(None, "timeout", ())
         except (OSError, http.client.HTTPException) as exc:
             return _Reply(None, "unavailable", (f"jev.transport:{type(exc).__name__}",))
         except Exception as exc:  # a failure is data, never an exception (CONTRACTS section 4)
             return _Reply(None, "provider_error", (f"jev.exception:{type(exc).__name__}",))
-        return _decode_success(data)
+        return _decode_success(data, self._key)
 
     def _post(self, payload: bytes, timeout: float) -> bytes:
         """One request on a fresh connection; the connection is closed on every path."""
@@ -227,7 +271,7 @@ class _HttpsExchange:
             response = connection.getresponse()
             if response.status != _SUCCESS_STATUS:
                 raise _StatusError(response.status)
-            return response.read(MAX_RESPONSE_BYTES + 1)
+            return _read_complete_body(response)
         finally:
             with contextlib.suppress(OSError):
                 connection.close()
@@ -241,14 +285,72 @@ class _StatusError(Exception):
         self.status = status
 
 
-def _decode_success(data: bytes) -> _Reply:
-    """Bound and decode a 200 body; the text is otherwise kept verbatim."""
+class _IncompleteBodyError(Exception):
+    """Internal control flow: the stream ended before the declared fixed length."""
+
+
+def _read_complete_body(response: _Response) -> bytes:
+    """Read a 200 body to the end of its framing, stopping once the byte cap is exceeded.
+
+    ``http.client`` may return fewer bytes than requested without error when a
+    fixed-length body ends early, so a single bounded ``read`` cannot prove
+    completeness. Pieces are read until end of stream; a fixed-length body
+    with declared bytes still unread at that point is incomplete. A chunked
+    body without its terminator makes ``http.client`` raise ``IncompleteRead``
+    (handled by the caller). A close-delimited body is complete at end of
+    stream. The cap counts bytes actually received, never the declared length,
+    and over-cap data is returned for rejection without consulting framing.
+    """
+    data = bytearray()
+    while len(data) <= MAX_RESPONSE_BYTES:
+        piece = response.read(_READ_CHUNK)
+        if not piece:
+            break
+        data.extend(piece)
+    else:
+        return bytes(data)
+    remaining = response.length
+    if remaining is not None and remaining > 0:
+        raise _IncompleteBodyError
+    return bytes(data)
+
+
+def _unescape_json(text: str) -> str:
+    """Resolve JSON string escapes (``\\uXXXX`` and the short escapes) one level."""
+
+    def resolve(match: re.Match[str]) -> str:
+        escape = match.group(1)
+        if escape[0] == "u":
+            return chr(int(escape[1:], 16))
+        return _SHORT_ESCAPES[escape]
+
+    return _JSON_ESCAPE.sub(resolve, text)
+
+
+def _echoes_credential(text: str, key: str) -> bool:
+    """Whether ``text`` contains ``key`` literally or behind up to three levels of JSON escapes."""
+    candidate = text
+    for _ in range(_UNESCAPE_PASSES):
+        if key in candidate:
+            return True
+        unescaped = _unescape_json(candidate)
+        if unescaped == candidate:
+            return False
+        candidate = unescaped
+    return key in candidate
+
+
+def _decode_success(data: bytes, key: str) -> _Reply:
+    """Bound, decode and credential-check a complete 200 body; otherwise keep it verbatim."""
     if len(data) > MAX_RESPONSE_BYTES:
         return _Reply(None, "malformed_response", ("jev.body_oversized",))
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError:
         return _Reply(None, "malformed_response", ("jev.body_not_utf8",))
+    if _echoes_credential(text, key):
+        # An unsafe provider response is failure data: never captured, never repaired.
+        return _Reply(None, "malformed_response", ("jev.credential_echo",))
     return _Reply(text, None, ())
 
 
@@ -291,21 +393,23 @@ class JevModel:
     """Pinned ``jev-1.13.0`` over the fixed vendor endpoint; one attempt per request."""
 
     def __init__(self, *, offline: bool = False) -> None:
-        exchange: _Exchange | None = None
-        if not offline:
-            exchange = _HttpsExchange(_api_key_from_environment(), _default_connect)
-        self._configure(exchange, offline=offline)
+        if offline:
+            # PLAN E: offline setup is rejected without a request. Checked before the
+            # environment is read or any transport object exists.
+            raise ProviderSetupError(
+                "offline: the experimental Jev adapter has no offline mode; no request was made"
+            )
+        self._configure(_HttpsExchange(_api_key_from_environment(), _default_connect))
 
     @classmethod
-    def _with_exchange(cls, exchange: _Exchange | None, *, offline: bool = False) -> JevModel:
+    def _with_exchange(cls, exchange: _Exchange) -> JevModel:
         """Test seam: a model over an injected exchange; reads no environment variable."""
         model = cls.__new__(cls)
-        model._configure(exchange, offline=offline)
+        model._configure(exchange)
         return model
 
-    def _configure(self, exchange: _Exchange | None, *, offline: bool) -> None:
-        self._exchange: _Exchange | None = None if offline else exchange
-        self._unavailable: str | None = "offline" if self._exchange is None else None
+    def _configure(self, exchange: _Exchange) -> None:
+        self._exchange: _Exchange | None = exchange
         self._closed = False
         self._attempts = 0
         self._identity = ModelIdentity(
@@ -327,9 +431,8 @@ class JevModel:
             raise SchemaError("request: must be DecisionRequest")
         digest = request_sha256(request)
         exchange = self._exchange
-        if self._unavailable is not None or exchange is None:
-            reason = self._unavailable or "closed"
-            return self._failure(digest, "unavailable", (f"jev.unavailable:{reason}",))
+        if exchange is None:
+            return self._failure(digest, "unavailable", ("jev.unavailable:closed",))
         payload = request_body(request)
         self._attempts += 1
         reply = exchange(payload, timeout)
@@ -346,5 +449,3 @@ class JevModel:
         """Drop the transport; later calls are ``unavailable``. Safe to repeat."""
         self._exchange = None
         self._closed = True
-        if self._unavailable is None:
-            self._unavailable = "closed"
