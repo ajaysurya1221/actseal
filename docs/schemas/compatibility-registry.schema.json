@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:compatibility-registry:1",
+  "title": "Actseal compatibility registry (schema 1)",
+  "description": "The packaged src/actseal/compatibility_registry.json: exact producer source fingerprints approved for a replay engine. No wildcard or range forms exist. Trusted verifier configuration, not proof of evidence authenticity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "implementations"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "implementations": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[0-9a-f]{64}$" },
+      "additionalProperties": { "enum": ["actseal-choice-v1"] }
+    }
+  }
+}

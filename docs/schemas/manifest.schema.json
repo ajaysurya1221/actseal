@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:manifest:2",
+  "title": "Actseal evidence bundle manifest (schema 2)",
+  "description": "manifest.json: canonical JSON plus one LF. Inventories exactly the six data files of the bundle by size and SHA-256. `sha256` is the canonical hash of the manifest with only `sha256` omitted. The manifest version also versions the canonical record encoding of lock.json, records.jsonl, faults.jsonl and verdict.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "files", "sha256"],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lock.json",
+        "calibration.jsonl",
+        "verification.jsonl",
+        "records.jsonl",
+        "faults.jsonl",
+        "verdict.json"
+      ],
+      "properties": {
+        "lock.json": { "$ref": "#/$defs/Entry" },
+        "calibration.jsonl": { "$ref": "#/$defs/Entry" },
+        "verification.jsonl": { "$ref": "#/$defs/Entry" },
+        "records.jsonl": { "$ref": "#/$defs/Entry" },
+        "faults.jsonl": { "$ref": "#/$defs/Entry" },
+        "verdict.json": { "$ref": "#/$defs/Entry" }
+      }
+    },
+    "sha256": { "$ref": "#/$defs/Sha256" }
+  },
+  "$defs": {
+    "Sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "Entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["size", "sha256"],
+      "properties": {
+        "size": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/Sha256" }
+      }
+    }
+  }
+}

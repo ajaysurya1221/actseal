@@ -411,7 +411,7 @@ def rehash_bundle(bundle: Path, replacements: Mapping[str, bytes]) -> None:
         for name in DATA_FILES
         for data in [(bundle / name).read_bytes()]
     }
-    unsealed: dict[str, object] = {"schema_version": 1, "files": files}
+    unsealed: dict[str, object] = {"schema_version": 2, "files": files}
     manifest = {**unsealed, "sha256": sha256_hex(canonical(unsealed))}
     (bundle / "manifest.json").write_bytes(document_bytes(manifest))
 

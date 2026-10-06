@@ -352,7 +352,7 @@ def test_edited_lock_fields_cannot_reuse_the_original_experiment(
     foreign_impl = json.loads(json.dumps(original))
     foreign_impl["implementation_sha256"] = "e" * 64
     schema = json.loads(json.dumps(original))
-    schema["schema_version"] = 2
+    schema["schema_version"] = 3
     relabelled = json.loads(json.dumps(original))
     relabelled["verification_cases"][0]["expected_label"] = "sales"
     invalid_locks = {
