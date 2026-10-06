@@ -1,8 +1,8 @@
-"""``release-receipt``, ``receipts``, ``candidate`` and ``docs`` gates.
+"""``release-receipt``, ``receipts``, ``candidate``, ``assets`` and ``docs`` gates.
 
-The real repository must fail ``candidate``, ``docs`` and ``receipts`` today
-because the v1 documentation, assets and receipts do not exist yet; the
-fixture trees show exactly what makes each gate pass.
+Every gate is exercised on deliberately complete and deliberately incomplete
+temporary fixtures, so the tests stay valid once the real repository gains its
+v1 documentation, assets and receipts. The real checkout is only smoke-run.
 """
 
 from __future__ import annotations
@@ -14,23 +14,31 @@ from pathlib import Path
 
 import pytest
 from release_support import (
-    ROOT,
+    PUBLISHER,
+    build_receipt_document,
     commit_all,
     git,
     load_tool,
     names,
+    picture_markup,
     png_bytes,
+    postpublish_document,
     readme_text,
+    release_receipt_document,
     run_main,
     sha256_hex,
     write_fake_distributions,
+    write_fake_renderer,
+    write_incomplete_tree,
+    write_json,
     write_release_tree,
     write_sums,
     write_text,
 )
 
 VERSION = "1.0.0"
-ARTIFACT_DIGEST = "sha256:" + "b" * 64
+BARE_DIGEST = "b" * 64
+RAW = "https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets"
 
 
 @pytest.fixture(scope="module")
@@ -38,10 +46,15 @@ def tool() -> types.ModuleType:
     return load_tool()
 
 
+def renderer(root: Path) -> str:
+    return str(root / "docs" / "assets" / "src" / "render.py")
+
+
 def failure(tool: types.ModuleType, root: Path, command: str) -> str:
     workflow = root / ".github" / "workflows" / "publish-pypi.yml"
     checks: dict[str, Callable[[], None]] = {
-        "candidate": lambda: tool.check_candidate(root, workflow),
+        "candidate": lambda: tool.check_candidate(root, workflow, renderer(root)),
+        "assets": lambda: tool.check_assets(root, renderer(root)),
         "docs": lambda: tool.check_docs(root),
         "receipts": lambda: tool.check_receipts(root),
     }
@@ -55,65 +68,25 @@ def failure(tool: types.ModuleType, root: Path, command: str) -> str:
 # --------------------------------------------------------------------------- #
 
 
-def build_receipt_document(
-    dist: Path, *, tag: str | None = f"v{VERSION}", commit: str | None = "c" * 40
-) -> dict[str, object]:
-    return {
-        "schema_version": 1,
-        "kind": "actseal-build-receipt",
-        "version": VERSION,
-        "tag": tag,
-        "ref": f"refs/tags/{tag}" if tag else "refs/heads/main",
-        "source_commit": commit,
-        "lock_sha256": "d" * 64,
-        "workflow_run": {"id": "42", "attempt": "1"},
-        "distributions": [
-            {
-                "filename": name,
-                "size": (dist / name).stat().st_size,
-                "sha256": sha256_hex((dist / name).read_bytes()),
-            }
-            for name in names(VERSION)
-        ],
-    }
-
-
-def postpublish_document(
-    dist: Path, *, ok: bool = True, hashes: dict[str, str] | None = None
-) -> dict[str, object]:
-    return {
-        "schema_version": 1,
-        "kind": "actseal-postpublish-receipt",
-        "version": VERSION,
-        "index": "https://pypi.org",
-        "ok": ok,
-        "files": [
-            {
-                "filename": name,
-                "sha256": (hashes or {}).get(name, sha256_hex((dist / name).read_bytes())),
-                "provenance": {"present": True, "attestations": 1, "publishers": []},
-            }
-            for name in names(VERSION)
-        ],
-        "checks": {"demo_exit": 0, "fixed_replay_exit": 0, "bad_replay_exit": 1},
-        "note": "Attestation presence and publisher identity were inspected.",
-    }
-
-
 @pytest.fixture
 def receipt_inputs(tmp_path: Path) -> dict[str, Path]:
     dist = tmp_path / "dist"
     files = write_fake_distributions(dist, VERSION)
-    sums = write_sums(tmp_path / "SHA256SUMS", files)
-    build = write_text(tmp_path / "build-receipt.json", json.dumps(build_receipt_document(dist)))
-    post = write_text(tmp_path / "postpublish-receipt.json", json.dumps(postpublish_document(dist)))
     return {
         "dist": dist,
-        "sums": sums,
-        "build": build,
-        "post": post,
+        "sums": write_sums(tmp_path / "SHA256SUMS", files),
+        "build": write_json(
+            tmp_path / "build-receipt.json", build_receipt_document(VERSION, files)
+        ),
+        "post": write_json(
+            tmp_path / "postpublish-receipt.json", postpublish_document(VERSION, files)
+        ),
         "out": tmp_path / "release-receipt.json",
     }
+
+
+def files_of(inputs: dict[str, Path]) -> dict[str, Path]:
+    return {name: inputs["dist"] / name for name in names(VERSION)}
 
 
 def make_release_receipt(
@@ -126,7 +99,7 @@ def make_release_receipt(
         "build_receipt_path": inputs["build"],
         "postpublish_path": inputs["post"],
         "artifact_id": "987654321",
-        "artifact_digest": ARTIFACT_DIGEST,
+        "artifact_digest": BARE_DIGEST,
         "run_id": "42",
         "run_attempt": "1",
         "verify_result": "success",
@@ -135,6 +108,21 @@ def make_release_receipt(
     arguments.update(overrides)
     document = tool.release_receipt(**arguments)
     return {str(key): value for key, value in document.items()}
+
+
+def release_receipt_failure(
+    tool: types.ModuleType, inputs: dict[str, Path], **overrides: str
+) -> str:
+    with pytest.raises(tool.ReleaseCheckError) as excinfo:
+        make_release_receipt(tool, inputs, **overrides)
+    assert not inputs["out"].exists()
+    return str(excinfo.value)
+
+
+def rewrite(path: Path, mutate: Callable[[dict[str, object]], None]) -> None:
+    document = json.loads(path.read_text(encoding="utf-8"))
+    mutate(document)
+    path.write_text(json.dumps(document), encoding="utf-8")
 
 
 def test_release_receipt_binds_artifact_identity_and_results(
@@ -147,27 +135,52 @@ def test_release_receipt_binds_artifact_identity_and_results(
         f"v{VERSION}",
         "c" * 40,
     )
-    assert receipt["artifact"] == {"id": "987654321", "digest": ARTIFACT_DIGEST}
+    assert receipt["lock_sha256"] == "d" * 64
+    assert receipt["artifact"] == {"id": "987654321", "digest": f"sha256:{BARE_DIGEST}"}
     assert receipt["workflow_run"] == {
         "id": "42",
-        "attempt": "1",
-        "url": "https://github.com/ajaysurya1221/actseal/actions/runs/42/attempts/1",
+        "build_attempt": "1",
+        "verification_attempt": "1",
+        "build_url": "https://github.com/ajaysurya1221/actseal/actions/runs/42/attempts/1",
+        "verification_url": "https://github.com/ajaysurya1221/actseal/actions/runs/42/attempts/1",
     }
     verification = receipt["verification"]
     assert isinstance(verification, dict)
     assert verification["verify_matrix"] == "success"
-    assert verification["postpublish"]["checks"]["bad_replay_exit"] == 1
+    post = verification["postpublish"]
+    assert post["checks"]["bad_replay_exit"] == 1
+    assert post["published_metadata"]["version"] == VERSION
+    assert [f["provenance"]["publishers"] for f in post["files"]] == [[PUBLISHER], [PUBLISHER]]
     assert json.loads(receipt_inputs["out"].read_text(encoding="utf-8")) == receipt
+    assert tool.validate_release_receipt(receipt, VERSION, None)
     assert "pypi-" not in json.dumps(receipt)
 
 
-def release_receipt_failure(
-    tool: types.ModuleType, inputs: dict[str, Path], **overrides: str
-) -> str:
-    with pytest.raises(tool.ReleaseCheckError) as excinfo:
-        make_release_receipt(tool, inputs, **overrides)
-    assert not inputs["out"].exists()
-    return str(excinfo.value)
+def test_rerun_keeps_build_and_verification_attempts_apart(
+    tool: types.ModuleType, receipt_inputs: dict[str, Path]
+) -> None:
+    receipt = make_release_receipt(tool, receipt_inputs, run_attempt="3")
+    run = receipt["workflow_run"]
+    assert isinstance(run, dict)
+    assert (run["build_attempt"], run["verification_attempt"]) == ("1", "3")
+    assert run["build_url"].endswith("/attempts/1")
+    assert run["verification_url"].endswith("/attempts/3")
+
+
+@pytest.mark.parametrize(
+    ("digest", "fragment"),
+    [
+        ("sha256:" + BARE_DIGEST, "bare 64-hex"),
+        (BARE_DIGEST[:-1], "bare 64-hex"),
+        ("", "bare 64-hex"),
+        (BARE_DIGEST.upper(), "bare 64-hex"),
+    ],
+)
+def test_artifact_digest_must_be_the_actions_bare_hex_output(
+    tool: types.ModuleType, receipt_inputs: dict[str, Path], digest: str, fragment: str
+) -> None:
+    assert fragment in release_receipt_failure(tool, receipt_inputs, artifact_digest=digest)
+    assert tool.normalize_artifact_digest(BARE_DIGEST) == f"sha256:{BARE_DIGEST}"
 
 
 @pytest.mark.parametrize("verify_result", ["failure", "skipped", "cancelled", ""])
@@ -186,33 +199,132 @@ def test_missing_postpublish_receipt_is_not_promoted(
     assert "do not auto-promote missing receipts" in release_receipt_failure(tool, receipt_inputs)
 
 
-def test_postpublish_not_ok_or_mismatched_hash_fails(
-    tool: types.ModuleType, receipt_inputs: dict[str, Path]
-) -> None:
-    dist = receipt_inputs["dist"]
-    receipt_inputs["post"].write_text(
-        json.dumps(postpublish_document(dist, ok=False)), encoding="utf-8"
-    )
-    assert "did not record ok: true" in release_receipt_failure(tool, receipt_inputs)
-    altered = {names(VERSION)[0]: "e" * 64}
-    receipt_inputs["post"].write_text(
-        json.dumps(postpublish_document(dist, hashes=altered)), encoding="utf-8"
-    )
-    assert "post-publication hashes differ" in release_receipt_failure(tool, receipt_inputs)
+def set_key(*path: str, value: object) -> Callable[[dict[str, object]], None]:
+    def mutate(document: dict[str, object]) -> None:
+        target: object = document
+        for key in path[:-1]:
+            assert isinstance(target, dict)
+            target = target[key]
+        assert isinstance(target, dict)
+        target[path[-1]] = value
+
+    return mutate
 
 
-def test_build_receipt_without_tag_or_commit_fails(
+def break_first_file(key: str, value: object) -> Callable[[dict[str, object]], None]:
+    def mutate(document: dict[str, object]) -> None:
+        files = document["files"]
+        assert isinstance(files, list)
+        files[0][key] = value
+
+    return mutate
+
+
+@pytest.mark.parametrize(
+    ("mutate", "fragment"),
+    [
+        (set_key("source_commit", value="not-a-sha"), "full 40-hex source commit"),
+        (set_key("source_commit", value=None), "full 40-hex source commit"),
+        (set_key("lock_sha256", value=None), "lock_sha256 must be a 64-hex"),
+        (set_key("distributions", value=[]), "distributions must not be empty"),
+        (set_key("tag", value=None), "build receipt tag"),
+        (set_key("ref", value="refs/heads/main"), "ref is"),
+        (set_key("workflow_run", "id", value="41"), "belongs to run 41"),
+        (set_key("workflow_run", "attempt", value="2"), "later than verification attempt"),
+        (set_key("workflow_run", value=None), "workflow_run must be an object"),
+        (set_key("kind", value="actseal-release-receipt"), "kind is wrong"),
+    ],
+)
+def test_build_receipt_evidence_is_validated(
+    tool: types.ModuleType,
+    receipt_inputs: dict[str, Path],
+    mutate: Callable[[dict[str, object]], None],
+    fragment: str,
+) -> None:
+    rewrite(receipt_inputs["build"], mutate)
+    assert fragment in release_receipt_failure(tool, receipt_inputs)
+
+
+def test_build_inventory_must_match_the_actual_distributions(
     tool: types.ModuleType, receipt_inputs: dict[str, Path]
 ) -> None:
-    dist = receipt_inputs["dist"]
-    receipt_inputs["build"].write_text(
-        json.dumps(build_receipt_document(dist, tag=None)), encoding="utf-8"
-    )
-    assert "build receipt tag" in release_receipt_failure(tool, receipt_inputs)
-    receipt_inputs["build"].write_text(
-        json.dumps(build_receipt_document(dist, commit=None)), encoding="utf-8"
-    )
-    assert "lacks a source commit" in release_receipt_failure(tool, receipt_inputs)
+    def shrink(document: dict[str, object]) -> None:
+        inventory = document["distributions"]
+        assert isinstance(inventory, list)
+        inventory[0]["size"] = inventory[0]["size"] + 1
+
+    rewrite(receipt_inputs["build"], shrink)
+    assert "inventory" in release_receipt_failure(tool, receipt_inputs)
+
+
+@pytest.mark.parametrize(
+    ("mutate", "fragment"),
+    [
+        (set_key("ok", value=False), "did not record ok: true"),
+        (set_key("checks", "demo_exit", value=99), "demo_exit is 99"),
+        (set_key("checks", "bad_replay_exit", value=0), "bad_replay_exit is 0"),
+        (set_key("checks", "fixed_replay_exit", value=1), "fixed_replay_exit is 1"),
+        (set_key("checks", "demo_bad_status", value="PASS"), "demo_bad_status is 'PASS'"),
+        (
+            set_key("checks", "installed_outside_checkout", value=False),
+            "installed_outside_checkout",
+        ),
+        (set_key("checks", "version_output", value="actseal 0.1.0"), "version_output is"),
+        (set_key("checks", "demo_exit", value=True), "demo_exit is True"),
+        (set_key("note", value="Signatures were cryptographically verified."), "not verbatim"),
+        (set_key("published_metadata", "classifiers", value=[]), "published classifiers lack"),
+        (set_key("published_metadata", "version", value="1.0.1"), "names another release"),
+        (break_first_file("sha256", "e" * 64), "inventory"),
+        (break_first_file("size", 1), "inventory"),
+        (break_first_file("declared_sha256", "e" * 64), "declared digest"),
+        (break_first_file("matches_build", False), "matches_build"),
+        (break_first_file("provenance", {"present": False}), "provenance not present"),
+        (
+            break_first_file(
+                "provenance",
+                {
+                    "present": True,
+                    "attestations": 0,
+                    "publishers": [PUBLISHER],
+                    "subject_sha256": None,
+                },
+            ),
+            "no attestations inspected",
+        ),
+        (
+            break_first_file(
+                "provenance",
+                {
+                    "present": True,
+                    "attestations": 1,
+                    "publishers": [{**PUBLISHER, "repository": "someone/else"}],
+                    "subject_sha256": None,
+                },
+            ),
+            "not the expected trusted publisher",
+        ),
+        (
+            break_first_file(
+                "provenance",
+                {
+                    "present": True,
+                    "attestations": 1,
+                    "publishers": [PUBLISHER],
+                    "subject_sha256": "0" * 64,
+                },
+            ),
+            "subject digest differs",
+        ),
+    ],
+)
+def test_postpublish_evidence_is_validated(
+    tool: types.ModuleType,
+    receipt_inputs: dict[str, Path],
+    mutate: Callable[[dict[str, object]], None],
+    fragment: str,
+) -> None:
+    rewrite(receipt_inputs["post"], mutate)
+    assert fragment in release_receipt_failure(tool, receipt_inputs)
 
 
 def test_altered_distribution_bytes_fail(
@@ -228,8 +340,8 @@ def test_altered_distribution_bytes_fail(
     [
         ({"artifact_id": "latest"}, "numeric Actions artifact ID"),
         ({"artifact_id": ""}, "numeric Actions artifact ID"),
-        ({"artifact_digest": "b" * 64}, "sha256:<hex>"),
         ({"run_id": "x"}, "must be numeric"),
+        ({"run_attempt": "0x1"}, "must be numeric"),
     ],
 )
 def test_malformed_artifact_identity_fails(
@@ -244,9 +356,15 @@ def test_malformed_artifact_identity_fails(
 def test_credential_shaped_strings_are_rejected(
     tool: types.ModuleType, receipt_inputs: dict[str, Path]
 ) -> None:
-    document = postpublish_document(receipt_inputs["dist"])
-    document["note"] = "token pypi-AgEIcHlwaS5vcmcCJDAwMDAwMDAwLTAwMDAtMDAwMA"
-    receipt_inputs["post"].write_text(json.dumps(document), encoding="utf-8")
+    rewrite(
+        receipt_inputs["post"],
+        set_key("index", value="pypi-AgEIcHlwaS5vcmcCJDAwMDAwMDAwLTAwMDAtMDAwMA"),
+    )
+    assert "credential-shaped" in release_receipt_failure(tool, receipt_inputs)
+    rewrite(receipt_inputs["post"], set_key("index", value="https://pypi.org"))
+    rewrite(
+        receipt_inputs["build"], set_key("ref", value="Bearer ghp_abcdefghijklmnopqrstuvwxyz0123")
+    )
     assert "credential-shaped" in release_receipt_failure(tool, receipt_inputs)
 
 
@@ -260,36 +378,15 @@ def write_receipt_tree(root: Path, tool: types.ModuleType) -> dict[str, object]:
     dist = root / "scratch-dist"
     files = write_fake_distributions(dist, VERSION)
     write_sums(root / tool.RECEIPT_PATHS["sha256sums"], files)
-    post = postpublish_document(dist)
-    write_text(root / tool.RECEIPT_PATHS["postpublish"], json.dumps(post))
-    receipt = {
-        "schema_version": 1,
-        "kind": "actseal-release-receipt",
-        "version": VERSION,
-        "tag": f"v{VERSION}",
-        "source_commit": "c" * 40,
-        "lock_sha256": "d" * 64,
-        "workflow_run": {"id": "42", "attempt": "1"},
-        "artifact": {"id": "987654321", "digest": ARTIFACT_DIGEST},
-        "distributions": [
-            {
-                "filename": name,
-                "size": files[name].stat().st_size,
-                "sha256": sha256_hex(files[name].read_bytes()),
-            }
-            for name in names(VERSION)
-        ],
-        "verification": {"verify_matrix": "success", "postpublish": post},
-    }
-    write_text(root / tool.RECEIPT_PATHS["release_receipt"], json.dumps(receipt))
+    write_json(root / tool.RECEIPT_PATHS["postpublish"], postpublish_document(VERSION, files))
+    receipt = release_receipt_document(VERSION, files)
+    write_json(root / tool.RECEIPT_PATHS["release_receipt"], receipt)
     notes = [
         f"# Actseal {VERSION}",
-        "![how-it-works](https://raw.githubusercontent.com/x/how-it-works.svg)",
+        f"![how-it-works]({RAW}/how-it-works.svg)",
+        f"https://pypi.org/project/actseal/{VERSION}/",
+        *(f"- `{name}` sha256 `{sha256_hex(files[name].read_bytes())}`" for name in names(VERSION)),
     ]
-    notes.append(f"https://pypi.org/project/actseal/{VERSION}/")
-    notes.extend(
-        f"- `{name}` sha256 `{sha256_hex(files[name].read_bytes())}`" for name in names(VERSION)
-    )
     write_text(root / tool.RECEIPT_PATHS["release_notes"], "\n".join(notes) + "\n")
     write_text(root / tool.RECEIPT_PATHS["final_report"], "# Final report\n\nWorkflow run 42.\n")
     write_text(root / tool.RECEIPT_PATHS["launch"], "# Launch\n\nThis post remains a DRAFT.\n")
@@ -300,8 +397,9 @@ def write_receipt_tree(root: Path, tool: types.ModuleType) -> dict[str, object]:
     return receipt
 
 
-def test_receipts_gate_fails_on_the_real_repository(tool: types.ModuleType) -> None:
-    message = failure(tool, ROOT, "receipts")
+def test_receipts_gate_fails_on_an_incomplete_tree(tool: types.ModuleType, tmp_path: Path) -> None:
+    write_incomplete_tree(tmp_path)
+    message = failure(tool, tmp_path, "receipts")
     assert "plan/v1/receipts/release-receipt.json" in message
     assert "plan/v1/RELEASE_NOTES.md" in message
 
@@ -323,16 +421,24 @@ def test_release_note_claims_must_map_to_receipts(tool: types.ModuleType, tmp_pa
 def test_receipt_cross_checks_fail(tool: types.ModuleType, tmp_path: Path) -> None:
     write_receipt_tree(tmp_path, tool)
     sums = tmp_path / tool.RECEIPT_PATHS["sha256sums"]
-    sums.write_text(sums.read_text(encoding="utf-8").replace("a", "b", 1), encoding="utf-8")
+    original = sums.read_text(encoding="utf-8")
+    sums.write_text(original.replace("a", "b", 1), encoding="utf-8")
     assert "SHA256SUMS receipt differs" in failure(tool, tmp_path, "receipts")
-    write_receipt_tree(tmp_path / "second", tool)
-    report = tmp_path / "second" / tool.RECEIPT_PATHS["final_report"]
+    sums.write_text(original, encoding="utf-8")
+    receipt = tmp_path / tool.RECEIPT_PATHS["release_receipt"]
+    rewrite(receipt, set_key("verification", "postpublish", "checks", "demo_exit", value=99))
+    assert "demo_exit is 99" in failure(tool, tmp_path, "receipts")
+    rewrite(receipt, set_key("verification", "postpublish", "checks", "demo_exit", value=0))
+    rewrite(receipt, set_key("source_commit", value="not-a-sha"))
+    assert "full 40-hex commit" in failure(tool, tmp_path, "receipts")
+    rewrite(receipt, set_key("source_commit", value="c" * 40))
+    report = tmp_path / tool.RECEIPT_PATHS["final_report"]
     report.write_text("# Final report\n", encoding="utf-8")
-    assert "omits the workflow run id" in failure(tool, tmp_path / "second", "receipts")
+    assert "omits the workflow run id" in failure(tool, tmp_path, "receipts")
     report.write_text("# Final report\n\nWorkflow run 42.\n", encoding="utf-8")
-    launch = tmp_path / "second" / tool.RECEIPT_PATHS["launch"]
+    launch = tmp_path / tool.RECEIPT_PATHS["launch"]
     launch.write_text("# Launch\n\nPosted.\n", encoding="utf-8")
-    assert "must remain a draft" in failure(tool, tmp_path / "second", "receipts")
+    assert "must remain a draft" in failure(tool, tmp_path, "receipts")
 
 
 # --------------------------------------------------------------------------- #
@@ -340,15 +446,67 @@ def test_receipt_cross_checks_fail(tool: types.ModuleType, tmp_path: Path) -> No
 # --------------------------------------------------------------------------- #
 
 
-def test_docs_gate_fails_on_the_real_repository_today(tool: types.ModuleType) -> None:
-    message = failure(tool, ROOT, "docs")
+def test_docs_gate_fails_on_an_incomplete_tree(tool: types.ModuleType, tmp_path: Path) -> None:
+    write_incomplete_tree(tmp_path)
+    message = failure(tool, tmp_path, "docs")
     assert "docs/stability.md" in message
     assert "absolute https:// links" in message
+    assert "still documents" in message
 
 
 def test_docs_gate_passes_on_the_fixture_tree(tool: types.ModuleType, tmp_path: Path) -> None:
     write_release_tree(tmp_path)
     tool.check_docs(tmp_path)
+
+
+def test_html_picture_markup_with_absolute_same_repo_sources_passes(
+    tool: types.ModuleType, tmp_path: Path
+) -> None:
+    write_release_tree(tmp_path)
+    picture = picture_markup(f"{RAW}/hero-dark.svg", f"{RAW}/hero-light.svg")
+    (tmp_path / "README.md").write_text(readme_text(picture=picture), encoding="utf-8")
+    tool.check_docs(tmp_path)
+    targets = tool.link_targets(picture)
+    assert targets.count(f"{RAW}/hero-dark.svg") == 2
+    assert f"{RAW}/hero-light.svg" in targets
+
+
+@pytest.mark.parametrize(
+    ("picture", "fragment"),
+    [
+        (picture_markup("docs/assets/hero-dark.svg", f"{RAW}/hero-light.svg"), "absolute https://"),
+        (picture_markup(f"{RAW}/hero-dark.svg", "docs/assets/hero-light.svg"), "absolute https://"),
+        (
+            picture_markup(f"{RAW}/missing-dark.svg", f"{RAW}/hero-light.svg"),
+            "links to missing file",
+        ),
+        (
+            picture_markup(f"{RAW}/hero-dark.svg", f"{RAW}/missing-light.svg"),
+            "links to missing file",
+        ),
+        ('<a href="docs/quickstart.md">quickstart</a>\n', "absolute https://"),
+        ("<img src='docs/assets/hero-light.svg' alt=\"a > b\">\n", "absolute https://"),
+    ],
+)
+def test_html_link_forms_are_not_skipped(
+    tool: types.ModuleType, tmp_path: Path, picture: str, fragment: str
+) -> None:
+    write_release_tree(tmp_path)
+    (tmp_path / "README.md").write_text(readme_text(picture=picture), encoding="utf-8")
+    assert fragment in failure(tool, tmp_path, "docs")
+
+
+def test_relative_html_sources_in_docs_must_resolve(tool: types.ModuleType, tmp_path: Path) -> None:
+    write_release_tree(tmp_path)
+    quickstart = tmp_path / "docs" / "quickstart.md"
+    quickstart.write_text(
+        '# quickstart\n\n<img src="assets/hero-light.svg" alt="x">\n', encoding="utf-8"
+    )
+    tool.check_docs(tmp_path)
+    quickstart.write_text(
+        '# quickstart\n\n<img src="assets/absent.svg"\n alt="x">\n', encoding="utf-8"
+    )
+    assert "broken relative links" in failure(tool, tmp_path, "docs")
 
 
 @pytest.mark.parametrize(
@@ -406,26 +564,105 @@ def test_each_docs_rule_rejects_its_mutation(
 
 
 # --------------------------------------------------------------------------- #
+# assets gate
+# --------------------------------------------------------------------------- #
+
+
+def test_assets_gate_passes_when_outputs_exist_and_renderer_agrees(
+    tool: types.ModuleType, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    write_release_tree(tmp_path)
+    tool.check_assets(tmp_path, renderer(tmp_path))
+    argv = ["--root", str(tmp_path), "assets", "--renderer", renderer(tmp_path)]
+    assert run_main(tool, argv, capsys) == (0, "", "")
+
+
+def test_assets_gate_requires_the_toolchain(tool: types.ModuleType, tmp_path: Path) -> None:
+    write_release_tree(tmp_path)
+    (tmp_path / "docs" / "assets" / "src" / "render.py").unlink()
+    assert "render.py is missing" in failure(tool, tmp_path, "assets")
+
+
+def test_assets_gate_requires_every_required_output(tool: types.ModuleType, tmp_path: Path) -> None:
+    write_release_tree(tmp_path)
+    (tmp_path / "docs" / "assets" / "social.png").unlink()
+    assert "docs/assets/social.png" in failure(tool, tmp_path, "assets")
+    (tmp_path / "docs" / "assets" / "social.png").write_bytes(png_bytes(1200, 630))
+    assert "social preview is (1200, 630)" in failure(tool, tmp_path, "assets")
+    (tmp_path / "docs" / "assets" / "social.png").write_bytes(png_bytes(1280, 640))
+    (tmp_path / "docs" / "assets" / "hero-dark.svg").write_text("not svg\n", encoding="utf-8")
+    assert "hero-dark.svg is not an SVG" in failure(tool, tmp_path, "assets")
+
+
+def test_assets_gate_fails_when_the_renderer_reports_errors(
+    tool: types.ModuleType, tmp_path: Path
+) -> None:
+    write_release_tree(tmp_path)
+    write_fake_renderer(
+        tmp_path,
+        'import sys\nsys.stdout.write("[error] hero: differs at byte 3\\n")\nsys.exit(1)\n',
+    )
+    message = failure(tool, tmp_path, "assets")
+    assert "asset regeneration check failed (exit 1)" in message
+    assert "differs at byte 3" in message
+
+
+def test_assets_gate_rejects_a_zero_implemented_bootstrap(
+    tool: types.ModuleType, tmp_path: Path
+) -> None:
+    write_release_tree(tmp_path)
+    write_fake_renderer(
+        tmp_path,
+        "import sys\n"
+        'sys.stdout.write("[info] hero: not implemented (planned in Task 11)\\n")\n'
+        "sys.exit(0)\n",
+    )
+    assert "not implemented" in failure(tool, tmp_path, "assets")
+
+
+def test_assets_gate_passes_only_the_required_asset_names(
+    tool: types.ModuleType, tmp_path: Path
+) -> None:
+    write_release_tree(tmp_path)
+    log = tmp_path / "renderer-argv.json"
+    write_fake_renderer(
+        tmp_path,
+        f"import json, sys\nopen({str(log)!r}, 'w').write(json.dumps(sys.argv[1:]))\nsys.exit(0)\n",
+    )
+    tool.check_assets(tmp_path, renderer(tmp_path))
+    argv = json.loads(log.read_text(encoding="utf-8"))
+    assert argv[0] == "--check"
+    assert argv[1::2] == ["--only"] * 4
+    assert argv[2::2] == ["hero", "how-it-works", "architecture", "social"]
+    assert "demo" not in argv
+
+
+# --------------------------------------------------------------------------- #
 # candidate gate
 # --------------------------------------------------------------------------- #
 
 
-def test_candidate_fails_clearly_on_the_real_repository_today(
-    tool: types.ModuleType, capsys: pytest.CaptureFixture[str]
+def test_candidate_fails_clearly_on_an_incomplete_tree(
+    tool: types.ModuleType, tmp_path: Path
 ) -> None:
-    code, out, err = run_main(tool, ["candidate"], capsys)
-    assert (code, out) == (1, "")
-    assert err.startswith("release check failed: candidate gate has ")
-    assert "release candidate version must be >= 1.0.0" in err
-    assert "docs/schemas/" in err
-    assert "docs/assets/social-preview.png" in err
+    write_incomplete_tree(tmp_path)
+    message = failure(tool, tmp_path, "candidate")
+    assert message.startswith("candidate gate has ")
+    assert "release candidate version must be >= 1.0.0, not 0.1.0" in message
+    assert "docs/stability.md" in message
+    assert "docs/schemas/ must contain JSON schemas" in message
+    assert "render.py is missing" in message
 
 
 def test_candidate_passes_on_a_complete_clean_fixture(
-    tool: types.ModuleType, tmp_path: Path
+    tool: types.ModuleType, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     write_release_tree(tmp_path)
-    tool.check_candidate(tmp_path, tmp_path / ".github" / "workflows" / "publish-pypi.yml")
+    tool.check_candidate(
+        tmp_path, tmp_path / ".github" / "workflows" / "publish-pypi.yml", renderer(tmp_path)
+    )
+    argv = ["--root", str(tmp_path), "candidate", "--renderer", renderer(tmp_path)]
+    assert run_main(tool, argv, capsys) == (0, "", "")
 
 
 def test_candidate_rejects_dirty_tree_wrong_png_and_misplaced_tag(
@@ -435,10 +672,10 @@ def test_candidate_rejects_dirty_tree_wrong_png_and_misplaced_tag(
     (tmp_path / "scratch.txt").write_text("x\n", encoding="utf-8")
     assert "working tree must be clean" in failure(tool, tmp_path, "candidate")
     (tmp_path / "scratch.txt").unlink()
-    (tmp_path / "docs" / "assets" / "social-preview.png").write_bytes(png_bytes(1200, 630))
+    (tmp_path / "docs" / "assets" / "social.png").write_bytes(png_bytes(1200, 630))
     commit_all(tmp_path, "wrong png")
     assert "social preview is (1200, 630)" in failure(tool, tmp_path, "candidate")
-    (tmp_path / "docs" / "assets" / "social-preview.png").write_bytes(png_bytes(1280, 640))
+    (tmp_path / "docs" / "assets" / "social.png").write_bytes(png_bytes(1280, 640))
     commit_all(tmp_path, "right png")
     git(tmp_path, "tag", f"v{VERSION}", head)
     assert "does not point at HEAD" in failure(tool, tmp_path, "candidate")
@@ -448,8 +685,21 @@ def test_candidate_lists_every_unmet_requirement(tool: types.ModuleType, tmp_pat
     write_release_tree(tmp_path, version="0.9.0")
     (tmp_path / "docs" / "schemas" / "lock.schema.json").unlink()
     (tmp_path / "CHANGELOG.md").write_text("# Changelog\n\n## v0.8.0\n", encoding="utf-8")
+    write_fake_renderer(tmp_path, "import sys\nsys.exit(1)\n")
     commit_all(tmp_path, "regress")
     message = failure(tool, tmp_path, "candidate")
     assert "must be >= 1.0.0, not 0.9.0" in message
     assert "docs/schemas/ must contain JSON schemas" in message
     assert "no heading for 0.9.0" in message
+    assert "asset regeneration check failed" in message
+
+
+def test_candidate_on_the_real_checkout_is_a_clear_verdict(
+    tool: types.ModuleType, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Valid before and after the v1 assets land: exit 0, or exit 1 with the gate's report."""
+    code, out, err = run_main(tool, ["candidate"], capsys)
+    assert out == ""
+    assert code in (0, 1)
+    if code == 1:
+        assert err.startswith("release check failed: candidate gate has ")

@@ -2,9 +2,10 @@ name: Publish to PyPI
 
 # Release pipeline: validate the tag/source/package identity, build the two
 # distributions exactly once, verify those immutable bytes on every supported
-# platform, upload them through Trusted Publishing after approval, verify the
-# public PyPI copy in a clean container, then mirror identical assets to a
-# draft GitHub release. workflow_dispatch is a rehearsal and never uploads.
+# platform, regenerate the required static assets with the pinned toolchain,
+# upload through Trusted Publishing after approval, verify the public PyPI copy
+# in a clean container, then mirror identical assets to a draft GitHub
+# release. workflow_dispatch is a rehearsal and never uploads.
 on:
   push:
     tags:
@@ -149,14 +150,40 @@ jobs:
         run: |
           uv run --frozen python tools/check_release.py verify-distributions "$RUNNER_TEMP/dist" \
             --version "$RELEASE_VERSION" --sha256sums "$RUNNER_TEMP/release-metadata/SHA256SUMS"
-      - name: Supplied-wheel packaging acceptance (no rebuild)
+      - name: Supplied-artifact packaging acceptance (no rebuild)
         env:
+          ACTSEAL_TEST_DIST: ${{ runner.temp }}/dist
           ACTSEAL_TEST_WHEEL: ${{ runner.temp }}/dist/${{ needs.build.outputs.wheel }}
         run: uv run --frozen pytest -m packaging
 
+  assets:
+    name: assets (regenerate required static assets)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.5'
+          python-version: '3.12'
+          enable-cache: true
+      - name: Install the locked authoring dependency group
+        run: uv sync --frozen --group dev --group assets
+      - name: Fetch the pinned authoring fonts and tools with hash verification
+        run: |
+          uv run --frozen python docs/assets/src/setup_tools.py --tool jetbrains-mono
+          uv run --frozen python docs/assets/src/setup_tools.py --tool resvg
+      - name: Regenerate and compare the required static assets
+        run: uv run --frozen python tools/check_release.py assets
+
   publish:
     name: publish (Trusted Publishing, approval gate)
-    needs: [build, verify]
+    needs: [build, verify, assets]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && needs.build.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -240,7 +267,7 @@ jobs:
 
   mirror:
     name: mirror (draft GitHub release with identical assets)
-    needs: [build, verify, publish, verify-published]
+    needs: [build, verify, assets, publish, verify-published]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 10

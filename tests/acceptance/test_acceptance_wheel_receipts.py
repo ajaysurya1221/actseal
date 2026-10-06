@@ -164,9 +164,18 @@ def uv() -> str:
 
 
 def supplied_wheel() -> Path | None:
-    """The exact wheel named by ``ACTSEAL_TEST_WHEEL``; ``None`` means build one here."""
+    """The exact wheel named by ``ACTSEAL_TEST_WHEEL``; ``None`` means build one here.
+
+    ``ACTSEAL_TEST_DIST`` (the downloaded release artifact directory) may only
+    appear together with ``ACTSEAL_TEST_WHEEL``, and the wheel must live inside it.
+    """
     raw = os.environ.get("ACTSEAL_TEST_WHEEL")
+    dist = os.environ.get("ACTSEAL_TEST_DIST")
     if raw is None:
+        if dist is not None:
+            pytest.fail(
+                f"ACTSEAL_TEST_DIST={dist!r} set without ACTSEAL_TEST_WHEEL; refusing to rebuild"
+            )
         return None
     path = Path(raw)
     if not path.is_absolute():
@@ -175,6 +184,8 @@ def supplied_wheel() -> Path | None:
         problem = "is not an existing regular file"
     elif not (path.name.startswith("actseal-") and path.suffix == ".whl"):
         problem = "is not named actseal-*.whl"
+    elif dist is not None and path.resolve().parent != Path(dist).resolve():
+        problem = f"is not inside ACTSEAL_TEST_DIST={dist!r}"
     else:
         return path
     pytest.fail(f"ACTSEAL_TEST_WHEEL={raw!r} {problem}; refusing to rebuild")

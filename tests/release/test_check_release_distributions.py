@@ -14,10 +14,11 @@ from pathlib import Path
 
 import pytest
 from release_support import (
+    PUBLISHER,
     ROOT,
-    build_real_distributions,
     load_tool,
     names,
+    release_distributions,
     run_main,
     sha256_path,
     write_fake_distributions,
@@ -235,10 +236,9 @@ def test_cli_verify_distributions(
 
 @pytest.fixture(scope="module")
 def real_dist(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    directory = tmp_path_factory.mktemp("real-dist") / "dist"
-    directory.mkdir()
-    build_real_distributions(directory)
-    return directory
+    """The supplied release artifacts when ``ACTSEAL_TEST_DIST`` is set, else one local build."""
+    files = release_distributions(tmp_path_factory.mktemp("real-dist") / "dist")
+    return next(iter(files.values())).parent
 
 
 @pytest.mark.packaging
@@ -291,11 +291,20 @@ def test_real_postpublish_chain_against_a_fake_index(
     assert checks["installed_outside_checkout"] is True
     recorded = {item["filename"]: item["sha256"] for item in receipt["files"]}
     assert recorded == {name: sha256_path(real_dist / name) for name in files}
-    assert all(item["provenance"]["present"] is True for item in receipt["files"])
-    assert all(
-        item["provenance"]["publishers"][0]["environment"] == "pypi" for item in receipt["files"]
-    )
+    for item in receipt["files"]:
+        provenance = item["provenance"]
+        assert provenance["present"] is True
+        assert provenance["attestations"] == 1
+        assert provenance["publishers"] == [PUBLISHER]
+        assert provenance["subject_sha256"] == item["sha256"]
+    assert receipt["published_metadata"]["version"] == version
     assert "no independent cryptographic verification" in receipt["note"]
+    assert (
+        tool.validate_postpublish_receipt(
+            receipt, version, tool.inspect_distributions(real_dist, version)
+        )
+        is None
+    )
     demo = tmp_path / "work" / "demo"
     assert (demo / "bad" / "evidence" / "manifest.json").is_file()
     assert (demo / "fixed" / "evidence" / "manifest.json").is_file()

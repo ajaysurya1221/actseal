@@ -1,13 +1,15 @@
 """``mirror``: create or update only a draft GitHub release; never clobber or touch a published one.
 
 A fake ``gh`` executable records every invocation and replays a scenario, so the
-tests assert the exact mutation commands without network or credentials.
+tests assert the exact mutation commands without network or credentials. The
+whole release receipt is validated against the supplied bytes before any call.
 """
 
 from __future__ import annotations
 
 import json
 import types
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -15,10 +17,10 @@ from release_support import (
     load_tool,
     names,
     python_script,
-    sha256_hex,
+    release_receipt_document,
     write_fake_distributions,
+    write_json,
     write_sums,
-    write_text,
 )
 
 VERSION = "1.0.0"
@@ -88,11 +90,8 @@ def inputs(tmp_path: Path) -> dict[str, Path]:
     dist = tmp_path / "dist"
     files = write_fake_distributions(dist, VERSION)
     sums = write_sums(tmp_path / "SHA256SUMS", files)
-    receipt = write_text(
-        tmp_path / "release-receipt.json",
-        json.dumps(
-            {"schema_version": 1, "kind": "actseal-release-receipt", "version": VERSION, "tag": TAG}
-        ),
+    receipt = write_json(
+        tmp_path / "release-receipt.json", release_receipt_document(VERSION, files)
     )
     return {"dist": dist, "sums": sums, "receipt": receipt}
 
@@ -123,6 +122,12 @@ def mirror_failure(tool: types.ModuleType, inputs: dict[str, Path], github: Fake
 
 def mutations(calls: list[list[str]]) -> list[list[str]]:
     return [call for call in calls if call[:2] in (["release", "create"], ["release", "upload"])]
+
+
+def rewrite_receipt(inputs: dict[str, Path], mutate: Callable[[dict[str, object]], None]) -> None:
+    document = json.loads(inputs["receipt"].read_text(encoding="utf-8"))
+    mutate(document)
+    inputs["receipt"].write_text(json.dumps(document), encoding="utf-8")
 
 
 def test_missing_release_creates_a_draft_and_uploads_every_asset(
@@ -200,15 +205,72 @@ def test_unexpected_gh_error_is_not_treated_as_missing_release(
     assert mutations(github.calls()) == []
 
 
-def test_mirror_requires_matching_receipt_and_verified_distributions(
+def set_key(*path: str, value: object) -> Callable[[dict[str, object]], None]:
+    def mutate(document: dict[str, object]) -> None:
+        target: object = document
+        for key in path[:-1]:
+            assert isinstance(target, dict)
+            target = target[key]
+        assert isinstance(target, dict)
+        target[path[-1]] = value
+
+    return mutate
+
+
+@pytest.mark.parametrize(
+    ("mutate", "fragment"),
+    [
+        (set_key("tag", value="v1.0.1"), "release receipt tag"),
+        (set_key("source_commit", value="not-a-sha"), "full 40-hex commit"),
+        (set_key("lock_sha256", value=None), "lock_sha256"),
+        (set_key("artifact", "digest", value="b" * 64), "sha256:<64 hex>"),
+        (set_key("artifact", "id", value=""), "artifact id"),
+        (set_key("verification", "verify_matrix", value="failure"), "verify matrix"),
+        (
+            set_key("verification", "postpublish", "checks", "demo_exit", value=99),
+            "demo_exit is 99",
+        ),
+        (set_key("verification", "postpublish", "note", value="verified!"), "not verbatim"),
+        (set_key("distributions", value=[]), "distributions must not be empty"),
+        (
+            set_key("note", value="token pypi-AgEIcHlwaS5vcmcCJDAwMDAwMDAwLTAwMDAtMDAwMA"),
+            "credential-shaped",
+        ),
+    ],
+)
+def test_release_receipt_is_fully_validated_before_any_mutation(
+    tool: types.ModuleType,
+    inputs: dict[str, Path],
+    github: FakeGitHub,
+    mutate: Callable[[dict[str, object]], None],
+    fragment: str,
+) -> None:
+    github.configure(view_code=1, view_stderr="release not found\n")
+    rewrite_receipt(inputs, mutate)
+    assert fragment in mirror_failure(tool, inputs, github)
+    assert github.calls() == []
+
+
+def test_receipt_inventory_must_match_the_supplied_bytes(
     tool: types.ModuleType, inputs: dict[str, Path], github: FakeGitHub
 ) -> None:
     github.configure(view_code=1, view_stderr="release not found\n")
-    inputs["receipt"].write_text(json.dumps({"tag": "v1.0.1"}), encoding="utf-8")
-    assert "release receipt tag" in mirror_failure(tool, inputs, github)
-    inputs["receipt"].write_text(json.dumps({"tag": TAG}), encoding="utf-8")
+
+    def grow(document: dict[str, object]) -> None:
+        inventory = document["distributions"]
+        assert isinstance(inventory, list)
+        inventory[0]["size"] = inventory[0]["size"] + 1
+
+    rewrite_receipt(inputs, grow)
+    assert "inventory" in mirror_failure(tool, inputs, github)
+    assert github.calls() == []
+
+
+def test_altered_distribution_bytes_fail_before_any_mutation(
+    tool: types.ModuleType, inputs: dict[str, Path], github: FakeGitHub
+) -> None:
+    github.configure(view_code=1, view_stderr="release not found\n")
     wheel = inputs["dist"] / names(VERSION)[0]
     wheel.write_bytes(wheel.read_bytes() + b"\0")
     assert "altered hash" in mirror_failure(tool, inputs, github)
     assert github.calls() == []
-    assert sha256_hex(b"") != sha256_hex(b"\0")

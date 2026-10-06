@@ -16,9 +16,11 @@ Subcommands:
                          PKG-INFO agreement, ``SHA256SUMS`` and build receipt
 ``verify-distributions`` downloaded bytes equal the recorded checksums
 ``postpublish``          clean install of the public PyPI files, demo/replay
-                         exit codes and attestation presence
+                         exit codes, published metadata and attestation
+                         identity/subject inspection
 ``release-receipt``      bind artifact identity and verification results
 ``mirror``               create or update only a draft GitHub release
+``assets``               required static assets regenerate byte-identically
 ``candidate``            Task 20 release gate (fails until v1 assets exist)
 ``docs``                 Task 08 documentation gate
 ``receipts``             Task 21 final receipt gate
@@ -27,10 +29,14 @@ Subcommands:
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import hashlib
+import io
 import json
 import os
 import re
+import shlex
 import shutil
 import struct
 import subprocess
@@ -63,10 +69,21 @@ APPROVED_ACTIONS = frozenset(
         "pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33",
     }
 )
-EXPECTED_JOBS = ("build", "verify", "publish", "verify-published", "mirror")
+EXPECTED_JOBS = ("build", "verify", "assets", "publish", "verify-published", "mirror")
+WORKFLOW_FILENAME = "publish-pypi.yml"
+ENVIRONMENT_NAME = "pypi"
+EXPECTED_PUBLISHER = {
+    "kind": "GitHub",
+    "repository": REPOSITORY,
+    "workflow": WORKFLOW_FILENAME,
+    "environment": ENVIRONMENT_NAME,
+}
+IN_TOTO_STATEMENT = "https://in-toto.io/Statement/v1"
 STABLE_CLASSIFIER = "Development Status :: 5 - Production/Stable"
 VERSION_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 SHA256_HEX_RE = re.compile(r"\b[0-9a-f]{64}\b")
+HEX64_RE = re.compile(r"^[0-9a-f]{64}$")
+GIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 SUMS_LINE_RE = re.compile(r"^([0-9a-f]{64})  ([^/\\\s]+)$")
 CREDENTIAL_RE = re.compile(r"pypi-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_|Bearer\s")
 DISTRIBUTION_COUNT = 2
@@ -79,13 +96,29 @@ PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 PNG_IHDR_OFFSET = 16
 PNG_IHDR_END = 24
 COMMAND_TIMEOUT_S = 600.0
-REQUIRED_RELEASE_ASSETS = (
-    "docs/assets/hero-light.svg",
-    "docs/assets/hero-dark.svg",
-    "docs/assets/how-it-works.svg",
-    "docs/assets/architecture.svg",
-    "docs/assets/social-preview.png",
-)
+# Required static assets by renderer name, with the outputs declared in the
+# accepted Task 10 inventory (docs/assets/src/actseal_assets/inventory.py).
+# ``demo`` is the approved post-PyPI exception and is deliberately absent.
+ASSET_DIR = "docs/assets"
+RENDERER_RELATIVE = "docs/assets/src/render.py"
+DEFAULT_RENDERER = "uv run --frozen --group assets python docs/assets/src/render.py"
+RELEASE_ASSETS: dict[str, tuple[str, ...]] = {
+    "hero": ("hero-light.svg", "hero-dark.svg"),
+    "how-it-works": ("how-it-works.svg",),
+    "architecture": ("architecture.svg",),
+    "social": ("social.png",),
+}
+SOCIAL_PREVIEW_FILE = "social.png"
+# Exact smoke outcomes the post-publication receipt must record.
+EXPECTED_SMOKE = {
+    "demo_exit": 0,
+    "fixed_replay_exit": 0,
+    "bad_replay_exit": 1,
+    "demo_bad_status": "BLOCK",
+    "demo_fixed_status": "PASS",
+    "installed_outside_checkout": True,
+}
+HTML_ATTRIBUTE_RE = re.compile(r"""\b(href|src|srcset)\s*=\s*(?:"([^"]*)"|'([^']*)')""", re.I)
 REQUIRED_DOCS = (
     "docs/quickstart.md",
     "docs/stability.md",
@@ -114,7 +147,7 @@ RECEIPT_PATHS = {
     "launch": "plan/v1/LAUNCH.md",
 }
 ATTESTATION_NOTE = (
-    "Attestation presence and publisher identity were inspected; "
+    "Attestation presence, publisher identity and statement subjects were inspected; "
     "no independent cryptographic verification is claimed."
 )
 GITHUB_FILE_URL_RE = re.compile(
@@ -141,6 +174,18 @@ def _err(text: str) -> None:
 def _require(condition: bool, message: str) -> None:  # noqa: FBT001 - assertion helper
     if not condition:
         raise ReleaseCheckError(message)
+
+
+def _as_dict(value: object, where: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ReleaseCheckError(f"{where} must be an object")
+    return dict(value)
+
+
+def _as_list(value: object, where: str) -> list[Any]:
+    if not isinstance(value, list):
+        raise ReleaseCheckError(f"{where} must be a list")
+    return list(value)
 
 
 def sha256_file(path: Path) -> str:
@@ -355,6 +400,20 @@ def _check_workflow_triggers(document: Mapping[Any, Any]) -> None:
     )
 
 
+def _check_assets_job(job: Mapping[str, Any]) -> None:
+    text = _run_text(job)
+    _require(
+        "uv sync --frozen --group dev --group assets" in text,
+        "assets job must install the locked assets dependency group",
+    )
+    _require(
+        "docs/assets/src/setup_tools.py" in text,
+        "assets job must fetch the pinned authoring tools with hash verification",
+    )
+    _require("check_release.py assets" in text, "assets job must run check_release.py assets")
+    _require("uv build" not in text, "assets job must not build distributions")
+
+
 def _check_workflow_pins(jobs: Mapping[str, Any]) -> None:
     build_count = 0
     for name, job in jobs.items():
@@ -461,9 +520,15 @@ def _check_verify_job(job: Mapping[str, Any]) -> None:
     packaging = [step for step in steps if "pytest -m packaging" in str(step.get("run", ""))]
     _require(len(packaging) == 1, "verify must run pytest -m packaging exactly once")
     env = packaging[0].get("env", {})
+    dist_dir = str(env.get("ACTSEAL_TEST_DIST", ""))
     _require(
-        "${{ needs.build.outputs.wheel }}" in str(env.get("ACTSEAL_TEST_WHEEL", "")),
-        "packaging tests must receive ACTSEAL_TEST_WHEEL pointing at the built wheel",
+        dist_dir.endswith("/dist"),
+        "packaging tests must receive ACTSEAL_TEST_DIST pointing at the downloaded artifact",
+    )
+    _require(
+        str(env.get("ACTSEAL_TEST_WHEEL", ""))
+        == f"{dist_dir}/${{{{ needs.build.outputs.wheel }}}}",
+        "packaging tests must receive ACTSEAL_TEST_WHEEL inside ACTSEAL_TEST_DIST",
     )
     for required in (
         "ruff check",
@@ -474,7 +539,9 @@ def _check_verify_job(job: Mapping[str, Any]) -> None:
 
 
 def _check_publish_job(job: Mapping[str, Any]) -> None:
-    _require({"build", "verify"} <= _needs(job), "publish must need build and verify")
+    _require(
+        {"build", "verify", "assets"} <= _needs(job), "publish must need build, verify and assets"
+    )
     _require(job.get("environment", {}).get("name") == "pypi", "publish must use environment pypi")
     _require(
         job.get("permissions") == {"id-token": "write"},
@@ -560,6 +627,7 @@ def check_workflow(path: Path) -> None:
     _check_workflow_pins(jobs)
     _check_build_job(jobs["build"])
     _check_verify_job(jobs["verify"])
+    _check_assets_job(jobs["assets"])
     _check_publish_job(jobs["publish"])
     _check_postpublish_jobs(jobs)
     _check_workflow_text(path.read_text(encoding="utf-8"))
@@ -824,40 +892,180 @@ def _fetch_release_json(base: str, version: str, wait_seconds: float) -> dict[st
         time.sleep(min(POLL_INTERVAL_S, remaining))
 
 
+def _published_metadata(document: Mapping[str, Any], version: str) -> dict[str, object]:
+    """The project/version/classifier facts PyPI reports for this exact release."""
+    info = _as_dict(document.get("info"), "PyPI release JSON info")
+    _require(info.get("name") == PROJECT_NAME, f"PyPI project name is {info.get('name')!r}")
+    _require(info.get("version") == version, f"PyPI reports version {info.get('version')!r}")
+    _require(info.get("yanked") is False, f"PyPI release {version} is yanked or not marked")
+    classifiers = _as_list(info.get("classifiers"), "PyPI classifiers")
+    _require(
+        all(isinstance(item, str) for item in classifiers),
+        "PyPI classifiers must be a list of strings",
+    )
+    if parse_version(version)[0] >= 1:
+        _require(
+            STABLE_CLASSIFIER in classifiers,
+            f"published {version} lacks classifier {STABLE_CLASSIFIER!r}",
+        )
+    summary = info.get("summary")
+    _require(isinstance(summary, str) and bool(summary), "PyPI summary is missing")
+    return {
+        "name": PROJECT_NAME,
+        "version": version,
+        "summary": summary,
+        "classifiers": sorted(classifiers),
+        "yanked": False,
+    }
+
+
 def _published_files(document: Mapping[str, Any], version: str) -> dict[str, dict[str, Any]]:
-    names = set(distribution_names(version))
+    wheel, sdist = distribution_names(version)
+    kinds = {wheel: "bdist_wheel", sdist: "sdist"}
     files: dict[str, dict[str, Any]] = {}
-    for entry in document.get("urls", []):
+    for raw in _as_list(document.get("urls"), "PyPI release JSON urls"):
+        entry = _as_dict(raw, "PyPI urls entry")
         filename = str(entry.get("filename"))
         _require(filename not in files, f"PyPI lists {filename} twice")
-        files[filename] = dict(entry)
-    extra = sorted(set(files) - names)
+        files[filename] = entry
+    extra = sorted(set(files) - set(kinds))
     _require(not extra, f"PyPI lists unexpected files for {version}: {extra}")
-    missing = sorted(names - set(files))
+    missing = sorted(set(kinds) - set(files))
     _require(
         not missing,
         f"partial publication: PyPI has {len(files)} of {DISTRIBUTION_COUNT} expected files, "
         f"missing {missing}; nothing will be re-uploaded or rebuilt",
     )
+    for filename, entry in files.items():
+        _require(entry.get("yanked") is False, f"{filename} is yanked or not marked unyanked")
+        _require(
+            entry.get("packagetype") == kinds[filename],
+            f"{filename} has packagetype {entry.get('packagetype')!r}",
+        )
+        _require(str(entry.get("url", "")).startswith(("https://", "file://")), f"{filename} URL")
+        digest = entry.get("digests", {}).get("sha256")
+        _require(
+            isinstance(digest, str) and HEX64_RE.match(digest) is not None,
+            f"{filename} lacks a declared sha256",
+        )
     return files
 
 
-def _provenance(base: str, version: str, filename: str) -> dict[str, object]:
+def _decode_statement(encoded: object, where: str) -> dict[str, Any]:
+    _require(isinstance(encoded, str) and bool(encoded), f"{where}: envelope.statement missing")
+    try:
+        raw = base64.b64decode(str(encoded), validate=True)
+        statement = json.loads(raw.decode("utf-8"))
+    except (binascii.Error, ValueError) as error:
+        raise ReleaseCheckError(f"{where}: statement is not base64 JSON ({error})") from error
+    _require(isinstance(statement, dict), f"{where}: statement is not an object")
+    _require(
+        statement.get("_type") == IN_TOTO_STATEMENT,
+        f"{where}: statement type is {statement.get('_type')!r}",
+    )
+    return dict(statement)
+
+
+def _statement_subjects(statement: Mapping[str, Any], where: str) -> list[tuple[str, str]]:
+    subjects = _as_list(statement.get("subject"), f"{where}: statement subject")
+    _require(bool(subjects), f"{where}: statement has no subject")
+    pairs: list[tuple[str, str]] = []
+    for raw in subjects:
+        subject = _as_dict(raw, f"{where}: subject")
+        name = subject.get("name")
+        digest = subject.get("digest", {})
+        sha = digest.get("sha256") if isinstance(digest, dict) else None
+        _require(
+            isinstance(name, str) and isinstance(sha, str) and HEX64_RE.match(sha) is not None,
+            f"{where}: subject lacks a name or sha256 digest",
+        )
+        pairs.append((str(name), str(sha)))
+    return pairs
+
+
+def _inspect_bundle(
+    bundle: object, *, filename: str, sha256: str, index: int
+) -> tuple[dict[str, object], int]:
+    where = f"{filename} attestation bundle {index}"
+    entry = _as_dict(bundle, where)
+    publisher = _as_dict(entry.get("publisher"), f"{where}: publisher")
+    identity = {key: publisher.get(key) for key in EXPECTED_PUBLISHER}
+    _require(
+        identity == EXPECTED_PUBLISHER,
+        f"{where}: publisher {identity} is not the expected trusted publisher",
+    )
+    attestations = _as_list(entry.get("attestations"), f"{where}: attestations")
+    _require(bool(attestations), f"{where}: no attestations")
+    for number, raw in enumerate(attestations):
+        label = f"{where} attestation {number}"
+        attestation = _as_dict(raw, label)
+        _require(attestation.get("version") == 1, f"{label}: unsupported attestation version")
+        envelope = _as_dict(attestation.get("envelope"), f"{label}: envelope")
+        signature = envelope.get("signature")
+        _require(isinstance(signature, str) and bool(signature), f"{label}: signature missing")
+        _require(
+            isinstance(attestation.get("verification_material"), dict),
+            f"{label}: verification_material missing",
+        )
+        subjects = _statement_subjects(_decode_statement(envelope.get("statement"), label), label)
+        _require(
+            (filename, sha256) in subjects,
+            f"{label}: statement subjects {subjects} do not name {filename} with sha256 {sha256}",
+        )
+    return identity, len(attestations)
+
+
+def _provenance(base: str, version: str, filename: str, sha256: str) -> dict[str, object]:
+    """PEP 740 provenance inspection: publisher identity and statement subjects only.
+
+    Signatures and certificates are recorded as present but are not verified
+    here; the receipt note states that distinction.
+    """
     url = f"{base}/integrity/{PROJECT_NAME}/{version}/{filename}/provenance"
     body = _fetch(url, accept=INTEGRITY_ACCEPT)
     if body is None:
-        return {"present": False, "attestations": 0, "publishers": []}
-    document = json.loads(body.decode("utf-8"))
-    bundles = document.get("attestation_bundles", []) if isinstance(document, dict) else []
-    publishers = []
-    attestations = 0
-    for bundle in bundles:
-        publisher = bundle.get("publisher", {})
-        publishers.append(
-            {key: publisher.get(key) for key in ("kind", "repository", "workflow", "environment")}
-        )
-        attestations += len(bundle.get("attestations", []))
-    return {"present": True, "attestations": attestations, "publishers": publishers}
+        return {"present": False, "attestations": 0, "publishers": [], "subject_sha256": None}
+    try:
+        document = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ReleaseCheckError(f"{filename}: provenance is not JSON ({error})") from error
+    _require(isinstance(document, dict), f"{filename}: provenance is not an object")
+    bundles = document.get("attestation_bundles")
+    _require(isinstance(bundles, list) and bool(bundles), f"{filename}: provenance has no bundles")
+    publishers: list[dict[str, object]] = []
+    count = 0
+    for index, bundle in enumerate(bundles):
+        identity, attested = _inspect_bundle(bundle, filename=filename, sha256=sha256, index=index)
+        publishers.append(identity)
+        count += attested
+    return {
+        "present": True,
+        "attestations": count,
+        "publishers": publishers,
+        "subject_sha256": sha256,
+    }
+
+
+def _wheel_metadata(data: bytes, version: str) -> dict[str, object]:
+    """Name, version, summary and classifiers from the wheel's METADATA."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            text = archive.read(f"{PROJECT_NAME}-{version}.dist-info/METADATA").decode("utf-8")
+    except (zipfile.BadZipFile, KeyError, UnicodeDecodeError) as error:
+        raise ReleaseCheckError(f"downloaded wheel METADATA unreadable: {error}") from error
+    fields = _metadata_fields(text, "downloaded wheel METADATA")
+    classifiers = sorted(
+        line.partition(":")[2].strip()
+        for line in text.split("\n\n", 1)[0].splitlines()
+        if line.startswith("Classifier:")
+    )
+    return {
+        "name": fields["Name"],
+        "version": fields["Version"],
+        "summary": fields.get("Summary", ""),
+        "classifiers": classifiers,
+        "yanked": False,
+    }
 
 
 def _run(argv: Sequence[str], *, cwd: Path, env: Mapping[str, str]) -> CommandResult:
@@ -982,6 +1190,20 @@ def _install_and_exercise(
     return checks
 
 
+def _validate_smoke_checks(checks: object, version: str, where: str) -> None:
+    """The recorded smoke outcomes must be exactly the frozen expectations."""
+    checks = _as_dict(checks, f"{where}: checks")
+    _require(
+        checks.get("version_output") == f"{PROJECT_NAME} {version}",
+        f"{where}: version_output is {checks.get('version_output')!r}",
+    )
+    for key, expected in EXPECTED_SMOKE.items():
+        _require(
+            key in checks and checks[key] == expected and type(checks[key]) is type(expected),
+            f"{where}: {key} is {checks.get(key)!r}, expected {expected!r}",
+        )
+
+
 def postpublish(
     *,
     version: str,
@@ -1009,7 +1231,9 @@ def postpublish(
     _require(not workdir.exists(), f"workdir {workdir} already exists; use a fresh directory")
     workdir.mkdir(parents=True)
     base = base_url.rstrip("/")
-    files = _published_files(_fetch_release_json(base, version, wait_seconds), version)
+    document = _fetch_release_json(base, version, wait_seconds)
+    published = _published_metadata(document, version)
+    files = _published_files(document, version)
     downloads = workdir / "downloads"
     downloads.mkdir()
     receipts: list[dict[str, object]] = []
@@ -1030,7 +1254,7 @@ def postpublish(
             f"{filename}: PyPI declares sha256 {declared}, bytes hash to {actual}",
         )
         (downloads / filename).write_bytes(body)
-        provenance = _provenance(base, version, filename)
+        provenance = _provenance(base, version, filename, actual)
         _require(
             bool(provenance["present"]) or allow_missing_attestations,
             f"{filename}: PyPI has no provenance/attestations for this file",
@@ -1047,6 +1271,11 @@ def postpublish(
             }
         )
     wheel = downloads / distribution_names(version)[0]
+    wheel_metadata = _wheel_metadata(wheel.read_bytes(), version)
+    _require(
+        wheel_metadata == published,
+        f"published metadata {published} differs from wheel METADATA {wheel_metadata}",
+    )
     checks = _install_and_exercise(
         wheel, version=version, workdir=workdir, checkout=checkout, python=python
     )
@@ -1056,6 +1285,7 @@ def postpublish(
         "version": version,
         "index": base,
         "ok": True,
+        "published_metadata": published,
         "files": receipts,
         "checks": checks,
         "note": ATTESTATION_NOTE,
@@ -1068,6 +1298,145 @@ def postpublish(
 # --------------------------------------------------------------------------- #
 # release-receipt
 # --------------------------------------------------------------------------- #
+
+
+def _digits(value: object, where: str) -> str:
+    _require(isinstance(value, str) and value.isdigit(), f"{where} must be a numeric string")
+    return str(value)
+
+
+def _hex64(value: object, where: str) -> str:
+    _require(
+        isinstance(value, str) and HEX64_RE.match(value) is not None,
+        f"{where} must be a 64-hex sha256",
+    )
+    return str(value)
+
+
+def _distribution_inventory(items: object, where: str) -> list[Distribution]:
+    """Strictly typed ``[{filename, size, sha256}]`` entries, sorted by filename."""
+    entries = _as_list(items, f"{where}: distributions")
+    _require(bool(entries), f"{where}: distributions must not be empty")
+    result: list[Distribution] = []
+    for raw in entries:
+        item = _as_dict(raw, f"{where}: distribution entry")
+        filename = item.get("filename")
+        size = item.get("size")
+        _require(isinstance(filename, str) and bool(filename), f"{where}: filename missing")
+        if not isinstance(size, int) or isinstance(size, bool) or size < 0:
+            raise ReleaseCheckError(f"{where}: size must be a non-negative integer")
+        result.append(Distribution(str(filename), size, _hex64(item.get("sha256"), where)))
+    _require(
+        len({item.filename for item in result}) == len(result), f"{where}: duplicate filenames"
+    )
+    return sorted(result, key=lambda item: item.filename)
+
+
+def _require_same_inventory(
+    actual: Sequence[Distribution], recorded: Sequence[Distribution], where: str
+) -> None:
+    expected = sorted(actual, key=lambda item: item.filename)
+    _require(
+        list(recorded) == expected,
+        f"{where} inventory {[d.as_dict() for d in recorded]} differs from the verified "
+        f"distributions {[d.as_dict() for d in expected]}",
+    )
+
+
+def _workflow_run(value: object, where: str) -> tuple[str, str]:
+    run = _as_dict(value, f"{where}: workflow_run")
+    return _digits(run.get("id"), f"{where} run id"), _digits(
+        run.get("attempt"), f"{where} run attempt"
+    )
+
+
+def validate_build_receipt(
+    build: Mapping[str, Any], version: str, distributions: Sequence[Distribution]
+) -> dict[str, str]:
+    """Typed validation of the build receipt; returns source commit, lock hash, run id/attempt."""
+    where = "build receipt"
+    _scan_credentials(dict(build), where)
+    _require(build.get("schema_version") == 1, f"{where}: schema_version must be 1")
+    _require(build.get("kind") == "actseal-build-receipt", f"{where}: kind is wrong")
+    _require(build.get("version") == version, f"{where}: version differs from {version}")
+    _require(build.get("tag") == f"v{version}", f"{where} tag is {build.get('tag')!r}")
+    _require(build.get("ref") == f"refs/tags/v{version}", f"{where}: ref is {build.get('ref')!r}")
+    commit = build.get("source_commit")
+    _require(
+        isinstance(commit, str) and GIT_SHA_RE.match(commit) is not None,
+        f"{where} lacks a full 40-hex source commit",
+    )
+    lock = _hex64(build.get("lock_sha256"), f"{where} lock_sha256")
+    run_id, attempt = _workflow_run(build.get("workflow_run"), where)
+    _require_same_inventory(
+        distributions, _distribution_inventory(build.get("distributions"), where), where
+    )
+    return {"source_commit": str(commit), "lock_sha256": lock, "run_id": run_id, "attempt": attempt}
+
+
+def _validate_postpublish_files(
+    files: object, version: str, distributions: Sequence[Distribution], where: str
+) -> None:
+    entries = _as_list(files, f"{where}: files")
+    recorded = _distribution_inventory(entries, where)
+    _require_same_inventory(distributions, recorded, where)
+    for raw in entries:
+        entry = _as_dict(raw, f"{where}: file entry")
+        filename = str(entry.get("filename"))
+        label = f"{where} {filename}"
+        _require(entry.get("declared_sha256") == entry.get("sha256"), f"{label}: declared digest")
+        _require(entry.get("matches_build") is True, f"{label}: matches_build is not true")
+        provenance = _as_dict(entry.get("provenance"), f"{label}: provenance")
+        _require(provenance.get("present") is True, f"{label}: provenance not present")
+        count = provenance.get("attestations")
+        _require(isinstance(count, int) and count >= 1, f"{label}: no attestations inspected")
+        publishers = provenance.get("publishers")
+        _require(
+            isinstance(publishers, list)
+            and bool(publishers)
+            and all(publisher == EXPECTED_PUBLISHER for publisher in publishers),
+            f"{label}: publishers are not the expected trusted publisher",
+        )
+        _require(
+            provenance.get("subject_sha256") == entry.get("sha256"),
+            f"{label}: attestation subject digest differs from the file digest",
+        )
+    del version
+
+
+def validate_postpublish_receipt(
+    post: Mapping[str, Any], version: str, distributions: Sequence[Distribution]
+) -> None:
+    where = "post-publication receipt"
+    _scan_credentials(dict(post), where)
+    _require(post.get("schema_version") == 1, f"{where}: schema_version must be 1")
+    _require(post.get("kind") == "actseal-postpublish-receipt", f"{where}: kind is wrong")
+    _require(post.get("version") == version, f"{where}: version differs from {version}")
+    _require(post.get("ok") is True, f"{where} did not record ok: true")
+    index = post.get("index")
+    _require(isinstance(index, str) and bool(index), f"{where}: index missing")
+    metadata = _as_dict(post.get("published_metadata"), f"{where}: published_metadata")
+    _require(
+        metadata.get("name") == PROJECT_NAME and metadata.get("version") == version,
+        f"{where}: published_metadata names another release",
+    )
+    if parse_version(version)[0] >= 1:
+        _require(
+            STABLE_CLASSIFIER in metadata.get("classifiers", []),
+            f"{where}: published classifiers lack {STABLE_CLASSIFIER!r}",
+        )
+    _validate_postpublish_files(post.get("files"), version, distributions, where)
+    _validate_smoke_checks(post.get("checks"), version, where)
+    _require(post.get("note") == ATTESTATION_NOTE, f"{where}: attestation note is not verbatim")
+
+
+def normalize_artifact_digest(value: str) -> str:
+    """upload-artifact emits a bare 64-hex digest; the receipt stores ``sha256:<hex>``."""
+    _require(
+        HEX64_RE.match(value) is not None,
+        f"artifact digest {value!r} must be the action's bare 64-hex sha256 output",
+    )
+    return f"sha256:{value}"
 
 
 def release_receipt(
@@ -1084,21 +1453,13 @@ def release_receipt(
     verify_result: str,
     out: Path,
 ) -> dict[str, object]:
+    parse_version(version)
     distributions = verify_distributions(dist, version, sums_path)
-    build = _read_json(build_receipt_path, "build receipt")
+    build = validate_build_receipt(
+        _read_json(build_receipt_path, "build receipt"), version, distributions
+    )
     post = _read_json(postpublish_path, "post-publication receipt")
-    _scan_credentials(build, "build receipt")
-    _scan_credentials(post, "post-publication receipt")
-    _require(build.get("version") == version, "build receipt version differs")
-    _require(build.get("tag") == f"v{version}", f"build receipt tag is {build.get('tag')!r}")
-    _require(bool(build.get("source_commit")), "build receipt lacks a source commit")
-    _require(post.get("version") == version, "post-publication receipt version differs")
-    _require(post.get("ok") is True, "post-publication receipt did not record ok: true")
-    by_name = {item.filename: item.sha256 for item in distributions}
-    published = {
-        str(item.get("filename")): str(item.get("sha256")) for item in post.get("files", [])
-    }
-    _require(published == by_name, "post-publication hashes differ from the verified distributions")
+    validate_postpublish_receipt(post, version, distributions)
     _require(
         verify_result == "success",
         f"verify matrix result was {verify_result!r}; every cell must succeed",
@@ -1106,37 +1467,102 @@ def release_receipt(
     _require(
         artifact_id.isdigit(), f"artifact id {artifact_id!r} must be a numeric Actions artifact ID"
     )
-    _require(
-        re.fullmatch(r"sha256:[0-9a-f]{64}", artifact_digest) is not None,
-        f"artifact digest {artifact_digest!r} must be sha256:<hex>",
-    )
+    digest = normalize_artifact_digest(artifact_digest)
     _require(run_id.isdigit() and run_attempt.isdigit(), "run id and attempt must be numeric")
+    _require(
+        build["run_id"] == run_id,
+        f"build receipt belongs to run {build['run_id']}, not this run {run_id}",
+    )
+    _require(
+        int(build["attempt"]) <= int(run_attempt),
+        f"build attempt {build['attempt']} is later than verification attempt {run_attempt}",
+    )
+    runs = f"https://github.com/{REPOSITORY}/actions/runs/{run_id}/attempts/"
     receipt: dict[str, object] = {
         "schema_version": 1,
         "kind": "actseal-release-receipt",
         "version": version,
         "tag": f"v{version}",
         "source_commit": build["source_commit"],
-        "lock_sha256": build.get("lock_sha256"),
+        "lock_sha256": build["lock_sha256"],
         "workflow_run": {
             "id": run_id,
-            "attempt": run_attempt,
-            "url": f"https://github.com/{REPOSITORY}/actions/runs/{run_id}/attempts/{run_attempt}",
+            "build_attempt": build["attempt"],
+            "verification_attempt": run_attempt,
+            "build_url": runs + build["attempt"],
+            "verification_url": runs + run_attempt,
         },
-        "artifact": {"id": artifact_id, "digest": artifact_digest},
+        "artifact": {"id": artifact_id, "digest": digest},
         "distributions": [item.as_dict() for item in distributions],
         "verification": {
             "verify_matrix": verify_result,
             "postpublish": {
-                "files": post.get("files"),
-                "checks": post.get("checks"),
-                "note": post.get("note"),
+                "index": post["index"],
+                "published_metadata": post["published_metadata"],
+                "files": post["files"],
+                "checks": post["checks"],
+                "note": post["note"],
             },
         },
         "note": "Contains no credentials.",
     }
+    validate_release_receipt(receipt, version, distributions)
     _write_json(out, receipt)
     return receipt
+
+
+def validate_release_receipt(
+    receipt: Mapping[str, Any], version: str, distributions: Sequence[Distribution] | None
+) -> list[Distribution]:
+    """Typed validation of a release receipt; returns its distribution inventory."""
+    where = "release receipt"
+    _scan_credentials(dict(receipt), where)
+    _require(receipt.get("schema_version") == 1, f"{where}: schema_version must be 1")
+    _require(receipt.get("kind") == "actseal-release-receipt", f"{where}: kind is wrong")
+    _require(receipt.get("version") == version, f"{where}: version is not {version}")
+    _require(receipt.get("tag") == f"v{version}", f"{where} tag is {receipt.get('tag')!r}")
+    commit = receipt.get("source_commit")
+    _require(
+        isinstance(commit, str) and GIT_SHA_RE.match(commit) is not None,
+        f"{where}: source_commit must be a full 40-hex commit",
+    )
+    _hex64(receipt.get("lock_sha256"), f"{where} lock_sha256")
+    run = _as_dict(receipt.get("workflow_run"), f"{where}: workflow_run")
+    _digits(run.get("id"), f"{where} run id")
+    build_attempt = _digits(run.get("build_attempt"), f"{where} build attempt")
+    verification_attempt = _digits(run.get("verification_attempt"), f"{where} verification attempt")
+    _require(
+        int(build_attempt) <= int(verification_attempt),
+        f"{where}: build attempt later than verification attempt",
+    )
+    artifact = _as_dict(receipt.get("artifact"), f"{where}: artifact")
+    _digits(artifact.get("id"), f"{where} artifact id")
+    digest = artifact.get("digest")
+    _require(
+        isinstance(digest, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", digest) is not None,
+        f"{where}: artifact digest must be sha256:<64 hex>",
+    )
+    inventory = _distribution_inventory(receipt.get("distributions"), where)
+    _require(
+        {item.filename for item in inventory} == set(distribution_names(version)),
+        f"{where}: distributions must be exactly the wheel and sdist for {version}",
+    )
+    if distributions is not None:
+        _require_same_inventory(distributions, inventory, where)
+    verification = _as_dict(receipt.get("verification"), f"{where}: verification")
+    _require(
+        verification.get("verify_matrix") == "success", f"{where}: verify matrix is not success"
+    )
+    post = _as_dict(verification.get("postpublish"), f"{where}: verification.postpublish")
+    embedded = {
+        "schema_version": 1,
+        "kind": "actseal-postpublish-receipt",
+        "version": version,
+        "ok": True,
+        **post,
+    }
+    validate_postpublish_receipt(embedded, version, inventory)
+    return inventory
 
 
 # --------------------------------------------------------------------------- #
@@ -1167,7 +1593,7 @@ def mirror(
     _require(tag == f"v{version}" and VERSION_RE.match(version) is not None, f"invalid tag {tag!r}")
     distributions = verify_distributions(dist, version, sums_path)
     receipt = _read_json(receipt_path, "release receipt")
-    _require(receipt.get("tag") == tag, f"release receipt tag is {receipt.get('tag')!r}")
+    validate_release_receipt(receipt, version, distributions)
     assets = {item.filename: dist / item.filename for item in distributions}
     assets["SHA256SUMS"] = sums_path
     assets["release-receipt.json"] = receipt_path
@@ -1256,23 +1682,43 @@ def _changelog_has_version(root: Path, version: str) -> None:
     )
 
 
-def _markdown_targets(path: Path) -> list[str]:
-    return MARKDOWN_LINK_RE.findall(path.read_text(encoding="utf-8"))
+def link_targets(text: str) -> list[str]:
+    """Every Markdown link/image target plus HTML ``href``, ``src`` and ``srcset`` URLs.
+
+    HTML attributes are matched across lines and inside quoted values, so
+    ``<picture>`` markup with ``>`` characters in alt text is handled.
+    """
+    targets = list(MARKDOWN_LINK_RE.findall(text))
+    for match in HTML_ATTRIBUTE_RE.finditer(text):
+        attribute = match.group(1).lower()
+        value = match.group(2) if match.group(2) is not None else match.group(3)
+        if attribute == "srcset":
+            targets.extend(
+                candidate.strip().split()[0] for candidate in value.split(",") if candidate.strip()
+            )
+        else:
+            targets.append(value.strip())
+    return targets
+
+
+def _document_targets(path: Path) -> list[str]:
+    return link_targets(path.read_text(encoding="utf-8"))
 
 
 def _check_readme_links(root: Path) -> None:
     readme = root / "README.md"
     _require(readme.is_file(), "README.md is missing")
-    relative = [t for t in _markdown_targets(readme) if not t.startswith("https://")]
+    targets = _document_targets(readme)
+    relative = [t for t in targets if not t.startswith("https://")]
     _require(
         not relative,
         f"README.md must use absolute https:// links (PyPI long description): {relative}",
     )
-    for target in _markdown_targets(readme):
+    for target in targets:
         match = GITHUB_FILE_URL_RE.match(target)
         if match is not None:
             _require(
-                (root / match.group(1)).exists(),
+                (root / match.group(1)).is_file(),
                 f"README.md links to missing file {match.group(1)}",
             )
 
@@ -1304,7 +1750,7 @@ def _check_relative_links(root: Path) -> None:
     for document in documents:
         if not document.is_file():
             continue
-        for target in _markdown_targets(document):
+        for target in _document_targets(document):
             if target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
             resolved = (document.parent / target.split("#", 1)[0]).resolve()
@@ -1350,12 +1796,44 @@ def png_dimensions(path: Path) -> tuple[int, int]:
     return int(width), int(height)
 
 
+def required_asset_files() -> tuple[str, ...]:
+    return tuple(
+        f"{ASSET_DIR}/{output}" for outputs in RELEASE_ASSETS.values() for output in outputs
+    )
+
+
 def _check_release_assets(root: Path) -> None:
-    _check_required_files(root, REQUIRED_RELEASE_ASSETS)
-    social = root / "docs" / "assets" / "social-preview.png"
-    size = png_dimensions(social)
+    _check_required_files(root, required_asset_files())
+    for relative in required_asset_files():
+        path = root / relative
+        if relative.endswith(".svg"):
+            _require("<svg" in path.read_text(encoding="utf-8"), f"{relative} is not an SVG")
+    size = png_dimensions(root / ASSET_DIR / SOCIAL_PREVIEW_FILE)
     _require(
         size == SOCIAL_PREVIEW_SIZE, f"social preview is {size}, must be {SOCIAL_PREVIEW_SIZE}"
+    )
+
+
+def check_assets(root: Path, renderer: str = DEFAULT_RENDERER) -> None:
+    """Required static assets exist and the pinned renderer regenerates them byte-identically.
+
+    A toolchain without implemented renderers fails here: ``--only`` on a planned
+    asset is an error in the accepted renderer, and the outputs must exist first.
+    """
+    _require((root / RENDERER_RELATIVE).is_file(), f"{RENDERER_RELATIVE} is missing")
+    _check_release_assets(root)
+    argv = [*shlex.split(renderer), "--check"]
+    for name in RELEASE_ASSETS:
+        argv.extend(("--only", name))
+    result = _run(argv, cwd=root, env=_clean_env())
+    _require(
+        result.code == 0,
+        f"asset regeneration check failed (exit {result.code}):\n{result.stdout}{result.stderr}",
+    )
+    # The accepted renderer reports a planned asset as "[level] name: not implemented".
+    _require(
+        re.search(r"^\[\w+\] [\w-]+: not implemented", result.stdout, re.M) is None,
+        "asset regeneration check reported a required asset as not implemented",
     )
 
 
@@ -1388,7 +1866,7 @@ def _check_clean_tree(root: Path) -> None:
         _require(probe.stdout.strip() == head, f"tag {tag} exists but does not point at HEAD")
 
 
-def check_candidate(root: Path, workflow_path: Path) -> None:
+def check_candidate(root: Path, workflow_path: Path, renderer: str = DEFAULT_RENDERER) -> None:
     failures = _collect(
         [
             lambda: _check_release_version(root),
@@ -1399,7 +1877,7 @@ def check_candidate(root: Path, workflow_path: Path) -> None:
                 root, ("docs/stability.md", "docs/versioning.md", "docs/migration.md")
             ),
             lambda: _check_schemas(root),
-            lambda: _check_release_assets(root),
+            lambda: check_assets(root, renderer),
             lambda: _check_clean_tree(root),
         ]
     )
@@ -1409,39 +1887,11 @@ def check_candidate(root: Path, workflow_path: Path) -> None:
 def _check_receipt_documents(root: Path, version: str) -> None:
     receipt = _read_json(root / RECEIPT_PATHS["release_receipt"], "release receipt")
     post = _read_json(root / RECEIPT_PATHS["postpublish"], "post-publication receipt")
-    _scan_credentials(receipt, "release receipt")
-    _scan_credentials(post, "post-publication receipt")
-    _require(receipt.get("schema_version") == 1, "release receipt schema_version must be 1")
-    _require(receipt.get("kind") == "actseal-release-receipt", "release receipt kind is wrong")
-    _require(receipt.get("version") == version, f"release receipt version is not {version}")
-    for key in (
-        "tag",
-        "source_commit",
-        "lock_sha256",
-        "workflow_run",
-        "artifact",
-        "distributions",
-        "verification",
-    ):
-        _require(key in receipt, f"release receipt lacks {key}")
-    artifact = receipt.get("artifact", {})
-    _require(
-        bool(artifact.get("id")) and bool(artifact.get("digest")),
-        "release receipt lacks artifact identity",
-    )
-    verification = receipt.get("verification", {})
-    _require(
-        verification.get("verify_matrix") == "success",
-        "release receipt verify matrix is not success",
-    )
-    _require(post.get("ok") is True, "post-publication receipt is not ok")
+    inventory = validate_release_receipt(receipt, version, None)
+    validate_postpublish_receipt(post, version, inventory)
     sums = read_sha256sums(root / RECEIPT_PATHS["sha256sums"])
-    recorded = {
-        str(d.get("filename")): str(d.get("sha256")) for d in receipt.get("distributions", [])
-    }
+    recorded = {item.filename: item.sha256 for item in inventory}
     _require(sums == recorded, "SHA256SUMS receipt differs from release receipt distributions")
-    published = {str(f.get("filename")): str(f.get("sha256")) for f in post.get("files", [])}
-    _require(published == recorded, "post-publication receipt hashes differ from release receipt")
 
 
 def _check_release_notes(root: Path, version: str) -> None:
@@ -1466,6 +1916,7 @@ def _check_release_notes(root: Path, version: str) -> None:
     ]
     _require(not unmapped, f"release notes claim hashes absent from receipts: {unmapped}")
     run_id = str(receipt.get("workflow_run", {}).get("id"))
+    _require(run_id.isdigit(), "release receipt lacks a numeric workflow run id")
     final_report = root / RECEIPT_PATHS["final_report"]
     _require(final_report.is_file(), f"{RECEIPT_PATHS['final_report']} is missing")
     _require(
@@ -1553,7 +2004,14 @@ def _parser() -> argparse.ArgumentParser:
     mirror_parser.add_argument("--release-receipt", type=Path, required=True)
     mirror_parser.add_argument("--gh", default="gh")
 
-    for name in ("candidate", "docs", "receipts"):
+    for name in ("candidate", "assets"):
+        gate = commands.add_parser(name)
+        gate.add_argument(
+            "--renderer",
+            default=DEFAULT_RENDERER,
+            help="command prefix that runs render.py (default: %(default)s)",
+        )
+    for name in ("docs", "receipts"):
         commands.add_parser(name)
     return parser
 
@@ -1606,7 +2064,9 @@ def _dispatch(args: argparse.Namespace) -> None:
             gh_binary=args.gh,
         )
     elif args.command == "candidate":
-        check_candidate(root, workflow_path)
+        check_candidate(root, workflow_path, args.renderer)
+    elif args.command == "assets":
+        check_assets(root, args.renderer)
     elif args.command == "docs":
         check_docs(root)
     else:

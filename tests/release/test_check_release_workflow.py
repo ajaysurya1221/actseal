@@ -138,6 +138,33 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "check_release.py release_receipt",
         "mirror must run check_release.py release-receipt",
     ),
+    "publish-without-assets": (
+        "needs: [build, verify, assets]\n    if: github.event_name",
+        "needs: [build, verify]\n    if: github.event_name",
+        "publish must need build, verify and assets",
+    ),
+    "assets-job-renamed": ("  assets:\n", "  assets2:\n", "jobs must be exactly"),
+    "assets-gate-missing": (
+        "run: uv run --frozen python tools/check_release.py assets",
+        "run: uv run --frozen python tools/check_release.py workflow",
+        "assets job must run check_release.py assets",
+    ),
+    "assets-no-tool-fetch": ("setup_tools.py", "setup.py", "fetch the pinned authoring tools"),
+    "assets-no-group": (
+        "uv sync --frozen --group dev --group assets",
+        "uv sync --frozen --group dev",
+        "locked assets dependency group",
+    ),
+    "no-supplied-dist": (
+        "          ACTSEAL_TEST_DIST: ${{ runner.temp }}/dist\n",
+        "",
+        "ACTSEAL_TEST_DIST",
+    ),
+    "wheel-outside-dist": (
+        "ACTSEAL_TEST_WHEEL: ${{ runner.temp }}/dist/${{ needs.build.outputs.wheel }}",
+        "ACTSEAL_TEST_WHEEL: ${{ runner.temp }}/other/${{ needs.build.outputs.wheel }}",
+        "inside ACTSEAL_TEST_DIST",
+    ),
 }
 
 

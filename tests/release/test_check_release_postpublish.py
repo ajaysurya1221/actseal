@@ -1,4 +1,4 @@
-"""``postpublish`` unit tests: exit-code table, hash comparison, provenance and partial publication.
+"""``postpublish`` unit tests: exit codes, hashes, metadata, attestations, partial publication.
 
 No network and no real wheel: the index is served over ``file://`` URLs and the
 installed-demo expectations are exercised through the pure ``assert_demo_outcomes``.
@@ -6,13 +6,30 @@ installed-demo expectations are exercised through the pure ``assert_demo_outcome
 
 from __future__ import annotations
 
+import base64
 import json
 import sys
 import types
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
-from release_support import load_tool, names, sha256_hex, write_fake_index, write_sums, write_text
+from release_support import (
+    ALPHA,
+    PUBLISHER,
+    STABLE,
+    attestation,
+    load_tool,
+    names,
+    provenance_document,
+    sha256_hex,
+    statement,
+    write_fake_index,
+    write_sdist,
+    write_sums,
+    write_text,
+    write_wheel,
+)
 
 VERSION = "1.0.0"
 
@@ -113,13 +130,11 @@ def test_non_json_output_fails(tool: types.ModuleType) -> None:
 
 @pytest.fixture
 def published(tmp_path: Path) -> tuple[dict[str, bytes], Path]:
-    wheel, sdist = names(VERSION)
-    files = {wheel: b"wheel-bytes", sdist: b"sdist-bytes"}
     store = tmp_path / "built"
     store.mkdir()
-    for name, data in files.items():
-        (store / name).write_bytes(data)
-    sums = write_sums(tmp_path / "SHA256SUMS", {name: store / name for name in files})
+    paths = (write_wheel(store, VERSION), write_sdist(store, VERSION))
+    files = {path.name: path.read_bytes() for path in paths}
+    sums = write_sums(tmp_path / "SHA256SUMS", {path.name: path for path in paths})
     return files, sums
 
 
@@ -139,6 +154,7 @@ def run_postpublish(
             allow_missing_attestations=allow_missing,
         )
     assert not (tmp_path / "receipt.json").exists()
+    assert not (tmp_path / "work" / "venv").exists()
     return str(excinfo.value)
 
 
@@ -189,28 +205,249 @@ def test_declared_digest_differing_from_the_bytes_fails(
     assert "PyPI declares sha256" in run_postpublish(tool, base, sums, tmp_path)
 
 
+# --------------------------------------------------------------------------- #
+# Published metadata
+# --------------------------------------------------------------------------- #
+
+
+def good_info(**overrides: object) -> dict[str, object]:
+    info: dict[str, object] = {
+        "name": "actseal",
+        "version": VERSION,
+        "summary": "fixture",
+        "classifiers": [STABLE],
+        "yanked": False,
+    }
+    info.update(overrides)
+    return info
+
+
+@pytest.mark.parametrize(
+    ("info", "fragment"),
+    [
+        (good_info(name="actseal2"), "project name"),
+        (good_info(version="1.0.1"), "reports version"),
+        (good_info(yanked=True), "yanked"),
+        (good_info(yanked=None), "yanked"),
+        (good_info(classifiers=[ALPHA]), "lacks classifier"),
+        (good_info(classifiers=[]), "lacks classifier"),
+        (good_info(summary=""), "summary"),
+        (good_info(classifiers=[STABLE, "Topic :: Other"]), "differs from wheel METADATA"),
+    ],
+)
+def test_published_metadata_is_validated(
+    tool: types.ModuleType,
+    published: tuple[dict[str, bytes], Path],
+    tmp_path: Path,
+    info: Mapping[str, object],
+    fragment: str,
+) -> None:
+    files, sums = published
+    base = write_fake_index(tmp_path / "index", VERSION, files, info=info)
+    assert fragment in run_postpublish(tool, base, sums, tmp_path)
+
+
+def test_yanked_file_fails(
+    tool: types.ModuleType, published: tuple[dict[str, bytes], Path], tmp_path: Path
+) -> None:
+    files, sums = published
+    base = write_fake_index(tmp_path / "index", VERSION, files, yanked=[names(VERSION)[1]])
+    assert "is yanked" in run_postpublish(tool, base, sums, tmp_path)
+
+
+def test_missing_info_block_fails(
+    tool: types.ModuleType, published: tuple[dict[str, bytes], Path], tmp_path: Path
+) -> None:
+    files, sums = published
+    base = write_fake_index(tmp_path / "index", VERSION, files)
+    release = tmp_path / "index" / "pypi" / "actseal" / VERSION / "json"
+    document = json.loads(release.read_text(encoding="utf-8"))
+    del document["info"]
+    release.write_text(json.dumps(document), encoding="utf-8")
+    assert "info must be an object" in run_postpublish(tool, base, sums, tmp_path)
+
+
+def test_alpha_classifier_is_acceptable_only_below_1_0(tool: types.ModuleType) -> None:
+    document = {"info": good_info(version="0.9.0", classifiers=[ALPHA]), "urls": []}
+    assert tool._published_metadata(document, "0.9.0")["classifiers"] == [ALPHA]
+    with pytest.raises(tool.ReleaseCheckError):
+        tool._published_metadata({"info": good_info(classifiers=[ALPHA]), "urls": []}, VERSION)
+
+
+# --------------------------------------------------------------------------- #
+# Attestations: identity and subject inspection, never signature verification
+# --------------------------------------------------------------------------- #
+
+
+def wheel_sha(files: Mapping[str, bytes]) -> str:
+    return sha256_hex(files[names(VERSION)[0]])
+
+
 def test_missing_provenance_fails_unless_explicitly_allowed(
     tool: types.ModuleType, published: tuple[dict[str, bytes], Path], tmp_path: Path
 ) -> None:
     files, sums = published
     base = write_fake_index(tmp_path / "index", VERSION, files, provenance_for=[names(VERSION)[1]])
     assert "no provenance/attestations" in run_postpublish(tool, base, sums, tmp_path)
-    assert tool._provenance(base, VERSION, names(VERSION)[0]) == {
+    assert tool._provenance(base, VERSION, names(VERSION)[0], wheel_sha(files)) == {
         "present": False,
         "attestations": 0,
         "publishers": [],
+        "subject_sha256": None,
     }
-    present = tool._provenance(base, VERSION, names(VERSION)[1])
-    assert present["present"] is True
-    assert present["attestations"] == 1
-    assert present["publishers"] == [
-        {
-            "kind": "GitHub",
-            "repository": "ajaysurya1221/actseal",
-            "workflow": "publish-pypi.yml",
-            "environment": "pypi",
-        }
+    sdist = names(VERSION)[1]
+    present = tool._provenance(base, VERSION, sdist, sha256_hex(files[sdist]))
+    assert present == {
+        "present": True,
+        "attestations": 1,
+        "publishers": [PUBLISHER],
+        "subject_sha256": sha256_hex(files[sdist]),
+    }
+
+
+def wheel_statement(files: Mapping[str, bytes], **overrides: object) -> str:
+    document: dict[str, object] = {
+        "_type": "https://in-toto.io/Statement/v1",
+        "subject": [{"name": names(VERSION)[0], "digest": {"sha256": wheel_sha(files)}}],
+        "predicateType": "https://docs.pypi.org/attestations/publish/v1",
+        "predicate": None,
+    }
+    document.update(overrides)
+    return base64.b64encode(json.dumps(document).encode("utf-8")).decode("ascii")
+
+
+def bad_provenances(files: Mapping[str, bytes]) -> list[tuple[str, dict[str, object], str]]:
+    wheel = names(VERSION)[0]
+    sha = wheel_sha(files)
+    good = statement(wheel, sha)
+    return [
+        ("empty-bundles", {"attestation_bundles": []}, "has no bundles"),
+        ("not-object", {"attestation_bundles": ["x"]}, "must be an object"),
+        ("no-attestations", provenance_document(wheel, sha, attestations=[]), "no attestations"),
+        (
+            "wrong-repository",
+            provenance_document(wheel, sha, publisher={**PUBLISHER, "repository": "x/y"}),
+            "not the expected trusted publisher",
+        ),
+        (
+            "wrong-environment",
+            provenance_document(wheel, sha, publisher={**PUBLISHER, "environment": "release"}),
+            "not the expected trusted publisher",
+        ),
+        (
+            "wrong-workflow",
+            provenance_document(wheel, sha, publisher={**PUBLISHER, "workflow": "ci.yml"}),
+            "not the expected trusted publisher",
+        ),
+        (
+            "missing-publisher-field",
+            provenance_document(
+                wheel, sha, publisher={k: v for k, v in PUBLISHER.items() if k != "kind"}
+            ),
+            "not the expected trusted publisher",
+        ),
+        (
+            "malformed-base64",
+            provenance_document(wheel, sha, attestations=[attestation("!!not-base64!!")]),
+            "not base64 JSON",
+        ),
+        (
+            "base64-not-json",
+            provenance_document(
+                wheel, sha, attestations=[attestation(base64.b64encode(b"nope").decode())]
+            ),
+            "not base64 JSON",
+        ),
+        (
+            "wrong-statement-type",
+            provenance_document(
+                wheel,
+                sha,
+                attestations=[attestation(wheel_statement(files, _type="https://example/v9"))],
+            ),
+            "statement type is",
+        ),
+        (
+            "no-subject",
+            provenance_document(
+                wheel, sha, attestations=[attestation(wheel_statement(files, subject=[]))]
+            ),
+            "has no subject",
+        ),
+        (
+            "wrong-subject-digest",
+            provenance_document(wheel, sha, attestations=[attestation(statement(wheel, "0" * 64))]),
+            "do not name",
+        ),
+        (
+            "wrong-subject-name",
+            provenance_document(
+                wheel, sha, attestations=[attestation(statement("other.whl", sha))]
+            ),
+            "do not name",
+        ),
+        (
+            "missing-signature",
+            provenance_document(
+                wheel,
+                sha,
+                attestations=[{**attestation(good), "envelope": {"statement": good}}],
+            ),
+            "signature missing",
+        ),
+        (
+            "missing-verification-material",
+            provenance_document(
+                wheel,
+                sha,
+                attestations=[
+                    {k: v for k, v in attestation(good).items() if k != "verification_material"}
+                ],
+            ),
+            "verification_material missing",
+        ),
+        (
+            "unsupported-version",
+            provenance_document(wheel, sha, attestations=[{**attestation(good), "version": 2}]),
+            "unsupported attestation version",
+        ),
     ]
+
+
+def test_every_malformed_or_foreign_attestation_fails(
+    tool: types.ModuleType, published: tuple[dict[str, bytes], Path], tmp_path: Path
+) -> None:
+    files, sums = published
+    seen: set[str] = set()
+    for name, provenance, fragment in bad_provenances(files):
+        base = write_fake_index(
+            tmp_path / name,
+            VERSION,
+            files,
+            provenance=provenance,
+            provenance_for=[names(VERSION)[0]],
+        )
+        message = run_postpublish(tool, base, sums, tmp_path / f"run-{name}")
+        assert fragment in message, (name, message)
+        seen.add(name)
+    assert len(seen) == len(bad_provenances(files))
+
+
+def test_a_second_bundle_from_another_publisher_fails(
+    tool: types.ModuleType, published: tuple[dict[str, bytes], Path], tmp_path: Path
+) -> None:
+    files, sums = published
+    wheel = names(VERSION)[0]
+    good = provenance_document(wheel, wheel_sha(files))
+    foreign = provenance_document(
+        wheel, wheel_sha(files), publisher={**PUBLISHER, "repository": "x/y"}
+    )
+    first, second = good["attestation_bundles"], foreign["attestation_bundles"]
+    assert isinstance(first, list)
+    assert isinstance(second, list)
+    merged = {"attestation_bundles": [*first, *second]}
+    base = write_fake_index(tmp_path / "index", VERSION, files, provenance=merged)
+    assert "bundle 1: publisher" in run_postpublish(tool, base, sums, tmp_path)
 
 
 def test_sums_for_another_version_or_existing_workdir_fail(
