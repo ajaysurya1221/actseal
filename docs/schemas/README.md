@@ -46,8 +46,28 @@ eleven 0.1.0 fields at `schema_version` 1 is reported as legacy.
 
 **CapturedOutcome.** Exactly one of `body_json` and `failure_code` is present
 (expressed with `oneOf`). `request_sha256` is the canonical hash of the
-reconstructed `DecisionRequest`. `identity.provider` must be `fixture` or
-`laya`; `artifact_hashes` and `runtime` keys are unique and serialized sorted.
+reconstructed `DecisionRequest`. `identity.provider` must be `fixture`, `laya`
+or `jev`; `artifact_hashes` and `runtime` keys are unique and serialized
+sorted. The `ModelIdentity` provider enum is identical in the lock,
+captured-outcome, decision-record, fault-result and CLI-receipt schemas and is
+updated atomically. `jev` (amendment V1-011) names the PROVISIONAL experimental
+cloud adapter's identity: `model` and `revision` are the configured vendor
+target `jev-1.13.0`, `artifact_hashes` is empty because no model-weight hash
+exists for a cloud target, and the version a response reports is a vendor
+claim, not a weight attestation. Admitting the value in these schemas records
+and replays such evidence; it does not register `jev` as a CLI provider (the
+`--provider` choices stay `fixture` and `laya`, and the CLI-receipt enum only
+describes nested `ModelIdentity` objects).
+
+**Jev body profile (PROVISIONAL).** A `jev` capture's `body_json` is the
+verbatim HTTP response text. The pure normalizer accepts exactly
+`{model, answers, usage}` with `answers` holding exactly the locked question id,
+`usage` exactly `{input_tokens, output_tokens}` as nonnegative integers, and an
+inner answer of exactly `{type: "choice", choice, probabilities, confidence}`
+whose mass is within the Actseal restriction `1e-12` of 1 (an explicit
+restriction, not a verified vendor rounding claim). A well-formed body whose
+`model` is not `jev-1.13.0` is `identity_mismatch`; every other out-of-profile
+shape is `malformed_response`. The vendor `confidence` is diagnostic only.
 
 **DecisionRecord / FaultResult.** `outcome` and `decision` must equal a fresh
 re-normalization of `capture` against the locked identity and a fresh policy

@@ -65,7 +65,7 @@
         "runtime"
       ],
       "properties": {
-        "provider": { "enum": ["fixture", "laya"] },
+        "provider": { "enum": ["fixture", "laya", "jev"] },
         "model": { "$ref": "#/$defs/NonEmpty" },
         "revision": { "$ref": "#/$defs/NonEmpty" },
         "artifact_hashes": {
