@@ -12,7 +12,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 ## Current state
 
 - Planning artifacts: complete; 119 material claims and all 18 candidate dispositions recorded.
-- Product implementation: T00 through T50 accepted and merged; T60 acceptance candidate passed 104 tests; two test gaps require correction.
+- Product implementation: T00 through T50 accepted and merged; T60 accepted and merged; T70 final publication gate is active.
 - Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
 - Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
 - Preflight: source statistics suite passed in a separate verification lane;
@@ -29,8 +29,8 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | T30 providers/faults | Claude C | ACCEPT / MERGED | 8b1efd6 (merge 87d2cd1) |
 | T40 evidence/replay | Claude B | ACCEPT / MERGED | 98297d5 (merge 7a2939e) |
 | T50 CLI/demo | Claude A | ACCEPT / MERGED | 286ae67 (merge7e696c5) |
-| T60 acceptance | Claude C | REVISE | 55c8568 |
-| T70 publication | Codex | WAITING_FOR_T60 | none |
+| T60 acceptance | Claude C | ACCEPT / MERGED | 24d5818 (merge3080079) |
+| T70 publication | Codex | FINAL_RELEASE_CHECKS | none |
 
 ## Resume pointers
 
@@ -122,3 +122,5 @@ actual identities and bounds; this synthetic input result is not model quality.
 T60 and final release gates remain open.
 
 T60 candidate 55c85682c23c82668b9bf37b8011638889048482 is REVISE in REVIEW T60-01: inject the first fault to prove continuation and retain independent lock/verify guard receipts. Root passed104 acceptance tests11.22s and owned lint/format/mypy. Small evidence-wording corrections also required. Claude session1db0e662-15be-406c-9bde-d95c97306735 will resume; cumulative subscription meter14.212899, incremental paid API0.
+
+T60 ACCEPT at24d5818aa225294f0ed540fbe6f03728b9332997, merged3080079 viaPR7. Both original test gaps fixed. Root104 acceptance11.84s; final integrated2282 default49.62s,14 packaging3.86s, full quality/build/hooks pass. All8jobs green in37455737559/37455758108; identical24-file demo digest. REVIEW T60-02 records root documentation-only caveat correction and final cumulative subscription meter17.3475675. All7 final meters sum115.08465475 estimated subscription usage, not paid charges; incremental API0. T70 now owns final release-candidate checks and publication.

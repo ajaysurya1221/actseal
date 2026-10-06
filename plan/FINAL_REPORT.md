@@ -1,20 +1,22 @@
-# Actseal v0.1.0 — final report draft
+# Actseal v0.1.0 — release report
 
-**PENDING RELEASE — 6 October 2026.** T00 through T50 are independently
-accepted and merged. T60 adversarial acceptance is running; T70 publication
-remains pending. The CLI, installed fixture demo and native Laya CLI have actual
+**PRE-PUBLICATION SNAPSHOT — 6 October 2026.** T00 through T60 are independently
+accepted and merged. T70 final artifact/CI and publication checks remain pending.
+The released source archive preserves this pre-publication snapshot; main will
+receive the final downloaded-asset hashes and public-URL receipt afterwards.
+The tag and assets will not be moved or replaced to embed their own hashes. The CLI, installed fixture demo and native Laya CLI have actual
 receipts below. The [public repository](https://github.com/ajaysurya1221/actseal)
 exists; the v0.1.0 release asset has not yet been published.
 
 | Release field | Current evidence / remaining gate |
 |---|---|
 | T50 CLI acceptance | ACCEPT `286ae67`, merge `7e696c5`; 127 unit and 8 clean-wheel tests independently passed |
-| T60 acceptance | PENDING — independent adversarial tests and review |
-| Required hosted CI | T50's eight jobs passed; all demo bytes agree. Final candidate jobs remain required. |
+| T60 acceptance | ACCEPT `24d5818`, merge `3080079`;104 adversarial tests,2282 default tests and14 packaging tests independently passed |
+| Required hosted CI | T60's eight jobs passed; all demo bytes agree. Final release-candidate jobs remain required. |
 | Installed demo | bad BLOCK 32/128; fixed PASS 0/128; both replay; installed fixture 0.170645s after cached preparation |
 | Native CLI | Real pinned cached Laya lock0 / verifyBLOCK1 / replayBLOCK1;128 ABSTAIN; [receipt](reports/T70-native.md) |
 | Tag and distributions | PENDING — final artifact hashes, v0.1.0 release and public-URL quickstart |
-| Spend and publication review | Paid API $0; final T60 meter and T70 ACCEPT pending. Launch remains a draft. |
+| Spend and publication review | Paid API $0; T70 publication ACCEPT pending. Launch remains a draft. |
 
 
 ## Accepted implementation versus planned release
@@ -22,8 +24,8 @@ exists; the v0.1.0 release asset has not yet been published.
 The accepted core freezes an application decision policy and its labelled inputs,
 records provider outcomes, checks failure behavior, calculates accepted-action
 error and coverage bounds, and independently replays bounded evidence. The
-complete user-facing workflow is accepted through T50; independent adversarial
-acceptance and publication remain gated.
+complete user-facing workflow and independent adversarial acceptance are accepted;
+publication remains gated on T70.
 
 | Planned component | Accepted implementation / remaining work |
 |---|---|
@@ -33,7 +35,8 @@ acceptance and publication remain gated.
 | T30 providers and faults | Fixture and pinned native Laya CPU adapters, strict normalization, bounded worker lifecycle and six canonical failure scenarios. [ACCEPT](reviews/T30-03.md), [PR 4](https://github.com/ajaysurya1221/actseal/pull/4), candidate `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`. |
 | T40 evidence and replay | Bounded seven-file bundles, exclusive atomic publication and provider-free semantic replay. [ACCEPT](reviews/T40-02.md), [PR 5](https://github.com/ajaysurya1221/actseal/pull/5), candidate `98297d5f79cfa62e348d722d8ae91ec59252eebd`. |
 | T50 CLI and demo | Complete runner, four CLI commands, packaged support-triage inputs and installed-wheel entrypoints/isolation. [ACCEPT](reviews/T50-02.md), [PR6](https://github.com/ajaysurya1221/actseal/pull/6), candidate `286ae67e252ecbb77e9c330ebe1f66cc375bfbab`. |
-| T60/T70 | Adversarial acceptance, final artifact/CI gate and publication are **PENDING**. |
+| T60 acceptance |104 adversarial/public/installed acceptance tests, including first-fault continuation and rehashed fallback forgery; [ACCEPT](reviews/T60-02.md), [PR7](https://github.com/ajaysurya1221/actseal/pull/7), candidate `24d5818aa225294f0ed540fbe6f03728b9332997`. |
+| T70 publication |Final artifact/CI gate and publication are **PENDING**. |
 
 Claude Code Fable 5.1/high implemented product code and tests; Codex specified,
 reviewed, independently checked and gated each accepted task. Project-local
@@ -55,6 +58,7 @@ formatting and strict mypy passed for each accepted task.
 | T30 providers/faults | 279 tests; independent canonical-fault and worker-lifecycle review | [Push](https://github.com/ajaysurya1221/actseal/actions/runs/37440036303), [PR](https://github.com/ajaysurya1221/actseal/actions/runs/37440043375) |
 | T40 evidence/replay | 178 tests; semantic forgery, raw-input preservation, incremental bounds and filesystem probes | [Push](https://github.com/ajaysurya1221/actseal/actions/runs/37447161362), [PR](https://github.com/ajaysurya1221/actseal/actions/runs/37447188177) |
 | T50 CLI/demo | 127 unit tests,8 clean-wheel tests; independent diagnostics/cleanup and installed demo/replay | [Push](https://github.com/ajaysurya1221/actseal/actions/runs/37451569089), [PR](https://github.com/ajaysurya1221/actseal/actions/runs/37451595664) |
+| T60 acceptance |104 acceptance tests11.84s; integrated2282 default49.62s and14 packaging3.86s; lint/format/types/hooks/build pass | [Push](https://github.com/ajaysurya1221/actseal/actions/runs/37455737559), [PR](https://github.com/ajaysurya1221/actseal/actions/runs/37455758108) |
 
 Each linked hosted run passed four Linux/macOS × Python3.12/3.13 jobs. T40's jobs
 executed the real exclusive-publication operation on both operating systems.
@@ -102,8 +106,16 @@ core runtime requirements are empty and Linux Torch remains the official CPU
 build. Final rebuilt archives require fresh hashes/inventories; no blanket audit
 of every embedded third-party-wheel file or all Git history is claimed.
 
-Still required: T60's independent adversarial review, full final candidate checks,
-final archive/README/public-URL verification and immutable tag/release receipts.
+T60 closed its two initial test gaps before acceptance: the first injected fault
+must not terminate the campaign, and lock/verify/replay each require separate clean
+isolation receipts. No product defect remained. Independent Git-history review
+through58f8586 inspected69 reachable commits,274 unique blobs and151 paths, including
+commit messages, and found no credential/private-input publication. That review
+excluded ignored files, credentials, unreachable objects and comparison with private
+repositories; it is a scoped pattern/path audit, not a universal secrecy guarantee.
+
+Still required: final release-candidate checks, final archives/public-URL verification
+and immutable tag/release receipts.
 
 ## Material deviations from the research
 
@@ -147,11 +159,11 @@ being silently converted into facts.
   unsupported platforms/filesystems. It promises no power-loss durability or
   defense against a hostile process controlling ancestor directories. Input and
   bundle sizes are deliberately bounded; details are in [CONTRACTS](CONTRACTS.md).
-- No material product defect remained at the accepted task heads. Release still
-  requires T60's actual injected policy-violation/completeness test and rehashed
-  fallback-flag forgery through public replay, plus the pending integration gates
-  above. Sensitive raw inputs/responses need caller-controlled handling; generated
-  runs are ignored by default, not automatically anonymized.
+- No material product defect remained at the accepted task heads. T60's injected
+  first-fault continuation and rehashed fallback-flag forgery checks passed; final
+  artifact/CI/publication checks remain pending in this snapshot. Sensitive raw
+  inputs/responses need caller-controlled handling; generated runs are ignored by
+  default, not automatically anonymized.
 
 ## Spend and execution accounting
 
@@ -160,7 +172,7 @@ call or paid hosting was required. Claude used the existing authenticated
 claude.ai Max subscription. Existing subscriptions, local compute and labour
 are not claimed free. The completed-session meters below are estimates, not API
 invoices; successive reports from one session are cumulative and must not be
-added together. T50 is complete; final T60 and full-session reconciliation remain pending.
+added together. All seven implementation sessions are complete and reconciled.
 
 | Completed execution session | Latest recorded estimated subscription meter |
 |---|---|
@@ -170,13 +182,16 @@ added together. T50 is complete; final T60 and full-session reconciliation remai
 | T30 complete session | $20.95634925 — [T30 review](reviews/T30-03.md); replaces earlier milestone meter |
 | T40 complete session | $18.21350825 — [T40 review](reviews/T40-02.md); includes corrective work |
 | T50 complete session | $19.152133 — [T50 review](reviews/T50-02.md); includes initial and corrective attempts |
+| T60 complete session | $17.3475675 — [T60 review](reviews/T60-02.md); includes initial14.212899 and corrective work |
 
 Root checked the ignored raw result metadata: T20's numerical and assessment
 attempts share session `14d9398c-146f-40cf-827d-a3c6a79632f1`; their cumulative
 meters are not separate spend. All completed dispatches report the requested
-`claude-fable-5-1` model. No final sprint total or invoice is asserted. The $100 projected incremental
-spend escalation and two-day target remain in force; 8 October is only an
-escalated buffer, not an already-used extension.
+`claude-fable-5-1` model. The sum of final cumulative meters is **$115.08465475
+of estimated subscription usage**, not paid API charges or an invoice. Incremental
+paid inference API spend remains **$0**; no billing switch occurred. The $100
+incremental-spend escalation and two-day target remain in force; 8 October is only
+an escalated buffer, not an already-used extension.
 
 ## Next three steps after v0.1.0
 
