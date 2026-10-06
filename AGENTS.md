@@ -69,7 +69,9 @@ Production/Stable classifier, accepted static P1 visuals and receipt-backed
 release notes. Optional experimental Jev work and P2 visuals must not delay the
 mandatory gates and are cut at the recorded deadlines. Public launch posts remain
 drafts. Escalate incompatible licenses, proprietary core requirements,
-load-bearing unverified facts, spend projected above $100, or a threatened
-mandatory gate.
+load-bearing unverified facts, or a threatened mandatory gate. Spend has no
+amount-based escalation threshold, but every REPORT must state actual spend
+receipts and keep unknown usage explicitly unknown; this authorizes no model,
+executor, credential or billing substitution.
 
 The v0.1.0 release followed `plan/PLAN.md`; its receipts stay under `plan/`.
