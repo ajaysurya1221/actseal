@@ -64,3 +64,11 @@ Optional Jev, hosted tier, Marketplace Action and PyPI remain out of v0.1.0.
 No action is required to finish this sprint. The user can run the README's one-command
 demo. Future work starts with the three evidence-driven steps in FINAL_REPORT;
 no background automation or public promotional post has been scheduled or sent.
+
+## Post-release follow-up — PyPI workflow
+
+On6October the user requested a PyPI YAML workflow. Codex owns this CI/docs-only
+follow-up under ADR0014. publish-pypi.yml promotes the pinned reviewed v0.1.0 assets;
+manual validation-only dispatch is the default. No product, released asset or tag
+change. PyPI account/environment configuration and actual upload remain external
+steps; no upload has been performed. See docs/publishing.md.

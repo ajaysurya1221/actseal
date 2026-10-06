@@ -1,0 +1,99 @@
+name: Publish to PyPI
+
+# Promote the reviewed release bytes; do not rebuild the existing release.
+# Update the version, commit, CI receipt and hashes together for the next release.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Upload to PyPI after validation (requires a configured Trusted Publisher)
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-actseal
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.repository == 'ajaysurya1221/actseal' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.5'
+          python-version: '3.12'
+          enable-cache: false
+      - name: Check release identity and successful CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          expected_commit=83fd04a5d340000aed6518109dce666dc208ad70
+          test "$(git rev-parse 'refs/tags/v0.1.0^{commit}')" = "$expected_commit"
+          gh release view v0.1.0 --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isDraft,isPrerelease,assets > "$RUNNER_TEMP/release.json"
+          jq -e '.tagName == "v0.1.0" and (.isDraft | not) and (.isPrerelease | not)
+            and ([.assets[].name] | sort) ==
+              ["actseal-0.1.0-py3-none-any.whl", "actseal-0.1.0.tar.gz"]' \
+            "$RUNNER_TEMP/release.json"
+          gh run view 37456279878 --repo "$GITHUB_REPOSITORY" \
+            --json headSha,conclusion,jobs > "$RUNNER_TEMP/release-ci.json"
+          jq -e --arg sha "$expected_commit" '.headSha == $sha
+            and .conclusion == "success" and (.jobs | length) == 4
+            and all(.jobs[]; .conclusion == "success")' "$RUNNER_TEMP/release-ci.json"
+      - name: Download and verify the approved distributions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir dist
+          gh release download v0.1.0 --repo "$GITHUB_REPOSITORY" --dir dist \
+            --pattern 'actseal-0.1.0-py3-none-any.whl' --pattern 'actseal-0.1.0.tar.gz'
+          cd dist
+          sha256sum --check --strict <<'CHECKSUMS'
+          672b60815394cf9673c6a9f78437750ffc40d44467627604f48c5e1c5f77e906  actseal-0.1.0-py3-none-any.whl
+          1781149ff09a21f14691daf0f6777f29022ec01293463394ac4f569f6897be2a  actseal-0.1.0.tar.gz
+          CHECKSUMS
+      - name: Validate PyPI metadata without uploading
+        run: uvx --from twine==7.0.0 twine check --strict dist/*
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pypi-distributions
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: validate
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/project/actseal/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: pypi-distributions
+          path: dist
+      - name: Publish with PyPI Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: dist/
+          print-hash: true
+          attestations: true
