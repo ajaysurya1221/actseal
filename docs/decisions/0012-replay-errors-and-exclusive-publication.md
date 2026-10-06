@@ -12,7 +12,9 @@ unknown identity, never a valid certification. After structural decoding, retain
 the decoded scope/hash for diagnostics even if subsequent seal/integrity checks
 fail. Never substitute the expected external digest for the observed digest.
 All ERROR counts remain zero and intervals [0,1]; reasons identify invariants
-without echoing payloads. Python API argument-type misuse may raise SchemaError.
+without echoing payloads. Invalid Python call arguments (wrong types, a malformed
+expected digest or a NUL-bearing path) may raise SchemaError; invalid bundle
+evidence returns ERROR. The CLI maps these argument errors to exit code 3.
 
 Publish a completed sibling temporary directory using an OS operation that
 atomically refuses an existing destination. An exists check followed by ordinary
