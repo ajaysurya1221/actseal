@@ -14,10 +14,10 @@ The measured demo duration is reported in the test output; the documented
 Prerequisites: ``uv`` on PATH and a supported platform (macOS/Linux, needed by
 the exclusive bundle publication). Network use: preparing the build tool
 (``uv build`` fetching the pinned ``hatchling`` build backend) may need network
-unless uv's cache already holds it; everything after that is offline by
-construction: the venv is created from the current interpreter, the wheel is
-installed with ``--no-deps --offline``, and every application run is guarded
-with sockets replaced and provider imports denied.
+unless uv's cache already holds it. The venv uses the current interpreter and
+the wheel installs with ``--no-deps --offline``. Dedicated isolation tests
+replace sockets and deny provider imports; the console timing and entrypoint
+checks run ordinarily and do not independently establish network isolation.
 """
 
 from __future__ import annotations
