@@ -19,4 +19,4 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work: 01R and 10 launch in isolated worktrees. Codex prepares 09 in parallel.
+Current work: 01R is independently ACCEPT; await PR #10 CI/merge, then launch 02 once. Claude09 and Claude10 are already running in isolated worktrees; monitor their existing process/session handles, never relaunch based only on observation timeout.

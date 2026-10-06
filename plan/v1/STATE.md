@@ -35,11 +35,11 @@ Codex is the sole writer of this state and REVIEW records. Executors write their
 
 ## Accepted commits and reports
 
-Task 00 ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8. All 2302 baseline tests were exercised: 2300 passed and two shared-process isolation checks failed. Native inference passed; full baseline is not green. Historical v0.1 reports remain unchanged.
+Task 00 ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8. The original complete baseline produced 2300 passes and two shared-process failures; that historical attempt is retained. Task 01R at d4bb8475ab5f6d9756bcfde1c2942a6dbb14d9c9 repaired the isolation checks and received independent ACCEPT: all 2302 tests, including native inference and packaging, passed in 57.79 seconds. PR #10 awaits green hosted CI and merge. Historical v0.1 reports remain unchanged.
 
 ## Next action
 
-Run Claude CLI Task 01R in /Users/ajay/.codex/worktrees/actseal-v1-baseline/not-yet-named and Task 10 in the visuals worktree concurrently. Both start from merged main e4bf59a. Return each committed branch and REPORT for independent review. Do not dispatch Task 02 until the baseline is ACCEPT. Claude CLI dispatch is authorized; do not substitute another product implementer.
+Monitor the existing Claude09 and Claude10 processes; do not relaunch them. Merge accepted Task01R only after exact-head PR #10 checks are green, then launch Task02 once from that integrated source. Task01R is finished and must not be dispatched again. Claude CLI orchestration is authorized; no other product implementer or billing substitution is permitted.
 
 ## Latest integration receipt
 
