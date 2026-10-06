@@ -316,9 +316,112 @@ def test_allowlisted_environment_copies_only_named_present_keys(session: ModuleT
     assert list(env) == [name for name in session.ENV_ALLOWLIST if name in source]
     assert session.allowlisted_environment({}) == {}
     assert all(name.isupper() for name in session.ENV_ALLOWLIST)
-    assert not any(
-        "KEY" in name or "TOKEN" in name or "SECRET" in name for name in session.ENV_ALLOWLIST
-    )
+    secret_words = {"KEY", "API_KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIALS"}
+    for name in session.ENV_ALLOWLIST:
+        assert not secret_words & set(name.split("_")), name
+
+
+SESSION_ROOT = "/recording-session"
+CONTROLLED_PREFIX = {
+    "PATH": "/usr/bin",
+    "HOME": "/Users/operator",
+    "TERM": "xterm-256color",
+    "LANG": "en_US.UTF-8",
+    "SHELL": "/bin/sh",
+    "UV_CACHE_DIR": f"{SESSION_ROOT}/uv-cache",
+    "UV_TOOL_DIR": f"{SESSION_ROOT}/uv-tools",
+    "UV_NO_CONFIG": "1",
+    "UV_NO_ENV_FILE": "1",
+    "UV_DEFAULT_INDEX": "https://pypi.org/simple",
+    "UV_KEYRING_PROVIDER": "disabled",
+    "ASCIINEMA_CONFIG_HOME": f"{SESSION_ROOT}/asciinema-config",
+    "ASCIINEMA_STATE_HOME": f"{SESSION_ROOT}/asciinema-state",
+}
+#: Index, source, find-links, credential and configuration overrides that must
+#: never reach a child even when the parent environment carries them.
+FORBIDDEN_OVERRIDES = (
+    "UV_INDEX",
+    "UV_INDEX_URL",
+    "UV_EXTRA_INDEX_URL",
+    "UV_FIND_LINKS",
+    "UV_INDEX_STRATEGY",
+    "UV_PUBLISH_TOKEN",
+    "UV_PUBLISH_USERNAME",
+    "UV_PUBLISH_PASSWORD",
+    "UV_CONFIG_FILE",
+    "UV_PYTHON",
+    "UV_PRERELEASE",
+    "UV_INSECURE_HOST",
+    "UV_NATIVE_TLS",
+    "UV_OFFLINE",
+    "PIP_INDEX_URL",
+    "PIP_EXTRA_INDEX_URL",
+    "PIP_FIND_LINKS",
+    "NETRC",
+    "SSL_CERT_FILE",
+    "REQUESTS_CA_BUNDLE",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "ALL_PROXY",
+    "XDG_CACHE_HOME",
+    "XDG_DATA_HOME",
+    "XDG_CONFIG_HOME",
+    "VIRTUAL_ENV",
+    "PYTHONPATH",
+    "PYTHONSTARTUP",
+    "CODEX_HOME",
+)
+
+
+def test_controlled_prefix_values_reach_children_and_overrides_do_not(
+    session: ModuleType,
+) -> None:
+    source = {
+        **CONTROLLED_PREFIX,
+        **dict.fromkeys(FORBIDDEN_OVERRIDES, "must-not-pass"),
+    }
+    env = session.allowlisted_environment(source)
+    for name in (
+        "UV_CACHE_DIR",
+        "UV_TOOL_DIR",
+        "UV_NO_CONFIG",
+        "UV_NO_ENV_FILE",
+        "UV_DEFAULT_INDEX",
+        "UV_KEYRING_PROVIDER",
+        "PATH",
+        "HOME",
+        "TERM",
+        "LANG",
+    ):
+        assert env[name] == CONTROLLED_PREFIX[name]
+    assert env["UV_DEFAULT_INDEX"] == "https://pypi.org/simple"
+    assert env["UV_KEYRING_PROVIDER"] == "disabled"
+    assert not set(env) & set(FORBIDDEN_OVERRIDES)
+    assert not set(session.ENV_ALLOWLIST) & set(FORBIDDEN_OVERRIDES)
+    # The recorder's own configuration roots are for the recorder, not for uvx.
+    assert "ASCIINEMA_CONFIG_HOME" not in env
+    assert "ASCIINEMA_STATE_HOME" not in env
+    assert "SHELL" not in env
+    # Only one uv name family is forwarded: task-owned paths plus the four safety settings.
+    uv_names = [name for name in session.ENV_ALLOWLIST if name.startswith("UV_")]
+    assert uv_names == [
+        "UV_CACHE_DIR",
+        "UV_TOOL_DIR",
+        "UV_PYTHON_INSTALL_DIR",
+        "UV_NO_CONFIG",
+        "UV_NO_ENV_FILE",
+        "UV_DEFAULT_INDEX",
+        "UV_KEYRING_PROVIDER",
+    ]
+
+
+def test_home_is_forwarded_unchanged_not_repurposed(session: ModuleType) -> None:
+    env = session.allowlisted_environment(CONTROLLED_PREFIX)
+    assert env["HOME"] == CONTROLLED_PREFIX["HOME"]
+    assert "HOME" in session.ENV_ALLOWLIST
+    text = SCRIPT.read_text(encoding="utf-8")
+    assert "HOME=" not in text
+    assert "CODEX_HOME" not in text
 
 
 def test_allowlisted_environment_defaults_to_the_process_environment(

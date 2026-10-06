@@ -48,6 +48,10 @@ MAX_PAUSE_SECONDS = 30.0
 
 #: Only these names are copied from the parent environment into each child.
 #: Nothing else is read, so credentials are never inspected, even to redact them.
+#: The values come from the reviewed controlled prefix in ``recording.md``:
+#: task-owned uv cache/tool directories, no uv config or ``.env`` file, the
+#: official index only and the keyring disabled. No other index, source,
+#: find-links, netrc or token name is forwarded.
 ENV_ALLOWLIST: tuple[str, ...] = (
     "PATH",
     "HOME",
@@ -57,11 +61,13 @@ ENV_ALLOWLIST: tuple[str, ...] = (
     "LC_ALL",
     "LC_CTYPE",
     "TMPDIR",
-    "XDG_CACHE_HOME",
-    "XDG_DATA_HOME",
     "UV_CACHE_DIR",
-    "UV_PYTHON_INSTALL_DIR",
     "UV_TOOL_DIR",
+    "UV_PYTHON_INSTALL_DIR",
+    "UV_NO_CONFIG",
+    "UV_NO_ENV_FILE",
+    "UV_DEFAULT_INDEX",
+    "UV_KEYRING_PROVIDER",
 )
 
 
