@@ -82,7 +82,7 @@ The [3.12 metadata](https://download.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp31
 
 Keep macOS on PyPI to preserve the tested Python 3.12 arm64 wheel: `torch-2.14.1-cp312-cp312-macosx_14_0_arm64.whl`, 127,307,099 bytes, SHA256 `420dbf314c180ee4b86e9bc00aee5746a7d6e5bacdd7df925af671ed393f0b2e`. The CPU index serves a differently hashed macOS artifact, so an all-platform index switch would change the tested binary.
 
-**Verified:** CPU artifact availability, published hashes, license declarations, and declared dependency metadata. **Pending:** actual uv resolution with the new configuration, absence of CUDA/NVIDIA/Triton packages in the regenerated lock, and Linux live Laya runtime acceptance. Some index links used `download-r2.pytorch.org`, whose metadata requests returned HTTP 403 during this check; equivalent `download.pytorch.org` requests returned HTTP 200. Successful direct metadata access therefore does not establish that uv can follow every index link. Linux live tests and lock review remain release gates; this check does not extend support to other Linux architectures or libc variants.
+**Verified:** CPU artifact availability, published hashes, license declarations, declared dependency metadata, and the corrected resolution in the final T00 lock audited below. That lock has no CUDA/NVIDIA/Triton package and retains the tested macOS hash. **Pending:** Linux installation and live Laya runtime acceptance. Earlier direct metadata requests to some `download-r2.pytorch.org` index links returned HTTP 403, while equivalent `download.pytorch.org` requests returned HTTP 200; the later lock resolves to the official CPU registry, but successful locking is not a Linux runtime test. Linux live tests remain a release gate; this check does not extend support to other Linux architectures or libc variants.
 
 ## Weights and immutable artifacts
 
@@ -100,19 +100,83 @@ Locally downloaded artifacts were SHA256-hashed after successful loading:
 
 These are download/runtime artifacts, not files to commit into the product repository. Verify hashes on preparation/loading. Preserve the checkpoint card's calibration and specialization limitations in user-facing model documentation. The 843 MB weight file does not mean a process uses less than 1 GB: the observed peak process RSS reached approximately 2.72 GiB in the cached smoke.
 
-## Transitive-license inventory
+## Resolved lockfile license inventory
 
-The macOS native smoke resolved 35 distributions. Installed metadata was inspected for every distribution, and relevant direct-dependency license files were read. This is a dated dependency inventory, not an exhaustive legal audit of every bundled file or the Linux graph. The committed lockfile remains authoritative for the final shipped graph.
+Final T00 lock audited on **6 October 2026**: `.worktrees/t00/uv.lock`, SHA256 `06eec429c7bd6d9dda0d960cd36a13b121a6e0c85f0e910a8bd913f651163268`. It contains **54 package records: Actseal plus 53 third-party records covering 52 unique third-party names**. Torch appears twice for the platform-specific builds. This inventory replaces the earlier 35-distribution preflight snapshot; that snapshot also contained pip, which is not in this product lock. Python, uv, the build backend, and GitHub Actions are recorded separately above rather than counted as locked runtime packages.
 
-| License family / declared expression | Observed distributions and versions |
+Every third-party record was checked against its exact-version PyPI JSON endpoint, except Linux CPU Torch, which was checked against official wheel metadata. Null license fields and generic BSD labels were not treated as proof: the exceptions below were resolved from already-installed exact-version license files or tagged upstream LICENSE files. These checks downloaded metadata and text only, with no package or weight binary downloads.
+
+**Scope:** “Laya” means reachable only from the optional inference extra; “Dev” means reachable only from the development group; “Both” means shared by those two graphs. Reachability includes locked platform-marker alternatives, not a claim that every record installs on every platform. The fixture/core runtime has no third-party requirements. There are 30 Laya-only names, 17 development-only names, and five shared names.
+
+| Transitive group | Why it is present |
 | --- | --- |
-| MIT | annotated-doc 0.0.5; anyio 4.15.1; filelock 4.0.12; h11 0.16.0; markdown-it-py 4.2.0; mdurl 0.1.2; pip 26.1.2; PyYAML 6.0.3; rich 15.0.0; setuptools 84.0.0; typer 0.27.2 |
-| BSD variants | click 8.5.0; fsspec 2026.9.0; httpcore 1.0.9; httpx 0.28.1; idna 3.20; Jinja2 3.1.6; MarkupSafe 3.0.4; mpmath 1.3.0; networkx 3.7; Pygments 2.21.0; sympy 1.14.0 |
-| Apache variants | hf-xet 1.6.0; tokenizers 0.23.2; packaging 26.3 (Apache-2.0 OR BSD-2-Clause); regex 2026.9.29 (Apache-2.0 AND CNRI-Python) |
-| MPL / MIT, ISC, PSF | certifi 2026.7.22 (MPL-2.0); tqdm 4.70.1 (MPL-2.0 AND MIT); shellingham 1.5.4 (ISC); typing_extensions 4.16.0 (PSF-2.0) |
-| Direct native packages | Laya, Torch, Transformers, HF Hub, Safetensors, and NumPy: versions and compound license expressions above |
+| Inference and numerical support | Laya brings Torch, Transformers, NumPy, Safetensors, tokenizers, regex, SymPy/mpmath, networkx, Jinja2/MarkupSafe, and setuptools for the native CPU path. |
+| Artifact download, cache, and transport | Hugging Face Hub brings hf-xet, fsspec, filelock, HTTPX/httpcore/h11, AnyIO, certifi, and idna to prepare and cache the pinned model. |
+| Upstream parsing and console utilities | Transformers/Hub bring PyYAML, packaging, typing-extensions, tqdm, click, and Typer; Typer brings annotated-doc, Rich, Markdown parsing, Pygments, and shellingham. Actseal does not add its own CLI framework. |
+| Type, test, and lint tooling | mypy brings ast-serialize, librt, mypy-extensions, pathspec, and typing-extensions; pytest brings iniconfig, pluggy, packaging, and Pygments; Ruff is a direct development tool. |
+| Hook environment management | pre-commit brings cfgv, identify, nodeenv, PyYAML, and virtualenv; virtualenv brings distlib, filelock, packaging, platformdirs, and python-discovery. nodeenv is transitive tooling, not a Node requirement for Actseal core. |
 
-Jinja2, mpmath, and SymPy installed license files were also inspected where package metadata used a generic BSD label. Retain upstream notices when redistribution requires them; install-time use of an optional dependency does not transfer its full codebase into Actseal. No proprietary runtime appeared in the tested macOS native stack. The rejected initial Linux CUDA graph is a separate, confirmed exception described above; the corrected Linux CPU graph still needs lock and runtime acceptance.
+| Package | Locked version | Scope | Verified license declaration / file | Exact primary source |
+| --- | --- | --- | --- | --- |
+| annotated-doc | 0.0.5 | Laya | MIT | [PyPI 0.0.5](https://pypi.org/pypi/annotated-doc/0.0.5/json) |
+| anyio | 4.15.1 | Laya | MIT | [PyPI 4.15.1](https://pypi.org/pypi/anyio/4.15.1/json) |
+| ast-serialize | 0.12.1 | Dev | MIT | [PyPI 0.12.1](https://pypi.org/pypi/ast-serialize/0.12.1/json) |
+| certifi | 2026.7.22 | Laya | MPL-2.0 | [PyPI 2026.7.22](https://pypi.org/pypi/certifi/2026.7.22/json) |
+| cfgv | 3.5.0 | Dev | MIT | [PyPI 3.5.0](https://pypi.org/pypi/cfgv/3.5.0/json) |
+| click | 8.5.0 | Laya | BSD-3-Clause | [PyPI 8.5.0](https://pypi.org/pypi/click/8.5.0/json) |
+| distlib | 0.4.3 | Dev | PSF-2.0 | [PyPI 0.4.3](https://pypi.org/pypi/distlib/0.4.3/json) |
+| filelock | 4.0.12 | Both | MIT | [PyPI 4.0.12](https://pypi.org/pypi/filelock/4.0.12/json) |
+| fsspec | 2026.9.0 | Laya | BSD-3-Clause | [PyPI 2026.9.0](https://pypi.org/pypi/fsspec/2026.9.0/json) |
+| h11 | 0.16.0 | Laya | MIT | [PyPI 0.16.0](https://pypi.org/pypi/h11/0.16.0/json) |
+| hf-xet | 1.6.0 | Laya | Apache-2.0 | [PyPI 1.6.0](https://pypi.org/pypi/hf-xet/1.6.0/json) |
+| httpcore | 1.0.9 | Laya | BSD-3-Clause | [PyPI 1.0.9](https://pypi.org/pypi/httpcore/1.0.9/json) |
+| httpx | 0.28.1 | Laya | BSD-3-Clause | [PyPI 0.28.1](https://pypi.org/pypi/httpx/0.28.1/json) |
+| huggingface-hub | 1.33.0 | Laya | Apache-2.0 | [PyPI 1.33.0](https://pypi.org/pypi/huggingface-hub/1.33.0/json) |
+| identify | 2.6.20 | Dev | MIT | [PyPI 2.6.20](https://pypi.org/pypi/identify/2.6.20/json) |
+| idna | 3.20 | Laya | BSD-3-Clause | [PyPI 3.20](https://pypi.org/pypi/idna/3.20/json) |
+| iniconfig | 2.3.0 | Dev | MIT | [PyPI 2.3.0](https://pypi.org/pypi/iniconfig/2.3.0/json) |
+| jinja2 | 3.1.6 | Laya | BSD-3-Clause | [PyPI 3.1.6](https://pypi.org/pypi/jinja2/3.1.6/json); [version LICENSE](https://github.com/pallets/jinja/blob/3.1.6/LICENSE.txt) |
+| laya | 0.3.28 | Laya | Apache-2.0 | [PyPI 0.3.28](https://pypi.org/pypi/laya/0.3.28/json) |
+| librt | 0.16.0 | Dev | MIT | [PyPI 0.16.0](https://pypi.org/pypi/librt/0.16.0/json) |
+| markdown-it-py | 4.2.0 | Laya | MIT | [PyPI 4.2.0](https://pypi.org/pypi/markdown-it-py/4.2.0/json); [version LICENSE](https://github.com/executablebooks/markdown-it-py/blob/v4.2.0/LICENSE) and installed bundled MIT notice |
+| markupsafe | 3.0.4 | Laya | BSD-3-Clause | [PyPI 3.0.4](https://pypi.org/pypi/markupsafe/3.0.4/json) |
+| mdurl | 0.1.2 | Laya | MIT | [PyPI 0.1.2](https://pypi.org/pypi/mdurl/0.1.2/json); installed `mdurl-0.1.2.dist-info/LICENSE`, including bundled MIT notice |
+| mpmath | 1.3.0 | Laya | BSD-3-Clause | [PyPI 1.3.0](https://pypi.org/pypi/mpmath/1.3.0/json); [version LICENSE](https://github.com/mpmath/mpmath/blob/1.3.0/LICENSE) |
+| mypy | 2.4.0 | Dev | MIT | [PyPI 2.4.0](https://pypi.org/pypi/mypy/2.4.0/json) |
+| mypy-extensions | 1.1.0 | Dev | MIT | [PyPI 1.1.0](https://pypi.org/pypi/mypy-extensions/1.1.0/json); [version LICENSE](https://github.com/python/mypy_extensions/blob/1.1.0/LICENSE) |
+| networkx | 3.7 | Laya | BSD-3-Clause | [PyPI 3.7](https://pypi.org/pypi/networkx/3.7/json) |
+| nodeenv | 1.11.0 | Dev | BSD-3-Clause | [PyPI 1.11.0](https://pypi.org/pypi/nodeenv/1.11.0/json); [version LICENSE](https://github.com/ekalinin/nodeenv/blob/1.11.0/LICENSE) |
+| numpy | 2.5.3 | Laya | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | [PyPI 2.5.3](https://pypi.org/pypi/numpy/2.5.3/json) |
+| packaging | 26.3 | Both | Apache-2.0 OR BSD-2-Clause | [PyPI 26.3](https://pypi.org/pypi/packaging/26.3/json) |
+| pathspec | 1.1.1 | Dev | MPL-2.0 | [PyPI 1.1.1](https://pypi.org/pypi/pathspec/1.1.1/json); [version LICENSE](https://github.com/cpburnz/python-pathspec/blob/v1.1.1/LICENSE) |
+| platformdirs | 4.12.3 | Dev | MIT | [PyPI 4.12.3](https://pypi.org/pypi/platformdirs/4.12.3/json) |
+| pluggy | 1.6.0 | Dev | MIT | [PyPI 1.6.0](https://pypi.org/pypi/pluggy/1.6.0/json) |
+| pre-commit | 4.6.2 | Dev | MIT | [PyPI 4.6.2](https://pypi.org/pypi/pre-commit/4.6.2/json) |
+| pygments | 2.21.0 | Both | BSD-2-Clause | [PyPI 2.21.0](https://pypi.org/pypi/pygments/2.21.0/json) |
+| pytest | 9.1.1 | Dev | MIT | [PyPI 9.1.1](https://pypi.org/pypi/pytest/9.1.1/json) |
+| python-discovery | 1.6.1 | Dev | MIT | [PyPI 1.6.1](https://pypi.org/pypi/python-discovery/1.6.1/json) |
+| pyyaml | 6.0.3 | Both | MIT | [PyPI 6.0.3](https://pypi.org/pypi/pyyaml/6.0.3/json) |
+| regex | 2026.9.29 | Laya | Apache-2.0 AND CNRI-Python | [PyPI 2026.9.29](https://pypi.org/pypi/regex/2026.9.29/json) |
+| rich | 15.0.0 | Laya | MIT | [PyPI 15.0.0](https://pypi.org/pypi/rich/15.0.0/json) |
+| ruff | 0.16.10 | Dev | MIT | [PyPI 0.16.10](https://pypi.org/pypi/ruff/0.16.10/json) |
+| safetensors | 0.8.0 | Laya | Apache-2.0 | [PyPI 0.8.0](https://pypi.org/pypi/safetensors/0.8.0/json); installed `safetensors-0.8.0.dist-info/licenses/LICENSE` |
+| setuptools | 84.0.0 | Laya | MIT | [PyPI 84.0.0](https://pypi.org/pypi/setuptools/84.0.0/json) |
+| shellingham | 1.5.4 | Laya | ISC | [PyPI 1.5.4](https://pypi.org/pypi/shellingham/1.5.4/json) |
+| sympy | 1.14.0 | Laya | BSD-3-Clause AND MIT (bundled code) | [PyPI 1.14.0](https://pypi.org/pypi/sympy/1.14.0/json); [version LICENSE and bundled notices](https://github.com/sympy/sympy/blob/sympy-1.14.0/LICENSE) |
+| tokenizers | 0.23.2 | Laya | Apache-2.0 | [PyPI 0.23.2](https://pypi.org/pypi/tokenizers/0.23.2/json); [version LICENSE](https://github.com/huggingface/tokenizers/blob/v0.23.2/LICENSE) |
+| torch | 2.14.1 | Laya | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT | [PyPI 2.14.1](https://pypi.org/pypi/torch/2.14.1/json) |
+| torch | 2.14.1+cpu | Laya | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT | [official wheel metadata](https://download.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl.metadata) |
+| tqdm | 4.70.1 | Laya | MPL-2.0 AND MIT | [PyPI 4.70.1](https://pypi.org/pypi/tqdm/4.70.1/json) |
+| transformers | 5.18.0 | Laya | Apache-2.0 | [PyPI 5.18.0](https://pypi.org/pypi/transformers/5.18.0/json) |
+| typer | 0.27.2 | Laya | MIT | [PyPI 0.27.2](https://pypi.org/pypi/typer/0.27.2/json) |
+| typing-extensions | 4.16.0 | Both | PSF-2.0 | [PyPI 4.16.0](https://pypi.org/pypi/typing-extensions/4.16.0/json) |
+| virtualenv | 21.14.5 | Dev | MIT | [PyPI 21.14.5](https://pypi.org/pypi/virtualenv/21.14.5/json) |
+
+**Ambiguities resolved:** Jinja2, mpmath, and nodeenv use BSD-3-Clause as confirmed by all three license conditions; SymPy includes BSD-3-Clause notices and MIT-licensed latex2sympy code. mypy-extensions has no PyPI license declaration or classifier but its installed and tagged LICENSE both explicitly grant MIT. markdown-it-py, mdurl, pathspec, Safetensors, and tokenizers have absent license-expression/legacy fields; exact license files confirm the table. python-discovery embeds the full MIT permission/disclaimer text in its exact-version metadata. A missing SPDX field is not silently substituted with a guess.
+
+**Audit result:** no unresolved missing, ambiguous, or proprietary package-level license remains in this inspected lock. No `cuda*`, `nvidia*`, or Triton package is present. The macOS Python 3.12 Torch wheel retains SHA256 `420dbf314c180ee4b86e9bc00aee5746a7d6e5bacdd7df925af671ed393f0b2e`; Linux Torch resolves to the official CPU registry and `2.14.1+cpu`. This establishes the corrected resolution recorded in the lock; this audit did not execute a Linux installation or inference.
+
+This is an exact-version declaration and selected license-file audit, not an exhaustive audit of every file embedded in every platform wheel. Keep compound expressions and applicable notices intact when redistributing dependencies. Any changed locked version, source, or license must be rechecked; an unresolved declaration or incompatible license blocks publication of the affected dependency path. Linux installation, native model execution, and hosted CI remain separate pending acceptance checks.
 
 ## Changes and release gate
 
