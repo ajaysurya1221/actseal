@@ -1,31 +1,60 @@
 # Actseal v0.1.0 — release report
 
-**PRE-PUBLICATION SNAPSHOT — 6 October 2026.** T00 through T60 are independently
-accepted and merged. T70 final artifact/CI and publication checks remain pending.
-The released source archive preserves this pre-publication snapshot; main will
-receive the final downloaded-asset hashes and public-URL receipt afterwards.
-The tag and assets will not be moved or replaced to embed their own hashes. The CLI, installed fixture demo and native Laya CLI have actual
-receipts below. The [public repository](https://github.com/ajaysurya1221/actseal)
-exists; the v0.1.0 release asset has not yet been published.
+**SHIPPED — 6 October 2026.** [Actseal v0.1.0](https://github.com/ajaysurya1221/actseal/releases/tag/v0.1.0) is public,
+with the audited wheel and source archive. T00–T70 are ACCEPT. The exact README
+command ran from a fresh directory in **6.20 seconds**, including uvx preparation
+with Python already available; downloaded hashes match the reviewed artifacts.
 
-| Release field | Current evidence / remaining gate |
+| Release field | Verified result |
 |---|---|
-| T50 CLI acceptance | ACCEPT `286ae67`, merge `7e696c5`; 127 unit and 8 clean-wheel tests independently passed |
-| T60 acceptance | ACCEPT `24d5818`, merge `3080079`;104 adversarial tests,2282 default tests and14 packaging tests independently passed |
-| Required hosted CI | T60's eight jobs passed; all demo bytes agree. Final release-candidate jobs remain required. |
-| Installed demo | bad BLOCK 32/128; fixed PASS 0/128; both replay; installed fixture 0.170645s after cached preparation |
-| Native CLI | Real pinned cached Laya lock0 / verifyBLOCK1 / replayBLOCK1;128 ABSTAIN; [receipt](reports/T70-native.md) |
-| Tag and distributions | PENDING — final artifact hashes, v0.1.0 release and public-URL quickstart |
-| Spend and publication review | Paid API $0; T70 publication ACCEPT pending. Launch remains a draft. |
+| Tag target | `83fd04a5d340000aed6518109dce666dc208ad70` |
+| Public repository | [ajaysurya1221/actseal](https://github.com/ajaysurya1221/actseal) |
+| Final local checks | 2,282 default tests; 14 packaging tests; lint, formatting, strict typing, build and all hooks pass |
+| Final hosted CI | [Four Linux/macOS Python 3.12/3.13 jobs](https://github.com/ajaysurya1221/actseal/actions/runs/37456279878), all green; identical demo evidence |
+| Fixture demonstration | Bad BLOCK:32 wrong ACTs/128; fixed PASS:0/128; separate replay matches |
+| Native demonstration | Pinned cached Laya:128 ABSTAIN; verify/replay BLOCK for low coverage; [receipt](reports/T70-native.md) |
+| Publication review | [ACCEPT](reviews/T70-02.md); [complete execution receipt](reports/T70.md) |
+| Incremental paid API spend | USD0; existing subscription usage accounted separately below |
 
+The source archive contains its declared pre-publication report snapshot. Final
+artifact hashes and public-URL receipts are committed on main after publication;
+the tag and assets remain unchanged. This avoids replacing artifacts to embed
+their own hashes. The launch post remains an unposted [draft](LAUNCH.md).
+
+## Final artifact and command receipts
+
+| Artifact | Bytes | SHA-256 |
+|---|---|---|
+| `actseal-0.1.0-py3-none-any.whl` | 84,617 | `672b60815394cf9673c6a9f78437750ffc40d44467627604f48c5e1c5f77e906` |
+| `actseal-0.1.0.tar.gz` | 505,681 | `1781149ff09a21f14691daf0f6777f29022ec01293463394ac4f569f6897be2a` |
+
+The final wheel installed without dependencies in a fresh external venv; Torch,
+Laya and Transformers were absent. Demo execution took **0.179569 seconds** after
+**0.043571 seconds** of cached venv/install preparation. Separately, the exact public
+README command took **6.202398 seconds** including uvx preparation. These are scoped
+reference measurements, not cold-download or inference benchmarks. Public-wheel
+fixed/bad replays returned0/1, including expected-lock checks; the detailed quickstart's
+standalone lock/verify/replay commands passed too.
+
+All 24 demo files match across final installed/public runs and hosted jobs:
+`f894beeb06c4053d0965180ea98d229f3870887f3f09473f1599def541798d6d`.
+The final source fingerprint remains
+`cd3a0976cf7886616f1fdf565c914f30d0c82cac530e7b9ffc4119e3a90300a7`.
+Root verified unchanged provider/test bytes against the earlier native receipts.
+
+Independent final archive review checked36 wheel files and150 sdist files: source
+parity, all RECORD hashes/sizes, metadata, LICENSE/NOTICE, exact inclusion list and
+private-file/credential-pattern exclusion. The pre-publication documentation review
+checked all89 local links/anchors in its seven-document scope. Limits of these checks are preserved in REPORT T70; no blanket guarantee
+about all secrets, dependency-internal code or untested hardware is implied.
 
 ## Accepted implementation versus planned release
 
 The accepted core freezes an application decision policy and its labelled inputs,
 records provider outcomes, checks failure behavior, calculates accepted-action
 error and coverage bounds, and independently replays bounded evidence. The
-complete user-facing workflow and independent adversarial acceptance are accepted;
-publication remains gated on T70.
+complete user-facing workflow, adversarial acceptance and public distribution are
+accepted. No mandatory v1 scope was cut.
 
 | Planned component | Accepted implementation / remaining work |
 |---|---|
@@ -36,7 +65,7 @@ publication remains gated on T70.
 | T40 evidence and replay | Bounded seven-file bundles, exclusive atomic publication and provider-free semantic replay. [ACCEPT](reviews/T40-02.md), [PR 5](https://github.com/ajaysurya1221/actseal/pull/5), candidate `98297d5f79cfa62e348d722d8ae91ec59252eebd`. |
 | T50 CLI and demo | Complete runner, four CLI commands, packaged support-triage inputs and installed-wheel entrypoints/isolation. [ACCEPT](reviews/T50-02.md), [PR6](https://github.com/ajaysurya1221/actseal/pull/6), candidate `286ae67e252ecbb77e9c330ebe1f66cc375bfbab`. |
 | T60 acceptance |104 adversarial/public/installed acceptance tests, including first-fault continuation and rehashed fallback forgery; [ACCEPT](reviews/T60-02.md), [PR7](https://github.com/ajaysurya1221/actseal/pull/7), candidate `24d5818aa225294f0ed540fbe6f03728b9332997`. |
-| T70 publication |Final artifact/CI gate and publication are **PENDING**. |
+| T70 publication |Public v0.1.0, exact-candidate CI, audited/downloaded artifacts and runnable public quickstart; [REPORT](reports/T70.md), [ACCEPT](reviews/T70-02.md). |
 
 Claude Code Fable 5.1/high implemented product code and tests; Codex specified,
 reviewed, independently checked and gated each accepted task. Project-local
@@ -45,8 +74,9 @@ the shared long-term context. No private orchestration implementation was copied
 
 ## Checks actually completed
 
-These are task-specific independent Codex results at the candidates above, not
-additive test totals or a final integrated release run. Each review records the
+The table below preserves task-specific independent Codex results at the candidates
+above. These counts are not additive. The final integrated release run is recorded
+separately above and in REPORT T70. Each review records the
 exact task commands, findings and applicable source identities. Ruff lint,
 formatting and strict mypy passed for each accepted task.
 
@@ -86,7 +116,8 @@ bad had 32 wrong ACTs and BLOCKed; fixed had 0 and PASSed. Risk intervals are
 both coverage intervals are [0.9663447899063922,1]. Fresh installed module replays
 with expected hashes return 1/0. This is authored demo evidence, not model quality.
 The [review](reviews/T50-02.md) binds source, locks and 24-file inventory digest.
-Final artifact metadata/public-download verification remains pending.
+Final artifact metadata and public-download verification are complete; the separate
+release receipt above binds those results to the published wheel.
 
 The [native CLI check](reports/T70-native.md) separately ran all 128 committed
 synthetic verification inputs once through pinned cached Laya at candidate 434c682.
@@ -103,8 +134,8 @@ issue in 143 tracked files, 36 wheel entries and 140 sdist files at 1337f3d. No 
 research originals, private memory, dispatch/local receipts, weights or generated
 runs were included. All 53 third-party lock records match the license inventory;
 core runtime requirements are empty and Linux Torch remains the official CPU
-build. Final rebuilt archives require fresh hashes/inventories; no blanket audit
-of every embedded third-party-wheel file or all Git history is claimed.
+build. Final rebuilt archives subsequently passed the separate audit recorded above;
+no blanket audit of every embedded third-party-wheel file or all Git history is claimed.
 
 T60 closed its two initial test gaps before acceptance: the first injected fault
 must not terminate the campaign, and lock/verify/replay each require separate clean
@@ -114,8 +145,8 @@ commit messages, and found no credential/private-input publication. That review
 excluded ignored files, credentials, unreachable objects and comparison with private
 repositories; it is a scoped pattern/path audit, not a universal secrecy guarantee.
 
-Still required: final release-candidate checks, final archives/public-URL verification
-and immutable tag/release receipts.
+The final release-candidate checks, archive/public-URL verification and immutable
+tag/release receipts are now complete in REPORT T70. Day3 was unused.
 
 ## Material deviations from the research
 
@@ -160,14 +191,14 @@ being silently converted into facts.
   defense against a hostile process controlling ancestor directories. Input and
   bundle sizes are deliberately bounded; details are in [CONTRACTS](CONTRACTS.md).
 - No material product defect remained at the accepted task heads. T60's injected
-  first-fault continuation and rehashed fallback-flag forgery checks passed; final
-  artifact/CI/publication checks remain pending in this snapshot. Sensitive raw
+  first-fault continuation and rehashed fallback-flag forgery checks passed, as did
+  final artifact/CI/publication checks. Sensitive raw
   inputs/responses need caller-controlled handling; generated runs are ignored by
   default, not automatically anonymized.
 
 ## Spend and execution accounting
 
-**Recorded incremental paid inference API spend to this snapshot: USD 0.** No Jev
+**Recorded incremental paid inference API spend for v0.1.0: USD 0.** No Jev
 call or paid hosting was required. Claude used the existing authenticated
 claude.ai Max subscription. Existing subscriptions, local compute and labour
 are not claimed free. The completed-session meters below are estimates, not API
@@ -190,8 +221,8 @@ meters are not separate spend. All completed dispatches report the requested
 `claude-fable-5-1` model. The sum of final cumulative meters is **$115.08465475
 of estimated subscription usage**, not paid API charges or an invoice. Incremental
 paid inference API spend remains **$0**; no billing switch occurred. The $100
-incremental-spend escalation and two-day target remain in force; 8 October is only
-an escalated buffer, not an already-used extension.
+incremental-spend threshold was not reached. Publication completed on6October,
+within the focused two-day target; the8October buffer was unused.
 
 ## Next three steps after v0.1.0
 

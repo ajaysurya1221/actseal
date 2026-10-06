@@ -158,3 +158,10 @@ correctly describes two authored answer sets under one policy. The sdist uses an
 explicit public-document/configuration allowlist so README/example links remain
 inspectable offline; private dispatch, local receipts, original research and
 .env remain outside every included path. No runtime dependency or product change.
+
+## 2026-10-06 — v0.1.0 publication complete
+
+T00–T70 ACCEPT. Tag83fd04a, audited wheel/sdist and exact public-wheel demo/replay verified.
+No mandatory scope cut. Final receipts are appended on main after publication, preserving
+the fixed tag/assets and their pre-publication report snapshot. Jev/hosting/PyPI and public
+launch posting remain deferred. See REPORT T70, REVIEW T70-02 and FINAL_REPORT.

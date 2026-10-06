@@ -1,126 +1,66 @@
 # Actseal shared project state
 
-Updated: 2026-10-06. Sole writer: Codex (planner/orchestrator/reviewer).
+Updated:2026-10-06. Sole writer:Codex. **v0.1.0 SHIPPED.**
 
 ## Current objective and authorization
 
-Ship a publishable focused OSS v0.1.0 in two days. The human selected Decision
-Contract and the focused v1 scope, delegated naming, and explicitly requested
-implementation on 2026-10-06. Product name: Actseal. No further "go" is needed.
-Public launch posts remain drafts. Claude Fable 5.1/high writes all product code.
+The focused two-day OSS sprint is complete. The user chose Decision Contract,
+authorized implementation and public delivery, delegated naming, and approved
+routine execution/hooks. Product name: **Actseal — decision contracts you can replay**.
+Claude Code Fable5.1/high implemented all product code and behavioral tests;
+Codex specified, orchestrated, reviewed, verified and released it.
+Public launch messages remain drafts; no further execution approval is pending.
 
-## Current state
+## Publication identity
 
-- Planning artifacts: complete; 119 material claims and all 18 candidate dispositions recorded.
-- Product implementation: T00 through T50 accepted and merged; T60 accepted and merged; T70 final publication gate is active.
-- Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
-- Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
-- Preflight: source statistics suite passed in a separate verification lane;
-  native pinned Laya CPU/cached-offline smoke passed. See VERIFICATION.md for scope.
+- [Public release](https://github.com/ajaysurya1221/actseal/releases/tag/v0.1.0) — non-draft, non-prerelease.
+- Tag target `83fd04a5d340000aed6518109dce666dc208ad70`; annotation object3bea9261a5157ecaa0f032ec9de52f2dadea12e8.
+- [Final CI](https://github.com/ajaysurya1221/actseal/actions/runs/37456279878): all4 Linux/macOS Python3.12/3.13 jobs green.
+- Exact public-wheel quickstart passed in6.202398s including uvx preparation;
+  both downloaded artifacts match reviewed hashes. Actual fixture badBLOCK/fixedPASS
+  and offline replays agree. Native CLI retains real coverageBLOCK with128ABSTAIN.
+- Main receives post-publication receipts after the tag. Product/tests, tag and
+  release assets are unchanged by that receipt commit. See FINAL_REPORT and REPORT T70.
 
 ## Task ledger
 
-| Task | Owner | State | Accepted commit |
+| Task | Owner | State | Accepted candidate / integration |
 |---|---|---|---|
-| Planning package | Codex | COMPLETE | ee99eee plus documented amendments |
-| T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff (merge 86dbca0) |
-| T10 contract/policy | Claude A | ACCEPT / MERGED | 9bdac25 (merge 28be58d) |
-| T20 statistics | Claude B | ACCEPT / MERGED | b1eace7 (merge 6d6d7c4) |
-| T30 providers/faults | Claude C | ACCEPT / MERGED | 8b1efd6 (merge 87d2cd1) |
-| T40 evidence/replay | Claude B | ACCEPT / MERGED | 98297d5 (merge 7a2939e) |
-| T50 CLI/demo | Claude A | ACCEPT / MERGED | 286ae67 (merge7e696c5) |
-| T60 acceptance | Claude C | ACCEPT / MERGED | 24d5818 (merge3080079) |
-| T70 publication | Codex | FINAL_RELEASE_CHECKS | none |
+| Planning package | Codex | COMPLETE | ee99eee plus approved ADR amendments |
+| T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff; merge86dbca0 |
+| T10 contract/policy | Claude A | ACCEPT / MERGED | 9bdac25; merge28be58d |
+| T20 statistics | Claude B | ACCEPT / MERGED | b1eace7; merge6d6d7c4 |
+| T30 providers/faults | Claude C | ACCEPT / MERGED | 8b1efd6; merge87d2cd1 |
+| T40 evidence/replay | Claude B | ACCEPT / MERGED | 98297d5; merge7a2939e |
+| T50 CLI/demo | Claude A | ACCEPT / MERGED | 286ae67; merge7e696c5 |
+| T60 acceptance | Claude C | ACCEPT / MERGED | 24d5818; merge3080079 |
+| T70 publication | Codex | ACCEPT / PUBLISHED | 83fd04a; tagv0.1.0 |
 
 ## Resume pointers
 
-Read PLAN.md, CONTRACTS.md, DECISIONS.md, then the exact task spec. Read the latest
-REVIEW as well as the executor REPORT; only ACCEPT authorizes integration. Shared
-types freeze after T00 ACCEPT. Recheck worktree/commit identity and auth before
-dispatch; never assume a status inherited from memory is still current.
+Read FINAL_REPORT, REPORT T70 and REVIEW T70-02 first. For new implementation read
+PLAN/CONTRACTS, relevant ADRs and the task spec; frozen shared types/acceptance remain
+protected. Preserve all REPORT/REVIEW attempts. Scope/license/proprietary-core,
+unverified-load-bearing and incremental-spend>USD100 escalation rules still apply.
+No current blocker or required follow-up remains for v0.1.0.
 
-## Blockers and next action
+## Verification and limits
 
-No authentication blocker remains. T00 PR1 is merged:
-https://github.com/ajaysurya1221/actseal/pull/1. REVIEW T00-05 ACCEPT binds
-commit ebe11ff947b366fa700bf0e1ecf6747fcebe970f; all four hosted jobs passed in
-runs37434438049/37434442393. Root independently passed 587 tests, Ruff, mypy,
-build and the three pre-commit hooks. Shared records/serialization/errors are frozen.
+Final local2282 default tests and14 packaging tests pass; no selected skips. Default
+excludes14 packaging and6 integration tests, with separate accepted native receipts.
+T60 also independently passed104 acceptance tests and all8 push/PR jobs. Source
+fingerprintcd3a0976cf7886616f1fdf565c914f30d0c82cac530e7b9ffc4119e3a90300a7;
+demo inventoryf894beeb06c4053d0965180ea98d229f3870887f3f09473f1599def541798d6d.
+Raw responses may be private; .env, original research, local receipts/dispatches,
+model weights and private-memory source are not tracked. Do not read/print real keys.
 
-The human approved the three hooks and standing routine execution on 2026-10-06.
-No pending permission question remains. Original scope/license/budget escalations
-and the release quality gates still apply; public launch messages remain drafts.
+Incremental paid inference API spend USD0. Final cumulative Claude subscription
+meters sumUSD115.08465475 estimated usage, not an invoice; repeated/resumed session
+meters count once. Existing subscriptions, compute and labour are not claimed free.
+Optional Jev, hosted tier, Marketplace Action and PyPI remain out of v0.1.0.
 
-T10 accepted at 9bdac251a76a22a30f8d3d5ab8b773e0200945a1 and merged through PR3
-as 28be58d. REVIEW T10-02 records 755 root-run tests, lint/format/mypy, independent
-regression probes and all eight hosted push/PR jobs green. All three original
-findings fixed; ADR0010 helpers are frozen. Claude cumulative subscription meter
-$12.1806425 is an estimate, not API billing.
+## Next action
 
-T30-02 fixes all four milestone findings. Root independently passed 243 unit
-tests in 4.12s, lint/format/mypy and 5 real cached-native Mac tests in 4.58s.
-Separate review confirms stalled-send timeout and malformed-IPC cleanup. Original
-REPORT preserved; corrective report acknowledges its earlier denial reroutes and
-does not repeat them. Cumulative subscription meter $17.69608775.
-Corrected provider milestone now ACCEPT at 17ed0875541ecfa6402991dc90e278beb2f4cc01
-in REVIEW T30-02. Both four-job CI matrices pass; native Linux run37439327535
-passes all 5 tests in 10.75s with Python3.12.3 and Torch2.14.1+cpu. Full T30 is now
-ACCEPT at 8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7 and merged as 87d2cd1 via PR4.
-Root passed 279 full-task tests in 4.25s, lint/format/mypy; all eight final hosted
-jobs pass in runs37440036303/37440043375. The native-tested provider code is
-byte-unchanged; new pure fault code independently reviewed. REVIEW T30-03 files
-one nonblocking T60 test-quality follow-up. Final Claude meter $20.95634925.
-
-T20 full task ACCEPT at b1eace7009bc5bc966e4f600d756ff1802fd6e8e, merged6d6d7c4
-through PR2. Root passed259 tests in25.41s, lint/format/mypy. Independent integrity
-and statistical probes found no material defects. Both four-job hosted matrices
-pass in runs37441967584/37441973261. REVIEW T20-02 records exact evidence.
-Numerical source/tests remain unchanged from the accepted port. Final cumulative
-session meter $11.50984675 is estimated subscription usage, not API billing.
-T40 ACCEPT at 98297d5f79cfa62e348d722d8ae91ec59252eebd, merged7a2939e via PR5.
-REVIEW T40-02 records all three corrections, root178 tests in1.72s, lint/format/
-mypy, independent filesystem and semantic probes, and all eight hosted jobs green
-in runs37447161362/37447188177. Real exclusive publication executes on both OSes.
-CLI packaging/demo remain unrun T50 gates. Both REPORTs are preserved. Claude
-session a02c2248-c36b-496c-b941-e4b806cc5247 completed; final cumulative subscription
-meter $18.21350825, not paid API billing. T50 dispatched from integrated base b7f725e in .worktrees/t50.
-Claude session61e69351-ebca-4990-bdc8-89b7915a3b79, modelclaude-fable-5-1/high,
-acceptEdits; current Max authentication rechecked. Root owns console metadata and
-CI guard removal, both completed on the candidate. No new dependencies approved.
-REVIEW T50-01 requires sanitized usage, complete failure summaries, fixture
---offline compatibility and a genuinely healthy Laya pre-failure test case. Root
-passed114 unit tests/8 clean-wheel tests plus exact lint/format/types/build/help.
-Initial Claude meter $14.9410545 is subscription usage only. Future dispatches
-disable automatic memory per ADR0007; only the Git-backed shared state is authoritative.
-
-T00 Claude session25979d71-e2c8-4a20-932b-a18022ec31c7 completed. Model was
-claude-fable-5-1/high. Cumulative meter $15.7246075 estimated subscription usage,
-not a billed API charge. Raw receipts remain ignored under plan/dispatch.
-
-## Budget and scope
-
-Measured preflight API spend: $0. No Jev calls. No mandatory hosting. Subscription
-billing uses the authenticated Max subscription; never silently switch to API billing. Escalate projected
-incremental spend >$100 or if delivery requires using 8 October as more than buffer.
-Optional Jev/Marketplace Action are excluded from the release critical path.
-
-T50 ACCEPT at286ae67e252ecbb77e9c330ebe1f66cc375bfbab, merged7e696c5 via PR6.
-REVIEW T50-02 records root127 unit tests/8 clean-wheel tests, exact task quality
-checks, corrected diagnostics/offline/worker-loss paths and all eight hosted jobs
-in37451569089/37451595664. All24-file demo inventories match across both matrices
-and the root installed-wheel run. Native CLI integration remains T70 work.
-Final cumulative Claude meter $19.152133; actual incremental paid API spend $0.
-T60 may add explicitly marked installed-wheel acceptance tests; CI's packaging
-selection now covers every packaging marker, including tests/acceptance.
-
-T60 dispatched from434c682 in .worktrees/t60. Actual Claude session
-1db0e662-15be-406c-9bde-d95c97306735, claude-fable-5-1/high, acceptEdits,
-process-local automatic memory disabled. Root native CLI check at434c682 is
-complete: lock0, verifyBLOCK1, replayBLOCK1; all128 ABSTAIN under unchanged0.90
-threshold, no provider failures, all six faults correct. REPORT T70-native records
-actual identities and bounds; this synthetic input result is not model quality.
-T60 and final release gates remain open.
-
-T60 candidate 55c85682c23c82668b9bf37b8011638889048482 is REVISE in REVIEW T60-01: inject the first fault to prove continuation and retain independent lock/verify guard receipts. Root passed104 acceptance tests11.22s and owned lint/format/mypy. Small evidence-wording corrections also required. Claude session1db0e662-15be-406c-9bde-d95c97306735 will resume; cumulative subscription meter14.212899, incremental paid API0.
-
-T60 ACCEPT at24d5818aa225294f0ed540fbe6f03728b9332997, merged3080079 viaPR7. Both original test gaps fixed. Root104 acceptance11.84s; final integrated2282 default49.62s,14 packaging3.86s, full quality/build/hooks pass. All8jobs green in37455737559/37455758108; identical24-file demo digest. REVIEW T60-02 records root documentation-only caveat correction and final cumulative subscription meter17.3475675. All7 final meters sum115.08465475 estimated subscription usage, not paid charges; incremental API0. T70 now owns final release-candidate checks and publication.
+No action is required to finish this sprint. The user can run the README's one-command
+demo. Future work starts with the three evidence-driven steps in FINAL_REPORT;
+no background automation or public promotional post has been scheduled or sent.
