@@ -22,8 +22,7 @@ agent = laya.load(
     fast=False,
 )
 result = agent.predict(
-    "I was charged twice for my monthly subscription. "
-    "Please refund the duplicate payment.",
+    "I was charged twice for my monthly subscription. Please refund the duplicate payment.",
     {
         "department": {
             "type": "choice",
