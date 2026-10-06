@@ -25,11 +25,11 @@ Codex is the sole writer of this state and REVIEW records. Executors write their
 | Task | Owner | Status |
 | --- | --- | --- |
 | 00 | Codex | ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8 |
-| 01 | Codex | REVISE: 2300 passed, 2 process-contamination failures; see Task 01R |
-| 02 | Claude A | Held for 01R and independent full-baseline ACCEPT |
+| 01 | Codex | ACCEPT after 01R: independent 2302 passed incl. native; PR #10 CI pending |
+| 02 | Claude A | Ready after accepted 01R integration; dispatch supplement being prepared |
 | 03–08 | Claude B/C/D | Waiting for frozen Task 02 contracts and specified dependencies |
-| 09 | Codex | Prerequisites ACCEPT and merged via PR #9 at e4bf59a; publication workflow hardening remains pending |
-| 10 | Claude V | Ready for Claude CLI in /Users/ajay/.codex/worktrees/actseal-v1-visuals/not-yet-named; dispatch/10.md |
+| 09 | Codex | Prerequisites ACCEPT and merged via PR #9 at e4bf59a; RUNNING Claude session b3ff94c7-3730-4f74-8c97-51ca08412f31 for publication workflow hardening |
+| 10 | Claude V | RUNNING Claude session 6d75b60a-06d9-4a39-a69b-fbe105277f4a in visuals worktree |
 | 11–18 | Claude V | Waiting for their specified dependencies |
 | 19–22 | Claude A/D and Codex | Waiting for integration/release gates |
 

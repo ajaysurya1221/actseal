@@ -4,7 +4,7 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 - [x] 00 Persist exact approval and decisions.
 - [x] 01 Run full baseline; retain two failures and native success.
-- [ ] 01R Claude repairs isolated import checks; Codex reruns all 2302 tests.
+- [x] 01R repair and independent 2302-test verification ACCEPT; hosted CI/merge pending.
 - [ ] 02 Freeze stable public interfaces, schema versions and compatible replay.
 - [ ] 03 Shared provider conformance and native fixture repair.
 - [ ] 04 Numerical boundary/properties/eight mutations.
