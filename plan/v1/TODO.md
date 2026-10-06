@@ -19,4 +19,4 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work: 01R is ACCEPT and merged; Claude02, Claude09 and Claude10 are running in isolated worktrees. Monitor existing handles, then independently review completed reports. Never relaunch based only on observation timeout.
+Current work: 01R is ACCEPT and merged. Claude02 and Claude09 are applying independent review findings in isolated worktrees. Task10CI is locally ACCEPT at 030ef840; PR13 awaits fresh hosted CI. After core02 ACCEPT, launch provider conformance03 and statistical verification04. Actual pinned asset downloads still await the requested exception; other lanes continue.
