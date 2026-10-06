@@ -4,21 +4,26 @@ Executor: Claude Code, model `claude-fable-5-1` (Claude Fable 5.1), effort high,
 
 Status: **PARTIAL by design.** The hero generator, its inventory registration and the focused tests are complete and green. **No hero asset exists**, the Task 11 done-when command **fails loudly (exit 1)** because the pinned JetBrains Mono files are not fetched, and no rendered review has happened. This report does not claim Task 11 acceptance. The parent resumes `--write`, rendered review and acceptance only after the scoped font-download and preview approvals.
 
+Revision: REVIEW 11 (REVISE at `09e96e5`) authorized amendment V1-019, under which this lane temporarily owns `tests/visual/test_render_cli.py` to replace three stale bootstrap expectations with missing-prerequisite tests, and asked for the time receipt to be corrected. Both are done below; the initial receipts are retained as history and the new results are reported separately.
+
 ## Commits (owned files only)
 
 | Commit | Message |
 |---|---|
 | `f26451fb9e909405da3dafff31d64f7aa0d0d36c` | feat(assets): add the hero banner generator and register its outlined outputs |
 | `d658b63fdbe94933585524fa08889bcbaf131fe1` | test(assets): cover hero copy, declarations, readability floors and fail-loud fonts |
-| (this report) | docs(v1): record REPORT 11 preparation |
+| `09e96e532cb75319bacffddbf9850d0067b9cb9e` | docs(v1): record REPORT 11 preparation for the hero banner (reviewed: REVISE) |
+| `e8cffe535eeb515d64dfa38d925916446fabd471` | test(assets): expect the implemented hero to fail on its missing pinned font (V1-019) |
+| (this revision) | docs(v1): amend REPORT 11 preparation after REVIEW 11 |
 
-SHA-256 of the owned files at `d658b63`:
+SHA-256 of the owned files at `e8cffe5` (the three Task 11 files are unchanged since `d658b63`):
 
 | File | SHA-256 |
 |---|---|
 | `docs/assets/src/actseal_assets/hero.py` | `11b3b2a71db8fd23cb519805aa455a78a2ff42362e343b7561cccde83aa5fe09` |
 | `docs/assets/src/actseal_assets/inventory.py` | `5f09ccb2c557751fc57468a1af4395a2e9b2472a8cd39491455464dcea842ea3` |
 | `tests/visual/test_hero.py` | `b264a71ba0f400f697f19859357efb769ae19e9c6a46819f9355e957923324be` |
+| `tests/visual/test_render_cli.py` (V1-019 temporary ownership) | `f1ca0357799f569555dc5cda98e281cb83aeb263d21c70a0d977db3405bcfdd2` |
 
 Hashes were computed with Python `hashlib` through `uv run --frozen python -c ...`; `shasum` was not used.
 
@@ -37,9 +42,16 @@ Hashes were computed with Python `hashlib` through `uv run --frozen python -c ..
 - **`docs/assets/src/actseal_assets/inventory.py`** — minimal registration: `from . import hero`; the `hero` asset gains `renderer=hero.render` and two mobile outputs (`hero-mobile-light.svg`, `hero-mobile-dark.svg`, `hero.MOBILE_WIDTH × hero.mobile_height()`, `display_width=MOBILE_DISPLAY_WIDTH`, `outlined=True`) built as plain `Output(...)` so the shared `_svg()` helper and every other asset are untouched. The desktop declarations (1600×400, outlined) are unchanged. The Task 12 how-it-works registration was not touched or anticipated; its `from . import how_it_works` line will sit next to the new import at integration (trivial adjacent-line merge).
 - **`tests/visual/test_hero.py`** (new, 19 tests). Font-free: exact copy and line rejoin; drifted line breaks rejected; forbidden-language scan (tamper, secure, signed, trust, guarantee, enforce, sandbox, padlock, shield, safe, proof, verified, … and `authentic`/`prove`/`truth` permitted only inside the caption); inventory declares exactly the four outlined outputs with the renderer, sizes and display widths; type sizes meet the floor (desktop caption 15.4 px, mobile 15.0 px) and a 20-unit caption is rejected; fixed geometry fits both canvases and crowded geometry is rejected; missing pinned fonts raise before outlining with both file names and the setup command; the real hero declaration in a font-less repository fails `check` and `write` with exactly `requires jetbrains-mono 2.304; not fetched: …` + `skipped rendering because prerequisites failed`, writes nothing; the in-process done-when command exits 1 with those errors and `0 asset(s) checked`. **Unit doubles** (fontTools only, skipped otherwise): rectangle-glyph TrueType files built in a temp dir under the pinned names, labelled in the module docstring and fixture as stand-ins that carry none of the pinned font's glyphs, metrics or bytes. They cover: exact output set and determinism; every output passes `checks.check_output` as outlined (no `<text>`, `font-family`, `transform`; title/desc exact); structure (groups `wordmark, tagline, motif, caption`; three `step-*` pills in order each with one rect and one glyph path; three arrowheads; one return route; 8 glyph paths desktop, 9 mobile; pills share a row); light/dark differ only in `fill`/`stroke`; a narrowed column raises instead of shrinking; a double lacking `,` raises `OutlineError`; and a pipeline `--write` then `--check --only hero` round trip passes when the copied manifest is re-pinned to the doubles' hashes (pipeline wiring only).
 
-No edits to `__init__.py` (the `hero` submodule is reachable as `actseal_assets.hero` through the inventory import), `pyproject.toml`, `uv.lock`, root `README.md`, `docs/assets/src/README.md`, workflows, product code, other assets, shared tests, shared state or REVIEW records.
+- **`tests/visual/test_render_cli.py`** (revision under amendment V1-019, commit `e8cffe5`). The three bootstrap expectations that assumed an unimplemented hero are replaced by missing-prerequisite tests with the same intent:
+  - `test_bootstrap_repository_reports_planned_assets_and_missing_hero_font[--check|--write]`: the seven planned assets stay `[info] … not implemented` with no `[error]`; the hero reports exactly `requires jetbrains-mono 2.304; not fetched: JetBrainsMono-Regular.ttf, JetBrainsMono-Bold.ttf, OFL.txt` and `skipped rendering because prerequisites failed`; no `[ok] hero`; exit 1; summary `0 asset(s) checked; 7 planned/not implemented; 2 error(s)` (`; 0 file(s) written` in write mode); no `hero*` file exists under `docs/assets`.
+  - `test_only_implemented_hero_without_font_exits_one`: `--check --only hero` exits 1 with the two hero errors, no `hero: not implemented`, `0 asset(s) checked`, nothing written.
+  - `test_only_planned_asset_exits_one`: the explicit unimplemented request now uses `architecture` (Task 13, planned on every lane) and asserts neither `hero` nor `how-it-works` appears in the output.
+  - `test_render_script_runs_without_fonttools`: the fontTools-blocked subprocess runs `--check`, exits 1 with an **empty stderr**, reports the two hero font errors and the references `[ok]` line, and leaves no hero file; a sibling `test_render_script_check_of_planned_asset_runs_without_fonttools` runs `--check --only architecture` in the same blocked process and asserts the hero is never touched.
+  - Unchanged: usage errors exit 2, `repository_root()`, `--help`, no eager fontTools import, runtime package has no toolchain dependency. No test is skipped or weakened; pipeline and product semantics are untouched. Task 12's workflow-specific tests on its own branch were not copied or integrated; its `IMPLEMENTED`/`PLANNED` reshaping of the same tests will need a reconciliation that keeps both the how-it-works write-then-check assertions and the hero missing-font assertions.
 
-## Commands and results
+No edits to `__init__.py` (the `hero` submodule is reachable as `actseal_assets.hero` through the inventory import), `pyproject.toml`, `uv.lock`, root `README.md`, `docs/assets/src/README.md`, workflows, product code, other assets, other shared tests, shared state or REVIEW records.
+
+## Commands and results — initial receipt at `09e96e5` (history, retained)
 
 | Command | Result | Exit |
 |---|---|---|
@@ -55,9 +67,24 @@ No edits to `__init__.py` (the `hero` submodule is reachable as `actseal_assets.
 
 Not run: `render.py --write --only hero` (would fail identically; nothing to write without fonts), `setup_tools.py` (prohibited), any rasterizer or preview (approval pending), packaging/integration markers, the full default suite (unchanged outside `tests/visual`; the three shared-test failures above would appear there too).
 
+## Commands and results — after REVIEW 11, at `e8cffe5` (new, reported separately)
+
+| Command | Result | Exit |
+|---|---|---|
+| `uv run --frozen --group assets pytest tests/visual -q -p no:cacheprovider -rs` | **226 passed** in 1.10 s (223 before V1-019: 3 tests replaced by 2 + 1 parametrized pair, 1 sibling added) | 0 |
+| `uv run --frozen python -c "import sys; sys.modules['fontTools'] = None; import pytest; sys.exit(pytest.main(['tests/visual', '-q', '-p', 'no:cacheprovider', '-rs']))"` (core environment simulation, whole visual suite) | 210 passed, 11 skipped (`test_outline.py` module skip; 10 unit-double hero tests) | 0 |
+| **`uv run --frozen --group assets python docs/assets/src/render.py --check --only hero`** (Done-when, still blocked) | identical to the initial receipt: two hero errors, `check: 0 asset(s) checked; 0 planned/not implemented; 2 error(s)` | **1** |
+| `uv run --frozen pre-commit run --all-files` | ruff check Passed; ruff format --check Passed; mypy --strict Passed | 0 |
+| `uv run --frozen mypy --strict docs/assets/src` (extra) | Success: no issues found in 12 source files | 0 |
+| `uv run --frozen ruff check docs/assets/src tests/visual` / `ruff format --check docs/assets/src tests/visual` | All checks passed / 25 files already formatted | 0 |
+| `git diff --check` (working tree) and `git diff --cached --check` | clean | 0 |
+| `ls docs/assets` | `src` only; **no hero asset exists** | 0 |
+
+Still not run and not authorized: font or tool download, `setup_tools.py`, any rasterizer or preview, native or mutation harness, network or live providers, secrets. No fake hero output was produced; unit doubles exist only inside temporary test directories.
+
 ## Deviations
 
-1. **Three shared tests now fail, by consequence, not by edit.** `tests/visual/test_render_cli.py::test_check_on_bootstrap_repository_reports_planned_assets` (expects exit 0 and eight planned assets), `::test_only_planned_asset_exits_one` (expects `not implemented (planned in Task 11)`) and `::test_render_script_runs_without_fonttools` (expects `--check` exit 0 in a bootstrap repository) all assumed the hero had no renderer. With the renderer registered and no pinned fonts, `--check` reports the hero's missing font as an error and exits 1, which is exactly the fail-loud behaviour this task requires. I did not edit that file: it is outside my ownership and Task 12's reviewed branch already rewrites the same tests (`IMPLEMENTED`/`PLANNED` tuples, write-then-check sibling). Codex should integrate one update covering both assets; note that the hero cannot join a bootstrap "write-then-check passes" test until the fonts exist, so the bootstrap expectation for hero is the two font errors recorded above.
+1. **Three shared tests failed at `09e96e5` by consequence, now corrected under V1-019.** `tests/visual/test_render_cli.py::test_check_on_bootstrap_repository_reports_planned_assets` (expected exit 0 and eight planned assets), `::test_only_planned_asset_exits_one` (expected `not implemented (planned in Task 11)`) and `::test_render_script_runs_without_fonttools` (expected `--check` exit 0 in a bootstrap repository) assumed the hero had no renderer. With the renderer registered and no pinned fonts, `--check` reports the hero's missing font as an error and exits 1, which is the fail-loud behaviour this task requires. The initial 3 failed / 220 passed receipt above is retained as history. Commit `e8cffe5` replaces the stale expectations with explicit missing-font failure, no-output and zero-checked assertions, moves the planned-asset request to `architecture`, and keeps the fontTools-free import/help/check paths (details under Changes). Task 12's branch rewrites the same tests for the how-it-works figure; integration must keep both sets of assertions.
 2. **Four outputs instead of two.** The provisional inventory declared light/dark desktop files only; the task requires readable mobile variants, so two stacked `hero-mobile-*.svg` outputs were added. README `<picture>` wiring belongs to Task 08.
 3. **Mobile canvas 720×561.** Width follows the Task 12 convention (720 units for a 360 px column); height derives from the baselines.
 4. **Widths are verified only by the real font at render time.** Line breaks were planned against a 0.6 em monospace advance (JetBrains Mono's nominal advance). The unit doubles use the same advance so the fit checks are representative, but this is an assumption: if the real advance differs, `render()` raises `… units wide … Text is not shrunk` and the fix is a different line break or column width, never a smaller size. Planned slack: desktop caption 773 of 800 units, mobile caption line 1 at 666 of 680.
@@ -71,8 +98,10 @@ Not run: `render.py --write --only hero` (would fail identically; nothing to wri
 2. `uv run --frozen --group assets python docs/assets/src/render.py --write --only hero` — expect `4 file(s) written`; any `does not fit` error means a line break must change (Deviation 4).
 3. `uv run --frozen --group assets python docs/assets/src/render.py --check --only hero` — the actual done-when; must report four `matches regeneration` lines and `1 asset(s) checked; 0 error(s)`.
 4. Rendered review per the supplement: light/dark at 1366×900 README top, 360 px mobile, labels ≥ 14 px after transforms, no clipping; blind reviewer with screenshot only; reject any response-authentication, inference-proof or label-truth inference. Expect to tune `LABEL_BASELINE_SHIFT` (vertical centring of the lowercase pill labels) and the wordmark/tagline spacing after the first real render; those are constants in `hero.py`.
-5. Integration of the shared `test_render_cli.py` expectations (Deviation 1) together with Task 12.
+5. Reconciliation of `tests/visual/test_render_cli.py` with Task 12's version at integration (Deviation 1): both the how-it-works write-then-check assertions and the hero missing-font assertions must survive.
 
 ## Spend
 
-Claude subscription session only. No paid API calls, no model inference, no Jev credits, no downloads. Wall-clock approximately 35 minutes; commits at the timestamps recorded in git.
+Claude subscription session only. No paid API calls, no model inference, no Jev credits, no downloads.
+
+Time receipt: the initial report estimated "approximately 35 minutes" of wall-clock; that estimate was not measured and is withdrawn. The tool-reported elapsed time of the initial CLI session (through `09e96e5`) is `duration_ms = 783233` (about 13 minutes 3 seconds) with `duration_api_ms = 780872`, as recorded by the Claude CLI result. These are elapsed-time counters supplied by the harness; they do not measure active reasoning time and are not a billing figure. The V1-019 revision session's duration is not available to this executor and is not estimated here; its commits carry git timestamps.
