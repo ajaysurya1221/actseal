@@ -34,6 +34,7 @@ import binascii
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import shlex
@@ -51,7 +52,7 @@ import zipfile
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_RELATIVE = Path(".github") / "workflows" / "publish-pypi.yml"
@@ -273,8 +274,35 @@ def write_sha256sums(path: Path, digests: Mapping[str, str]) -> None:
 
 
 def _write_json(path: Path, document: Mapping[str, object]) -> None:
+    try:
+        encoded = json.dumps(document, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    except (TypeError, ValueError) as error:
+        raise ReleaseCheckError(f"cannot encode receipt as finite JSON: {error}") from error
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(encoded, encoding="utf-8")
+
+
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        _require(key not in result, "receipt JSON contains a duplicate object key")
+        result[key] = value
+    return result
+
+
+def _reject_json_constant(_value: str) -> NoReturn:
+    raise ReleaseCheckError("receipt JSON contains a nonfinite constant")
+
+
+def _finite_json_float(value: str) -> float:
+    number = float(value)
+    _require(math.isfinite(number), "receipt JSON contains a nonfinite number")
+    return number
+
+
+def _require_fields(record: Mapping[str, Any], fields: Iterable[str], where: str) -> None:
+    expected = set(fields)
+    _require(set(record) == expected, f"{where}: keys must be exactly {sorted(expected)}")
 
 
 def _read_json(path: Path, description: str) -> dict[str, Any]:
@@ -282,8 +310,13 @@ def _read_json(path: Path, description: str) -> dict[str, Any]:
         path.is_file(), f"{description} {path} is missing; do not auto-promote missing receipts"
     )
     try:
-        document = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as error:
+        document = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_json_constant,
+            parse_float=_finite_json_float,
+        )
+    except (ValueError, UnicodeError) as error:
         raise ReleaseCheckError(f"{description} {path} is not valid JSON: {error}") from error
     _require(isinstance(document, dict), f"{description} {path} must be a JSON object")
     return dict(document)
@@ -1243,6 +1276,7 @@ def _install_and_exercise(
 def _validate_smoke_checks(checks: object, version: str, where: str) -> None:
     """The recorded smoke outcomes must be exactly the frozen expectations."""
     checks = _as_dict(checks, f"{where}: checks")
+    _require_fields(checks, {*EXPECTED_SMOKE, "version_output"}, f"{where}: checks")
     _require(
         checks.get("version_output") == f"{PROJECT_NAME} {version}",
         f"{where}: version_output is {checks.get('version_output')!r}",
@@ -1351,7 +1385,10 @@ def postpublish(
 
 
 def _digits(value: object, where: str) -> str:
-    _require(isinstance(value, str) and value.isdigit(), f"{where} must be a numeric string")
+    _require(
+        isinstance(value, str) and re.fullmatch(r"[1-9][0-9]*", value) is not None,
+        f"{where} must be numeric: a positive ASCII numeric string without leading zeros",
+    )
     return str(value)
 
 
@@ -1370,11 +1407,12 @@ def _distribution_inventory(items: object, where: str) -> list[Distribution]:
     result: list[Distribution] = []
     for raw in entries:
         item = _as_dict(raw, f"{where}: distribution entry")
+        _require_fields(item, {"filename", "size", "sha256"}, f"{where}: distribution entry")
         filename = item.get("filename")
         size = item.get("size")
         _require(isinstance(filename, str) and bool(filename), f"{where}: filename missing")
-        if not isinstance(size, int) or isinstance(size, bool) or size < 0:
-            raise ReleaseCheckError(f"{where}: size must be a non-negative integer")
+        if type(size) is not int or size <= 0:
+            raise ReleaseCheckError(f"{where}: size must be a positive integer")
         result.append(Distribution(str(filename), size, _hex64(item.get("sha256"), where)))
     _require(
         len({item.filename for item in result}) == len(result), f"{where}: duplicate filenames"
@@ -1395,6 +1433,7 @@ def _require_same_inventory(
 
 def _workflow_run(value: object, where: str) -> tuple[str, str]:
     run = _as_dict(value, f"{where}: workflow_run")
+    _require_fields(run, {"id", "attempt"}, f"{where}: workflow_run")
     return _digits(run.get("id"), f"{where} run id"), _digits(
         run.get("attempt"), f"{where} run attempt"
     )
@@ -1405,6 +1444,21 @@ def validate_build_receipt(
 ) -> dict[str, str]:
     """Typed validation of the build receipt; returns source commit, lock hash, run id/attempt."""
     where = "build receipt"
+    _require_fields(
+        build,
+        {
+            "schema_version",
+            "kind",
+            "version",
+            "tag",
+            "ref",
+            "source_commit",
+            "lock_sha256",
+            "workflow_run",
+            "distributions",
+        },
+        where,
+    )
     _scan_credentials(dict(build), where)
     _exact_int(build.get("schema_version"), 1, f"{where}: schema_version")
     _require(build.get("kind") == "actseal-build-receipt", f"{where}: kind is wrong")
@@ -1418,9 +1472,12 @@ def validate_build_receipt(
     )
     lock = _hex64(build.get("lock_sha256"), f"{where} lock_sha256")
     run_id, attempt = _workflow_run(build.get("workflow_run"), where)
-    _require_same_inventory(
-        distributions, _distribution_inventory(build.get("distributions"), where), where
+    inventory = _distribution_inventory(build.get("distributions"), where)
+    _require(
+        {item.filename for item in inventory} == set(distribution_names(version)),
+        f"{where}: distributions must be exactly the wheel and sdist for {version}",
     )
+    _require_same_inventory(distributions, inventory, where)
     return {"source_commit": str(commit), "lock_sha256": lock, "run_id": run_id, "attempt": attempt}
 
 
@@ -1433,7 +1490,20 @@ def _validate_postpublish_files(
     official_index: bool,
 ) -> None:
     entries = _as_list(files, f"{where}: files")
-    recorded = _distribution_inventory(entries, where)
+    inventory_entries: list[dict[str, object]] = []
+    for raw in entries:
+        entry = _as_dict(raw, f"{where}: file entry")
+        _require_fields(
+            entry,
+            {"filename", "url", "size", "sha256", "declared_sha256", "matches_build", "provenance"},
+            f"{where}: file entry",
+        )
+        inventory_entries.append({key: entry[key] for key in ("filename", "size", "sha256")})
+    recorded = _distribution_inventory(inventory_entries, where)
+    _require(
+        {item.filename for item in recorded} == set(distribution_names(version)),
+        f"{where}: files must be exactly the wheel and sdist for {version}",
+    )
     _require_same_inventory(distributions, recorded, where)
     for raw in entries:
         entry = _as_dict(raw, f"{where}: file entry")
@@ -1450,22 +1520,24 @@ def _validate_postpublish_files(
         _require(entry.get("matches_build") is True, f"{label}: matches_build is not true")
         provenance = _as_dict(entry.get("provenance"), f"{label}: provenance")
         _require(provenance.get("present") is True, f"{label}: provenance not present")
-        count = provenance.get("attestations")
-        _require(
-            type(count) is int and count >= 1, f"{label}: no attestations inspected ({count!r})"
+        _require_fields(
+            provenance,
+            {"present", "attestations", "publishers", "subject_sha256"},
+            f"{label}: provenance",
         )
-        publishers = provenance.get("publishers")
+        count = provenance.get("attestations")
+        if type(count) is not int or count < 1:
+            raise ReleaseCheckError(f"{label}: no attestations inspected ({count!r})")
+        publishers = _as_list(provenance.get("publishers"), f"{label}: publishers")
         _require(
-            isinstance(publishers, list)
-            and bool(publishers)
-            and all(publisher == EXPECTED_PUBLISHER for publisher in publishers),
+            bool(publishers) and all(publisher == EXPECTED_PUBLISHER for publisher in publishers),
             f"{label}: publishers are not the expected trusted publisher",
         )
+        _require(count >= len(publishers), f"{label}: attestation count is below publisher count")
         _require(
             provenance.get("subject_sha256") == entry.get("sha256"),
             f"{label}: attestation subject digest differs from the file digest",
         )
-    del version
 
 
 def validate_postpublish_receipt(
@@ -1477,6 +1549,21 @@ def validate_postpublish_receipt(
 ) -> None:
     """Strict post-publication receipt; ``official_index`` requires the real PyPI (promotion)."""
     where = "post-publication receipt"
+    _require_fields(
+        post,
+        {
+            "schema_version",
+            "kind",
+            "version",
+            "index",
+            "ok",
+            "published_metadata",
+            "files",
+            "checks",
+            "note",
+        },
+        where,
+    )
     _scan_credentials(dict(post), where)
     _exact_int(post.get("schema_version"), 1, f"{where}: schema_version")
     _require(post.get("kind") == "actseal-postpublish-receipt", f"{where}: kind is wrong")
@@ -1531,11 +1618,10 @@ def release_receipt(
         verify_result == "success",
         f"verify matrix result was {verify_result!r}; every cell must succeed",
     )
-    _require(
-        artifact_id.isdigit(), f"artifact id {artifact_id!r} must be a numeric Actions artifact ID"
-    )
+    _digits(artifact_id, "numeric Actions artifact ID")
     digest = normalize_artifact_digest(artifact_digest)
-    _require(run_id.isdigit() and run_attempt.isdigit(), "run id and attempt must be numeric")
+    _digits(run_id, "run id")
+    _digits(run_attempt, "run attempt")
     _require(
         build["run_id"] == run_id,
         f"build receipt belongs to run {build['run_id']}, not this run {run_id}",
@@ -1583,6 +1669,23 @@ def validate_release_receipt(
 ) -> list[Distribution]:
     """Typed validation of a release receipt; returns its distribution inventory."""
     where = "release receipt"
+    _require_fields(
+        receipt,
+        {
+            "schema_version",
+            "kind",
+            "version",
+            "tag",
+            "source_commit",
+            "lock_sha256",
+            "workflow_run",
+            "artifact",
+            "distributions",
+            "verification",
+            "note",
+        },
+        where,
+    )
     _scan_credentials(dict(receipt), where)
     _exact_int(receipt.get("schema_version"), 1, f"{where}: schema_version")
     _require(receipt.get("kind") == "actseal-release-receipt", f"{where}: kind is wrong")
@@ -1595,6 +1698,11 @@ def validate_release_receipt(
     )
     _hex64(receipt.get("lock_sha256"), f"{where} lock_sha256")
     run = _as_dict(receipt.get("workflow_run"), f"{where}: workflow_run")
+    _require_fields(
+        run,
+        {"id", "build_attempt", "verification_attempt", "build_url", "verification_url"},
+        f"{where}: workflow_run",
+    )
     run_id = _digits(run.get("id"), f"{where} run id")
     build_attempt = _digits(run.get("build_attempt"), f"{where} build attempt")
     verification_attempt = _digits(run.get("verification_attempt"), f"{where} verification attempt")
@@ -1609,6 +1717,7 @@ def validate_release_receipt(
             f"{where}: {key} is {run.get(key)!r}, expected {expected_url}",
         )
     artifact = _as_dict(receipt.get("artifact"), f"{where}: artifact")
+    _require_fields(artifact, {"id", "digest"}, f"{where}: artifact")
     _digits(artifact.get("id"), f"{where} artifact id")
     digest = artifact.get("digest")
     _require(
@@ -1623,10 +1732,16 @@ def validate_release_receipt(
     if distributions is not None:
         _require_same_inventory(distributions, inventory, where)
     verification = _as_dict(receipt.get("verification"), f"{where}: verification")
+    _require_fields(verification, {"verify_matrix", "postpublish"}, f"{where}: verification")
     _require(
         verification.get("verify_matrix") == "success", f"{where}: verify matrix is not success"
     )
     post = _as_dict(verification.get("postpublish"), f"{where}: verification.postpublish")
+    _require_fields(
+        post,
+        {"index", "published_metadata", "files", "checks", "note"},
+        f"{where}: verification.postpublish",
+    )
     embedded = {
         "schema_version": 1,
         "kind": "actseal-postpublish-receipt",
@@ -1635,6 +1750,7 @@ def validate_release_receipt(
         **post,
     }
     validate_postpublish_receipt(embedded, version, inventory, official_index=True)
+    _require(receipt.get("note") == "Contains no credentials.", f"{where}: note is not verbatim")
     return inventory
 
 
