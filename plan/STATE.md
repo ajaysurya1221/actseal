@@ -12,7 +12,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 ## Current state
 
 - Planning artifacts: complete; 119 material claims and all 18 candidate dispositions recorded.
-- Product implementation: T00 accepted and merged as 86dbca0; parallel lanes active.
+- Product implementation: T00, T10, T20 and T30 accepted and merged; T40 is next.
 - Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
 - Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
 - Preflight: source statistics suite passed in a separate verification lane;
@@ -25,9 +25,9 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | Planning package | Codex | COMPLETE | ee99eee plus documented amendments |
 | T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff (merge 86dbca0) |
 | T10 contract/policy | Claude A | ACCEPT / MERGED | 9bdac25 (merge 28be58d) |
-| T20 statistics | Claude B | ASSESSMENT_RUNNING | numerical milestone ad67ac6, unmerged |
+| T20 statistics | Claude B | ACCEPT / MERGED | b1eace7 (merge 6d6d7c4) |
 | T30 providers/faults | Claude C | ACCEPT / MERGED | 8b1efd6 (merge 87d2cd1) |
-| T40 evidence/replay | Claude B | WAITING_FOR_ACCEPTED_INTERFACES | none |
+| T40 evidence/replay | Claude B | READY_FOR_DISPATCH | none |
 | T50 CLI/demo | Claude A | WAITING_FOR_T10_T20_T30_T40 | none |
 | T60 acceptance | Claude C | WAITING_FOR_T50 | none |
 | T70 publication | Codex | WAITING_FOR_T60 | none |
@@ -71,18 +71,14 @@ jobs pass in runs37440036303/37440043375. The native-tested provider code is
 byte-unchanged; new pure fault code independently reviewed. REVIEW T30-03 files
 one nonblocking T60 test-quality follow-up. Final Claude meter $20.95634925.
 
-T20 numerical milestone is
-verified: 159 tests independently pass; all four CI jobs green at 7df7600.
-PR2 stays draft/unmerged until full assessment acceptance. See T20-numeric-01.
-T20 numerical session completed at $5.43887825 estimated subscription usage.
-Accepted T10/T30 are integrated into its worktree at dispatch HEAD656c77b.
-Session14d9398c-146f-40cf-827d-a3c6a79632f1 is implementing assessment.py and its
-tests, with new receipt T20-02.md. Verified stats.py/test_stats.py stay unchanged.
-All three report actual model claude-fable-5-1; effort high was supplied at dispatch.
-Local process/session receipts are in ignored plan/dispatch/active-lanes.json.
-ADR0009/CHANGE_LOG correct permanent-worker-loss statistical dependence before
-these dispatches. All lanes receive the new contract hash. No extra feature scope.
-T20 remains PARTIAL until integrated assessment and its full checks pass.
+T20 full task ACCEPT at b1eace7009bc5bc966e4f600d756ff1802fd6e8e, merged6d6d7c4
+through PR2. Root passed259 tests in25.41s, lint/format/mypy. Independent integrity
+and statistical probes found no material defects. Both four-job hosted matrices
+pass in runs37441967584/37441973261. REVIEW T20-02 records exact evidence.
+Numerical source/tests remain unchanged from the accepted port. Final cumulative
+session meter $11.50984675 is estimated subscription usage, not API billing.
+T40 will receive real accepted dependencies and ADR0012 before implementation.
+No fake authorities or stubs are allowed. Raw session receipts remain ignored.
 
 T00 Claude session25979d71-e2c8-4a20-932b-a18022ec31c7 completed. Model was
 claude-fable-5-1/high. Cumulative meter $15.7246075 estimated subscription usage,

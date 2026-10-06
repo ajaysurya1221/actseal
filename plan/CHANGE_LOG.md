@@ -107,3 +107,12 @@ Clarified size conventions before T40 dispatch: row payload bytes exclude the LF
 separator, count any CR, and match the accepted T10/T30 readers. Whole bundle
 size includes all seven files and their terminators. No record/signature change;
 the clarification prevents downstream off-by-one or manifest-omission errors.
+
+## 2026-10-06 — T40 pre-dispatch diagnostic and publication clarification
+
+ADR0012 freezes unknown-lock ERROR metadata and requires exclusive native rename
+to honor the existing no-overwrite promise, including a target created immediately
+before publication. Stdlib ctypes only; fail explicitly on unsupported systems.
+No record/signature or scope expansion. T40/CONTRACTS updated before dispatch.
+ADR0005 also clarifies that a trusted lock hash cannot authenticate same-lock
+rewritten responses or provider execution.

@@ -1,22 +1,24 @@
 # Actseal v0.1.0 release evidence checklist
 
-**PENDING — release evidence, not an execution receipt.** Prepared 6 October 2026 while T10, T20's numerical milestone and T30's provider milestone are in progress. T00 has an [ACCEPT receipt](reviews/T00-05.md); that foundation result does not establish CLI, provider, statistics, replay or release completion. Read [STATE](STATE.md) for current progress. This document does not change scope, contracts, ownership or authorization.
+**PENDING — final release gates remain open.** Progress snapshot refreshed 6 October 2026: T00, T10 and full T30 are accepted; T10/T30 are merged. T20 is now accepted and merged at candidate b1eace7 (merge6d6d7c4); both hosted matrices pass (REVIEW T20-02). T40 evidence/replay, T50 CLI/demo and T60 acceptance remain pending. These task results do not establish integrated release completion. Read [STATE](STATE.md) for subsequent progress. This document does not change scope, contracts, ownership or authorization.
 
 Every gate below remains unchecked until its evidence is attached to `plan/reports/T70.md` and `plan/FINAL_REPORT.md`, with the reviewed candidate SHA, exact command, exit code, platform, pass/fail/skip counts and artifact/run location. A task REPORT alone is supplied evidence; Codex's independent REVIEW and required green CI authorize acceptance. Never use foundation CI, a numeric/provider-only milestone, an upstream model probe or collected tests as a substitute for final product checks.
+
+Available task evidence: [T10 ACCEPT](reviews/T10-02.md) covers candidate `9bdac251a76a22a30f8d3d5ab8b773e0200945a1`, merged as `28be58d`; [full T30 ACCEPT](reviews/T30-03.md) covers `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`, merged as `87d2cd1`. The earlier [native product receipt](reviews/T30-02.md) records five macOS tests in 4.58 s and five Ubuntu/Python 3.12.3 tests in 10.75 s with torch 2.14.1+cpu; the latter is [Linux run 37439327535](https://github.com/ajaysurya1221/actseal/actions/runs/37439327535). Full T30 review confirms the native-tested adapter/normalization/test bytes are unchanged. This supplies real native product evidence; final receipt applicability and integrated release gates remain unchecked.
 
 ## Definition-of-done mapping
 
 | PLAN publication group | Required evidence and exact check block | Publication gate / current state |
 |---|---|---|
-| 1. Runnable product | T50 REPORT/ACCEPT; installed-wheel console and module receipt; real bad BLOCK/fixed PASS plus both replays; README commands and measured ≤60-second fixture workflow with prerequisites; T30 accepted native adapter receipt. Blocks A, B, C. | PENDING: integrated CLI/demo/wheel and product-native results. Earlier native upstream feasibility is insufficient. |
-| 2. Correctness | T00–T60 ACCEPT on identified commits; independent oracles/policy/fault/integrity/CLI/acceptance suites; all four Linux/macOS × Python3.12/3.13 release-candidate jobs green. Blocks A, D; explicit ADR0009 assertions below. | PENDING: predecessor integration, full tasks and final candidate CI. No skipped packaging/demo job counts as release coverage. |
+| 1. Runnable product | T50 REPORT/ACCEPT; installed-wheel console and module receipt; real bad BLOCK/fixed PASS plus both replays; README commands and measured ≤60-second fixture workflow with prerequisites; T30 accepted native adapter receipt. Blocks A, B, C. | PENDING: integrated CLI/demo/wheel and final-candidate receipt applicability. Accepted macOS/Linux native product results now exist; earlier upstream feasibility alone remains insufficient. |
+| 2. Correctness | T00–T60 ACCEPT on identified commits; independent oracles/policy/fault/integrity/CLI/acceptance suites; all four Linux/macOS × Python3.12/3.13 release-candidate jobs green. Blocks A, D; explicit ADR0009 assertions below. | PENDING: T40/T50/T60 and final integrated checks. T10/T20/T30 are accepted. No skipped packaging/demo job counts as release coverage. |
 | 3. Distribution and licenses | Public repository; Apache-2.0 LICENSE/actual reuse NOTICE; committed resolved lock; stdlib core; corrected official Linux CPU graph and license inventory; wheel/sdist contents and hashes. Blocks E, G. | PENDING: final artifact/graph audit. OSI-compatible runtime dependencies must be checked on the resolved graph, not inferred from torch's top-level license. |
 | 4. Documentation and privacy | README, CHANGELOG, CONTRIBUTING, SECURITY, architecture/statistical/trust/provider/quickstart docs; placeholder-only `.env.example`; reviewed tracked/release inventory; launch remains draft. Blocks F and claim review. | PENDING: final docs against executed product behavior; secrets/private-original exclusion. Do not read or print `.env` values. |
 | 5. Release receipt | Accepted candidate; immutable v0.1.0 tag; non-draft GitHub release with matching wheel/sdist; FINAL_REPORT's shipped/planned comparison, research deviations, known limits, actual checks, incremental spend and next three steps. Block G. | PENDING: publish only after groups 1–4. No PyPI upload or public promotional message is required. |
 
 ## A — complete local product checks
 
-Run from the release-candidate checkout after accepted T10 → T30 → T20 → T40 → T50 integration and T60 acceptance work. T20's numerical-only and T30's provider-only checks may pass earlier but remain PARTIAL. Preserve relevant task REPORTs and independent REVIEWs.
+Run from the release-candidate checkout after accepted T10 → T30 → T20 → T40 → T50 integration and T60 acceptance work. T10 and full T30 have passed their gates; T20 has also passed local checks, independent review and both hosted matrices. Historical numerical-only/provider-only milestones do not substitute for full task or integrated release checks. Preserve relevant task REPORTs and independent REVIEWs.
 
 ```bash
 git rev-parse HEAD
@@ -53,7 +55,7 @@ The final output subdirectory names and quickstart text belong to T50/README. Th
 
 ## C — optional local adapter product receipt
 
-Prepare only the approved pinned public artifacts separately, recording preparation and dependency identities. Then run the accepted **Actseal adapter**, not the earlier upstream script:
+Accepted macOS and Linux **Actseal adapter** receipts are available above. Before checking the final release gate, bind those receipts to the final candidate's relevant source/test/runtime identities and rerun when changes require it. For an execution, prepare only the approved pinned public artifacts separately, record preparation/dependency identities, and use the product command below rather than the earlier upstream script:
 
 ```bash
 uv sync --frozen --group dev --extra laya
@@ -61,7 +63,7 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya pytest -m i
 ```
 
 - [ ] Actual cached-native test runs rather than skipping; receipt records OS/Python, model revision, weights hash, runtime pins, CPU execution, warnings and worker cleanup. Preserve the published checkpoint calibration caveat.
-- [ ] Distinguish macOS native execution from Linux CPU artifact/installation evidence. Report Linux inference as unrun unless it actually runs; do not broaden supported-hardware/performance claims from metadata or one macOS case.
+- [ ] Record the verified macOS and Ubuntu/Python 3.12.3 native environments separately from artifact metadata and ordinary CI. Do not infer native Python 3.13, broader hardware support or performance from those bounded receipts.
 - [ ] Product ordinary tests verify truncation preflight, full native envelope/usage checks, timeout termination/join, unavailable-after-worker-loss and no silent restart/device fallback. Offline environment flags alone are not proof of OS network isolation.
 
 ## D — ADR0009 and hosted CI
@@ -135,4 +137,4 @@ gh release view v0.1.0 --repo ajaysurya1221/actseal --json tagName,isDraft,isPre
 - [ ] Release asset hashes match the audited local artifacts. Record stable release/run links and final REVIEW ACCEPT in T70/FINAL_REPORT.
 - [ ] All preceding gates have receipts or a user-approved recorded scope change. A missing required gate means release remains pending; a missing optional Linux inference receipt means no Linux-inference claim, not an invented test result.
 
-Open prerequisites at drafting: T10/T30/T20 full acceptance, T40 replay, T50 installed demo/CLI, T60 adversarial acceptance, native Actseal adapter receipt, final-candidate four-job CI, final docs/artifact/license/privacy audit, release tag/assets and FINAL_REPORT. No release success is asserted by this checklist.
+Open prerequisites at this update: T40 replay, T50 installed demo/CLI, T60 adversarial acceptance, final-candidate applicability of the existing macOS/Linux native receipts, final-candidate four-job CI, final docs/artifact/license/privacy audit, release tag/assets and FINAL_REPORT. T10, T20 and full T30 acceptance are established; no final release gate is checked and no release success is asserted.

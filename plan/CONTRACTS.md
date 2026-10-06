@@ -423,6 +423,9 @@ other files. File ordering and canonical bytes are deterministic; timestamps,
 durations, host paths and PID data are excluded from the sealed core entirely.
 Write to a sibling temporary directory and atomically rename to a NEW destination;
 never overwrite an existing run, input file or bundle.
+Use exclusive atomic publication on supported macOS/Linux (ADR0012); a prior
+existence check plus ordinary overwriting rename is insufficient. Missing native
+support fails explicitly. No fallback that can replace an existing destination.
 
 Replay verifies size/path inventory, hashes, self-seals, externally supplied lock
 hash if present, current implementation fingerprint, raw dataset bytes/inventories,
@@ -430,7 +433,11 @@ request hashes, raw-response re-normalization, policy re-evaluation, and fresh a
 Compare all reconstructed outcomes/decisions/verdict with their recorded equivalents.
 Mismatch -> ERROR, even when an attacker recomputed all ordinary file hashes.
 Do not merely return archived verdict. An unsupported implementation is ERROR,
-not best-effort migration. Source label truth and fully re-authored evidence remain
+not best-effort migration. Before strict lock decoding succeeds, ERROR uses
+scope=demo and a 64-zero lock digest sentinel. After decoding, retain its scope/hash
+for diagnostics even when later checks fail; never use the expected external digest
+as the observed identity. Python argument-type misuse may raise SchemaError.
+Source label truth and fully re-authored evidence remain
 outside the assurance claim; external trusted lock hashes anchor identity only.
 
 ## 7. CLI, runner and demonstration (T50)
