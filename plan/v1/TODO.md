@@ -19,8 +19,10 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work: Task15 source/test repair64b8e03 has scoped ACCEPT and250 parent visual checks; its draft CI is pending. Task08 ADR repairs eb21e87 have scoped ACCEPT and eight green hosted jobs. Task14 procedure and Task05 offline transport also have eight green jobs. No actual social PNG or v1 publication exists.
+Current work: Task13 architecture source/unit preparation has scoped ACCEPT at2e2a7b2 with286 parent visual and50 independent focused checks. Final provider inclusion, registration, committed outputs and rendered acceptance remain required. Task15 source/test preparation and Task08 ADR repairs have scoped ACCEPT and eight green hosted jobs each.
 
-Task06 is stopped after retrying denied public-cache access; the deviation and scoped approval request remain open. Native03, mutation04, example07, actual visuals and tracked .env.example access also remain approval-blocked.
+Task09 ordinary-CI provisioning has local scoped ACCEPT at bdedc1e (64 parent checks, 41 independent checks). Do not push this branch while tool-download approval is pending. Checkpoint11 is merged at 0348fa0 after independent ACCEPT and eight green jobs.
 
-Next gate: preserve these receipts in checkpoint11, independently review it and verify its exact-head CI. Do not promote source-only acceptance to full-task acceptance.
+Task06 remains stopped after retrying denied public-cache access; the deviation and scoped approval request remain open. Native03, mutation04, example07, actual visuals and tracked .env.example access also remain approval-blocked. No v1 tag or publication exists.
+
+Next gate: finish Task13 draft CI and checkpoint12 review. All executor processes are terminal; remaining full-task operations need the pending approvals. Preserve all original acceptance and publication gates.
