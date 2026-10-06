@@ -12,9 +12,11 @@ Protocol:
 * ``lock``: read and validate the contract and both raw splits, build the
   provider, observe its actual identity, close it, seal a lock and write the
   lock document exclusively to a new file.
-* ``verify``: read the lock structurally, validate seal/implementation/inputs,
-  check the requested provider against the locked provider, build the
-  provider, compare its COMPLETE observed identity with the locked identity,
+* ``verify``: read the lock structurally, validate seal/compatibility/inputs,
+  check the requested provider against the locked provider, require the EXACT
+  running implementation fingerprint (a lock that is merely replay-compatible
+  may be replayed but never collected against), build the provider, compare
+  its COMPLETE observed identity with the locked identity,
   capture every locked verification case exactly once in lock order, run the
   six-scenario fault campaign, assess, and publish one new evidence bundle.
   Every provider is closed in a ``finally`` block, including identity and
@@ -42,6 +44,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 from actseal.assessment import assess
+from actseal.compatibility import require_exact_implementation
 from actseal.contract import parse_cases, parse_contract, read_input_text
 from actseal.errors import IntegrityError, ProviderSetupError, SchemaError
 from actseal.evidence import write_bundle
@@ -179,9 +182,13 @@ def collect(
     Each capture is normalized against the LOCKED identity and evaluated with
     the locked policy, exactly as assessment and replay will recompute it.
     Captured failures are terminal records; only provider setup errors raise.
+    The lock must name the exact running implementation: a foreign producer
+    fingerprint is :class:`IntegrityError` before any ``decide`` call, even
+    when that fingerprint is registered as replay-compatible.
     """
     if not isinstance(lock, PlanLock):
         raise SchemaError("lock: must be PlanLock")
+    require_exact_implementation(lock)
     question = lock.contract.question
     policy = lock.contract.policy
     records: list[DecisionRecord] = []
@@ -259,6 +266,7 @@ def verify_run(
     cases = validate_inputs(lock, calibration, verification)
     if lock.model_identity.provider != provider:
         raise IntegrityError("model_identity.provider: requested provider does not match the lock")
+    require_exact_implementation(lock)
     model = model_factory()
     try:
         if _observe_identity(model) != lock.model_identity:

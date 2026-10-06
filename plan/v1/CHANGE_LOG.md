@@ -19,3 +19,29 @@ The approved v1 plan section E explicitly authorizes PlanLock.replay_engine_vers
 ## V1-004 — Preserve the verbatim approval receipt during formatting
 
 Hosted CI runs 37494066475 and 37494420609 rejected only the line wrapping of a Python fence in plan/v1/PLAN.md. Task 00 requires that file to preserve the approved message verbatim. Add an exact-file formatter exclusion, not a lint or product-code exclusion. Continue running the unchanged repository-wide Ruff commands; verify the approval receipt SHA-256 remains bb3538db868f929c1f779dcbcd105936f521acba51fbfe7c08988fedcd0fdcaa. The pre-commit format hook checks only Python files, so its earlier success did not cover this Markdown fence.
+
+## V1-005 — Autonomous Claude CLI orchestration authorized
+
+The latest human goal explicitly says: "Call Claude Code via CLI and handle the Orchestration" and authorizes autonomous continuation while AFK. This replaces the earlier manual-session restriction only. Claude Code Fable 5.1/high still writes all product code, product docs, tests and visual assets; Codex reviews and gates. Existing ownership, normal permission controls, no-secret rules, immutable approval text and publication approvals remain in force. No alternate provider or API billing is authorized by this amendment.
+
+## V1-006 — Task 09 implementation delegation and supplied-wheel acceptance
+
+Codex retains release ownership and independent review, delegating Task09 CI/packaging implementation to Claude CLI for parallel throughput. Its exclusive scope includes an ACTSEAL_TEST_WHEEL absolute-path override in tests/packaging/test_wheel.py and tests/acceptance/test_acceptance_wheel_receipts.py. The override must fail on invalid inputs and must never rebuild the supplied wheel; default source-CI behavior and existing assertions remain unchanged. This closes the audit's tested-artifact promotion gap, not a relaxation of acceptance. Codex handles hosted rehearsal, environment changes, merging and publication.
+
+## V1-007 — Recover interrupted executor sessions without model substitution
+
+Observed02 and09 print processes exited while background workers were incomplete; CLI results explicitly record killed background workers and no final REPORT. Logs also record Sonnet/Opus worker usage outside the requested Fable5.1 executor. These drafts are not accepted. Codex saved tracked binary diffs and untracked bytes with hashes under the task-local orchestration directory before recovery. Fable is instructed to restore only its task-owned interrupted drafts to baseline and reimplement directly; the parent-authored09 workflow may remain. No draft is relabelled as original Fable work. A correction in each REPORT must preserve the deviation. Subsequent CLI launches expose only Bash/Read/Write/Edit/Glob/Grep built-ins, so Agent/Task delegation is unavailable. Normal permissions, user settings and hooks remain enabled; personal memory writes are forbidden by the task packet. No other lane's edits are reverted.
+
+Task10 was directly authored by the required model. Its first REPORT incorrectly says manual user-run and estimates1h10m; the observed CLI duration was1529830ms. REVIEW10 requires a separate correction receipt plus eight bounded fixes (seven validator defects and receipt provenance). Assets/fonts remain unfetched pending the explicit exception to the configured curl deny rule.
+
+## V1-008 — Validate published JSON Schemas with a maintained dev-only validator
+
+The Task02 review reproduced a real demo receipt rejected by its advertised schema while the structural key-set tests passed. Add jsonschema==4.26.0 (MIT) and types-jsonschema==4.26.0.20261006 (Apache-2.0) only to the locked development group. This replaces the need to invent a partial JSON Schema validator and exercises Draft2020-12 references/allOf against actual output. ClaudeA temporarily owns this exact pyproject.toml/uv.lock addition in Task02 repair; Task09 must not edit those files concurrently. Core runtime dependencies remain empty. Primary PyPI metadata verified6Oct2026 also reports MIT for attrs26.1.0,jsonschema-specifications2025.9.1,referencing0.37.0,rpds-py2026.9.1; typing-extensions is already locked. Recheck actual resolved versions/licenses and record them. Register all local schemas in referencing.Registry and reject unknown retrievals so unit tests cannot fetch network schemas. No optional format extras are authorized.
+
+## V1-009 — Workflow figure wiring after accepted toolchain
+
+Task10 is accepted and merged at6ad1e91 after exact-head eight-job CI. Task12 now owns its workflow renderer/source, generated light/dark/mobile SVGs, relevant visual tests and the minimal shared asset-inventory registration/dimension update. No concurrent visual author may change that inventory. This is necessary integration glue for the already-approved figure, not new product scope. Use generic font stacks and no font/binary downloads while the exception is pending. Readability remains subject to actual rendered Codex review; a bootstrap renderer pass does not establish visual completeness. Task02 interfaces are independently accepted at84079e9 and frozen for dependent work while its hosted CI runs; no dependent task merges before that gate passes.
+
+## V1-010 — Strict stable formats and opt-in additions
+
+Final normative review found Task02 docs permit additive JSON fields despite strict unknown-field rejection. Clarify that existing strict schema versions/default receipt shapes stay unchanged through1.x; additive formats or engines require separately versioned explicit opt-in interfaces preserving existing stable behavior. This tightens documentation to the approved stability promise; no runtime/schema change. ClaudeA owns the two normative docs and ADR0015 for this correction; all dependent source contracts stay frozen.

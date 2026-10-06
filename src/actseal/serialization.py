@@ -471,6 +471,7 @@ _SCHEMAS: Final[Mapping[type[object], tuple[tuple[str, _Codec], ...]]] = {
         ("fault_inventory", _Array(_Record(FaultSpec))),
         ("implementation_sha256", _STR),
         ("sha256", _STR),
+        ("replay_engine_version", _STR),
     ),
     PolicyDecision: (
         ("action", _STR),

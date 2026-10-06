@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:captured-outcome:2",
+  "title": "Actseal CapturedOutcome record (bundle schema 2 encoding)",
+  "description": "The raw provider capture embedded in records.jsonl and faults.jsonl rows. Exactly one of `body_json` (a raw response body string, possibly malformed JSON) or `failure_code` (a transport failure) is present.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_sha256",
+    "identity",
+    "body_json",
+    "failure_code",
+    "warnings",
+    "fallback_used"
+  ],
+  "properties": {
+    "request_sha256": { "$ref": "#/$defs/Sha256" },
+    "identity": { "$ref": "#/$defs/ModelIdentity" },
+    "body_json": { "type": ["string", "null"] },
+    "failure_code": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/FailureCode" }
+      ]
+    },
+    "warnings": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "fallback_used": { "type": "boolean" }
+  },
+  "oneOf": [
+    {
+      "properties": { "body_json": { "type": "string" }, "failure_code": { "type": "null" } }
+    },
+    {
+      "properties": {
+        "body_json": { "type": "null" },
+        "failure_code": { "$ref": "#/$defs/FailureCode" }
+      }
+    }
+  ],
+  "$defs": {
+    "Sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "NonEmpty": { "type": "string", "minLength": 1 },
+    "FailureCode": {
+      "enum": [
+        "timeout",
+        "rate_limit",
+        "provider_error",
+        "malformed_response",
+        "identity_mismatch",
+        "unknown_choice",
+        "input_too_long",
+        "unavailable"
+      ]
+    },
+    "ModelIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "model",
+        "revision",
+        "artifact_hashes",
+        "adapter_version",
+        "normalizer_version",
+        "runtime"
+      ],
+      "properties": {
+        "provider": { "enum": ["fixture", "laya"] },
+        "model": { "$ref": "#/$defs/NonEmpty" },
+        "revision": { "$ref": "#/$defs/NonEmpty" },
+        "artifact_hashes": {
+          "type": "object",
+          "propertyNames": { "minLength": 1 },
+          "additionalProperties": { "$ref": "#/$defs/Sha256" }
+        },
+        "adapter_version": { "$ref": "#/$defs/NonEmpty" },
+        "normalizer_version": { "$ref": "#/$defs/NonEmpty" },
+        "runtime": {
+          "type": "object",
+          "propertyNames": { "minLength": 1 },
+          "additionalProperties": { "$ref": "#/$defs/NonEmpty" }
+        }
+      }
+    }
+  }
+}

@@ -342,7 +342,7 @@ def _defects() -> dict[str, Defect]:
         manifest = read_document(bundle / "manifest.json")
         files = nested(manifest, "files")
         files["../lock.json"] = files.pop("lock.json")
-        unsealed = {"schema_version": 1, "files": files}
+        unsealed = {"schema_version": 2, "files": files}
         import hashlib  # noqa: PLC0415 - local, independent self-hash recomputation
 
         canonical = json.dumps(unsealed, sort_keys=True, separators=(",", ":")).encode()

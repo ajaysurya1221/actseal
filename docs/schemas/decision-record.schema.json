@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:decision-record:2",
+  "title": "Actseal DecisionRecord row (records.jsonl, bundle schema 2 encoding)",
+  "description": "One canonical JSON object per line of records.jsonl, one per locked verification case in lock order. `outcome` carries an explicit `kind` discriminator: `answer` (ChoiceAnswer) or `failure` (ProviderFailure).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "capture", "outcome", "decision"],
+  "properties": {
+    "case_id": { "$ref": "#/$defs/NonEmpty" },
+    "capture": { "$ref": "#/$defs/CapturedOutcome" },
+    "outcome": { "$ref": "#/$defs/Outcome" },
+    "decision": { "$ref": "#/$defs/PolicyDecision" }
+  },
+  "$defs": {
+    "Sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "NonEmpty": { "type": "string", "minLength": 1 },
+    "Warnings": { "type": "array", "items": { "$ref": "#/$defs/NonEmpty" } },
+    "FailureCode": {
+      "enum": [
+        "timeout",
+        "rate_limit",
+        "provider_error",
+        "malformed_response",
+        "identity_mismatch",
+        "unknown_choice",
+        "input_too_long",
+        "unavailable"
+      ]
+    },
+    "Action": { "enum": ["ACT", "ABSTAIN", "ESCALATE", "DENY"] },
+    "ModelIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "model",
+        "revision",
+        "artifact_hashes",
+        "adapter_version",
+        "normalizer_version",
+        "runtime"
+      ],
+      "properties": {
+        "provider": { "enum": ["fixture", "laya"] },
+        "model": { "$ref": "#/$defs/NonEmpty" },
+        "revision": { "$ref": "#/$defs/NonEmpty" },
+        "artifact_hashes": {
+          "type": "object",
+          "propertyNames": { "minLength": 1 },
+          "additionalProperties": { "$ref": "#/$defs/Sha256" }
+        },
+        "adapter_version": { "$ref": "#/$defs/NonEmpty" },
+        "normalizer_version": { "$ref": "#/$defs/NonEmpty" },
+        "runtime": {
+          "type": "object",
+          "propertyNames": { "minLength": 1 },
+          "additionalProperties": { "$ref": "#/$defs/NonEmpty" }
+        }
+      }
+    },
+    "CapturedOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_sha256",
+        "identity",
+        "body_json",
+        "failure_code",
+        "warnings",
+        "fallback_used"
+      ],
+      "properties": {
+        "request_sha256": { "$ref": "#/$defs/Sha256" },
+        "identity": { "$ref": "#/$defs/ModelIdentity" },
+        "body_json": { "type": ["string", "null"] },
+        "failure_code": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/FailureCode" }] },
+        "warnings": { "$ref": "#/$defs/Warnings" },
+        "fallback_used": { "type": "boolean" }
+      },
+      "oneOf": [
+        { "properties": { "body_json": { "type": "string" }, "failure_code": { "type": "null" } } },
+        {
+          "properties": {
+            "body_json": { "type": "null" },
+            "failure_code": { "$ref": "#/$defs/FailureCode" }
+          }
+        }
+      ]
+    },
+    "ChoiceAnswer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "choice",
+        "probabilities",
+        "selected_probability",
+        "provider_confidence",
+        "warnings",
+        "fallback_used"
+      ],
+      "properties": {
+        "kind": { "const": "answer" },
+        "choice": { "$ref": "#/$defs/NonEmpty" },
+        "probabilities": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 16,
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [
+              { "$ref": "#/$defs/NonEmpty" },
+              { "type": "number", "minimum": 0, "maximum": 1 }
+            ],
+            "items": false
+          }
+        },
+        "selected_probability": { "type": "number", "minimum": 0, "maximum": 1 },
+        "provider_confidence": {
+          "oneOf": [{ "type": "null" }, { "type": "number", "minimum": 0, "maximum": 1 }]
+        },
+        "warnings": { "$ref": "#/$defs/Warnings" },
+        "fallback_used": { "type": "boolean" }
+      }
+    },
+    "ProviderFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "code", "warnings", "fallback_used"],
+      "properties": {
+        "kind": { "const": "failure" },
+        "code": { "$ref": "#/$defs/FailureCode" },
+        "warnings": { "$ref": "#/$defs/Warnings" },
+        "fallback_used": { "type": "boolean" }
+      }
+    },
+    "Outcome": {
+      "oneOf": [{ "$ref": "#/$defs/ChoiceAnswer" }, { "$ref": "#/$defs/ProviderFailure" }]
+    },
+    "PolicyDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "choice", "reason", "fallback_used"],
+      "properties": {
+        "action": { "$ref": "#/$defs/Action" },
+        "choice": { "type": ["string", "null"], "minLength": 1 },
+        "reason": { "$ref": "#/$defs/NonEmpty" },
+        "fallback_used": { "type": "boolean" }
+      },
+      "oneOf": [
+        { "properties": { "action": { "const": "ACT" }, "choice": { "type": "string" } } },
+        {
+          "properties": {
+            "action": { "enum": ["ABSTAIN", "ESCALATE", "DENY"] },
+            "choice": { "type": "null" }
+          }
+        }
+      ]
+    }
+  }
+}
