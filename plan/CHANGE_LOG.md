@@ -182,3 +182,14 @@ artifact validation but PyPI rejected the identity exchange with invalid-publish
 No upload succeeded; project/version APIs returned404. REPORT/REVIEW PYPI-03
 preserve the attempt and required publisher diagnosis. No product, workflow,
 release asset or tag change, and no alternate credential path was used.
+
+## 2026-10-06 — PyPI publication verified
+
+After successful pending-publisher registration, run37485461528 published the
+reviewed v0.1.0 wheel/sdist through OIDC. Both downloaded PyPI distributions
+match the GitHub release hashes and sizes. A fresh PyPI installation, fixture
+demo and expected-lock offline replays passed with matching source/evidence
+digests. REPORT/REVIEW PYPI-04 supersede the blocked status without altering the
+failed-attempt receipts. Current quickstart and the unposted launch draft use
+the shorter verified PyPI command. No product, workflow or immutable artifact
+change; no paid inference API spend added.

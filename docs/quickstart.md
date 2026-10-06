@@ -8,11 +8,11 @@ authored support-triage data.
 ## One-command first run
 
 Prerequisites: macOS or Linux, [uv installed](https://docs.astral.sh/uv/getting-started/installation/),
-and a writable working directory. This command selects Python 3.12 and uses a
-wheel from the GitHub release, not an assumed PyPI package:
+and a writable working directory. This command selects Python 3.12 and installs
+the published [PyPI package](https://pypi.org/project/actseal/0.1.0/):
 
 ```bash
-uvx --python 3.12 --from https://github.com/ajaysurya1221/actseal/releases/download/v0.1.0/actseal-0.1.0-py3-none-any.whl actseal demo --out ./actseal-demo
+uvx --python 3.12 --from actseal==0.1.0 actseal demo --out ./actseal-demo
 ```
 
 `./actseal-demo` must not already exist, and its parent must exist. Do not create
@@ -30,8 +30,16 @@ workflow after prerequisites are ready, not a bound on downloading them.
 For repeated commands below, set this convenience variable in the same shell:
 
 ```bash
-actseal_wheel_url='https://github.com/ajaysurya1221/actseal/releases/download/v0.1.0/actseal-0.1.0-py3-none-any.whl'
+actseal_package='actseal==0.1.0'
 ```
+
+The PyPI wheel and source archive are byte-identical to the reviewed
+[GitHub release](https://github.com/ajaysurya1221/actseal/releases/tag/v0.1.0).
+An independent fresh-cache PyPI installation and demo completed in 1.48 seconds
+on the reference Mac with Python already installed. Both offline replays and
+the complete evidence inventory matched the accepted release. This is one
+fixture measurement, not a download or inference guarantee; see the
+[PyPI publication receipt](../plan/reports/PYPI-04.md).
 
 ## Outputs and result meaning
 
@@ -91,13 +99,13 @@ exact interval construction and assumptions.
 ## Replay separately
 
 ```bash
-uvx --python 3.12 --from "$actseal_wheel_url" actseal replay ./actseal-demo/fixed/evidence --json
+uvx --python 3.12 --from "$actseal_package" actseal replay ./actseal-demo/fixed/evidence --json
 ```
 
 To inspect the deliberately failing evidence, run this as a separate command:
 
 ```bash
-uvx --python 3.12 --from "$actseal_wheel_url" actseal replay ./actseal-demo/bad/evidence --json
+uvx --python 3.12 --from "$actseal_package" actseal replay ./actseal-demo/bad/evidence --json
 ```
 
 The expected exit for that second command is **1 (BLOCK)**. Successful replay
@@ -123,7 +131,7 @@ The following commands reuse the copied **fixed synthetic inputs** from the
 demo, so the outcome remains demo evidence. Both output paths must be new.
 
 ```bash
-uvx --python 3.12 --from "$actseal_wheel_url" actseal lock \
+uvx --python 3.12 --from "$actseal_package" actseal lock \
   --contract ./actseal-demo/inputs/fixed.toml \
   --calibration ./actseal-demo/inputs/fixed_calibration.jsonl \
   --verification ./actseal-demo/inputs/fixed_verification.jsonl \
@@ -133,7 +141,7 @@ uvx --python 3.12 --from "$actseal_wheel_url" actseal lock \
 ```
 
 ```bash
-uvx --python 3.12 --from "$actseal_wheel_url" actseal verify \
+uvx --python 3.12 --from "$actseal_package" actseal verify \
   --lock ./fixed-recheck.lock.json \
   --calibration ./actseal-demo/inputs/fixed_calibration.jsonl \
   --verification ./actseal-demo/inputs/fixed_verification.jsonl \
@@ -143,7 +151,7 @@ uvx --python 3.12 --from "$actseal_wheel_url" actseal verify \
 ```
 
 ```bash
-uvx --python 3.12 --from "$actseal_wheel_url" actseal replay ./fixed-recheck.evidence --json
+uvx --python 3.12 --from "$actseal_package" actseal replay ./fixed-recheck.evidence --json
 ```
 
 For your own use, choose the policy and sampling plan before evaluation, prepare

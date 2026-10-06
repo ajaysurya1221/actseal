@@ -1,8 +1,8 @@
 # Actseal v0.1.0 — release report
 
 **SHIPPED — 6 October 2026.** [Actseal v0.1.0](https://github.com/ajaysurya1221/actseal/releases/tag/v0.1.0) is public,
-with the audited wheel and source archive. T00–T70 are ACCEPT. The exact README
-command ran from a fresh directory in **6.20 seconds**, including uvx preparation
+with the audited wheel and source archive. T00–T70 are ACCEPT. The release-tag
+README's GitHub-wheel command ran from a fresh directory in **6.20 seconds**, including uvx preparation
 with Python already available; downloaded hashes match the reviewed artifacts.
 
 | Release field | Verified result |
@@ -30,8 +30,8 @@ their own hashes. The launch post remains an unposted [draft](LAUNCH.md).
 
 The final wheel installed without dependencies in a fresh external venv; Torch,
 Laya and Transformers were absent. Demo execution took **0.179569 seconds** after
-**0.043571 seconds** of cached venv/install preparation. Separately, the exact public
-README command took **6.202398 seconds** including uvx preparation. These are scoped
+**0.043571 seconds** of cached venv/install preparation. Separately, the release-tag
+README's GitHub-wheel command took **6.202398 seconds** including uvx preparation. These are scoped
 reference measurements, not cold-download or inference benchmarks. Public-wheel
 fixed/bad replays returned0/1, including expected-lock checks; the detailed quickstart's
 standalone lock/verify/replay commands passed too.
@@ -225,6 +225,16 @@ incremental-spend threshold was not reached. Publication completed on6October,
 within the focused two-day target; the8October buffer was unused.
 
 ## Next three steps after v0.1.0
+
+Post-release distribution follow-up: the user subsequently requested PyPI
+publication. On 6 October 2026, [run 37485461528](https://github.com/ajaysurya1221/actseal/actions/runs/37485461528)
+published [actseal 0.1.0](https://pypi.org/project/actseal/0.1.0/) using the exact
+reviewed GitHub release bytes. Both downloaded hashes/sizes, a fresh PyPI install,
+the fixture demo and offline replays were independently verified. The successful
+attempt follows one recorded publisher-matching failure; no tag, product or
+release artifact was replaced. See [REPORT PYPI-04](reports/PYPI-04.md) and
+[REVIEW PYPI-04](reviews/PYPI-04.md). Incremental paid inference API spend remains
+USD0. This distribution follow-up does not change the product priorities below.
 
 1. Record one independently reproduced external application integration using a
    prespecified policy and genuinely held-out data; publish its exact scope and

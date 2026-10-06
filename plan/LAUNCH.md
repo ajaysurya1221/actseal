@@ -28,10 +28,11 @@ interpretation requires independent cases and one prespecified fixed-policy atte
 Try the model-free demo with uv installed and a fresh output directory:
 
 ```bash
-uvx --python 3.12 --from https://github.com/ajaysurya1221/actseal/releases/download/v0.1.0/actseal-0.1.0-py3-none-any.whl actseal demo --out ./actseal-demo
+uvx --python 3.12 --from actseal==0.1.0 actseal demo --out ./actseal-demo
 ```
 
 [Repository](https://github.com/ajaysurya1221/actseal) ·
+[PyPI](https://pypi.org/project/actseal/0.1.0/) ·
 [v0.1.0 release](https://github.com/ajaysurya1221/actseal/releases/tag/v0.1.0) ·
 [Verification and limitations](FINAL_REPORT.md)
 

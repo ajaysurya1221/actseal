@@ -83,8 +83,20 @@ GitHub pypi environment, restricted it to main, and dispatched publish=true at
 with invalid-publisher. Project/version APIs returned404 afterward; no package
 upload succeeded. REPORT/REVIEW PYPI-03 preserve the attempt.
 
-Current follow-up status: **BLOCKED on publisher matching**. The user was asked
-to confirm/correct the pending-publisher row on pypi.org. The accessible browser
-is not signed in, and the exact cause remains unconfirmed. Do not retry unchanged
-or switch to API-token publishing. Once diagnosed, inspect PyPI state before retry;
-after success verify both published hashes/sizes and a fresh install/demo.
+Current follow-up status: **COMPLETE — v0.1.0 PUBLISHED ON PYPI**. After the user
+reported successful creation of a pending publisher for actseal, the version API
+still returned404, and Codex dispatched run37485461528 atf8d602e. Both jobs passed;
+the wheel and sdist were uploaded through OIDC and their downloaded bytes match
+the original reviewed GitHub assets. The earlier failed attempt remains recorded.
+
+A fresh PyPI tool environment installed only actseal0.1.0; demo completed in
+1.483087s including package preparation with Python3.12.13 already installed.
+BadBLOCK/fixedPASS, expected-lock offline replays, source fingerprint and the
+24-file evidence digest all matched the accepted release. Independent review
+confirmed both artifact hashes and inspected published attestation identities;
+no independent cryptographic signature verification is claimed.
+
+REPORT/REVIEW PYPI-04 record completion. README/quickstart and the unposted launch
+draft now use the verified PyPI command. Product, tests, workflow, lockfile, tag
+and release bytes remain unchanged. Do not rerun this version's upload; future
+releases require new reviewed pins. No user setup step remains for publication.

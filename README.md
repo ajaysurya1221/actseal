@@ -10,11 +10,12 @@ and saves evidence that you can replay without the model.
 ## Try the packaged demo
 
 With [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, run
-this on macOS or Linux. It selects Python 3.12 and installs the GitHub release
-wheel in uv's tool environment; no source checkout, model or API key is needed.
+this on macOS or Linux. It selects Python 3.12 and installs
+[Actseal from PyPI](https://pypi.org/project/actseal/0.1.0/) in uv's tool environment;
+no source checkout, model or API key is needed.
 
 ```bash
-uvx --python 3.12 --from https://github.com/ajaysurya1221/actseal/releases/download/v0.1.0/actseal-0.1.0-py3-none-any.whl actseal demo --out ./actseal-demo
+uvx --python 3.12 --from actseal==0.1.0 actseal demo --out ./actseal-demo
 ```
 
 Choose an output directory that does **not** already exist. Its parent must
@@ -49,7 +50,7 @@ this is a synthetic fixture measurement, not an inference benchmark.
 Replay an individual bundle in a separate command:
 
 ```bash
-uvx --python 3.12 --from https://github.com/ajaysurya1221/actseal/releases/download/v0.1.0/actseal-0.1.0-py3-none-any.whl actseal replay ./actseal-demo/fixed/evidence
+uvx --python 3.12 --from actseal==0.1.0 actseal replay ./actseal-demo/fixed/evidence
 ```
 
 Replay reconstructs the policy decisions and verdict from recorded data; it
