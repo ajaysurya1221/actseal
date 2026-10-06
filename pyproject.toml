@@ -1,0 +1,153 @@
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "actseal"
+version = "0.1.0"
+description = "Verify frozen categorical decision policies with risk/coverage bounds, provider-fault tests and offline replay."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+dependencies = []
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Quality Assurance",
+  "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+# Tested native stack from docs/dependencies.md (6 October 2026). Exact pins only.
+# Linux requires the official CPU build so no CUDA/NVIDIA/Triton packages resolve;
+# macOS keeps the tested PyPI wheel.
+laya = [
+  "laya==0.3.28",
+  "torch==2.14.1+cpu; sys_platform == 'linux'",
+  "torch==2.14.1; sys_platform != 'linux'",
+  "transformers==5.18.0",
+  "huggingface-hub==1.33.0",
+  "safetensors==0.8.0",
+  "numpy==2.5.3",
+]
+
+[dependency-groups]
+dev = [
+  "ruff==0.16.10",
+  "mypy==2.4.0",
+  "pytest==9.1.1",
+  "pre-commit==4.6.2",
+]
+
+[tool.uv]
+environments = [
+  "sys_platform == 'linux'",
+  "sys_platform == 'darwin'",
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/actseal"]
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+  "src/actseal",
+  "tests",
+  "pyproject.toml",
+  "uv.lock",
+  "README.md",
+  "LICENSE",
+  "NOTICE",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "A",    # builtins shadowing
+  "ANN",  # annotations
+  "ARG",  # unused arguments
+  "B",    # bugbear
+  "C4",   # comprehensions
+  "E",    # pycodestyle errors
+  "ERA",  # commented-out code
+  "F",    # pyflakes
+  "FBT",  # boolean traps
+  "I",    # isort
+  "ISC",  # implicit string concatenation
+  "N",    # naming
+  "PERF", # performance
+  "PIE",  # misc
+  "PL",   # pylint
+  "PT",   # pytest style
+  "RET",  # returns
+  "RUF",  # ruff rules
+  "S",    # bandit
+  "SIM",  # simplify
+  "T20",  # print
+  "TRY",  # exception style
+  "UP",   # pyupgrade
+  "W",    # pycodestyle warnings
+]
+ignore = [
+  "PLR0913", # validators and records legitimately take many positional fields
+  "TRY003",  # schema errors carry the failing path in their message by design
+  "UP046",   # the frozen contract names a module-level TypeVar, not PEP 695 syntax
+  "UP047",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  "S101",    # asserts are the test mechanism
+  "PLR2004", # literal expectations are the point of the tests
+  "FBT001",  # boolean parametrization is intentional
+  "FBT003",
+  "ANN401",  # test helpers deliberately manipulate untyped JSON data
+]
+
+[tool.ruff.lint.pylint]
+max-branches = 20
+max-statements = 60
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+warn_unused_ignores = true
+disallow_any_unimported = true
+no_implicit_reexport = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+mypy_path = "src:tests"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers --strict-config"
+xfail_strict = true
+filterwarnings = ["error"]
+markers = [
+  "integration: exercises live providers or external services; not offline",
+  "packaging: builds or installs distributions; may need network for tooling",
+]
