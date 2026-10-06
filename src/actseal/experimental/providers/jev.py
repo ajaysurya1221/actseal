@@ -23,9 +23,11 @@ Fixed execution profile (frozen before any live collection):
   before any environment read or transport construction; this adapter has no
   offline mode (the Laya adapter's cached-offline behaviour is a different,
   local matter). Otherwise the constructor reads only ``JEV_API_KEY``,
-  validates that it is a nonempty printable ASCII token and keeps it solely
-  inside the transport's ``Authorization`` header. A missing or malformed key
-  raises :class:`ProviderSetupError` before any request. The key never enters
+  validates that it is a nonempty printable ASCII token and keeps it only
+  inside the private transport object, in two places: the ``Authorization``
+  header it sends, and the value it compares successful bodies against for
+  the credential-echo check below. A missing or malformed key raises
+  :class:`ProviderSetupError` before any request. The key never enters
   identity, captures, warnings, exceptions or diagnostics.
 * One attempt per ``decide``: no retry, no redirect following, no fallback.
   ``http.client.HTTPSConnection`` with the default TLS context and the caller's
@@ -300,10 +302,14 @@ def _read_complete_body(response: _Response) -> bytes:
     (handled by the caller). A close-delimited body is complete at end of
     stream. The cap counts bytes actually received, never the declared length,
     and over-cap data is returned for rejection without consulting framing.
+    Each read asks for at most the bytes still allowed, so no more than
+    ``MAX_RESPONSE_BYTES + 1`` body bytes (one detection byte beyond the cap)
+    are ever requested or consumed, whatever the framing declares.
     """
     data = bytearray()
     while len(data) <= MAX_RESPONSE_BYTES:
-        piece = response.read(_READ_CHUNK)
+        budget = min(_READ_CHUNK, MAX_RESPONSE_BYTES + 1 - len(data))
+        piece = response.read(budget)
         if not piece:
             break
         data.extend(piece)

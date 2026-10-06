@@ -91,6 +91,7 @@ class Sent:
     headers: dict[str, str]
     timeout: float
     read_amounts: list[int] = field(default_factory=list)
+    delivered: int = 0  # body bytes the adapter actually consumed
     closed: int = 0
 
 
@@ -107,6 +108,7 @@ class FakeResponse:
         if self._script.raise_on_read is not None:
             raise self._script.raise_on_read
         chunk, self._buffer = self._buffer[:amt], self._buffer[amt:]
+        self._sent.delivered += len(chunk)
         return chunk
 
 
@@ -132,6 +134,28 @@ def real_response(raw_http: bytes) -> http.client.HTTPResponse:
     return response
 
 
+class CountingResponse:
+    """Pass-through over a genuine ``HTTPResponse`` that records what the adapter consumed."""
+
+    def __init__(self, inner: http.client.HTTPResponse, connection: RealResponseConnection) -> None:
+        self._inner = inner
+        self._connection = connection
+
+    @property
+    def status(self) -> int:
+        return self._inner.status
+
+    @property
+    def length(self) -> int | None:
+        return self._inner.length
+
+    def read(self, amt: int) -> bytes:
+        self._connection.read_amounts.append(amt)
+        piece = self._inner.read(amt)
+        self._connection.delivered += len(piece)
+        return piece
+
+
 class RealResponseConnection:
     """A connection whose ``getresponse`` is a genuine ``HTTPResponse`` over bytes."""
 
@@ -140,14 +164,16 @@ class RealResponseConnection:
         self._log = log
         self._timeout = timeout
         self.response: http.client.HTTPResponse | None = None
+        self.read_amounts: list[int] = []
+        self.delivered = 0
         self.closed = 0
 
     def request(self, method: str, url: str, body: bytes, headers: Mapping[str, str]) -> None:
         self._log.append(Sent(method, url, bytes(body), dict(headers), self._timeout))
 
-    def getresponse(self) -> http.client.HTTPResponse:
+    def getresponse(self) -> CountingResponse:
         self.response = real_response(self._raw)
-        return self.response
+        return CountingResponse(self.response, self)
 
     def close(self) -> None:
         self.closed += 1
@@ -796,22 +822,33 @@ def test_unexpected_exception_is_bounded_provider_error_and_base_exceptions_prop
         model.decide(make_request(), timeout_s=5.0)
 
 
+#: The exact read budgets for a body that reaches the cap: full pieces, then one detection byte.
+CAP_READ_AMOUNTS = [jev_module._READ_CHUNK] * (MAX_RESPONSE_BYTES // jev_module._READ_CHUNK) + [1]
+
+
 def test_oversized_body_is_malformed_after_a_bounded_read() -> None:
+    assert MAX_RESPONSE_BYTES % jev_module._READ_CHUNK == 0
     model, connect = model_over(ok(b"x" * (MAX_RESPONSE_BYTES + 1)))
     capture = model.decide(make_request(), timeout_s=5.0)
     assert capture.failure_code == "malformed_response"
     assert capture.warnings == ("jev.body_oversized",)
     assert capture.body_json is None
-    piece = jev_module._READ_CHUNK
-    # Reading stops as soon as the cap is exceeded: at most cap + one piece is ever consumed.
-    assert set(connect.log[0].read_amounts) == {piece}
-    assert len(connect.log[0].read_amounts) * piece <= MAX_RESPONSE_BYTES + piece
+    # Exactly cap + 1 bytes are requested and consumed: the last read asks for one byte.
+    assert connect.log[0].read_amounts == CAP_READ_AMOUNTS
+    assert connect.log[0].delivered == MAX_RESPONSE_BYTES + 1
     huge, connect = model_over(ok(b"y" * (4 * MAX_RESPONSE_BYTES)))
     huge.decide(make_request(), timeout_s=5.0)
-    assert len(connect.log[0].read_amounts) * piece <= MAX_RESPONSE_BYTES + piece
+    assert connect.log[0].read_amounts == CAP_READ_AMOUNTS
+    assert connect.log[0].delivered == MAX_RESPONSE_BYTES + 1
     # A declared fixed length far above the cap changes nothing: actual bytes decide.
     declared, connect = model_over(Script(200, b"z" * (MAX_RESPONSE_BYTES + 1), length=10**9))
     assert declared.decide(make_request(), timeout_s=5.0).warnings == ("jev.body_oversized",)
+    assert connect.log[0].delivered == MAX_RESPONSE_BYTES + 1
+    # At the cap the detection byte finds end of stream: complete, nothing beyond consumed.
+    at_cap, connect = model_over(ok(b"w" * MAX_RESPONSE_BYTES))
+    assert at_cap.decide(make_request(), timeout_s=5.0).failure_code is None
+    assert connect.log[0].read_amounts == CAP_READ_AMOUNTS
+    assert connect.log[0].delivered == MAX_RESPONSE_BYTES
 
 
 def test_fixed_length_body_ending_early_is_unavailable_not_a_capture() -> None:
@@ -928,14 +965,46 @@ def test_real_response_over_cap_is_oversized_whatever_the_declared_length(frame:
     assert capture.warnings == ("jev.body_oversized",)
     assert capture.body_json is None
     assert connect.connections[0].closed == 1
+    assert connect.connections[0].delivered == MAX_RESPONSE_BYTES + 1
+    assert connect.connections[0].read_amounts == CAP_READ_AMOUNTS
 
 
-def test_real_response_exactly_at_cap_is_complete() -> None:
-    body = b" " * MAX_RESPONSE_BYTES
-    model, _ = model_over_http(fixed_length_http(body))
+def _chunks(body: bytes, size: int = 300_000) -> list[bytes]:
+    return [body[start : start + size] for start in range(0, len(body), size)]
+
+
+@pytest.mark.parametrize(
+    "framing",
+    [
+        fixed_length_http,
+        lambda body: chunked_http(_chunks(body)),
+        close_delimited_http,
+    ],
+    ids=["fixed-length", "chunked", "close-delimited"],
+)
+@pytest.mark.parametrize("extra", [0, 1, MAX_RESPONSE_BYTES], ids=["at-cap", "cap+1", "2x-cap"])
+def test_real_response_consumes_at_most_one_detection_byte_beyond_the_cap(
+    framing: Any, extra: int
+) -> None:
+    """Genuine ``HTTPResponse`` framing: the adapter never consumes more than cap + 1 body bytes."""
+    body = b" " * (MAX_RESPONSE_BYTES + extra)
+    model, connect = model_over_http(framing(body))
     capture = model.decide(make_request(), timeout_s=5.0)
-    assert capture.failure_code is None
-    assert capture.body_json == body.decode("utf-8")
+    connection = connect.connections[0]
+    assert connection.read_amounts == CAP_READ_AMOUNTS
+    assert connection.closed == 1
+    if extra == 0:
+        assert capture.failure_code is None
+        assert capture.body_json == body.decode("utf-8")
+        assert connection.delivered == MAX_RESPONSE_BYTES
+        response = connection.response
+        assert response is not None
+        assert response.isclosed()  # the one-byte detection read reached end of stream
+    else:
+        assert capture.failure_code == "malformed_response"
+        assert capture.warnings == ("jev.body_oversized",)
+        assert capture.body_json is None
+        assert connection.delivered == MAX_RESPONSE_BYTES + 1
 
 
 def test_real_response_non_200_status_is_mapped_without_reading_the_body() -> None:
