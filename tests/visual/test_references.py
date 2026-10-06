@@ -64,13 +64,22 @@ def test_single_quoted_unquoted_and_multiline_html_are_parsed(
         encoding="utf-8",
     )
     refs = kit.references.scan_references(tmp_path)
-    assert [(ref.line, ref.target, ref.alt) for ref in refs] == [
-        (2, "docs/assets/probe.svg", "Single quoted"),
-        (6, "docs/assets/bare.svg", "bare"),
-        (8, "docs/assets/a.svg", None),
-        (8, "docs/assets/b.svg", None),
-        (9, "docs/assets/c.svg", "Multi"),
+    assert [(ref.line, ref.target, ref.alt, ref.needs_alt) for ref in refs] == [
+        (2, "docs/assets/probe.svg", "Single quoted", True),
+        (6, "docs/assets/bare.svg", "bare", True),
+        (8, "docs/assets/a.svg", None, False),
+        (8, "docs/assets/b.svg", None, False),
+        (9, "docs/assets/c.svg", "Multi", True),
     ]
+
+
+def test_entities_in_attributes_are_decoded(kit: ModuleType, tmp_path: Path) -> None:
+    (tmp_path / "README.md").write_text(
+        '<img src="docs/assets/probe.svg" alt="Freeze &rarr; Run &amp; Replay">\n',
+        encoding="utf-8",
+    )
+    refs = kit.references.scan_references(tmp_path)
+    assert refs[0].alt == "Freeze → Run & Replay"
 
 
 def test_classification(kit: ModuleType) -> None:
@@ -89,13 +98,102 @@ def test_classification(kit: ModuleType) -> None:
     assert classify("data:image/png;base64,AAAA") == "external"
 
 
-def test_recognized_badges_are_exempt(kit: ModuleType, repo: Path) -> None:
+def test_recognized_badges_are_exempt_from_file_checks(kit: ModuleType, repo: Path) -> None:
     (repo / "README.md").write_text(
         "![PyPI](https://img.shields.io/pypi/v/actseal.svg)\n"
         "![CI](https://github.com/ajaysurya1221/actseal/actions/workflows/ci.yml/badge.svg)\n",
         encoding="utf-8",
     )
-    assert kit.references.check_references(repo, _assets(kit)) == ([], 0)
+    assert kit.references.check_references(repo, _assets(kit)) == ([], 2)
+
+
+def test_badges_still_require_alt_text(kit: ModuleType, repo: Path) -> None:
+    (repo / "README.md").write_text(
+        '<img src="https://img.shields.io/pypi/v/actseal.svg">\n'
+        "![](https://img.shields.io/pypi/v/actseal.svg)\n",
+        encoding="utf-8",
+    )
+    errors, checked = kit.references.check_references(repo, _assets(kit))
+    assert checked == 2
+    assert errors == [
+        "README.md:1: image 'https://img.shields.io/pypi/v/actseal.svg' has no alt text",
+        "README.md:2: image 'https://img.shields.io/pypi/v/actseal.svg' has no alt text",
+    ]
+
+
+def test_quoted_closing_bracket_does_not_truncate_the_tag(kit: ModuleType, repo: Path) -> None:
+    (repo / "README.md").write_text(
+        '<img alt="Freeze > Run" src="docs/assets/missing.svg">\n', encoding="utf-8"
+    )
+    errors, checked = kit.references.check_references(repo, _assets(kit))
+    assert checked == 1
+    assert errors == ["README.md:1: 'docs/assets/missing.svg' does not exist"]
+
+
+def test_img_srcset_is_inspected(kit: ModuleType, repo: Path) -> None:
+    _commit_probe(repo, kit)
+    (repo / "README.md").write_text(
+        '<img srcset="docs/assets/missing.svg 1x, docs/assets/probe.svg 2x" alt="Figure">\n',
+        encoding="utf-8",
+    )
+    errors, checked = kit.references.check_references(repo, _assets(kit))
+    assert checked == 3
+    assert errors == [
+        "README.md:1: <img> has no src attribute",
+        "README.md:1: 'docs/assets/missing.svg' does not exist",
+    ]
+
+
+def test_markdown_reference_images_are_resolved(kit: ModuleType, repo: Path) -> None:
+    _commit_probe(repo, kit)
+    (repo / "README.md").write_text(
+        "![Figure][diagram]\n"
+        "![Probe][]\n"
+        "![probe]\n"
+        "![Lost][nowhere]\n"
+        "\n"
+        "[diagram]: docs/assets/missing.svg\n"
+        '[PROBE]: <docs/assets/probe.svg> "Title"\n',
+        encoding="utf-8",
+    )
+    refs = kit.references.scan_references(repo)
+    assert [(ref.line, ref.target, ref.problem) for ref in refs] == [
+        (1, "docs/assets/missing.svg", None),
+        (2, "docs/assets/probe.svg", None),
+        (3, "docs/assets/probe.svg", None),
+        (4, "", "reference image label 'nowhere' has no definition"),
+    ]
+    errors, checked = kit.references.check_references(repo, _assets(kit))
+    assert checked == 4
+    assert errors == [
+        "README.md:1: 'docs/assets/missing.svg' does not exist",
+        "README.md:4: reference image label 'nowhere' has no definition",
+    ]
+
+
+def test_unsupported_embedded_media_is_rejected(kit: ModuleType, repo: Path) -> None:
+    (repo / "README.md").write_text(
+        '<object data="docs/assets/probe.svg" type="image/svg+xml"></object>\n'
+        '<embed src="docs/assets/probe.svg">\n'
+        '<video poster="docs/assets/probe.png"></video>\n'
+        '<iframe src="https://example.com"></iframe>\n',
+        encoding="utf-8",
+    )
+    errors, checked = kit.references.check_references(repo, _assets(kit))
+    assert checked == 4
+    assert errors == [
+        "README.md:1: <object> is unsupported image syntax",
+        "README.md:2: <embed> is unsupported image syntax",
+        "README.md:3: <video> is unsupported image syntax",
+        "README.md:4: <iframe> is unsupported image syntax",
+    ]
+
+
+def test_img_without_src_is_an_error(kit: ModuleType, repo: Path) -> None:
+    (repo / "README.md").write_text('<img alt="Nothing">\n', encoding="utf-8")
+    errors, checked = kit.references.check_references(repo, _assets(kit))
+    assert checked == 1
+    assert errors == ["README.md:1: <img> has no src attribute"]
 
 
 def test_unrecognized_external_images_fail(kit: ModuleType, repo: Path) -> None:

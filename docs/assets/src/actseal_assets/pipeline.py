@@ -35,9 +35,12 @@ from .inventory import (
 ERROR = "error"
 INFO = "info"
 OK = "ok"
-# Errors in these scopes describe the declarations themselves; no renderer may
-# run and nothing may be written while they stand.
-BLOCKING_SCOPES = frozenset({"inventory", "arguments"})
+# Errors in these scopes describe the declarations, pins or licensed inputs
+# that every renderer depends on; no renderer or tool may run and nothing may
+# be written while any of them stands. Reference/orphan errors are reported
+# but do not block, otherwise a figure the README already cites could never
+# be written for the first time.
+BLOCKING_SCOPES = frozenset({"inventory", "arguments", "manifest", "fonts"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -358,10 +361,12 @@ def run(
     _global_checks(root, assets, manifest, report)
     blocking = [f for f in report.findings if f.level == ERROR and f.scope in BLOCKING_SCOPES]
     if blocking:
+        scopes = ", ".join(sorted({f.scope for f in blocking}))
         report.add(
             "inventory",
             ERROR,
-            f"aborting before any renderer runs: {len(blocking)} declaration error(s) above",
+            f"aborting before any renderer runs: {len(blocking)} prerequisite error(s) "
+            f"above ({scopes})",
         )
         return report
     selected = [asset for asset in assets if not only or asset.name in only]

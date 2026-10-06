@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from types import ModuleType
 
 import pytest
@@ -239,6 +240,90 @@ def test_transform_scale_helper(kit: ModuleType) -> None:
     assert kit.checks.transform_scale("matrix(0 1 -1 0 0 0)") == 1.0
     assert kit.checks.transform_scale("scale(-0.5)") == 0.5
     assert isinstance(kit.checks.transform_scale("skewY(1)"), str)
+
+
+def test_minimum_singular_value_is_a_true_lower_bound(kit: ModuleType) -> None:
+    sigma = kit.checks.minimum_singular_value
+    assert sigma(1, 0, 0, 1) == pytest.approx(1.0)
+    assert sigma(0, 1, -1, 0) == pytest.approx(1.0)
+    assert sigma(0.1, 0, 0, 0.1) == pytest.approx(0.1)
+    assert sigma(1, 0, 1, 0) == 0.0
+    assert sigma(0, 0, 0, 0) == 0.0
+    # Shear-like matrix: both column norms are >= 1 but a unit vector along
+    # (1, -1)/sqrt(2) maps to length 0.001/sqrt(2) ... the old column-norm
+    # estimate (1.0) overstated the minimum by three orders of magnitude.
+    assert sigma(1, 0, 1, 0.001) == pytest.approx(0.001 / math.sqrt(2.000001), rel=1e-6)
+    assert sigma(2, 0, 0, 3) == pytest.approx(2.0)
+    assert sigma(3, 4, 0, 5) == pytest.approx(15 / math.sqrt((50 + math.sqrt(50**2 - 900)) / 2))
+
+
+@pytest.mark.parametrize(
+    ("transform", "message"),
+    [
+        ("matrix(1 0 1 0 0 0)", "<text> transform: degenerate transform 'matrix(1 0 1 0 0 0)'"),
+        ("matrix(1 0 1 0.001 0 0)", "'tiny' renders at 0.0px at display width"),
+        ("matrix(1 0 0 0.02 0 0)", "'tiny' renders at 0.3px at display width"),
+    ],
+)
+def test_singular_and_near_singular_matrices_on_text_fail(
+    kit: ModuleType, transform: str, message: str
+) -> None:
+    root = kit.svg.document(1600, 400, title="T", desc="D")
+    group = root.add("g", font_family="sans-serif", font_size=28)
+    group.add("text", x=0, y=50, transform=transform).text("tiny")
+    joined = _joined(kit.checks.check_svg(_render(kit, root), make_output(kit)))
+    assert message in joined
+
+
+@pytest.mark.parametrize(
+    ("transform", "message"),
+    [
+        ("matrix(1 0 1 0 0 0)", "<g> transform: degenerate transform 'matrix(1 0 1 0 0 0)'"),
+        ("matrix(1 0 1 0.001 0 0)", "'tiny' renders at 0.0px at display width"),
+    ],
+)
+def test_singular_and_near_singular_ancestor_matrices_fail(
+    kit: ModuleType, transform: str, message: str
+) -> None:
+    root = kit.svg.document(1600, 400, title="T", desc="D")
+    outer = root.add("g", transform=transform)
+    inner = outer.add("g", font_family="sans-serif", font_size=28)
+    inner.add("text", x=0, y=50).text("tiny")
+    joined = _joined(kit.checks.check_svg(_render(kit, root), make_output(kit)))
+    assert message in joined
+
+
+def test_rotation_matrix_keeps_text_size(kit: ModuleType) -> None:
+    root = kit.svg.document(1600, 400, title="T", desc="D")
+    group = root.add("g", transform="matrix(0.7071 0.7071 -0.7071 0.7071 0 0)")
+    group.add("text", x=0, y=50, font_size=28, font_family="monospace").text("rotated")
+    assert kit.checks.check_svg(_render(kit, root), make_output(kit)) == []
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        r"\75rl(//example.invalid/p.svg#paint)",
+        r"u\72l(remote.svg#paint)",
+        r"url\(x)",
+        "#1f6feb\\",
+    ],
+)
+def test_css_escapes_in_attribute_values_are_rejected(kit: ModuleType, value: str) -> None:
+    text = probe_bytes(kit).decode().replace('fill="#1f6feb"', f'fill="{value}"').encode()
+    errors = kit.checks.check_svg(text, make_output(kit))
+    assert any("contains a backslash; CSS escapes are not allowed" in error for error in errors), (
+        errors
+    )
+
+
+def test_ordinary_palette_path_and_text_attributes_pass(kit: ModuleType) -> None:
+    root = probe_document(kit)
+    root.add("path", d="M10 10 L20 20 C30 30 40 40 50 50 Z", fill="#0b7285", stroke="#ffffff")
+    root.add("rect", x=1, y=1, width=5, height=5, fill="rgb(10, 20, 30)", fill_opacity=0.5)
+    label = root.add("g", font_family="'JetBrains Mono', ui-monospace, monospace", font_size=28)
+    label.add("text", x=0, y=200, fill="currentColor", text_anchor="middle").text("Freeze → Run")
+    assert kit.checks.check_svg(_render(kit, root), make_output(kit)) == []
 
 
 def test_outlined_assets_reject_text(kit: ModuleType) -> None:

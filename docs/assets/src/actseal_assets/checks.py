@@ -136,12 +136,30 @@ def _forbidden_value_tokens(
     return [token for token in tokens if token in squished]
 
 
+def minimum_singular_value(a: float, b: float, c: float, d: float) -> float:
+    """Smallest singular value of the 2x2 linear part ``[[a, c], [b, d]]``.
+
+    This is the true lower bound on how much the transform can shrink any
+    length, so it never overestimates rendered text size. A singular matrix
+    yields 0. Computed as ``|det| / sigma_max`` for numerical stability near
+    singularity.
+    """
+    frobenius = a * a + b * b + c * c + d * d
+    determinant = abs(a * d - b * c)
+    if determinant == 0 or frobenius == 0:
+        return 0.0
+    discriminant = max(frobenius * frobenius - 4 * determinant * determinant, 0.0)
+    sigma_max = math.sqrt((frobenius + math.sqrt(discriminant)) / 2)
+    return determinant / sigma_max
+
+
 def transform_scale(value: str) -> float | str:
     """Minimum linear scale applied by an SVG ``transform`` list.
 
-    ``translate`` and ``rotate`` preserve lengths; ``scale`` and ``matrix`` are
-    reduced to their smallest axis factor. Skews and anything unparsable return
-    an error string so text size under them is never approximated.
+    ``translate`` and ``rotate`` preserve lengths; ``scale`` contributes its
+    smallest axis factor and ``matrix`` its smallest singular value, which is
+    the exact lower bound on length scaling. Skews and anything unparsable
+    return an error string so text size under them is never approximated.
     """
     position = 0
     factor = 1.0
@@ -166,7 +184,7 @@ def transform_scale(value: str) -> float | str:
         if name == "scale" and len(args) in {1, 2}:
             step = min(abs(arg) for arg in args)
         elif name == "matrix" and len(args) == 6:  # noqa: PLR2004 - matrix(a b c d e f)
-            step = min(math.hypot(args[0], args[1]), math.hypot(args[2], args[3]))
+            step = minimum_singular_value(args[0], args[1], args[2], args[3])
         else:
             return f"unsupported transform {match.group(0).strip()!r}"
         if step <= 0:
@@ -312,6 +330,11 @@ def _check_attributes(element: ET.Element, name: str, seen_ids: set[str]) -> lis
                 errors.append(f"<{name}> href {value!r} is not a local fragment")
         if lowered.startswith(EXTERNAL_PREFIXES):
             errors.append(f"<{name}> attribute {key}={value!r} references an external resource")
+        if "\\" in value:
+            errors.append(
+                f"<{name}> attribute {key}={value!r} contains a backslash; "
+                "CSS escapes are not allowed in attribute values"
+            )
         errors.extend(
             f"<{name}> attribute {key}={value!r} contains forbidden resource syntax {token!r}"
             for token in _forbidden_value_tokens(value)

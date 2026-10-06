@@ -239,7 +239,10 @@ def test_missing_font_license_fails_when_fonts_are_present(kit: ModuleType, repo
     (font_dir / "JetBrainsMono-Regular.ttf").write_bytes(regular)
     (font_dir / "JetBrainsMono-Bold.ttf").write_bytes(bold)
     report = kit.pipeline.run(repo, mode="check", assets=())
-    assert _errors(report) == ["docs/assets/src/fonts/OFL.txt (upstream font notice) is missing"]
+    assert _errors(report) == [
+        "docs/assets/src/fonts/OFL.txt (upstream font notice) is missing",
+        "aborting before any renderer runs: 1 prerequisite error(s) above (fonts)",
+    ]
     (font_dir / "OFL.txt").write_text(
         "Copyright 2020 The JetBrains Mono Project Authors\n"
         "This Font Software is licensed under the SIL Open Font License, Version 1.1.\n"
@@ -255,12 +258,119 @@ def test_manifest_and_lock_pin_problems_fail(kit: ModuleType, repo: Path) -> Non
     (repo / "uv.lock").write_text("nothing\n", encoding="utf-8")
     report = kit.pipeline.run(repo, mode="check", assets=())
     assert _errors(report) == [
-        "fonttools: uv.lock does not pin fonttools-4.66.1-py3-none-any.whl at sha256 7234ae9e28db…"
+        "fonttools: uv.lock does not pin fonttools-4.66.1-py3-none-any.whl at sha256 7234ae9e28db…",
+        "aborting before any renderer runs: 1 prerequisite error(s) above (manifest)",
     ]
     (repo / "docs" / "assets" / "src" / "tools.toml").write_text("[x\n", encoding="utf-8")
     broken = kit.pipeline.run(repo, mode="check", assets=())
     assert len(_errors(broken)) == 1
     assert _errors(broken)[0].startswith("cannot read manifest")
+
+
+def _counting(kit: ModuleType) -> tuple[Any, list[str]]:
+    calls: list[str] = []
+
+    def render(_context: Any) -> Mapping[str, bytes]:
+        calls.append("render")
+        return {"probe.svg": probe_bytes(kit)}
+
+    return make_asset(kit, outputs=(make_output(kit),), renderer=render), calls
+
+
+def _pin_fonts_to(kit: ModuleType, repo: Path, regular: bytes, bold: bytes) -> Path:
+    manifest = repo / "docs" / "assets" / "src" / "tools.toml"
+    text = manifest.read_text(encoding="utf-8")
+    text = text.replace(
+        "a0bf60ef0f83c5ed4d7a75d45838548b1f6873372dfac88f71804491898d138f",
+        kit.tools.sha256_bytes(regular),
+    ).replace(
+        "5590990c82e097397517f275f430af4546e1c45cff408bde4255dad142479dcb",
+        kit.tools.sha256_bytes(bold),
+    )
+    manifest.write_text(text, encoding="utf-8")
+    font_dir = repo / str(kit.inventory.FONT_DIR)
+    font_dir.mkdir(parents=True, exist_ok=True)
+    (font_dir / "OFL.txt").write_text(
+        "Copyright 2020 The JetBrains Mono Project Authors\n"
+        "SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n",
+        encoding="utf-8",
+    )
+    return font_dir
+
+
+def test_wrong_font_bytes_block_rendering_and_writes(kit: ModuleType, repo: Path) -> None:
+    font_dir = _pin_fonts_to(kit, repo, b"regular", b"bold")
+    (font_dir / "JetBrainsMono-Regular.ttf").write_bytes(b"not the pinned regular")
+    (font_dir / "JetBrainsMono-Bold.ttf").write_bytes(b"bold")
+    asset, calls = _counting(kit)
+    for mode in ("write", "check"):
+        report = kit.pipeline.run(repo, mode=mode, assets=(asset,))
+        errors = _errors(report)
+        assert errors == [
+            "docs/assets/src/fonts/JetBrainsMono-Regular.ttf: sha256 does not match the pin",
+            "aborting before any renderer runs: 1 prerequisite error(s) above (fonts)",
+        ]
+        assert report.checked == []
+        assert report.written == []
+    assert calls == []
+    assert not (repo / "docs" / "assets" / "probe.svg").exists()
+
+
+def test_correct_font_bytes_allow_rendering(kit: ModuleType, repo: Path) -> None:
+    font_dir = _pin_fonts_to(kit, repo, b"regular", b"bold")
+    (font_dir / "JetBrainsMono-Regular.ttf").write_bytes(b"regular")
+    (font_dir / "JetBrainsMono-Bold.ttf").write_bytes(b"bold")
+    asset, calls = _counting(kit)
+    report = kit.pipeline.run(repo, mode="write", assets=(asset,))
+    assert report.ok
+    assert report.written == ["probe.svg"]
+    assert calls == ["render", "render"]
+
+
+def test_lock_pin_mismatch_blocks_rendering_and_writes(kit: ModuleType, repo: Path) -> None:
+    (repo / "uv.lock").write_text("nothing\n", encoding="utf-8")
+    asset, calls = _counting(kit)
+    report = kit.pipeline.run(repo, mode="write", assets=(asset,))
+    assert _errors(report)[-1] == (
+        "aborting before any renderer runs: 1 prerequisite error(s) above (manifest)"
+    )
+    assert calls == []
+    assert report.written == []
+    assert not (repo / "docs" / "assets" / "probe.svg").exists()
+
+
+def test_invalid_manifest_entry_blocks_rendering(kit: ModuleType, repo: Path) -> None:
+    manifest = repo / "docs" / "assets" / "src" / "tools.toml"
+    text = manifest.read_text(encoding="utf-8").replace(
+        "https://github.com/asciinema/agg/blob/v1.9.0/LICENSE",
+        "http://github.com/asciinema/agg/blob/v1.9.0/LICENSE",
+    )
+    manifest.write_text(text, encoding="utf-8")
+    asset, calls = _counting(kit)
+    report = kit.pipeline.run(repo, mode="write", assets=(asset,))
+    assert "agg: license_url must be https" in _errors(report)
+    assert calls == []
+    assert report.written == []
+
+
+def test_unfetched_fonts_stay_informational_without_implemented_need(
+    kit: ModuleType, repo: Path
+) -> None:
+    asset, calls = _counting(kit)
+    report = kit.pipeline.run(repo, mode="write", assets=(asset,))
+    assert report.ok
+    assert _messages(report, "fonts") == ["jetbrains-mono 2.304 not fetched; run setup_tools.py"]
+    assert calls == ["render", "render"]
+
+
+def test_reference_errors_do_not_block_first_write(kit: ModuleType, repo: Path) -> None:
+    (repo / "README.md").write_text("![Probe](docs/assets/probe.svg)\n", encoding="utf-8")
+    asset, calls = _counting(kit)
+    report = kit.pipeline.run(repo, mode="write", assets=(asset,))
+    assert _errors(report) == ["README.md:1: 'docs/assets/probe.svg' does not exist"]
+    assert report.written == ["probe.svg"]
+    assert calls == ["render", "render"]
+    assert kit.pipeline.run(repo, mode="check", assets=(asset,)).ok
 
 
 def test_real_inventory_is_structurally_valid(kit: ModuleType) -> None:
@@ -345,7 +455,7 @@ def test_invalid_declarations_abort_before_any_renderer_runs(kit: ModuleType, re
         assert not report.ok
         assert "escape: output '../escaped.svg' must be a plain filename" in _errors(report)
         assert _errors(report)[-1] == (
-            "aborting before any renderer runs: 1 declaration error(s) above"
+            "aborting before any renderer runs: 1 prerequisite error(s) above (inventory)"
         )
         assert report.checked == []
         assert report.written == []
@@ -386,7 +496,9 @@ def test_symlinked_asset_directory_is_refused(kit: ModuleType, repo: Path, tmp_p
     errors = _errors(report)
     assert errors[0].startswith("docs/assets resolves to ")
     assert errors[0].endswith(", outside the repository; refusing to continue")
-    assert errors[-1] == "aborting before any renderer runs: 1 declaration error(s) above"
+    assert errors[-1] == (
+        "aborting before any renderer runs: 1 prerequisite error(s) above (inventory)"
+    )
     assert list(outside.iterdir()) == [outside / "src"]
     assert report.written == []
 
