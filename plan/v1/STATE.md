@@ -7,7 +7,7 @@ Codex is the sole writer of this state and REVIEW records. Executors write their
 - Approved message: `bb3538db868f929c1f779dcbcd105936f521acba51fbfe7c08988fedcd0fdcaa`; received `2026-10-06T16:04:49.582Z`.
 - Baseline commit: `332e1633f46975331f25f9af461f1220b6f36e8b`.
 - Decisions: 1A, 2A, 3A adopted through approval of the recommended plan; see DECISIONS.md for exact provenance.
-- Product code, product docs, tests and visual assets: user-run Claude Code, Fable 5.1, effort high. No automated Claude dispatch.
+- Product code, product docs, tests and visual assets: Claude Code CLI, Fable 5.1, effort high, orchestrated by Codex under the latest explicit human authorization (V1-005).
 - Codex: planning receipts, review, checks, CI/packaging glue and release gates.
 - Main must remain releasable. No task merges without ACCEPT and green CI.
 
@@ -29,7 +29,7 @@ Codex is the sole writer of this state and REVIEW records. Executors write their
 | 02 | Claude A | Held for 01R and independent full-baseline ACCEPT |
 | 03–08 | Claude B/C/D | Waiting for frozen Task 02 contracts and specified dependencies |
 | 09 | Codex | Prerequisites ACCEPT and merged via PR #9 at e4bf59a; publication workflow hardening remains pending |
-| 10 | Claude V | Ready for manual Claude in /Users/ajay/.codex/worktrees/actseal-v1-visuals/not-yet-named; dispatch/10.md |
+| 10 | Claude V | Ready for Claude CLI in /Users/ajay/.codex/worktrees/actseal-v1-visuals/not-yet-named; dispatch/10.md |
 | 11–18 | Claude V | Waiting for their specified dependencies |
 | 19–22 | Claude A/D and Codex | Waiting for integration/release gates |
 
@@ -39,7 +39,7 @@ Task 00 ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8. All 2302 baseline te
 
 ## Next action
 
-Run manual Claude Task 01R in /Users/ajay/.codex/worktrees/actseal-v1-baseline/not-yet-named and Task 10 in the visuals worktree concurrently. Both start from merged main e4bf59a. Return each committed branch and REPORT for independent review. Do not dispatch Task 02 until the baseline is ACCEPT. Do not launch Claude or substitute another product implementer.
+Run Claude CLI Task 01R in /Users/ajay/.codex/worktrees/actseal-v1-baseline/not-yet-named and Task 10 in the visuals worktree concurrently. Both start from merged main e4bf59a. Return each committed branch and REPORT for independent review. Do not dispatch Task 02 until the baseline is ACCEPT. Claude CLI dispatch is authorized; do not substitute another product implementer.
 
 ## Latest integration receipt
 

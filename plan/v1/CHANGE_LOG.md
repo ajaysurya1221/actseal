@@ -19,3 +19,7 @@ The approved v1 plan section E explicitly authorizes PlanLock.replay_engine_vers
 ## V1-004 — Preserve the verbatim approval receipt during formatting
 
 Hosted CI runs 37494066475 and 37494420609 rejected only the line wrapping of a Python fence in plan/v1/PLAN.md. Task 00 requires that file to preserve the approved message verbatim. Add an exact-file formatter exclusion, not a lint or product-code exclusion. Continue running the unchanged repository-wide Ruff commands; verify the approval receipt SHA-256 remains bb3538db868f929c1f779dcbcd105936f521acba51fbfe7c08988fedcd0fdcaa. The pre-commit format hook checks only Python files, so its earlier success did not cover this Markdown fence.
+
+## V1-005 — Autonomous Claude CLI orchestration authorized
+
+The latest human goal explicitly says: "Call Claude Code via CLI and handle the Orchestration" and authorizes autonomous continuation while AFK. This replaces the earlier manual-session restriction only. Claude Code Fable 5.1/high still writes all product code, product docs, tests and visual assets; Codex reviews and gates. Existing ownership, normal permission controls, no-secret rules, immutable approval text and publication approvals remain in force. No alternate provider or API billing is authorized by this amendment.
