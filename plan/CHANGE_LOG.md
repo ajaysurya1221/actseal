@@ -148,3 +148,13 @@ silently excluded, CI now selects all packaging markers, not just tests/packagin
 T60/T70 command specifications reflect that broader check. No public API,
 statistical rule, dependency or frozen fixture changes. T60 implementation has
 not started before its prerequisites were accepted.
+
+## 2026-10-06 — native CLI receipt and public source documentation
+
+Real cached-native lock/verify/replay completed at434c682 with BLOCK/zero accepted
+under the frozen fixture threshold. REPORT T70-native preserves the outcome,
+full identity and hashes; no tuning/retry was performed. Public plan wording now
+correctly describes two authored answer sets under one policy. The sdist uses an
+explicit public-document/configuration allowlist so README/example links remain
+inspectable offline; private dispatch, local receipts, original research and
+.env remain outside every included path. No runtime dependency or product change.
