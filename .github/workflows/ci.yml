@@ -72,3 +72,27 @@ jobs:
           PY
       - name: Repository hooks
         run: uv run --frozen pre-commit run --all-files
+
+  assets:
+    name: assets (committed references and regeneration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.5'
+          python-version: '3.12'
+          enable-cache: true
+      - name: Install locked authoring and development tools
+        run: uv sync --frozen --group dev --group assets
+      - name: Type-check the asset tooling
+        run: uv run --frozen mypy --strict docs/assets/src
+      - name: Validate every committed asset and README image reference
+        # Planned renderers are reported, not counted as completed assets.
+        # The publication workflow separately requires every static P1 asset.
+        # Required authoring inputs must be provisioned before their renderers
+        # land; a missing input or stale output must fail rather than be skipped.
+        run: uv run --frozen --group assets python docs/assets/src/render.py --check
