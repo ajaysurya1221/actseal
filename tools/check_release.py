@@ -511,6 +511,19 @@ def _check_workflow_pins(jobs: Mapping[str, Any]) -> None:
 def _check_build_job(job: Mapping[str, Any]) -> None:
     steps = _steps(job)
     runs = [str(step.get("run", "")) for step in steps]
+    docs_steps = [
+        (i, step)
+        for i, step in enumerate(steps)
+        if str(step.get("run", "")).strip() == "uv run --frozen python tools/check_release.py docs"
+    ]
+    _require(len(docs_steps) == 1, "build job must run the exact docs gate once")
+    docs_index, docs_step = docs_steps[0]
+    build_index = next(i for i, run in enumerate(runs) if "uv build" in run)
+    _require(docs_index < build_index, "docs gate must precede building distributions")
+    _require(
+        docs_step.get("if") is None and docs_step.get("continue-on-error") in (None, False),
+        "docs gate must be unconditional and fail closed",
+    )
     distributions_index = next(
         (i for i, run in enumerate(runs) if "check_release.py distributions" in run), None
     )

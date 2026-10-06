@@ -58,6 +58,8 @@ jobs:
         run: |
           uv run --frozen python tools/check_release.py metadata \
             --ref "$RELEASE_REF" --sha "$RELEASE_SHA" >> "$GITHUB_OUTPUT"
+      - name: Validate release documentation before building
+        run: uv run --frozen python tools/check_release.py docs
       - name: Build the wheel and source distribution exactly once
         # uv writes a .gitignore into its out-dir; the packages-dir must hold
         # only the two distributions, so remove that marker before validation.

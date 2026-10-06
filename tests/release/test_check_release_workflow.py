@@ -43,6 +43,24 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "  workflow_dispatch:\n    inputs:\n      publish:\n        type: boolean\n",
         "rehearsal-only",
     ),
+    "docs-gate-missing": (
+        "run: uv run --frozen python tools/check_release.py docs",
+        "run: uv run --frozen python tools/check_release.py workflow",
+        "exact docs gate once",
+    ),
+    "docs-gate-conditional": (
+        "      - name: Validate release documentation before building\n",
+        "      - name: Validate release documentation before building\n        if: false\n",
+        "unconditional and fail closed",
+    ),
+    "docs-gate-ignored": (
+        "      - name: Validate release documentation before building\n",
+        (
+            "      - name: Validate release documentation before building\n"
+            "        continue-on-error: true\n"
+        ),
+        "unconditional and fail closed",
+    ),
     "top-level-write": (
         "permissions:\n  contents: read\n\nconcurrency",
         "permissions:\n  contents: write\n\nconcurrency",
@@ -185,3 +203,26 @@ def test_each_contract_rule_rejects_its_mutation(
     assert out == ""
     assert err.startswith("release check failed: ")
     assert fragment in err, (name, err)
+
+
+def test_docs_gate_cannot_move_after_the_build(
+    tool: types.ModuleType,
+    workflow_text: str,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    gate = (
+        "      - name: Validate release documentation before building\n"
+        "        run: uv run --frozen python tools/check_release.py docs\n"
+    )
+    after_build = "      - name: Validate the built distributions and record checksums\n"
+    assert workflow_text.count(gate) == workflow_text.count(after_build) == 1
+    mutated = tmp_path / "publish-pypi.yml"
+    mutated.write_text(
+        workflow_text.replace(gate, "").replace(after_build, gate + after_build),
+        encoding="utf-8",
+    )
+    code, out, err = run_main(tool, ["workflow", "--path", str(mutated)], capsys)
+    assert code == 1
+    assert out == ""
+    assert "docs gate must precede building distributions" in err
