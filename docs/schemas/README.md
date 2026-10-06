@@ -23,9 +23,37 @@ rejected by Actseal; a document Actseal accepts always validates here.
 | [compatibility-registry.schema.json](compatibility-registry.schema.json) | `src/actseal/compatibility_registry.json` | `compatibility.REGISTRY_SCHEMA_VERSION` | 1 |
 
 The contract TOML (schema 1) is not JSON and is specified in
-[CONTRACTS](../../plan/CONTRACTS.md) section 3. The release provenance receipt
-(schema 1) is produced by release tooling and specified in the
-[versioning policy](../versioning.md).
+[CONTRACTS](../../plan/CONTRACTS.md) section 3.
+
+## Release receipts (release tooling, not the package)
+
+The release workflow's helper, `tools/check_release.py`, writes three JSON
+receipts per release. Their promotion-profile schemas live in the sibling
+directory `docs/release-schemas/`, because this directory enumerates exactly
+the formats the `actseal` package itself reads and writes. All three carry
+`schema_version` 1 (`compatibility.RELEASE_RECEIPT_SCHEMA_VERSION`) and reject
+unknown fields at every object level; see the
+[versioning policy](../versioning.md#release-receipts-schema-1) and
+[ADR 0016](../decisions/0016-release-promotion-and-receipts.md).
+
+| File | Describes | Written by |
+|---|---|---|
+| [build-receipt.schema.json](../release-schemas/build-receipt.schema.json) | `build-receipt.json`: tag, source commit, `uv.lock` hash, originating run and the two built distributions | `check_release.py distributions` (build job) |
+| [postpublish-receipt.schema.json](../release-schemas/postpublish-receipt.schema.json) | `postpublish-receipt.json`: official-PyPI download hashes, published metadata, attestation inspection and the clean-container smoke outcomes | `check_release.py postpublish` (pinned container) |
+| [release-receipt.schema.json](../release-schemas/release-receipt.schema.json) | `release-receipt.json`: the binding of version, tag, commit, `uv.lock` hash, run/attempts, immutable artifact and the embedded post-publication evidence; mirrored to the draft GitHub release with `SHA256SUMS` | `check_release.py release-receipt` (mirror job) |
+
+`lock_sha256` in these receipts is the SHA-256 of the repository `uv.lock` at
+the source commit, not an Actseal decision lock. Inspection-only receipts (a
+rehearsal build with a branch ref and null workflow metadata, a post-publication
+run against a local or test index, or one that tolerated missing attestations)
+deliberately fail these schemas and are never promoted. The helper is stricter
+than the schemas: it rejects duplicate keys and nonfinite numbers while decoding,
+requires exact integers where JSON Schema would accept `1.0`, and enforces the
+cross-field equalities listed in the versioning policy. The provenance fields
+record that attestation presence, trusted-publisher identity and statement
+subjects were inspected; no cryptographic signature verification is claimed.
+`tests/release/test_release_schemas.py` validates receipts the helper actually
+writes against these schemas with the same local, non-fetching validator.
 
 ## Invariants not expressed in the schemas
 

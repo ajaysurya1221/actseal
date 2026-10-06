@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:release-receipt:1",
+  "title": "Actseal release receipt (schema 1, promotion profile)",
+  "description": "release-receipt.json written by `tools/check_release.py release-receipt` in the mirror job and attached, with SHA256SUMS and the two distributions, to the draft GitHub release. It binds the version, tag, source commit, the SHA-256 of the repository `uv.lock` at that commit (not an Actseal decision lock), the workflow run with the originating build attempt and the verification attempt, the immutable Actions artifact ID and digest, every distribution's filename, size and SHA-256, the verify-matrix result and the embedded post-publication evidence. It contains no credentials. Unknown fields are rejected everywhere. The helper additionally enforces exact integer schema version, equality of the inventory with the verified distribution bytes and SHA256SUMS, equality of the embedded file hashes with that inventory, derivation of both workflow URLs from the fixed repository, run ID and respective attempts, build attempt not later than verification attempt, and the Production/Stable classifier for 1.x.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "version",
+    "tag",
+    "source_commit",
+    "lock_sha256",
+    "workflow_run",
+    "artifact",
+    "distributions",
+    "verification",
+    "note"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "actseal-release-receipt" },
+    "version": { "$ref": "urn:actseal:schema:build-receipt:1#/$defs/Version" },
+    "tag": { "$ref": "urn:actseal:schema:build-receipt:1#/$defs/Tag" },
+    "source_commit": { "$ref": "urn:actseal:schema:build-receipt:1#/$defs/GitSha" },
+    "lock_sha256": { "$ref": "urn:actseal:schema:build-receipt:1#/$defs/Sha256" },
+    "workflow_run": { "$ref": "#/$defs/ReleaseWorkflowRun" },
+    "artifact": { "$ref": "#/$defs/Artifact" },
+    "distributions": { "$ref": "urn:actseal:schema:build-receipt:1#/$defs/Distributions" },
+    "verification": { "$ref": "#/$defs/Verification" },
+    "note": { "const": "Contains no credentials." }
+  },
+  "if": { "properties": { "version": { "pattern": "^[1-9]" } } },
+  "then": {
+    "properties": {
+      "verification": {
+        "properties": {
+          "postpublish": {
+            "properties": {
+              "published_metadata": {
+                "properties": {
+                  "classifiers": {
+                    "contains": { "const": "Development Status :: 5 - Production/Stable" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "RunUrl": {
+      "description": "A GitHub Actions attempt URL of this repository; the helper requires the run ID and attempt in the URL to equal the recorded id and respective attempt.",
+      "type": "string",
+      "pattern": "^https://github\\.com/ajaysurya1221/actseal/actions/runs/[1-9][0-9]*/attempts/[1-9][0-9]*$(?![\\s\\S])"
+    },
+    "ReleaseWorkflowRun": {
+      "description": "One workflow run; `build_attempt` is the attempt that produced the immutable artifact and `verification_attempt` the attempt that promoted it (a rerun of failed jobs keeps the run ID and increments the attempt).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "build_attempt", "verification_attempt", "build_url", "verification_url"],
+      "properties": {
+        "id": { "$ref": "urn:actseal:schema:build-receipt:1#/$defs/Decimal" },
+        "build_attempt": { "$ref": "urn:actseal:schema:build-receipt:1#/$defs/Decimal" },
+        "verification_attempt": { "$ref": "urn:actseal:schema:build-receipt:1#/$defs/Decimal" },
+        "build_url": { "$ref": "#/$defs/RunUrl" },
+        "verification_url": { "$ref": "#/$defs/RunUrl" }
+      }
+    },
+    "Artifact": {
+      "description": "The immutable Actions artifact holding exactly the wheel and sdist. `digest` is the pinned upload-artifact's bare 64-hex output normalized to `sha256:<hex>`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "digest"],
+      "properties": {
+        "id": { "$ref": "urn:actseal:schema:build-receipt:1#/$defs/Decimal" },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$(?![\\s\\S])" }
+      }
+    },
+    "Verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verify_matrix", "postpublish"],
+      "properties": {
+        "verify_matrix": { "const": "success" },
+        "postpublish": { "$ref": "urn:actseal:schema:postpublish-receipt:1#/$defs/EmbeddedPostpublish" }
+      }
+    }
+  }
+}

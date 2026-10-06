@@ -100,12 +100,27 @@ The registry is trusted verifier configuration. It does not authenticate any
 bundle, response or execution; it states which implementations a verifier is
 willing to treat as equivalent for replay.
 
-## Release provenance receipt (schema 1)
+## Release receipts (schema 1)
 
-Release tooling, not the package, emits one JSON receipt per release. It binds:
-the package version, the git tag, the source commit, the lock hash of the
-release acceptance evidence, the CI workflow run, the immutable artifact ID,
-every distribution filename with its size and SHA-256, and the verification
-results (tests, metadata checks, post-publication install and replay). It
-contains no credentials. Its field set is owned by the release workflow task
-and versioned by `RELEASE_RECEIPT_SCHEMA_VERSION`.
+Release tooling (`tools/check_release.py`), not the package, emits three JSON
+receipts per release, all at `RELEASE_RECEIPT_SCHEMA_VERSION` 1 and described by
+the strict promotion-profile schemas in `docs/release-schemas/` (indexed from
+the [wire schemas](schemas/README.md#release-receipts-release-tooling-not-the-package)).
+The build receipt records the tag, the source commit, the originating workflow
+run and the two built distributions. The post-publication receipt records the
+official-PyPI download hashes, the published metadata, the attestation
+inspection and the clean-container demo/replay outcomes. The release receipt
+binds the package version, the git tag, the source commit, the CI workflow run
+with its build and verification attempts, the immutable Actions artifact ID and
+digest, every distribution filename with its size and SHA-256, the verify-matrix
+result and the embedded post-publication evidence; it is mirrored with
+`SHA256SUMS` to the draft GitHub release. In every receipt `lock_sha256` is the
+SHA-256 of the repository `uv.lock` dependency lockfile at the source commit; it
+is **not** an Actseal decision lock (`lock.json`) and binds the release
+environment, not any evidence bundle. The receipts contain no credentials.
+Their attestation fields record that PEP 740 attestation presence, the trusted
+publisher identity and the statement subjects were inspected; they do not claim
+cryptographic verification. Unknown fields are rejected at every level, so these
+shapes never gain fields within schema 1; a receipt that fails promotion is never
+rewritten to pass. [ADR 0016](decisions/0016-release-promotion-and-receipts.md)
+records the promotion design.
