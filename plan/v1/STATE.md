@@ -25,14 +25,14 @@ Codex is the sole writer of STATE, TODO and REVIEW records. Claude writes its ta
 | 00 | Codex | ACCEPT b2332bff; approved plan immutable |
 | 01/01R | Codex/Claude | ACCEPT: independent2302 tests inclnative; PR10 mergedaaaf6c9 |
 | 02 | Claude A | ACCEPT0595512;2519core+14packaging+hooks,116manifest; PR15 eight green checks, mergedcef6c474 |
-| 03 | Claude B | Quota-interrupted draft;177 independent tests pass, PT017 lint/report repair required; native permission pending |
-| 04 | Claude C | Quota-interrupted draft;221 independent tests/eight mutations pass; unsafe --workdir cleanup requires repair; further harness permission pending |
+| 03 | Claude B | Scoped ACCEPT212a1d6;177 focused tests, core2780+separate6outline tests; draftPR20 eight green hosted jobs; native permission pending |
+| 04 | Claude C | Scoped ACCEPT732914d;252 focused/31 independent safety tests; parent-deletion and silent-cleanup defects repaired; draftPR21, full harness permission pending |
 | 05–06 | Claude B | Pending03; V1-011 wiring and V1-013 collection clarifications recorded; no Jev calls |
-| 07–08 | Claude D | Pending approved dependencies; example/docs |
-| 09 | Codex/Claude | CI helper strictness0060f27 scoped ACCEPT;442release/319independent tests; Claude09R4 schemas/docs queued; draftPR18 hosted checks pending, final assets/rehearsal pending |
+| 07–08 | Claude D | 07 isolated fixture example running under V1-015;08 pending dependencies |
+| 09 | Codex/Claude | Helper0060f27 scoped ACCEPT and ten CI jobs green; schemas006072f REVISE, bounded09R5 running; actual assets/rehearsal pending |
 | 10 | Claude V | ACCEPT030ef840; PR13 all8checks green and merged6ad1e91 |
-| 11 | Claude V | Pinned font/tool download exception pending |
-| 12 | Claude V | REVISE6ede9eab;231 independent tests pass; missing labelled-input/provider-answer/bounded-bundle meaning; rendered review incomplete |
+| 11 | Claude V | Source-only hero preparation running under V1-017; authentic font/download/render approval pending |
+| 12 | Claude V | Semantic scoped ACCEPTe27ad2f, mergedheadf712dae;236 tests and four SVG comparisons pass; draftPR22, actual rendered acceptance pending |
 | 13–18 | Claude V | Pending specified dependencies; optionalP2 subject to cut |
 | 19–22 | Claude/Codex | Integration/release gates pending |
 
@@ -40,13 +40,14 @@ Codex is the sole writer of STATE, TODO and REVIEW records. Claude writes its ta
 
 | Task | Claude session | Tool handle | Worktree suffix |
 | --- | --- | --- | --- |
-| 02R3 (terminal) | 55bc88af-619e-4aff-97ac-4d7c42d31418 | 93186 (exit0) | actseal-v1-core/not-yet-named |
-| 03 (terminal) | da80547c-fab0-4926-8c79-3a6d66f6b7b3 | 54179 (exit1, quota) | actseal-v1-baseline/not-yet-named |
-| 04 (terminal) | 36334c93-ddb9-413b-a094-2549b02efef3 | 61248 (exit1, quota) | actseal-v1-stats/not-yet-named |
-| 09R3 (terminal) | b3ff94c7-3730-4f74-8c97-51ca08412f31 | 95304 (exit0) | actseal-v1-release/not-yet-named |
-| 12 (terminal) | 96db6a5b-dd17-4a10-b820-1aadc37f7873 | 7869 (exit0) | actseal-v1-visuals/not-yet-named |
+| 07 running | eeb42150-bc57-422f-8406-8b15797a9027 | 3812 | actseal-v1-core/not-yet-named |
+| 09R5 running | b3ff94c7-3730-4f74-8c97-51ca08412f31 | 78919 | actseal-v1-release/not-yet-named |
+| 11 preparation running | f3f4a433-fd6f-4b98-a084-a5a4996d858b | 87864 | actseal-v1-hero/not-yet-named |
+| 03R2 terminal | da80547c-fab0-4926-8c79-3a6d66f6b7b3 | 4164 | actseal-v1-baseline/not-yet-named |
+| 04R2 terminal | 36334c93-ddb9-413b-a094-2549b02efef3 | 1100 | actseal-v1-stats/not-yet-named |
+| 12R2 terminal | 96db6a5b-dd17-4a10-b820-1aadc37f7873 | 61329 | actseal-v1-visuals/not-yet-named |
 
-Worktree prefix is `/Users/ajay/.codex/worktrees/`. Earlier57407/25815/58170 are terminal. Current sessions expose no Agent/Task tools and prohibit nested executors/personal-memory writes. Prompts/streams/status remain under `/tmp/actseal-v1-orchestration`; raw logs stay uncommitted. Observation timeouts are not process completion. Original interrupted02/09 drafts and executor-model deviations remain preserved under V1-007 and their REPORTs; direct Fable reimplementations replaced them before review.
+Worktree prefix is `/Users/ajay/.codex/worktrees/`. Task02 is complete; its worktree now belongs to07. Current sessions expose no Agent/Task built-ins and prohibit nested executors/personal-memory writes. Prompts/streams/status remain under `/tmp/actseal-v1-orchestration`; raw logs stay uncommitted. Observation timeouts are not completion. Quota reset was successfully observed at20:21UTC6October; no model or billing substitution. Earlier executor deviations remain preserved under V1-007 and their REPORTs.
 
 ## Recent integration and verification receipts
 
@@ -64,10 +65,17 @@ Worktree prefix is `/Users/ajay/.codex/worktrees/`. Earlier57407/25815/58170 are
 
 ## Blockers and next action
 
-Claude subscription quota resets **7 October2026 01:50 IST (6 October20:20 UTC)**. No Claude process remains active; do not retry before reset or switch model/billing/credentials. Resume03/04 and bounded12 repairs after reset. Review/CI preparation continues independently. After03 ACCEPT, start experimental Jev and the application example.
+The quota reset succeeded;07,09R5 and11 are progressing.03/04/12 bounded repairs have scoped implementation/semantic ACCEPT; their denied native/harness/render gates remain pending. V1-015 permits only isolated fixture-example preparation before03's full gate; it does not waive dependencies for merge. All historical failures/denials remain recorded.
 
 Claude settings explicitly deny curl; an async task-scoped exception request for official pinned font/asciinema/agg/resvg downloads remains unanswered. No alternative download path or settings change is authorized by elapsed time. Other lanes continue. JEV_API_KEY is not exported in the current Codex process; no secret file was inspected.
 
 A second scoped permission request covers the denied cached-only native test, repaired mutation harness and local SVG previews. Claude's noninteractive session had no approval surface. Already-completed independent checks that preceded discovery of those denials are documented in the draft reviews; do not repeat the denied actions while permission remains unresolved. The browser's separate local-file URL denial was not bypassed.
 
 The pypi environment permits v* tags plus main, requires ajaysurya1221 approval and permits solo-maintainer self-review. Notify the human when an actual deployment waits; do not remove the gate.
+
+## Latest checkpoint evidence
+
+- PR19 checkpointd02be14f independently ACCEPTed, eight hosted jobs37522284155/37522311659 passed, merged77bf39feb542d4cbaa2b9034e1210704a6019b68.
+- PR18 helper0060f27 has ten successful source/assets jobs37522079944/37522088875. Schemas006072f need three bounded corrections; see09R5-request and V1-016. No publication/rehearsal claim.
+- PR20 implementation212a1d6 has eight successful jobs37527352887/37527392467. Native receipt still blocks merge.
+- PR21/PR22 hold the corrected statistics/workflow candidates for hosted checks; exact-head scope and missing gates are in04R2/12R2 reviews.
