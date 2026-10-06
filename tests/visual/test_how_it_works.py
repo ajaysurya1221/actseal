@@ -134,7 +134,10 @@ def test_required_content_is_present(rendered: dict[str, bytes], name: str) -> N
     # Run: provider answers -> the four decisions.
     assert "provider answers" in labels
     assert any(label.startswith("→ ACT") for label in labels)
-    assert "+ 6 fault scenarios" in labels
+    # Inference covers only the locked verification cases; faults are synthetic.
+    assert "verification cases" in labels
+    assert "+ 6 synthetic faults" in labels
+    assert not any("every" in label or "scenario" in label for label in labels)
     # Verify: bounds and fault rules -> verdict with exit code.
     assert "risk + coverage" in labels
     assert "bounds, fault rules" in labels
@@ -164,7 +167,7 @@ def test_overview_omits_module_names_inventories_and_repeated_exit_codes(
     # not repeat them.
     assert sum("exit" in label for label in lowered) == 1
     digits = [label for label in labels if re.search(r"\d", label)]
-    expected_with_digits = {"+ 6 fault scenarios"} | {
+    expected_with_digits = {"+ 6 synthetic faults"} | {
         label for label in labels if any(f"{v} {c}" in label for v, c in VERDICT_EXITS)
     }
     assert set(digits) - expected_with_digits == {f"{i} {t}" for i, t in enumerate(STAGE_TITLES, 1)}
@@ -207,7 +210,9 @@ def test_description_names_every_stage_and_limit(rendered: dict[str, bytes]) -> 
     assert "frozen policy" in text
     assert "labelled inputs" in text
     assert "into one lock" in text
-    assert "provider answers" in text
+    assert "provider answers for the locked verification cases" in text
+    assert "six synthetic fault scenarios" in text
+    assert "every locked case" not in text
     assert "bounded evidence bundle" in text
     assert "offline" in text
     assert "no model call" in text
