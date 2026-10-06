@@ -72,3 +72,9 @@ follow-up under ADR0014. publish-pypi.yml promotes the pinned reviewed v0.1.0 as
 manual validation-only dispatch is the default. No product, released asset or tag
 change. PyPI account/environment configuration and actual upload remain external
 steps; no upload has been performed. See docs/publishing.md.
+
+PyPI workflow follow-up COMPLETE: PR8 merged at2a1ac36b0f9fe9dda52b946ab48c8e833269d40d; independent
+REVIEW PYPI-01 and both four-job CI matrices passed. Hosted validation-only run
+37482446498 passed on Ubuntu, publish job skipped. REVIEW PYPI-02 records exact scope.
+Next optional action: configure the pending publisher using docs/publishing.md;
+then explicitly run publish=true to upload. No package has been published to PyPI.
