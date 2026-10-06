@@ -299,12 +299,15 @@ def test_real_postpublish_chain_against_a_fake_index(
         assert provenance["subject_sha256"] == item["sha256"]
     assert receipt["published_metadata"]["version"] == version
     assert "no independent cryptographic verification" in receipt["note"]
-    assert (
-        tool.validate_postpublish_receipt(
-            receipt, version, tool.inspect_distributions(real_dist, version)
-        )
-        is None
+    # The file:// index is the isolated chain, not promotion: official_index stays off.
+    tool.validate_postpublish_receipt(
+        receipt, version, tool.inspect_distributions(real_dist, version), official_index=False
     )
+    with pytest.raises(tool.ReleaseCheckError) as excinfo:
+        tool.validate_postpublish_receipt(
+            receipt, version, tool.inspect_distributions(real_dist, version), official_index=True
+        )
+    assert "not official https://pypi.org" in str(excinfo.value)
     demo = tmp_path / "work" / "demo"
     assert (demo / "bad" / "evidence" / "manifest.json").is_file()
     assert (demo / "fixed" / "evidence" / "manifest.json").is_file()

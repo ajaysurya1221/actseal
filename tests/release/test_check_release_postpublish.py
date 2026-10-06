@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 from release_support import (
     ALPHA,
+    CERTIFICATE_B64,
     PUBLISHER,
     STABLE,
     attestation,
@@ -226,12 +227,14 @@ def good_info(**overrides: object) -> dict[str, object]:
     ("info", "fragment"),
     [
         (good_info(name="actseal2"), "project name"),
-        (good_info(version="1.0.1"), "reports version"),
+        (good_info(version="1.0.1"), "version is '1.0.1'"),
         (good_info(yanked=True), "yanked"),
         (good_info(yanked=None), "yanked"),
         (good_info(classifiers=[ALPHA]), "lacks classifier"),
         (good_info(classifiers=[]), "lacks classifier"),
         (good_info(summary=""), "summary"),
+        (good_info(summary=None), "summary"),
+        (good_info(classifiers=STABLE), "classifiers must be a list"),
         (good_info(classifiers=[STABLE, "Topic :: Other"]), "differs from wheel METADATA"),
     ],
 )
@@ -393,7 +396,17 @@ def bad_provenances(files: Mapping[str, bytes]) -> list[tuple[str, dict[str, obj
                 sha,
                 attestations=[{**attestation(good), "envelope": {"statement": good}}],
             ),
-            "signature missing",
+            "envelope.signature must be a non-empty base64 string",
+        ),
+        (
+            "garbage-signature",
+            provenance_document(wheel, sha, attestations=[attestation(good, signature="!!!")]),
+            "envelope.signature is not valid base64",
+        ),
+        (
+            "empty-signature",
+            provenance_document(wheel, sha, attestations=[attestation(good, signature="")]),
+            "envelope.signature must be a non-empty base64 string",
         ),
         (
             "missing-verification-material",
@@ -404,14 +417,111 @@ def bad_provenances(files: Mapping[str, bytes]) -> list[tuple[str, dict[str, obj
                     {k: v for k, v in attestation(good).items() if k != "verification_material"}
                 ],
             ),
-            "verification_material missing",
+            "verification_material must be an object",
+        ),
+        (
+            "empty-verification-material",
+            provenance_document(wheel, sha, attestations=[attestation(good, material={})]),
+            "verification_material.certificate must be a non-empty base64 string",
+        ),
+        (
+            "garbage-certificate",
+            provenance_document(
+                wheel,
+                sha,
+                attestations=[
+                    attestation(
+                        good, material={"certificate": "!!!", "transparency_entries": [{"a": 1}]}
+                    )
+                ],
+            ),
+            "verification_material.certificate is not valid base64",
+        ),
+        (
+            "no-transparency-entries",
+            provenance_document(
+                wheel,
+                sha,
+                attestations=[
+                    attestation(
+                        good, material={"certificate": CERTIFICATE_B64, "transparency_entries": []}
+                    )
+                ],
+            ),
+            "transparency_entries is empty",
+        ),
+        (
+            "transparency-entry-not-object",
+            provenance_document(
+                wheel,
+                sha,
+                attestations=[
+                    attestation(
+                        good,
+                        material={"certificate": CERTIFICATE_B64, "transparency_entries": ["x"]},
+                    )
+                ],
+            ),
+            "transparency entry 0 must be an object",
         ),
         (
             "unsupported-version",
-            provenance_document(wheel, sha, attestations=[{**attestation(good), "version": 2}]),
-            "unsupported attestation version",
+            provenance_document(wheel, sha, attestations=[attestation(good, version=2)]),
+            "attestation version must be the integer 1",
+        ),
+        (
+            "boolean-version",
+            provenance_document(wheel, sha, attestations=[attestation(good, version=True)]),
+            "attestation version must be the integer 1",
+        ),
+        (
+            "unrelated-predicate-type",
+            provenance_document(
+                wheel,
+                sha,
+                attestations=[
+                    attestation(
+                        statement(wheel, sha, predicate_type="https://slsa.dev/provenance/v1")
+                    )
+                ],
+            ),
+            "not the PyPI Publish attestation",
+        ),
+        (
+            "missing-predicate-type",
+            provenance_document(
+                wheel,
+                sha,
+                attestations=[attestation(wheel_statement(files, predicateType=None))],
+            ),
+            "not the PyPI Publish attestation",
+        ),
+        (
+            "non-empty-predicate",
+            provenance_document(
+                wheel,
+                sha,
+                attestations=[attestation(statement(wheel, sha, predicate={"builder": "x"}))],
+            ),
+            "predicate must be empty",
         ),
     ]
+
+
+def test_publish_attestation_with_empty_object_predicate_is_accepted(
+    tool: types.ModuleType, published: tuple[dict[str, bytes], Path], tmp_path: Path
+) -> None:
+    files, _ = published
+    wheel = names(VERSION)[0]
+    provenance = provenance_document(
+        wheel,
+        wheel_sha(files),
+        attestations=[attestation(statement(wheel, wheel_sha(files), predicate={}))],
+    )
+    base = write_fake_index(tmp_path / "index", VERSION, files, provenance=provenance)
+    inspected = tool._provenance(base, VERSION, wheel, wheel_sha(files))
+    assert inspected["present"] is True
+    assert inspected["attestations"] == 1
 
 
 def test_every_malformed_or_foreign_attestation_fails(

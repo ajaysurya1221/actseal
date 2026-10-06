@@ -236,6 +236,22 @@ def set_key(*path: str, value: object) -> Callable[[dict[str, object]], None]:
             set_key("note", value="token pypi-AgEIcHlwaS5vcmcCJDAwMDAwMDAwLTAwMDAtMDAwMA"),
             "credential-shaped",
         ),
+        (
+            set_key(
+                "workflow_run",
+                "build_url",
+                value="https://github.com/other/repo/actions/runs/42/attempts/1",
+            ),
+            "build_url is",
+        ),
+        (set_key("workflow_run", "verification_url", value=None), "verification_url is"),
+        (set_key("verification", "postpublish", "index", value="file:///not-pypi"), "not official"),
+        (
+            set_key("verification", "postpublish", "published_metadata", "yanked", value=True),
+            "is yanked",
+        ),
+        (set_key("schema_version", value=True), "schema_version must be the integer 1"),
+        (set_key("source_commit", value="c" * 40 + "\n"), "full 40-hex commit"),
     ],
 )
 def test_release_receipt_is_fully_validated_before_any_mutation(

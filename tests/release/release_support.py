@@ -401,21 +401,44 @@ def release_distributions(directory: Path) -> dict[str, Path]:
 # --------------------------------------------------------------------------- #
 
 
-def statement(filename: str, sha256: str, *, kind: str = IN_TOTO) -> str:
+PUBLISH_PREDICATE = "https://docs.pypi.org/attestations/publish/v1"
+CERTIFICATE_B64 = base64.b64encode(b"\x30\x82\x01\x00fixture-der").decode("ascii")
+SIGNATURE_B64 = base64.b64encode(b"\x30\x45\x02\x21fixture-sig").decode("ascii")
+TRANSPARENCY_ENTRY = {"logIndex": "1", "logId": {"keyId": "AAAA"}, "integratedTime": "1"}
+
+
+def statement(
+    filename: str,
+    sha256: str,
+    *,
+    kind: str = IN_TOTO,
+    predicate_type: str = PUBLISH_PREDICATE,
+    predicate: object = None,
+) -> str:
     document = {
         "_type": kind,
         "subject": [{"name": filename, "digest": {"sha256": sha256}}],
-        "predicateType": "https://docs.pypi.org/attestations/publish/v1",
-        "predicate": None,
+        "predicateType": predicate_type,
+        "predicate": predicate,
     }
     return base64.b64encode(json.dumps(document).encode("utf-8")).decode("ascii")
 
 
-def attestation(encoded_statement: str) -> dict[str, object]:
+def attestation(
+    encoded_statement: str,
+    *,
+    signature: object = SIGNATURE_B64,
+    material: object = None,
+    version: object = 1,
+) -> dict[str, object]:
     return {
-        "version": 1,
-        "verification_material": {"certificate": "MIIB", "transparency_entries": [{}]},
-        "envelope": {"statement": encoded_statement, "signature": "MEUCIQ"},
+        "version": version,
+        "verification_material": (
+            {"certificate": CERTIFICATE_B64, "transparency_entries": [TRANSPARENCY_ENTRY]}
+            if material is None
+            else material
+        ),
+        "envelope": {"statement": encoded_statement, "signature": signature},
     }
 
 
@@ -521,7 +544,7 @@ def postpublish_document(
         "files": [
             {
                 "filename": name,
-                "url": f"{index}/packages/{name}",
+                "url": f"https://files.pythonhosted.org/packages/{name}",
                 "size": files[name].stat().st_size,
                 "sha256": sha256_path(files[name]),
                 "declared_sha256": sha256_path(files[name]),

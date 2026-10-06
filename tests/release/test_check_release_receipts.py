@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 from release_support import (
     PUBLISHER,
+    STABLE,
     build_receipt_document,
     commit_all,
     git,
@@ -174,6 +175,9 @@ def test_rerun_keeps_build_and_verification_attempts_apart(
         (BARE_DIGEST[:-1], "bare 64-hex"),
         ("", "bare 64-hex"),
         (BARE_DIGEST.upper(), "bare 64-hex"),
+        (BARE_DIGEST + "\n", "bare 64-hex"),
+        (" " + BARE_DIGEST, "bare 64-hex"),
+        (BARE_DIGEST + " ", "bare 64-hex"),
     ],
 )
 def test_artifact_digest_must_be_the_actions_bare_hex_output(
@@ -181,6 +185,25 @@ def test_artifact_digest_must_be_the_actions_bare_hex_output(
 ) -> None:
     assert fragment in release_receipt_failure(tool, receipt_inputs, artifact_digest=digest)
     assert tool.normalize_artifact_digest(BARE_DIGEST) == f"sha256:{BARE_DIGEST}"
+
+
+@pytest.mark.parametrize(
+    ("value", "pattern"),
+    [
+        ("a" * 64 + "\n", "HEX64_RE"),
+        ("a" * 40 + "\n", "GIT_SHA_RE"),
+        ("1.0.0\n", "VERSION_RE"),
+        ("\n" + "a" * 64, "HEX64_RE"),
+    ],
+)
+def test_identity_patterns_match_whole_strings_only(
+    tool: types.ModuleType, value: str, pattern: str
+) -> None:
+    assert getattr(tool, pattern).fullmatch(value) is None
+    assert getattr(tool, pattern).fullmatch(value.strip()) is not None
+    if pattern == "VERSION_RE":
+        with pytest.raises(tool.ReleaseCheckError):
+            tool.parse_version(value)
 
 
 @pytest.mark.parametrize("verify_result", ["failure", "skipped", "cancelled", ""])
@@ -225,6 +248,9 @@ def break_first_file(key: str, value: object) -> Callable[[dict[str, object]], N
     [
         (set_key("source_commit", value="not-a-sha"), "full 40-hex source commit"),
         (set_key("source_commit", value=None), "full 40-hex source commit"),
+        (set_key("source_commit", value="c" * 40 + "\n"), "full 40-hex source commit"),
+        (set_key("schema_version", value=True), "schema_version must be the integer 1"),
+        (set_key("lock_sha256", value="d" * 64 + "\n"), "lock_sha256 must be a 64-hex"),
         (set_key("lock_sha256", value=None), "lock_sha256 must be a 64-hex"),
         (set_key("distributions", value=[]), "distributions must not be empty"),
         (set_key("tag", value=None), "build receipt tag"),
@@ -272,8 +298,16 @@ def test_build_inventory_must_match_the_actual_distributions(
         (set_key("checks", "version_output", value="actseal 0.1.0"), "version_output is"),
         (set_key("checks", "demo_exit", value=True), "demo_exit is True"),
         (set_key("note", value="Signatures were cryptographically verified."), "not verbatim"),
-        (set_key("published_metadata", "classifiers", value=[]), "published classifiers lack"),
-        (set_key("published_metadata", "version", value="1.0.1"), "names another release"),
+        (set_key("published_metadata", "classifiers", value=[]), "lacks classifier"),
+        (set_key("published_metadata", "classifiers", value=STABLE), "classifiers must be a list"),
+        (set_key("published_metadata", "version", value="1.0.1"), "version is '1.0.1'"),
+        (set_key("published_metadata", "yanked", value=True), "is yanked"),
+        (set_key("published_metadata", "summary", value=" "), "summary is missing"),
+        (set_key("published_metadata", "extra", value="x"), "keys must be exactly"),
+        (set_key("index", value="file:///not-pypi"), "not official https://pypi.org"),
+        (set_key("index", value="https://test.pypi.org"), "not official https://pypi.org"),
+        (set_key("schema_version", value=True), "schema_version must be the integer 1"),
+        (break_first_file("url", "https://example.invalid/x.whl"), "not an official PyPI file URL"),
         (break_first_file("sha256", "e" * 64), "inventory"),
         (break_first_file("size", 1), "inventory"),
         (break_first_file("declared_sha256", "e" * 64), "declared digest"),
@@ -290,6 +324,18 @@ def test_build_inventory_must_match_the_actual_distributions(
                 },
             ),
             "no attestations inspected",
+        ),
+        (
+            break_first_file(
+                "provenance",
+                {
+                    "present": True,
+                    "attestations": True,
+                    "publishers": [PUBLISHER],
+                    "subject_sha256": None,
+                },
+            ),
+            "no attestations inspected (True)",
         ),
         (
             break_first_file(
@@ -409,6 +455,52 @@ def test_receipts_gate_passes_on_a_complete_fixture(tool: types.ModuleType, tmp_
     tool.check_receipts(tmp_path)
 
 
+RUNS = "https://github.com/ajaysurya1221/actseal/actions/runs"
+
+
+@pytest.mark.parametrize(
+    ("mutate", "fragment"),
+    [
+        (set_key("workflow_run", "build_url", value=f"{RUNS}/41/attempts/1"), "build_url is"),
+        (set_key("workflow_run", "build_url", value=f"{RUNS}/42/attempts/2"), "build_url is"),
+        (set_key("workflow_run", "build_url", value=None), "build_url is"),
+        (
+            set_key("workflow_run", "verification_url", value="https://evil.invalid/42/attempts/1"),
+            "verification_url is",
+        ),
+        (set_key("workflow_run", "verification_url", value=None), "verification_url is"),
+        (set_key("schema_version", value=True), "schema_version must be the integer 1"),
+        (set_key("source_commit", value="c" * 40 + "\n"), "full 40-hex commit"),
+        (set_key("artifact", "digest", value="sha256:" + "b" * 64 + "\n"), "sha256:<64 hex>"),
+        (set_key("verification", "postpublish", "index", value="file:///not-pypi"), "not official"),
+        (
+            set_key("verification", "postpublish", "published_metadata", "yanked", value=True),
+            "is yanked",
+        ),
+        (
+            set_key(
+                "verification", "postpublish", "published_metadata", "classifiers", value=STABLE
+            ),
+            "classifiers must be a list",
+        ),
+    ],
+)
+def test_release_receipt_identity_and_metadata_are_revalidated_strictly(
+    tool: types.ModuleType,
+    tmp_path: Path,
+    mutate: Callable[[dict[str, object]], None],
+    fragment: str,
+) -> None:
+    receipt = write_receipt_tree(tmp_path, tool)
+    document = {str(key): value for key, value in receipt.items()}
+    mutate(document)
+    with pytest.raises(tool.ReleaseCheckError) as excinfo:
+        tool.validate_release_receipt(document, VERSION, None)
+    assert fragment in str(excinfo.value)
+    rewrite(tmp_path / tool.RECEIPT_PATHS["release_receipt"], mutate)
+    assert fragment in failure(tool, tmp_path, "receipts")
+
+
 def test_release_note_claims_must_map_to_receipts(tool: types.ModuleType, tmp_path: Path) -> None:
     write_receipt_tree(tmp_path, tool)
     notes = tmp_path / tool.RECEIPT_PATHS["release_notes"]
@@ -494,6 +586,76 @@ def test_html_link_forms_are_not_skipped(
     write_release_tree(tmp_path)
     (tmp_path / "README.md").write_text(readme_text(picture=picture), encoding="utf-8")
     assert fragment in failure(tool, tmp_path, "docs")
+
+
+BLOB = "https://github.com/ajaysurya1221/actseal/blob/main"
+
+
+@pytest.mark.parametrize(
+    "markup",
+    [
+        f"See [the quickstart]({BLOB}/docs/quickstart.md#one-command-first-run).\n",
+        f"See [the quickstart]({BLOB}/docs/quickstart.md?plain=1#top).\n",
+        f"See [the quickstart]({BLOB}/docs/quick%73tart.md#anchor).\n",
+        f"![hero]({RAW}/hero-light.svg?raw=true)\n",
+        (
+            f'<a\n   href="{BLOB}/docs/quickstart.md#one-command-first-run"\n'
+            '   title="a > b">docs</a>\n'
+        ),
+        f"<a href='{BLOB}/docs/quickstart.md#x'>docs</a>\n",
+    ],
+)
+def test_same_repository_links_with_anchors_and_encoding_resolve(
+    tool: types.ModuleType, tmp_path: Path, markup: str
+) -> None:
+    write_release_tree(tmp_path)
+    (tmp_path / "README.md").write_text(readme_text(picture=markup), encoding="utf-8")
+    tool.check_docs(tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("markup", "fragment"),
+    [
+        (f"[gone]({BLOB}/docs/absent.md#anchor)\n", "links to missing file docs/absent.md"),
+        (f"[gone]({BLOB}/docs/abs%65nt.md)\n", "links to missing file docs/absent.md"),
+        (
+            f'<a\n   href="{BLOB}/docs/absent.md#x">docs</a>\n',
+            "links to missing file docs/absent.md",
+        ),
+        ("[local](docs/quickstart.md#one-command-first-run)\n", "absolute https://"),
+        ("[local](#top)\n", "absolute https://"),
+        (f"[escape]({BLOB}/docs/../pyproject.toml)\n", "links to missing file"),
+    ],
+)
+def test_anchors_do_not_hide_missing_or_relative_targets(
+    tool: types.ModuleType, tmp_path: Path, markup: str, fragment: str
+) -> None:
+    write_release_tree(tmp_path)
+    (tmp_path / "README.md").write_text(readme_text(picture=markup), encoding="utf-8")
+    assert fragment in failure(tool, tmp_path, "docs")
+
+
+def test_same_repository_path_parsing(tool: types.ModuleType) -> None:
+    assert tool.same_repository_path(f"{BLOB}/docs/quickstart.md#a?b") == "docs/quickstart.md"
+    assert tool.same_repository_path(f"{RAW}/hero-light.svg") == "docs/assets/hero-light.svg"
+    assert tool.same_repository_path("https://github.com/other/repo/blob/main/x.md") is None
+    assert tool.same_repository_path("https://pypi.org/project/actseal/") is None
+    assert tool.same_repository_path(f"{BLOB}/") is None
+
+
+def test_relative_docs_links_with_anchors_and_encoding_resolve(
+    tool: types.ModuleType, tmp_path: Path
+) -> None:
+    write_release_tree(tmp_path)
+    quickstart = tmp_path / "docs" / "quickstart.md"
+    quickstart.write_text(
+        "# quickstart\n\n[s](stability.md#promise) [v](versi%6Fning.md?x=1) "
+        '<a\n href="migration.md#from-0-1">m</a>\n',
+        encoding="utf-8",
+    )
+    tool.check_docs(tmp_path)
+    quickstart.write_text("# quickstart\n\n[gone](absent.md#promise)\n", encoding="utf-8")
+    assert "broken relative links" in failure(tool, tmp_path, "docs")
 
 
 def test_relative_html_sources_in_docs_must_resolve(tool: types.ModuleType, tmp_path: Path) -> None:

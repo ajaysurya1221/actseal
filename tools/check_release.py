@@ -45,6 +45,7 @@ import tarfile
 import time
 import tomllib
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -79,6 +80,10 @@ EXPECTED_PUBLISHER = {
     "environment": ENVIRONMENT_NAME,
 }
 IN_TOTO_STATEMENT = "https://in-toto.io/Statement/v1"
+# PyPI Publish attestation (https://docs.pypi.org/attestations/publish/v1/): the
+# predicate type is fixed and the predicate body is documented as empty.
+PYPI_PUBLISH_PREDICATE = "https://docs.pypi.org/attestations/publish/v1"
+GITHUB_RUNS_URL = f"https://github.com/{REPOSITORY}/actions/runs"
 STABLE_CLASSIFIER = "Development Status :: 5 - Production/Stable"
 VERSION_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 SHA256_HEX_RE = re.compile(r"\b[0-9a-f]{64}\b")
@@ -150,10 +155,10 @@ ATTESTATION_NOTE = (
     "Attestation presence, publisher identity and statement subjects were inspected; "
     "no independent cryptographic verification is claimed."
 )
-GITHUB_FILE_URL_RE = re.compile(
-    r"^https://(?:github\.com/ajaysurya1221/actseal/(?:blob|raw)/main/"
-    r"|raw\.githubusercontent\.com/ajaysurya1221/actseal/main/)(.+)$"
-)
+GITHUB_FILE_PREFIXES = {
+    "github.com": (f"/{REPOSITORY}/blob/main/", f"/{REPOSITORY}/raw/main/"),
+    "raw.githubusercontent.com": (f"/{REPOSITORY}/main/",),
+}
 MARKDOWN_LINK_RE = re.compile(r"\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 
 
@@ -188,6 +193,23 @@ def _as_list(value: object, where: str) -> list[Any]:
     return list(value)
 
 
+def _exact_int(value: object, expected: int, where: str) -> None:
+    """``True == 1`` in Python; schema versions and counts must be real integers."""
+    if type(value) is not int or value != expected:
+        raise ReleaseCheckError(f"{where} must be the integer {expected}, got {value!r}")
+
+
+def _base64_text(value: object, where: str) -> str:
+    """A non-empty standard-base64 string (the shape only; nothing is verified)."""
+    _require(isinstance(value, str) and bool(value), f"{where} must be a non-empty base64 string")
+    try:
+        decoded = base64.b64decode(str(value), validate=True)
+    except (binascii.Error, ValueError) as error:
+        raise ReleaseCheckError(f"{where} is not valid base64 ({error})") from error
+    _require(bool(decoded), f"{where} decodes to nothing")
+    return str(value)
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -197,7 +219,7 @@ def sha256_file(path: Path) -> str:
 
 
 def parse_version(version: str) -> tuple[int, int, int]:
-    match = VERSION_RE.match(version)
+    match = VERSION_RE.fullmatch(version)
     if match is None:
         raise ReleaseCheckError(f"version {version!r} is not a plain MAJOR.MINOR.PATCH release")
     return int(match.group(1)), int(match.group(2)), int(match.group(3))
@@ -234,7 +256,7 @@ def read_sha256sums(path: Path) -> dict[str, str]:
     _require(path.is_file(), f"checksum file {path} is missing")
     entries: dict[str, str] = {}
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-        match = SUMS_LINE_RE.match(line)
+        match = SUMS_LINE_RE.fullmatch(line)
         if match is None:
             raise ReleaseCheckError(f"{path}:{number}: malformed SHA256SUMS line {line!r}")
         digest, name = match.group(1), match.group(2)
@@ -892,29 +914,40 @@ def _fetch_release_json(base: str, version: str, wait_seconds: float) -> dict[st
         time.sleep(min(POLL_INTERVAL_S, remaining))
 
 
-def _published_metadata(document: Mapping[str, Any], version: str) -> dict[str, object]:
-    """The project/version/classifier facts PyPI reports for this exact release."""
-    info = _as_dict(document.get("info"), "PyPI release JSON info")
-    _require(info.get("name") == PROJECT_NAME, f"PyPI project name is {info.get('name')!r}")
-    _require(info.get("version") == version, f"PyPI reports version {info.get('version')!r}")
-    _require(info.get("yanked") is False, f"PyPI release {version} is yanked or not marked")
-    classifiers = _as_list(info.get("classifiers"), "PyPI classifiers")
+METADATA_KEYS = frozenset({"name", "version", "summary", "classifiers", "yanked"})
+
+
+def validate_metadata_record(record: Mapping[str, Any], version: str, where: str) -> None:
+    """Strict shape and content of a published-metadata record (PyPI info or a receipt copy)."""
+    _require(set(record) == METADATA_KEYS, f"{where}: keys must be exactly {sorted(METADATA_KEYS)}")
+    _require(record.get("name") == PROJECT_NAME, f"{where}: project name is {record.get('name')!r}")
+    _require(record.get("version") == version, f"{where}: version is {record.get('version')!r}")
+    _require(record.get("yanked") is False, f"{where}: release {version} is yanked or not marked")
+    classifiers = _as_list(record.get("classifiers"), f"{where}: classifiers")
     _require(
-        all(isinstance(item, str) for item in classifiers),
-        "PyPI classifiers must be a list of strings",
+        all(isinstance(item, str) and bool(item) for item in classifiers),
+        f"{where}: classifiers must be a list of non-empty strings",
     )
     if parse_version(version)[0] >= 1:
         _require(
             STABLE_CLASSIFIER in classifiers,
-            f"published {version} lacks classifier {STABLE_CLASSIFIER!r}",
+            f"{where}: published {version} lacks classifier {STABLE_CLASSIFIER!r}",
         )
-    summary = info.get("summary")
-    _require(isinstance(summary, str) and bool(summary), "PyPI summary is missing")
+    summary = record.get("summary")
+    _require(isinstance(summary, str) and bool(summary.strip()), f"{where}: summary is missing")
+
+
+def _published_metadata(document: Mapping[str, Any], version: str) -> dict[str, object]:
+    """The project/version/classifier facts PyPI reports for this exact release."""
+    info = _as_dict(document.get("info"), "PyPI release JSON info")
+    record = {key: info.get(key) for key in METADATA_KEYS}
+    validate_metadata_record(record, version, "PyPI info")
+    classifiers = _as_list(record["classifiers"], "PyPI info: classifiers")
     return {
         "name": PROJECT_NAME,
         "version": version,
-        "summary": summary,
-        "classifiers": sorted(classifiers),
+        "summary": str(record["summary"]),
+        "classifiers": sorted(str(item) for item in classifiers),
         "yanked": False,
     }
 
@@ -945,7 +978,7 @@ def _published_files(document: Mapping[str, Any], version: str) -> dict[str, dic
         _require(str(entry.get("url", "")).startswith(("https://", "file://")), f"{filename} URL")
         digest = entry.get("digests", {}).get("sha256")
         _require(
-            isinstance(digest, str) and HEX64_RE.match(digest) is not None,
+            isinstance(digest, str) and HEX64_RE.fullmatch(digest) is not None,
             f"{filename} lacks a declared sha256",
         )
     return files
@@ -963,7 +996,28 @@ def _decode_statement(encoded: object, where: str) -> dict[str, Any]:
         statement.get("_type") == IN_TOTO_STATEMENT,
         f"{where}: statement type is {statement.get('_type')!r}",
     )
+    _require(
+        statement.get("predicateType") == PYPI_PUBLISH_PREDICATE,
+        f"{where}: predicateType is {statement.get('predicateType')!r}, "
+        f"not the PyPI Publish attestation {PYPI_PUBLISH_PREDICATE}",
+    )
+    _require(
+        statement.get("predicate") in (None, {}),
+        f"{where}: the PyPI Publish predicate must be empty, got {statement.get('predicate')!r}",
+    )
     return dict(statement)
+
+
+def _check_verification_material(material: object, where: str) -> None:
+    """PEP 740 verification material: base64 certificate and non-empty transparency entries."""
+    fields = _as_dict(material, f"{where}: verification_material")
+    _base64_text(fields.get("certificate"), f"{where}: verification_material.certificate")
+    entries = _as_list(
+        fields.get("transparency_entries"), f"{where}: verification_material.transparency_entries"
+    )
+    _require(bool(entries), f"{where}: verification_material.transparency_entries is empty")
+    for number, entry in enumerate(entries):
+        _as_dict(entry, f"{where}: transparency entry {number}")
 
 
 def _statement_subjects(statement: Mapping[str, Any], where: str) -> list[tuple[str, str]]:
@@ -976,7 +1030,7 @@ def _statement_subjects(statement: Mapping[str, Any], where: str) -> list[tuple[
         digest = subject.get("digest", {})
         sha = digest.get("sha256") if isinstance(digest, dict) else None
         _require(
-            isinstance(name, str) and isinstance(sha, str) and HEX64_RE.match(sha) is not None,
+            isinstance(name, str) and isinstance(sha, str) and HEX64_RE.fullmatch(sha) is not None,
             f"{where}: subject lacks a name or sha256 digest",
         )
         pairs.append((str(name), str(sha)))
@@ -999,14 +1053,10 @@ def _inspect_bundle(
     for number, raw in enumerate(attestations):
         label = f"{where} attestation {number}"
         attestation = _as_dict(raw, label)
-        _require(attestation.get("version") == 1, f"{label}: unsupported attestation version")
+        _exact_int(attestation.get("version"), 1, f"{label}: attestation version")
         envelope = _as_dict(attestation.get("envelope"), f"{label}: envelope")
-        signature = envelope.get("signature")
-        _require(isinstance(signature, str) and bool(signature), f"{label}: signature missing")
-        _require(
-            isinstance(attestation.get("verification_material"), dict),
-            f"{label}: verification_material missing",
-        )
+        _base64_text(envelope.get("signature"), f"{label}: envelope.signature")
+        _check_verification_material(attestation.get("verification_material"), label)
         subjects = _statement_subjects(_decode_statement(envelope.get("statement"), label), label)
         _require(
             (filename, sha256) in subjects,
@@ -1307,7 +1357,7 @@ def _digits(value: object, where: str) -> str:
 
 def _hex64(value: object, where: str) -> str:
     _require(
-        isinstance(value, str) and HEX64_RE.match(value) is not None,
+        isinstance(value, str) and HEX64_RE.fullmatch(value) is not None,
         f"{where} must be a 64-hex sha256",
     )
     return str(value)
@@ -1356,14 +1406,14 @@ def validate_build_receipt(
     """Typed validation of the build receipt; returns source commit, lock hash, run id/attempt."""
     where = "build receipt"
     _scan_credentials(dict(build), where)
-    _require(build.get("schema_version") == 1, f"{where}: schema_version must be 1")
+    _exact_int(build.get("schema_version"), 1, f"{where}: schema_version")
     _require(build.get("kind") == "actseal-build-receipt", f"{where}: kind is wrong")
     _require(build.get("version") == version, f"{where}: version differs from {version}")
     _require(build.get("tag") == f"v{version}", f"{where} tag is {build.get('tag')!r}")
     _require(build.get("ref") == f"refs/tags/v{version}", f"{where}: ref is {build.get('ref')!r}")
     commit = build.get("source_commit")
     _require(
-        isinstance(commit, str) and GIT_SHA_RE.match(commit) is not None,
+        isinstance(commit, str) and GIT_SHA_RE.fullmatch(commit) is not None,
         f"{where} lacks a full 40-hex source commit",
     )
     lock = _hex64(build.get("lock_sha256"), f"{where} lock_sha256")
@@ -1375,7 +1425,12 @@ def validate_build_receipt(
 
 
 def _validate_postpublish_files(
-    files: object, version: str, distributions: Sequence[Distribution], where: str
+    files: object,
+    version: str,
+    distributions: Sequence[Distribution],
+    where: str,
+    *,
+    official_index: bool,
 ) -> None:
     entries = _as_list(files, f"{where}: files")
     recorded = _distribution_inventory(entries, where)
@@ -1384,12 +1439,21 @@ def _validate_postpublish_files(
         entry = _as_dict(raw, f"{where}: file entry")
         filename = str(entry.get("filename"))
         label = f"{where} {filename}"
+        url = entry.get("url")
+        _require(isinstance(url, str) and bool(url), f"{label}: url missing")
+        if official_index:
+            _require(
+                str(url).startswith("https://files.pythonhosted.org/"),
+                f"{label}: url {url!r} is not an official PyPI file URL",
+            )
         _require(entry.get("declared_sha256") == entry.get("sha256"), f"{label}: declared digest")
         _require(entry.get("matches_build") is True, f"{label}: matches_build is not true")
         provenance = _as_dict(entry.get("provenance"), f"{label}: provenance")
         _require(provenance.get("present") is True, f"{label}: provenance not present")
         count = provenance.get("attestations")
-        _require(isinstance(count, int) and count >= 1, f"{label}: no attestations inspected")
+        _require(
+            type(count) is int and count >= 1, f"{label}: no attestations inspected ({count!r})"
+        )
         publishers = provenance.get("publishers")
         _require(
             isinstance(publishers, list)
@@ -1405,27 +1469,30 @@ def _validate_postpublish_files(
 
 
 def validate_postpublish_receipt(
-    post: Mapping[str, Any], version: str, distributions: Sequence[Distribution]
+    post: Mapping[str, Any],
+    version: str,
+    distributions: Sequence[Distribution],
+    *,
+    official_index: bool,
 ) -> None:
+    """Strict post-publication receipt; ``official_index`` requires the real PyPI (promotion)."""
     where = "post-publication receipt"
     _scan_credentials(dict(post), where)
-    _require(post.get("schema_version") == 1, f"{where}: schema_version must be 1")
+    _exact_int(post.get("schema_version"), 1, f"{where}: schema_version")
     _require(post.get("kind") == "actseal-postpublish-receipt", f"{where}: kind is wrong")
     _require(post.get("version") == version, f"{where}: version differs from {version}")
     _require(post.get("ok") is True, f"{where} did not record ok: true")
     index = post.get("index")
     _require(isinstance(index, str) and bool(index), f"{where}: index missing")
-    metadata = _as_dict(post.get("published_metadata"), f"{where}: published_metadata")
-    _require(
-        metadata.get("name") == PROJECT_NAME and metadata.get("version") == version,
-        f"{where}: published_metadata names another release",
-    )
-    if parse_version(version)[0] >= 1:
+    if official_index:
         _require(
-            STABLE_CLASSIFIER in metadata.get("classifiers", []),
-            f"{where}: published classifiers lack {STABLE_CLASSIFIER!r}",
+            index == PYPI_BASE_URL, f"{where}: index is {index!r}, not official {PYPI_BASE_URL}"
         )
-    _validate_postpublish_files(post.get("files"), version, distributions, where)
+    metadata = _as_dict(post.get("published_metadata"), f"{where}: published_metadata")
+    validate_metadata_record(metadata, version, f"{where}: published_metadata")
+    _validate_postpublish_files(
+        post.get("files"), version, distributions, where, official_index=official_index
+    )
     _validate_smoke_checks(post.get("checks"), version, where)
     _require(post.get("note") == ATTESTATION_NOTE, f"{where}: attestation note is not verbatim")
 
@@ -1433,7 +1500,7 @@ def validate_postpublish_receipt(
 def normalize_artifact_digest(value: str) -> str:
     """upload-artifact emits a bare 64-hex digest; the receipt stores ``sha256:<hex>``."""
     _require(
-        HEX64_RE.match(value) is not None,
+        HEX64_RE.fullmatch(value) is not None,
         f"artifact digest {value!r} must be the action's bare 64-hex sha256 output",
     )
     return f"sha256:{value}"
@@ -1459,7 +1526,7 @@ def release_receipt(
         _read_json(build_receipt_path, "build receipt"), version, distributions
     )
     post = _read_json(postpublish_path, "post-publication receipt")
-    validate_postpublish_receipt(post, version, distributions)
+    validate_postpublish_receipt(post, version, distributions, official_index=True)
     _require(
         verify_result == "success",
         f"verify matrix result was {verify_result!r}; every cell must succeed",
@@ -1477,7 +1544,7 @@ def release_receipt(
         int(build["attempt"]) <= int(run_attempt),
         f"build attempt {build['attempt']} is later than verification attempt {run_attempt}",
     )
-    runs = f"https://github.com/{REPOSITORY}/actions/runs/{run_id}/attempts/"
+    runs = f"{GITHUB_RUNS_URL}/{run_id}/attempts/"
     receipt: dict[str, object] = {
         "schema_version": 1,
         "kind": "actseal-release-receipt",
@@ -1517,24 +1584,30 @@ def validate_release_receipt(
     """Typed validation of a release receipt; returns its distribution inventory."""
     where = "release receipt"
     _scan_credentials(dict(receipt), where)
-    _require(receipt.get("schema_version") == 1, f"{where}: schema_version must be 1")
+    _exact_int(receipt.get("schema_version"), 1, f"{where}: schema_version")
     _require(receipt.get("kind") == "actseal-release-receipt", f"{where}: kind is wrong")
     _require(receipt.get("version") == version, f"{where}: version is not {version}")
     _require(receipt.get("tag") == f"v{version}", f"{where} tag is {receipt.get('tag')!r}")
     commit = receipt.get("source_commit")
     _require(
-        isinstance(commit, str) and GIT_SHA_RE.match(commit) is not None,
+        isinstance(commit, str) and GIT_SHA_RE.fullmatch(commit) is not None,
         f"{where}: source_commit must be a full 40-hex commit",
     )
     _hex64(receipt.get("lock_sha256"), f"{where} lock_sha256")
     run = _as_dict(receipt.get("workflow_run"), f"{where}: workflow_run")
-    _digits(run.get("id"), f"{where} run id")
+    run_id = _digits(run.get("id"), f"{where} run id")
     build_attempt = _digits(run.get("build_attempt"), f"{where} build attempt")
     verification_attempt = _digits(run.get("verification_attempt"), f"{where} verification attempt")
     _require(
         int(build_attempt) <= int(verification_attempt),
         f"{where}: build attempt later than verification attempt",
     )
+    for key, attempt in (("build_url", build_attempt), ("verification_url", verification_attempt)):
+        expected_url = f"{GITHUB_RUNS_URL}/{run_id}/attempts/{attempt}"
+        _require(
+            run.get(key) == expected_url,
+            f"{where}: {key} is {run.get(key)!r}, expected {expected_url}",
+        )
     artifact = _as_dict(receipt.get("artifact"), f"{where}: artifact")
     _digits(artifact.get("id"), f"{where} artifact id")
     digest = artifact.get("digest")
@@ -1561,7 +1634,7 @@ def validate_release_receipt(
         "ok": True,
         **post,
     }
-    validate_postpublish_receipt(embedded, version, inventory)
+    validate_postpublish_receipt(embedded, version, inventory, official_index=True)
     return inventory
 
 
@@ -1590,7 +1663,9 @@ def mirror(
 ) -> list[str]:
     """Create or update only a draft release whose assets are byte-identical; never clobber."""
     version = tag.removeprefix("v")
-    _require(tag == f"v{version}" and VERSION_RE.match(version) is not None, f"invalid tag {tag!r}")
+    _require(
+        tag == f"v{version}" and VERSION_RE.fullmatch(version) is not None, f"invalid tag {tag!r}"
+    )
     distributions = verify_distributions(dist, version, sums_path)
     receipt = _read_json(receipt_path, "release receipt")
     validate_release_receipt(receipt, version, distributions)
@@ -1705,6 +1780,28 @@ def _document_targets(path: Path) -> list[str]:
     return link_targets(path.read_text(encoding="utf-8"))
 
 
+def same_repository_path(target: str) -> str | None:
+    """The repository-relative path named by an absolute same-repo URL, or ``None``.
+
+    The URL is parsed, so fragments and query strings are ignored and
+    percent-encoding in the path is decoded before the local file is checked.
+    """
+    parsed = urllib.parse.urlsplit(target)
+    if parsed.scheme != "https" or parsed.hostname not in GITHUB_FILE_PREFIXES:
+        return None
+    path = urllib.parse.unquote(parsed.path)
+    for prefix in GITHUB_FILE_PREFIXES[parsed.hostname]:
+        if path.startswith(prefix) and len(path) > len(prefix):
+            return path[len(prefix) :]
+    return None
+
+
+def _local_target(document: Path, target: str) -> Path:
+    """Resolve a relative document link: drop fragment/query, decode percent-encoding."""
+    parsed = urllib.parse.urlsplit(target)
+    return (document.parent / urllib.parse.unquote(parsed.path)).resolve()
+
+
 def _check_readme_links(root: Path) -> None:
     readme = root / "README.md"
     _require(readme.is_file(), "README.md is missing")
@@ -1715,11 +1812,11 @@ def _check_readme_links(root: Path) -> None:
         f"README.md must use absolute https:// links (PyPI long description): {relative}",
     )
     for target in targets:
-        match = GITHUB_FILE_URL_RE.match(target)
-        if match is not None:
+        relative_path = same_repository_path(target)
+        if relative_path is not None:
             _require(
-                (root / match.group(1)).is_file(),
-                f"README.md links to missing file {match.group(1)}",
+                ".." not in Path(relative_path).parts and (root / relative_path).is_file(),
+                f"README.md links to missing file {relative_path}",
             )
 
 
@@ -1753,8 +1850,7 @@ def _check_relative_links(root: Path) -> None:
         for target in _document_targets(document):
             if target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
-            resolved = (document.parent / target.split("#", 1)[0]).resolve()
-            if not resolved.exists():
+            if not _local_target(document, target).exists():
                 broken.append(f"{document.relative_to(root)} -> {target}")
     _require(not broken, f"broken relative links: {broken}")
 
@@ -1888,7 +1984,7 @@ def _check_receipt_documents(root: Path, version: str) -> None:
     receipt = _read_json(root / RECEIPT_PATHS["release_receipt"], "release receipt")
     post = _read_json(root / RECEIPT_PATHS["postpublish"], "post-publication receipt")
     inventory = validate_release_receipt(receipt, version, None)
-    validate_postpublish_receipt(post, version, inventory)
+    validate_postpublish_receipt(post, version, inventory, official_index=True)
     sums = read_sha256sums(root / RECEIPT_PATHS["sha256sums"])
     recorded = {item.filename: item.sha256 for item in inventory}
     _require(sums == recorded, "SHA256SUMS receipt differs from release receipt distributions")
