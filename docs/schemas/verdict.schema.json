@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:verdict:2",
+  "title": "Actseal Verdict document (verdict.json, bundle schema 2 encoding)",
+  "description": "Canonical JSON plus one LF. `reasons` are sorted unique machine codes. An ERROR verdict has zero counts and both intervals equal to [0, 1]; a non-ERROR verdict has total > 0 and PASS has accepted > 0 (cross-field rules enforced by the Python validator).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "reasons",
+    "total",
+    "accepted",
+    "errors",
+    "risk",
+    "coverage",
+    "evidence_scope",
+    "lock_sha256"
+  ],
+  "properties": {
+    "status": { "enum": ["PASS", "BLOCK", "INCONCLUSIVE", "ERROR"] },
+    "reasons": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "total": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "accepted": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "errors": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "risk": { "$ref": "#/$defs/Interval" },
+    "coverage": { "$ref": "#/$defs/Interval" },
+    "evidence_scope": { "enum": ["demo", "iid"] },
+    "lock_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  },
+  "$defs": {
+    "Interval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "upper"],
+      "properties": {
+        "lower": { "type": "number", "minimum": 0, "maximum": 1 },
+        "upper": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

@@ -131,7 +131,7 @@ def make_fault_spec() -> FaultSpec:
 
 def make_lock() -> PlanLock:
     return PlanLock(
-        1,
+        2,
         make_contract(),
         make_identity(),
         HEX_C,
@@ -142,6 +142,7 @@ def make_lock() -> PlanLock:
         (make_fault_spec(), FaultSpec("fault.unknown_choice", "unknown_choice", "DENY")),
         HEX_0,
         HEX_1,
+        "actseal-choice-v1",
     )
 
 

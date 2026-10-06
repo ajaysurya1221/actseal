@@ -11,9 +11,14 @@ BLOCK, the fixed run is PASS and both fresh replays equal the recorded verdicts.
 
 Output discipline: with ``--json`` exactly one JSON object is written to
 stdout and nothing else; warnings and captured failures are fields of that
-object. Without ``--json`` the report goes to stdout and warnings/failures to
-stderr. Error messages name fields, invariants or errno text; they never echo
-input values, paths supplied by the operating system, raw bodies or
+object. Every JSON receipt, including every error and usage error, carries
+``schema_version`` (``RECEIPT_SCHEMA_VERSION``, 1) and ``command``; the field
+names, types and meanings of versioned receipts are stable through 1.x
+(docs/stability.md). Without ``--json`` the report goes to stdout and
+warnings/failures/notes to stderr; ``--help`` and ``--version`` remain text.
+Abbreviated long options are rejected by the root parser and every
+subcommand. Error messages name fields, invariants or errno text; they never
+echo input values, paths supplied by the operating system, raw bodies or
 arbitrary exception text.
 
 Importing this module imports no adapter or optional library; ``replay`` and
@@ -33,6 +38,7 @@ from pathlib import Path
 from typing import Final
 
 from actseal import __version__
+from actseal.compatibility import LEGACY_GUIDANCE
 from actseal.errors import ActsealError
 from actseal.records import (
     DecisionRecord,
@@ -42,13 +48,15 @@ from actseal.records import (
     ProviderFailure,
     Verdict,
 )
-from actseal.replay import replay
+from actseal.replay import REASON_LEGACY_SCHEMA, replay
 from actseal.runner import demo_run, lock_run, open_model, verify_run
 
-__all__ = ["EXIT_CODES", "EXIT_ERROR", "main"]
+__all__ = ["EXIT_CODES", "EXIT_ERROR", "RECEIPT_SCHEMA_VERSION", "main"]
 
 EXIT_CODES: Final[Mapping[str, int]] = {"PASS": 0, "BLOCK": 1, "INCONCLUSIVE": 2, "ERROR": 3}
 EXIT_ERROR: Final = 3
+#: Schema version written into every ``--json`` receipt, successes and errors alike.
+RECEIPT_SCHEMA_VERSION: Final = 1
 
 _PROVIDERS: Final = ("fixture", "laya")
 _COMMAND_NAMES: Final = ("lock", "verify", "replay", "demo")
@@ -137,21 +145,30 @@ def _build_parser() -> _Parser:
     parser.add_argument("--version", action="version", version=f"actseal {__version__}")
     commands = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
 
-    lock = commands.add_parser("lock", help="seal contract, inputs and provider identity")
+    # Every subcommand parser disables abbreviation too: ``--ou`` is never ``--out``.
+    lock = commands.add_parser(
+        "lock", help="seal contract, inputs and provider identity", allow_abbrev=False
+    )
     lock.add_argument("--contract", required=True, type=Path, metavar="PATH")
     _add_provider_arguments(lock)
     lock.add_argument("--out", required=True, type=Path, metavar="PATH")
 
-    verify = commands.add_parser("verify", help="collect evidence for a lock and assess it")
+    verify = commands.add_parser(
+        "verify", help="collect evidence for a lock and assess it", allow_abbrev=False
+    )
     verify.add_argument("--lock", required=True, type=Path, metavar="PATH")
     _add_provider_arguments(verify)
     verify.add_argument("--out", required=True, type=Path, metavar="DIRECTORY")
 
-    replay_parser = commands.add_parser("replay", help="recompute a verdict from a bundle")
+    replay_parser = commands.add_parser(
+        "replay", help="recompute a verdict from a bundle", allow_abbrev=False
+    )
     replay_parser.add_argument("bundle", type=Path, metavar="DIRECTORY")
     replay_parser.add_argument("--expected-lock-sha256", metavar="HEX", default=None)
 
-    demo = commands.add_parser("demo", help="run the packaged synthetic demonstration")
+    demo = commands.add_parser(
+        "demo", help="run the packaged synthetic demonstration", allow_abbrev=False
+    )
     demo.add_argument("--out", required=True, type=Path, metavar="NEW_DIRECTORY")
 
     for subparser in (lock, verify, replay_parser, demo):
@@ -189,7 +206,11 @@ class _Output:
         if not isinstance(code, int):  # pragma: no cover - payloads are built below
             raise TypeError("exit_code")
         if self.as_json:
-            document = {"command": self.command, **payload}
+            document = {
+                "schema_version": RECEIPT_SCHEMA_VERSION,
+                "command": self.command,
+                **payload,
+            }
             sys.stdout.write(json.dumps(document, sort_keys=True, ensure_ascii=False) + "\n")
         else:
             for line in lines:
@@ -330,6 +351,7 @@ def _run_lock(args: argparse.Namespace, output: _Output) -> int:
         "ok": True,
         "lock_sha256": lock.sha256,
         "implementation_sha256": lock.implementation_sha256,
+        "replay_engine_version": lock.replay_engine_version,
         "evidence_scope": lock.contract.evidence_scope,
         "contract": lock.contract.name,
         "model_identity": _identity_data(identity),
@@ -340,6 +362,7 @@ def _run_lock(args: argparse.Namespace, output: _Output) -> int:
     lines = [
         f"lock_sha256: {lock.sha256}",
         f"implementation_sha256: {lock.implementation_sha256}",
+        f"replay_engine_version: {lock.replay_engine_version}",
         f"contract: {lock.contract.name}",
         f"evidence_scope: {lock.contract.evidence_scope}",
         f"provider: {identity.provider}",
@@ -376,17 +399,21 @@ def _run_replay(args: argparse.Namespace, output: _Output) -> int:
     expected: str | None = args.expected_lock_sha256
     verdict = replay(args.bundle, expected_lock_sha256=expected)
     code = EXIT_CODES[verdict.status]
+    # Advisory, human-readable notes; legacy (actseal 0.1.0) evidence gets the
+    # pinned-replay guidance so the ERROR is actionable.
+    notes = [LEGACY_GUIDANCE] if REASON_LEGACY_SCHEMA in verdict.reasons else []
     payload: dict[str, object] = {
         **_verdict_data(verdict),
         "exit_code": code,
         "ok": code == 0,
         "bundle": str(args.bundle),
         "expected_lock_sha256": expected,
+        "notes": notes,
     }
     lines = [*_verdict_lines(verdict), f"bundle: {args.bundle}"]
     if expected is not None:
         lines.append(f"expected_lock_sha256: {expected}")
-    return output.report(payload, lines, [])
+    return output.report(payload, lines, notes)
 
 
 def _run_demo(args: argparse.Namespace, output: _Output) -> int:

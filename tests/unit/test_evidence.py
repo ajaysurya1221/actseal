@@ -275,7 +275,7 @@ def independent_manifest(files: Mapping[str, bytes]) -> bytes:
     inventory = {
         name: {"size": len(data), "sha256": sha256_hex(data)} for name, data in files.items()
     }
-    return seal_manifest({"schema_version": 1, "files": inventory})
+    return seal_manifest({"schema_version": 2, "files": inventory})
 
 
 def read_files(directory: Path) -> dict[str, bytes]:
@@ -348,11 +348,11 @@ def test_manifest_matches_an_independent_digest_computation(tmp_path: Path) -> N
     assert files[MANIFEST_FILE] == independent_manifest(data_files)
     manifest = json.loads(files[MANIFEST_FILE])
     assert set(manifest) == {"schema_version", "files", "sha256"}
-    assert manifest["schema_version"] == 1
+    assert manifest["schema_version"] == 2
     assert set(manifest["files"]) == set(DATA_FILES)
     for name, data in data_files.items():
         assert manifest["files"][name] == {"size": len(data), "sha256": sha256_hex(data)}
-    unsealed = {"schema_version": 1, "files": manifest["files"]}
+    unsealed = {"schema_version": 2, "files": manifest["files"]}
     assert manifest["sha256"] == sha256_hex(compact(unsealed))
 
 
@@ -903,7 +903,7 @@ def _raw_manifest_mutations() -> dict[str, Callable[[Path], bytes]]:
 
     def missing_files_key(out: Path) -> bytes:
         del out
-        return seal_manifest({"schema_version": 1})
+        return seal_manifest({"schema_version": 2})
 
     def non_string_self_hash(out: Path) -> bytes:
         return compact({**_unsealed(out), "sha256": 1}) + b"\n"
@@ -916,7 +916,7 @@ def _raw_manifest_mutations() -> dict[str, Callable[[Path], bytes]]:
 
     def duplicate_key(out: Path) -> bytes:
         data = (out / MANIFEST_FILE).read_bytes()
-        return data.replace(b'"schema_version":1', b'"schema_version":1,"schema_version":1', 1)
+        return data.replace(b'"schema_version":2', b'"schema_version":2,"schema_version":2', 1)
 
     def not_an_object(out: Path) -> bytes:
         del out
@@ -943,7 +943,8 @@ def _raw_manifest_mutations() -> dict[str, Callable[[Path], bytes]]:
 
 def _manifest_mutations() -> dict[str, tuple[Callable[[Path], bytes], type[Exception]]]:
     schema: dict[str, Callable[[Path], bytes]] = {
-        "unknown_version": _edit(_set_top("schema_version", 2)),
+        "unknown_version": _edit(_set_top("schema_version", 3)),
+        "legacy_version": _edit(_set_top("schema_version", 1)),
         "bool_version": _edit(_set_top("schema_version", True)),
         "extra_key": _edit(_set_top("created", "2026-10-06")),
         "traversal_name": _edit(_rename_entry(VERDICT_FILE, "../" + VERDICT_FILE)),
