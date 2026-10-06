@@ -1,0 +1,21 @@
+# Credentials and machine-local inputs are never staged.
+.env
+.env.*
+!.env.example
+.DS_Store
+/research/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+.actseal/
+.worktrees/
+/plan/dispatch/
+/plan/local-receipts/
