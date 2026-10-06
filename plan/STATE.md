@@ -24,9 +24,9 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 |---|---|---|---|
 | Planning package | Codex | COMPLETE | ee99eee plus documented amendments |
 | T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff (merge 86dbca0) |
-| T10 contract/policy | Claude A | STARTING | none |
-| T20 statistics | Claude B | NUMERICAL_MILESTONE_STARTING | none |
-| T30 providers/faults | Claude C | PROVIDER_MILESTONE_STARTING | none |
+| T10 contract/policy | Claude A | RUNNING | none |
+| T20 statistics | Claude B | NUMERICAL_MILESTONE_RUNNING | none |
+| T30 providers/faults | Claude C | PROVIDER_MILESTONE_RUNNING | none |
 | T40 evidence/replay | Claude B | WAITING_FOR_ACCEPTED_INTERFACES | none |
 | T50 CLI/demo | Claude A | WAITING_FOR_T10_T20_T30_T40 | none |
 | T60 acceptance | Claude C | WAITING_FOR_T50 | none |
@@ -51,7 +51,9 @@ The human approved the three hooks and standing routine execution on 2026-10-06.
 No pending permission question remains. Original scope/license/budget escalations
 and the release quality gates still apply; public launch messages remain drafts.
 
-Next: isolated Claude T10, T20 numerical and T30 provider milestones in parallel.
+Running: isolated Claude T10, T20 numerical and T30 provider milestones in parallel.
+All three report actual model claude-fable-5-1; effort high was supplied at dispatch.
+Local process/session receipts are in ignored plan/dispatch/active-lanes.json.
 ADR0009/CHANGE_LOG correct permanent-worker-loss statistical dependence before
 these dispatches. All lanes receive the new contract hash. No extra feature scope.
 T20/T30 remain PARTIAL until accepted predecessor integration and full checks.
