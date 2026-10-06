@@ -92,3 +92,11 @@ Linux CPU-test and fixture-bound repairs despite235 passing unit/5 native Mac
 tests. T40/T50 packet wording now explicitly matches ADR0009 worker-loss ERROR,
 complete diagnostics and synthetic-fault exclusion, and the ADR0010 helpers.
 This prevents stale generic failure wording from overriding the frozen contract.
+
+## 2026-10-06 — acceptance packet clarification
+
+T60 now explicitly distinguishes regular Laya worker-loss diagnostic ERROR from
+nonfatal denominator failures, matching ADR0009. A nonblocking T30 test-quality
+follow-up requires an actually injected policy violation while retaining all six
+campaign results; the current straight-line implementation already continues.
+This corrects the advertised test coverage without changing the product contract.
