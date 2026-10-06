@@ -173,3 +173,12 @@ v0.1.0 wheel/sdist, SHA-pinned actions and assets, existing CI identity checks a
 Twine metadata validation. Separate OIDC publication job; default is validation
 only. ADR0014 records the decision and tooling licenses. Original release scope
 and artifact identities remain unchanged; actual PyPI upload is not performed.
+
+## 2026-10-06 — first PyPI publication attempt blocked
+
+After the user reported publisher registration, Codex configured the GitHub pypi
+environment for main only and dispatched publish=true. Run37484412303 passed
+artifact validation but PyPI rejected the identity exchange with invalid-publisher.
+No upload succeeded; project/version APIs returned404. REPORT/REVIEW PYPI-03
+preserve the attempt and required publisher diagnosis. No product, workflow,
+release asset or tag change, and no alternate credential path was used.

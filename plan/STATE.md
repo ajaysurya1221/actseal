@@ -57,7 +57,8 @@ model weights and private-memory source are not tracked. Do not read/print real 
 Incremental paid inference API spend USD0. Final cumulative Claude subscription
 meters sumUSD115.08465475 estimated usage, not an invoice; repeated/resumed session
 meters count once. Existing subscriptions, compute and labour are not claimed free.
-Optional Jev, hosted tier, Marketplace Action and PyPI remain out of v0.1.0.
+Optional Jev, hosted tier, Marketplace Action and PyPI were outside the original
+v0.1.0 sprint. The user separately requested the PyPI follow-up below.
 
 ## Next action
 
@@ -76,5 +77,14 @@ steps; no upload has been performed. See docs/publishing.md.
 PyPI workflow follow-up COMPLETE: PR8 merged at2a1ac36b0f9fe9dda52b946ab48c8e833269d40d; independent
 REVIEW PYPI-01 and both four-job CI matrices passed. Hosted validation-only run
 37482446498 passed on Ubuntu, publish job skipped. REVIEW PYPI-02 records exact scope.
-Next optional action: configure the pending publisher using docs/publishing.md;
-then explicitly run publish=true to upload. No package has been published to PyPI.
+The user subsequently reported the publisher registered. Codex created the
+GitHub pypi environment, restricted it to main, and dispatched publish=true at
+548c697. Run37484412303 passed validation but failed the PyPI identity exchange
+with invalid-publisher. Project/version APIs returned404 afterward; no package
+upload succeeded. REPORT/REVIEW PYPI-03 preserve the attempt.
+
+Current follow-up status: **BLOCKED on publisher matching**. The user was asked
+to confirm/correct the pending-publisher row on pypi.org. The accessible browser
+is not signed in, and the exact cause remains unconfirmed. Do not retry unchanged
+or switch to API-token publishing. Once diagnosed, inspect PyPI state before retry;
+after success verify both published hashes/sizes and a fresh install/demo.
