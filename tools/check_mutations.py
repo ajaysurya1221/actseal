@@ -435,24 +435,52 @@ def allocate_workdir(parent: Path | None, repo: Path = REPO) -> Path:
 
 
 def release_workdir(workdir: Path, *, keep: bool) -> None:
-    """Remove only the child this run created; the caller's parent is never touched."""
+    """Remove the child this run allocated; the caller's parent is never touched.
+
+    Ownership follows from the fresh-allocation call path (``allocate_workdir``
+    -> ``run_in_owned_workdir``). The guard here only checks the expected prefix
+    and non-symlink status as a last defence; it cannot authenticate that a
+    same-prefix directory was created by this run. A cleanup failure is loud:
+    the retained path is reported and the run's outcome becomes nonzero, even
+    after a successful body.
+    """
     if keep:
         emit(f"temporary trees kept under {workdir}")
         return
     if workdir.is_symlink() or not workdir.name.startswith(WORKDIR_PREFIX):
         raise HarnessError(f"refusing to remove a directory the harness did not create: {workdir}")
-    shutil.rmtree(workdir, ignore_errors=True)
+    try:
+        shutil.rmtree(workdir)
+    except OSError as error:
+        raise HarnessError(
+            f"cleanup failed, temporary trees retained at {workdir}: {error}"
+        ) from error
+    if workdir.exists() or workdir.is_symlink():
+        raise HarnessError(f"cleanup incomplete, temporary trees retained at {workdir}")
 
 
 def run_in_owned_workdir(
     parent: Path | None, *, keep: bool, repo: Path, body: Callable[[Path], int]
 ) -> int:
-    """Allocate an owned child, run ``body`` in it and release only that child."""
+    """Allocate an owned child, run ``body`` in it and release only that child.
+
+    A release failure propagates as ``HarnessError`` and therefore replaces a
+    successful body result with the harness-error exit status.
+    """
     workdir = allocate_workdir(parent, repo)
     try:
         return body(workdir)
     finally:
         release_workdir(workdir, keep=keep)
+
+
+def cli(argv: Sequence[str] | None = None) -> int:
+    """``main`` with every harness error mapped to the nonzero harness-error exit."""
+    try:
+        return main(argv)
+    except HarnessError as error:
+        emit(f"HARNESS ERROR: {error}")
+        return EXIT_HARNESS_ERROR
 
 
 def make_tree(workdir: Path, name: str, repo: Path = REPO) -> Path:
@@ -1027,8 +1055,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except HarnessError as error:
-        emit(f"HARNESS ERROR: {error}")
-        sys.exit(EXIT_HARNESS_ERROR)
+    sys.exit(cli())

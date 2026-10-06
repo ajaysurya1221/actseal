@@ -157,6 +157,77 @@ def test_run_in_owned_workdir_cleans_the_child_after_failure(
     _assert_parent_intact(parent)
 
 
+def _failing_rmtree(path: Path | str) -> None:
+    """A simulated cleanup failure: nothing is removed, an OSError surfaces."""
+    raise OSError(f"simulated removal failure for {path}")
+
+
+def _noop_rmtree(path: Path | str) -> None:
+    """A simulated silent partial failure: returns without removing anything."""
+    assert Path(path).is_dir()
+
+
+def test_cleanup_failure_is_loud_and_names_the_retained_child(
+    parent: Path, fake_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    child = harness.allocate_workdir(parent, fake_repo)
+    (child / "baseline").mkdir()
+    monkeypatch.setattr(harness.shutil, "rmtree", _failing_rmtree)
+    with pytest.raises(HarnessError, match="cleanup failed") as caught:
+        harness.release_workdir(child, keep=False)
+    assert str(child) in str(caught.value)
+    assert isinstance(caught.value.__cause__, OSError)
+    assert child.is_dir()
+    assert (child / "baseline").is_dir()
+    _assert_parent_intact(parent)
+
+
+def test_cleanup_that_leaves_the_child_behind_is_reported(
+    parent: Path, fake_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    child = harness.allocate_workdir(parent, fake_repo)
+    monkeypatch.setattr(harness.shutil, "rmtree", _noop_rmtree)
+    with pytest.raises(HarnessError, match="cleanup incomplete") as caught:
+        harness.release_workdir(child, keep=False)
+    assert str(child) in str(caught.value)
+    assert child.is_dir()
+    _assert_parent_intact(parent)
+
+
+def test_cleanup_failure_overrides_a_successful_body(
+    parent: Path, fake_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A body that returns the success exit must not yield success when cleanup fails."""
+    seen: list[Path] = []
+
+    def body(workdir: Path) -> int:
+        seen.append(workdir)
+        (workdir / "M01").mkdir()
+        return 0  # the harness's EXIT_OK
+
+    assert harness.EXIT_OK == 0
+    before = _children(parent)
+    monkeypatch.setattr(harness.shutil, "rmtree", _failing_rmtree)
+    with pytest.raises(HarnessError, match="cleanup failed") as caught:
+        harness.run_in_owned_workdir(parent, keep=False, repo=fake_repo, body=body)
+    assert len(seen) == 1
+    assert str(seen[0]) in str(caught.value)
+    assert seen[0].is_dir()
+    assert (seen[0] / "M01").is_dir()
+    assert _children(parent) == before | {seen[0].name}
+    _assert_parent_intact(parent)
+
+
+def test_cli_maps_harness_errors_to_the_nonzero_harness_exit(tmp_path: Path) -> None:
+    """Exit mapping only: both calls stop before any tree is allocated or copied."""
+    assert harness.cli(["--only", "M99", "--workdir", str(tmp_path)]) == harness.EXIT_HARNESS_ERROR
+    assert harness.cli(["--only", "M01", "--workdir", str(harness.REPO / "tests")]) == (
+        harness.EXIT_HARNESS_ERROR
+    )
+    assert harness.EXIT_HARNESS_ERROR != harness.EXIT_OK
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_keep_retains_only_the_owned_child(parent: Path, fake_repo: Path) -> None:
     seen: list[Path] = []
 
