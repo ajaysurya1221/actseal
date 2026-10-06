@@ -22,8 +22,12 @@ The boundary is fixed by the approved plan:
   the project's core.
 - The service is proprietary and bring-your-own-key: the adapter reads only
   `JEV_API_KEY`, rejects offline or missing-key setup before any request, and
-  never writes the key or authentication headers into requests-at-rest,
-  captures, evidence, logs, diagnostics or locks.
+  never writes the key or authentication headers into the captures, evidence,
+  logs, diagnostics or locks it owns. The reviewed guard detects the literal
+  key and a limited set of JSON escapings in material it records; it does not
+  promise to sanitize arbitrarily encoded secret material that a malicious
+  provider body might contain, so raw bodies remain data to review before
+  sharing.
 - Gating uses the normalized **selected-option probability** from the
   returned distribution, not the vendor's confidence field; provider
   confidence is preserved as `provider_confidence` evidence only.
@@ -31,9 +35,12 @@ The boundary is fixed by the approved plan:
   empty artifact-hash tuple. It is a vendor claim about a remote service, not a
   local artifact attestation, and must not be described as equivalent to the
   Laya adapter's verified weight hashes.
-- One attempt per request with the fixed collection deadline: no retry, no
-  redirect following, no fallback to another provider. Fault injection
-  targets local transport doubles, never the live service.
+- One attempt per request with a validated per-request timeout: no retry, no
+  redirect following, no fallback to another provider. Callers keep the fixed
+  collection schedule and deadline; timeout behaviour is bounded as specified
+  for the transport, which is not a universal hard wall-clock bound on
+  operating-system or network operations. Fault injection targets local
+  transport doubles, never the live service.
 - Replay imports no transport module; successful raw bodies are preserved so
   recorded evidence normalizes offline.
 
@@ -50,10 +57,12 @@ legal guarantee; this ADR does not refresh or re-interpret those terms.
 
 ## Consequences
 
-- `records.PROVIDERS` and the CLI choices remain `fixture` and `laya` until
-  integration explicitly registers the experimental provider (V1-011,
-  Task 19). Documentation describes Jev as conditional preparation, not
-  shipped behaviour.
+- On the reviewed candidate branch, `jev` is already admitted in serialized
+  records and the published schemas (V1-011, V1-021) so that captures and
+  faults can carry its identity; the stable default CLI choices and runner
+  registration remain `fixture` and `laya` until Task 19 integrates the
+  experimental flag. Accepted main carries neither change yet. Documentation
+  describes Jev as conditional preparation, not shipped behaviour.
 - A provider-reported version can be wrong or change server-side; evidence
   collected through it carries that weaker identity claim visibly.
 - If the adapter is not integrated and green by the recorded deadline it is

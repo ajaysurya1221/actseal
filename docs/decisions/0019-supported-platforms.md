@@ -59,6 +59,10 @@ exceed the receipts.
 - Metadata: `pyproject.toml` declares `requires-python = ">=3.12"`, empty
   `dependencies`, and only MacOS and POSIX Linux classifiers;
   `tests/docs/test_policy_and_metadata.py` checks the installed metadata.
-- Native receipts to date are the Task 03 and provider milestone runs
-  recorded in [providers](../providers.md); no v1 release has occurred and the
-  native gate for changed paths remains open.
+- Native receipts to date are the historical v0.1 milestones recorded in
+  [providers](../providers.md): the T30 provider/normalizer milestone (macOS
+  cached-native tests and the Linux native workflow run) and the native CLI
+  lock/verify/replay receipt. The v1 Task 01 baseline also passed
+  independently before the later cached-native denial. The v1 Task 03 native
+  rerun for the conformance changes is still pending, so the native gate for
+  changed paths remains open; no v1 release has occurred.

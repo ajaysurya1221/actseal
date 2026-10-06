@@ -34,15 +34,22 @@ Frozen protocol, exactly as approved:
 - Each cohort reports every failure category, selected-probability
   reliability bins, descriptive ECE and multiclass Brier score, with `null`
   for empty bins and unmeasured totals, never NaN or zero by assumption.
-- An interrupted or over-budget run yields an explicitly incomplete/ERROR
-  audit receipt with every attempted and unattempted case accounted for. It
-  is retained, never reduced to a smaller "successful" sample or resealed.
+- Completeness and timeliness are separate. An **interrupted** run (any
+  scheduled case started without capture or unattempted) yields an explicitly
+  incomplete/ERROR audit receipt with every case accounted for; no ordinary
+  verification bundle is written for it, and it is never reduced to a smaller
+  "successful" sample or resealed. A **complete but late** run (all 959
+  captures present, 90-minute budget violated) also makes the overall audit
+  receipt ERROR with `budget_exceeded`, but its complete verification bundle
+  is still published and retains its independently computed verdict. A
+  complete late bundle is never called incomplete and its verdict is never
+  changed to the overall ERROR.
 
-The supplement further binds a 90-minute monotonic collection budget frozen
-before the first request, a durable attempt-start/terminal-capture journal
-for every call, separate calibration sidecar artifacts with an offline
-checker, and the exact bin boundaries and metric formulas. Those details are
-normative as written there and are not restated here.
+The supplement further binds the 90-minute monotonic collection budget
+frozen before the first request, a durable attempt-start/terminal-capture
+journal for every call, separate calibration sidecar artifacts with an
+offline checker, and the exact bin boundaries and metric formulas. Those
+details are normative as written there and are not restated here.
 
 ## Rationale
 
