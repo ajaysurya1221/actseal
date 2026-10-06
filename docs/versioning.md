@@ -11,13 +11,19 @@ Actseal follows `MAJOR.MINOR.PATCH`.
 | Change | Allowed in |
 |---|---|
 | Bug fixes that preserve every STABLE behaviour; reviewed compatibility registry entries approving an exact released source fingerprint for an existing engine | patch |
-| New commands, new optional flags with defaults, new JSON fields, new constants, new engines | minor |
-| Removal of a STABLE name or flag, an incompatible change to a STABLE behaviour or schema, a new required constructor field | 2.0 only |
+| New commands, new constants, new optional arguments or flags whose defaults preserve existing behaviour; a new replay engine that must be explicitly selected; a separately versioned, explicitly opt-in interface for an additional format or semantics | minor |
+| Adding a field to an existing strict schema version or to a default CLI receipt shape, removal of a STABLE name or flag, an incompatible change to a STABLE behaviour or schema, a new required constructor field | 2.0 only |
 
-Stable 1.x schemas and semantics remain supported throughout 1.x. A STABLE
-surface is deprecated before it is removed: the deprecation is documented in
-the changelog and the stability manifest, remains in place for at least one
-minor release **and** at least 90 days, and the removal happens only in 2.0.
+Stable 1.x schemas and semantics remain supported throughout 1.x. The
+published schemas reject unknown fields, so an existing schema version (lock
+2, manifest 2, receipt 1, registry 1) and the default CLI receipt shapes never
+gain fields within 1.x; a new field is a new schema version or a new opt-in
+interface, and every existing stable surface keeps working unchanged. A
+STABLE surface is deprecated before it is removed: the deprecation is
+documented in the changelog and the stability manifest, remains in place for
+at least one minor release **and** at least 90 days, and the removal happens
+only in 2.0. [ADR 0015](decisions/0015-v1-stability-and-replay-compatibility.md)
+records these decisions.
 
 PROVISIONAL surfaces (`actseal.experimental`, explicit experimental CLI flags)
 carry no compatibility promise and may change in any release.
@@ -82,9 +88,13 @@ lowercase 64-hex source SHA-256>": "<engine>"}}`. Approval of an entry requires:
 
 Because every source change, including a patch release, changes the
 fingerprint, a reviewed entry approving an exact released fingerprint for an
-existing engine may ship in a patch release. A new engine is a minor release.
-Approval is always explicit and per fingerprint; there is no wildcard, range or
-"all patches of" form.
+existing engine may ship in a patch release. Approval is always explicit and
+per fingerprint; there is no wildcard, range or "all patches of" form.
+
+A new engine is a minor release and must be explicitly selected; existing
+engines keep their semantics and remain the default behaviour. Evidence is
+interpreted through the engine recorded in its lock and is never reinterpreted
+under a newer engine.
 
 The registry is trusted verifier configuration. It does not authenticate any
 bundle, response or execution; it states which implementations a verifier is

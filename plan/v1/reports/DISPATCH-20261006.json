@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "sessions": [
+    {
+      "task": "01R",
+      "model": "claude-fable-5-1",
+      "session_id": "a4814ebe-58b4-4077-8b7d-f3b344078549",
+      "permission_mode": "acceptEdits",
+      "prompt_sha256": "3b1f2d95c65a5437825f4b72d36b7f03d5df749ea5ef6830aea7a96ad452ee90",
+      "result_seen": true,
+      "reported_meter_usd": 1.9279320000000002,
+      "meter_note": "CLI nominal usage meter; Max subscription authenticated; not incremental API billing or Jev spend"
+    },
+    {
+      "task": "10",
+      "model": "claude-fable-5-1",
+      "session_id": "6d75b60a-06d9-4a39-a69b-fbe105277f4a",
+      "permission_mode": "acceptEdits",
+      "prompt_sha256": "b88393eabc4087335d1b2f99fffbcbe29a4ce8041de73aa5002269c5237f337d",
+      "result_seen": false,
+      "reported_meter_usd": null,
+      "meter_note": "CLI nominal usage meter; Max subscription authenticated; not incremental API billing or Jev spend"
+    },
+    {
+      "task": "09",
+      "model": "claude-fable-5-1",
+      "session_id": "b3ff94c7-3730-4f74-8c97-51ca08412f31",
+      "permission_mode": "acceptEdits",
+      "prompt_sha256": "e77fed38903b63c94390efd5b99cbb80e6a410cccf709b07dab9123dd6ea5c4a",
+      "result_seen": false,
+      "reported_meter_usd": null,
+      "meter_note": "CLI nominal usage meter; Max subscription authenticated; not incremental API billing or Jev spend"
+    }
+  ]
+}
