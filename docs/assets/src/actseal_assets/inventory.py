@@ -13,6 +13,8 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import hero
+
 ASSET_DIR = "docs/assets"
 SOURCE_DIR = "docs/assets/src"
 FONT_DIR = "docs/assets/src/fonts"
@@ -126,8 +128,26 @@ ASSETS: tuple[Asset, ...] = (
         outputs=(
             _svg("hero-light.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
             _svg("hero-dark.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
+            # Stacked variants for a 360 CSS px column; outlined like the desktop files.
+            Output(
+                path="hero-mobile-light.svg",
+                kind="svg",
+                width=hero.MOBILE_WIDTH,
+                height=hero.mobile_height(),
+                display_width=MOBILE_DISPLAY_WIDTH,
+                outlined=True,
+            ),
+            Output(
+                path="hero-mobile-dark.svg",
+                kind="svg",
+                width=hero.MOBILE_WIDTH,
+                height=hero.mobile_height(),
+                display_width=MOBILE_DISPLAY_WIDTH,
+                outlined=True,
+            ),
         ),
         needs=("jetbrains-mono", "fonttools"),
+        renderer=hero.render,
     ),
     Asset(
         name="how-it-works",
