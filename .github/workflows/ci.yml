@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    env:
+      UV_PYTHON: ${{ matrix.python }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ['3.12', '3.13']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.5'
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - name: Install locked development tools
+        run: uv sync --frozen --group dev
+      - name: Lint and formatting
+        run: |
+          uv run --frozen ruff check .
+          uv run --frozen ruff format --check .
+      - name: Strict type checks
+        run: uv run --frozen mypy --strict src tests
+      - name: Offline unit and acceptance tests
+        run: uv run --frozen pytest -m "not integration and not packaging"
+      - name: Build wheel and source distribution
+        run: uv build --no-sources
+      - name: Clean-wheel packaging acceptance
+        if: ${{ hashFiles('tests/packaging/*.py') != '' }}
+        run: uv run --frozen pytest -m packaging
+      - name: Reproduce fixture evidence
+        if: ${{ hashFiles('src/actseal/cli.py') != '' }}
+        shell: bash
+        run: |
+          uv run --frozen actseal demo --out "$RUNNER_TEMP/actseal-demo-a" --json
+          uv run --frozen actseal demo --out "$RUNNER_TEMP/actseal-demo-b" --json
+          uv run --frozen python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          def inventory(name):
+              root = Path(os.environ["RUNNER_TEMP"]) / name
+              return {
+                  str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in sorted(root.rglob("*")) if path.is_file()
+              }
+
+          first = inventory("actseal-demo-a")
+          second = inventory("actseal-demo-b")
+          assert first and first == second, "fixture artifacts differ"
+          encoded = json.dumps(first, sort_keys=True, separators=(",", ":")).encode()
+          print("ACTSEAL_DEMO_SHA256=" + hashlib.sha256(encoded).hexdigest())
+          PY
+      - name: Repository hooks
+        run: uv run --frozen pre-commit run --all-files

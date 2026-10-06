@@ -52,13 +52,14 @@ implemented checks except Repository hooks: its config file is absent.
 REVIEW T00-04 closes the Unicode constructor finding. All known T00 product
 findings are fixed, including parser, domain validation, CPU-only Linux dependency
 resolution and packaging. Claude revision04 has completed; no executor is running.
-The sole immediate blocker is the pending hook approval. T10/T20/T30 still wait
+The human approved the three hooks on 2026-10-06. T10/T20/T30 still wait
 for T00 ACCEPT and green CI. Shared types are not yet frozen by acceptance.
 
-Claude's permission layer denied creating sensitive .pre-commit-config.yaml
-because its non-interactive session has no approval surface. The one pending
-human question requests approval for three local hooks: Ruff lint, Ruff format
-check, and strict mypy. Do not retry or route around that write without approval.
+Claude's earlier sensitive-file denial was escalated. The human explicitly approved
+the three local hooks and standing routine work within this plan. Codex created
+that exact hook configuration; all three hooks pass locally. Await hosted CI.
+Standing approval does not change the required license, scope, budget or release
+quality gates; public launch messages remain drafts.
 Raw local dispatch receipts remain ignored under plan/dispatch.
 
 Claude session25979d71-e2c8-4a20-932b-a18022ec31c7, actual model claude-fable-5-1,
