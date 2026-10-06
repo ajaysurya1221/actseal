@@ -74,6 +74,38 @@ def rehash_bundle(bundle: Path) -> None:
     (bundle / "manifest.json").write_bytes(canonical(manifest) + b"\n")
 
 
+def write_producer(run_dir: Path, producer: dict[str, object]) -> None:
+    (run_dir / "PRODUCER.json").write_text(
+        json.dumps(producer, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
+def corrupt_seal(run_dir: Path, seal: str) -> None:
+    """Replace the archived lock's own seal (root and bundle copies) with ``seal``.
+
+    The verdict, manifest and ``PRODUCER.json`` are rewritten to agree, so
+    every ordinary hash check passes and only the self-seal is wrong. The
+    producer fingerprint is left as it is.
+    """
+    evidence = run_dir / "evidence"
+    lock = read_json(evidence / "lock.json")
+    lock["sha256"] = seal
+    lock_bytes = canonical(lock) + b"\n"
+    (evidence / "lock.json").write_bytes(lock_bytes)
+    (run_dir / "lock.json").write_bytes(lock_bytes)
+    verdict = read_json(evidence / "verdict.json")
+    verdict["lock_sha256"] = seal
+    (evidence / "verdict.json").write_bytes(canonical(verdict) + b"\n")
+    rehash_bundle(evidence)
+    producer = read_json(run_dir / "PRODUCER.json")
+    producer["lock_sha256"] = seal
+    write_producer(run_dir, producer)
+
+
+def registry_text(entries: dict[str, str]) -> str:
+    return json.dumps({"schema_version": 1, "implementations": entries})
+
+
 def foreign_copy(run_dir: Path, destination: Path, fingerprint: str) -> str:
     """Copy a recorded run as if a different implementation had produced it.
 
@@ -99,7 +131,5 @@ def foreign_copy(run_dir: Path, destination: Path, fingerprint: str) -> str:
     producer = read_json(destination / "PRODUCER.json")
     producer["implementation_sha256"] = fingerprint
     producer["lock_sha256"] = seal
-    (destination / "PRODUCER.json").write_text(
-        json.dumps(producer, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    write_producer(destination, producer)
     return seal

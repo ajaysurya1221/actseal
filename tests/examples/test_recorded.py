@@ -73,18 +73,24 @@ def test_at_least_one_recorded_run_replays_under_the_running_implementation(
     compatible = 0
     for run_dir in recorded_dirs():
         producer = run.load_producer(run_dir)
+        # Archive validity is established explicitly, independent of compatibility.
+        run.check_archived_lock(parse_lock((run_dir / "lock.json").read_text(encoding="utf-8")))
         recorded = decode_document(
             "verdict.json", read_bundle_files(run_dir / "evidence")["verdict.json"], Verdict
         )
         replayed = replay(run_dir / "evidence", expected_lock_sha256=producer.lock_sha256)
+        status = run.compatibility_status(producer)
         if producer.implementation_sha256 == running:
+            assert status == "exact"
             assert replayed == recorded, run_dir.name
             validate_lock(parse_lock((run_dir / "lock.json").read_text(encoding="utf-8")))
             compatible += 1
-        elif replayed == recorded:
-            compatible += 1  # registry-approved compatible implementation
+        elif status == "approved":
+            assert replayed == recorded, run_dir.name
+            compatible += 1
         else:
             # A foreign, unapproved producer: exactly the compatibility ERROR and nothing else.
+            assert status == "unapproved"
             assert replayed.status == "ERROR", run_dir.name
             assert replayed.reasons == (REASON_LOCK,), run_dir.name
             assert replayed.lock_sha256 == producer.lock_sha256

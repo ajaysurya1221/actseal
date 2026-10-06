@@ -63,6 +63,22 @@ class FallbackModel(RecordingModel):
         return replace(capture, fallback_used=True)
 
 
+class SwappingModel(RecordingModel):
+    """Answers one ticket with the (same-identity) capture recorded for another ticket."""
+
+    def __init__(self, responses: Path, swap: dict[str, str]) -> None:
+        super().__init__(responses)
+        self._swap = swap
+
+    def decide(self, request: DecisionRequest, *, timeout_s: float) -> CapturedOutcome:
+        self.requests.append(request)
+        other = self._swap.get(request.case_id)
+        if other is None:
+            return self._inner.decide(request, timeout_s=timeout_s)
+        swapped = DecisionRequest(other, f"Ticket {other}: swapped", request.question)
+        return self._inner.decide(swapped, timeout_s=timeout_s)
+
+
 class FailingModel(RecordingModel):
     """Raises on the named ticket, after answering the earlier ones."""
 
@@ -216,7 +232,39 @@ def test_unrecorded_ticket_is_a_setup_error_not_a_decision(gate: ModuleType, fre
     assert queue.journal == ()
 
 
-def test_queue_failure_propagates_and_records_nothing(
+def test_swapped_capture_is_refused_before_any_effect(
+    gate: ModuleType, run: ModuleType, fresh: Any
+) -> None:
+    """A same-identity capture for another ticket must not authorize a queue write.
+
+    T-1002's recorded answer is a confident ``technical`` ACT. Served as the
+    reply to T-1001 it still carries T-1002's request hash, so the gate must
+    refuse it before normalization; nothing is enqueued and no disposition is
+    produced.
+    """
+    tickets = run.load_tickets(EXAMPLE_DIR / "tickets.jsonl")
+    queue = gate.LocalQueue()
+    model = SwappingModel(EXAMPLE_DIR / "responses.jsonl", {"T-1001": "T-1002"})
+    opened = open_gate(gate, fresh, model)
+    with pytest.raises(gate.RequestBindingError, match="T-1001"):
+        opened.route(tickets[0], queue)
+    assert queue.journal == ()
+    assert [r.case_id for r in model.requests] == ["T-1001"]
+    with pytest.raises(gate.RequestBindingError):
+        gate.route_all(opened, tickets, queue)
+    assert queue.journal == ()
+    # The same model answers every other ticket exactly as before.
+    honest = gate.route_all(
+        open_gate(gate, fresh, SwappingModel(EXAMPLE_DIR / "responses.jsonl", {})),
+        tickets,
+        queue,
+    )
+    assert [d.action for d in honest] == [
+        run.EXPECTED_DISPOSITIONS[t.ticket_id][0] for t in tickets
+    ]
+
+
+def test_queue_failure_before_its_effect_propagates_and_records_nothing(
     gate: ModuleType, run: ModuleType, fresh: Any
 ) -> None:
     class BrokenQueue:
@@ -231,6 +279,35 @@ def test_queue_failure_propagates_and_records_nothing(
     with pytest.raises(OSError, match="queue unavailable"):
         gate.route_all(open_gate(gate, fresh), tickets, queue)
     assert queue.journal == ()
+
+
+def test_queue_failure_after_its_effect_propagates_with_the_effect_retained(
+    gate: ModuleType, run: ModuleType, fresh: Any
+) -> None:
+    """The example promises propagation without retry, not that a failed enqueue had no effect."""
+
+    class EffectThenRaiseQueue:
+        def __init__(self) -> None:
+            self.journal: tuple[tuple[str, str], ...] = ()
+
+        def enqueue(self, queue: str, ticket_id: str) -> None:
+            self.journal = (*self.journal, (queue, ticket_id))
+            if ticket_id == "T-1002":
+                raise OSError("acknowledgement lost after write")
+
+    def route_each(opened: Any, queue: EffectThenRaiseQueue, sink: list[Any]) -> None:
+        for ticket in run.load_tickets(EXAMPLE_DIR / "tickets.jsonl"):
+            disposition = opened.route(ticket, queue)
+            sink.append(disposition)
+
+    queue = EffectThenRaiseQueue()
+    dispositions: list[Any] = []
+    with pytest.raises(OSError, match="acknowledgement lost"):
+        route_each(open_gate(gate, fresh), queue, dispositions)
+    # The write happened, the exception reached the application, no disposition claims it,
+    # and nothing after it was routed or retried.
+    assert queue.journal == (("billing", "T-1001"), ("technical", "T-1002"))
+    assert [d.ticket_id for d in dispositions] == ["T-1001"]
 
 
 # --------------------------------------------------------------------------- #
