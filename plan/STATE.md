@@ -11,8 +11,8 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 
 ## Current state
 
-- Planning artifacts: being materialized and reviewed.
-- Product implementation: T00 dispatched in isolated task/t00 worktree.
+- Planning artifacts: complete; 119 material claims and all 18 candidate dispositions recorded.
+- Product implementation: T00 under revision in isolated task/t00 worktree; no product merged.
 - Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
 - Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
 - Preflight: source statistics suite passed in a separate verification lane;
@@ -41,24 +41,29 @@ dispatch; never assume a status inherited from memory is still current.
 
 ## Blockers and next action
 
-No authentication blocker remains. Repository initialized; T00 dispatched from
-`.worktrees/t00` at documentation base 38900e1. Finish remaining task specs/CI and
-independently review T00 when its REPORT arrives. Raw local dispatch receipts are
-ignored under plan/dispatch; publish only reviewed, credential-free REPORTs.
+No authentication blocker remains. Public repository:
+https://github.com/ajaysurya1221/actseal. Draft foundation PR:
+https://github.com/ajaysurya1221/actseal/pull/1. Candidate dd47d2e595ec5fc01eaac7be6c62c838826891d5
+contains product commit 56073a700ba5e019e96d0c7d6b103332a7d87249 and documentation formatting only.
+Root independently passed all six T00 commands (551 tests, lint/format, mypy,
+sync and build). Hosted Linux/macOS Python3.12/3.13 at run37432682697 passes all
+implemented checks except Repository hooks: its config file is absent.
 
-Public repository created: https://github.com/ajaysurya1221/actseal. Initial docs
-are published. No product release or green product CI is claimed. Claude's
-permission layer denied creating the sensitive .pre-commit-config.yaml in its
-non-interactive session; explicit approval for the three proposed local hooks is
-pending with the user. Other product work continues.
+REVIEW T00-03 requires rejecting unpaired Unicode surrogates in record constructors
+before canonical serialization. Prior parser, domain-validation, CPU-only Linux
+dependency and packaging findings are fixed. Claude revision04 is next; it may
+edit records/tests and write a new receipt only. Product lanes T10/T20/T30 still
+wait for T00 ACCEPT and green CI. Shared types are not yet frozen by acceptance.
 
-T00 initial REPORT is PARTIAL. Codex independently repeated sync, Ruff lint/format,
-strict mypy, both owned test files (485 passed) and build. Constructor probes still
-accepted invalid normalized distributions, unsupported providers and zero-case
-PASS, and numeric overflow escaped SchemaError. Linux CUDA/proprietary resolution,
-generic JSON cap and sdist contents also require correction. No product has been
-accepted or merged. Initial Claude meter: $9.3913315 estimated usage, not a billed
-API charge; actual incremental paid API spend remains $0 on the Max subscription.
+Claude's permission layer denied creating sensitive .pre-commit-config.yaml
+because its non-interactive session has no approval surface. The one pending
+human question requests approval for three local hooks: Ruff lint, Ruff format
+check, and strict mypy. Do not retry or route around that write without approval.
+Raw local dispatch receipts remain ignored under plan/dispatch.
+
+Claude session25979d71-e2c8-4a20-932b-a18022ec31c7, actual model claude-fable-5-1,
+effort high. Cumulative meter after revision03: $14.0396135 estimated subscription
+usage, not a billed API charge. Incremental paid API spend remains $0 on Max.
 
 ## Budget and scope
 
