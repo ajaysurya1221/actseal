@@ -45,10 +45,8 @@ jobs:
       - name: Build wheel and source distribution
         run: uv build --no-sources
       - name: Clean-wheel packaging acceptance
-        if: ${{ hashFiles('tests/packaging/*.py') != '' }}
-        run: uv run --frozen pytest -m packaging
+        run: uv run --frozen pytest -m packaging tests/packaging
       - name: Reproduce fixture evidence
-        if: ${{ hashFiles('src/actseal/cli.py') != '' }}
         shell: bash
         run: |
           uv run --frozen actseal demo --out "$RUNNER_TEMP/actseal-demo-a" --json
