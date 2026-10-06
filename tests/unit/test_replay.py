@@ -210,6 +210,9 @@ def test_replay_type_misuse_raises_schema_error(tmp_path: Path) -> None:
     out, bundle = written(tmp_path)
     with pytest.raises(SchemaError, match="bundle"):
         replay(str(out))  # type: ignore[arg-type]
+    with pytest.raises(SchemaError, match="bundle: must not contain NUL") as info:
+        replay(tmp_path / "run\x00suffix")
+    assert "\x00" not in str(info.value)
     with pytest.raises(SchemaError, match="expected_lock_sha256"):
         replay(out, expected_lock_sha256=bundle.lock.sha256.upper())
     with pytest.raises(SchemaError, match="expected_lock_sha256"):

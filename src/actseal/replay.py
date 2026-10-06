@@ -42,6 +42,7 @@ locked identity, and it authenticates neither responses nor execution
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 from typing import Final
@@ -142,6 +143,10 @@ def _lock_error(lock: PlanLock, reasons: set[str]) -> _InvalidEvidenceError:
 def _check_arguments(bundle: object, expected_lock_sha256: object) -> None:
     if not isinstance(bundle, Path):
         raise SchemaError("bundle: must be a Path")
+    if "\x00" in os.fspath(bundle):
+        # A NUL cannot reach the operating system intact; this is Python argument
+        # misuse (SchemaError), not evidence about any bundle.
+        raise SchemaError("bundle: must not contain NUL")
     if expected_lock_sha256 is not None and (
         type(expected_lock_sha256) is not str or _SHA256_HEX.fullmatch(expected_lock_sha256) is None
     ):

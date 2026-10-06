@@ -20,16 +20,20 @@ rows per JSONL file.
 
 Writing validates the evidence with the accepted authorities first
 (``validate_inputs`` and a fresh ``assess`` that must equal the recorded
-verdict), refuses an existing destination, writes into a sibling temporary
-directory and publishes it with an OS rename that atomically refuses an
-existing destination: ``renamex_np(RENAME_EXCL)`` on macOS, ``renameat2
+verdict), rejects a destination path containing NUL before any filesystem
+effect, refuses an existing destination, encodes the seven files under one
+running aggregate budget that stops at the first overflowing row or file,
+writes into a sibling temporary directory and publishes it with an OS rename
+that atomically refuses an existing destination: ``renamex_np(RENAME_EXCL)`` on macOS, ``renameat2
 (RENAME_NOREPLACE)`` on Linux, through ``ctypes`` and the system C library.
 Other platforms, missing symbols and unsupported filesystems fail explicitly;
 there is no overwriting fallback. A failed write leaves no partial bundle.
 
-Reading is bounded before any content is read: the directory and every entry
-are inspected with ``lstat`` (symlinks, nonregular files and extra or missing
-entries are rejected), every size is checked against its ceiling and the
+Reading is bounded before any content is read: the directory listing is
+rejected at the first entry outside the seven-name inventory (an arbitrarily
+long malformed tail is never traversed), every entry is inspected with
+``lstat`` (symlinks, nonregular files and missing entries are rejected),
+every size is checked against its ceiling and the
 aggregate ceiling, and only then is the manifest read and each file read with
 the accepted bounded reader and compared with the manifest. Nothing here
 executes bundle content, extracts archives, unpickles, imports user modules or
@@ -132,55 +136,93 @@ _D = TypeVar("_D", bound=DecisionRecord | FaultResult | Verdict | PlanLock)
 # --------------------------------------------------------------------------- #
 
 
-def _document(record: object) -> bytes:
-    """One canonical JSON object plus one LF."""
-    return canonical_json(to_data(record)) + _LF
+class _Budget:
+    """Running wire-byte budget for one bundle: every file byte and every LF is charged.
+
+    Charging happens before bytes are retained, so encoding stops at the first
+    row or file that would push the seven-file total past ``limit``; later rows
+    and files are never serialized and no oversized join is made.
+    """
+
+    __slots__ = ("limit", "used")
+
+    def __init__(self, limit: int) -> None:
+        self.limit = limit
+        self.used = 0
+
+    @property
+    def remaining(self) -> int:
+        return self.limit - self.used
+
+    def charge(self, size: int) -> None:
+        if size > self.remaining:
+            raise SchemaError(f"bundle: aggregate size exceeds {self.limit} bytes")
+        self.used += size
 
 
-def _encode_rows(name: str, records: Sequence[object]) -> bytes:
+def _document(record: object, budget: _Budget) -> bytes:
+    """One canonical JSON object plus one LF, charged to the budget."""
+    data = canonical_json(to_data(record)) + _LF
+    budget.charge(len(data))
+    return data
+
+
+def _encode_rows(name: str, records: Sequence[object], budget: _Budget) -> bytes:
+    """Canonical rows plus LF each; the budget stops encoding at the first overflow."""
     rows: list[bytes] = []
     for index, record in enumerate(records):
         row = canonical_json(to_data(record))
         if len(row) > MAX_ROW_BYTES:
             raise SchemaError(f"{name}[{index}]: row exceeds {MAX_ROW_BYTES} bytes")
+        budget.charge(len(row) + len(_LF))
         rows.append(row + _LF)
     return b"".join(rows)
 
 
-def _encode_dataset(name: str, text: str) -> bytes:
-    """The exact raw bytes of a locked JSONL split; nothing is added or repaired."""
+def _encode_dataset(name: str, text: str, budget: _Budget) -> bytes:
+    """The exact raw bytes of a locked JSONL split; nothing is added or repaired.
+
+    The character count is a lower bound on the UTF-8 byte count, so text that
+    cannot fit the remaining budget is rejected before any encoding is allocated.
+    """
+    if len(text) > budget.remaining:
+        raise SchemaError(f"bundle: aggregate size exceeds {budget.limit} bytes")
     data = text.encode("utf-8")
     if len(data) > MAX_JSON_BYTES:
         raise SchemaError(f"{name}: document exceeds {MAX_JSON_BYTES} bytes")
+    budget.charge(len(data))
     return data
 
 
-def _manifest(files: Mapping[str, bytes]) -> bytes:
+def _manifest(files: Mapping[str, bytes], budget: _Budget) -> bytes:
     inventory: dict[str, object] = {
         name: {"size": len(data), "sha256": sha256_bytes(data)} for name, data in files.items()
     }
     unsealed: dict[str, object] = {"schema_version": SCHEMA_VERSION, "files": inventory}
     sealed: dict[str, object] = {**unsealed, "sha256": sha256_bytes(canonical_json(unsealed))}
-    return canonical_json(sealed) + _LF
+    data = canonical_json(sealed) + _LF
+    budget.charge(len(data))
+    return data
 
 
-def _encode_files(bundle: EvidenceBundle) -> dict[str, bytes]:
-    """Serialize all seven files, enforcing every byte ceiling."""
-    lock = _document(bundle.lock)
+def _encode_files(bundle: EvidenceBundle, limit: int) -> dict[str, bytes]:
+    """Serialize all seven files in bundle order under one running aggregate budget.
+
+    Per-file and per-row ceilings are enforced as each unit is produced; the
+    aggregate ceiling ``limit`` (manifest and every LF included) is enforced
+    incrementally, so the first overflowing row or file ends encoding.
+    """
+    budget = _Budget(limit)
+    lock = _document(bundle.lock, budget)
     if len(lock) > MAX_LOCK_BYTES:
         raise SchemaError(f"{LOCK_FILE}: document exceeds {MAX_LOCK_BYTES} bytes")
-    data: dict[str, bytes] = {
-        LOCK_FILE: lock,
-        CALIBRATION_FILE: _encode_dataset(CALIBRATION_FILE, bundle.calibration_jsonl),
-        VERIFICATION_FILE: _encode_dataset(VERIFICATION_FILE, bundle.verification_jsonl),
-        RECORDS_FILE: _encode_rows(RECORDS_FILE, bundle.records),
-        FAULTS_FILE: _encode_rows(FAULTS_FILE, bundle.faults),
-        VERDICT_FILE: _document(bundle.verdict),
-    }
-    manifest = _manifest(data)
-    total = len(manifest) + sum(len(content) for content in data.values())
-    if total > MAX_BUNDLE_BYTES:
-        raise SchemaError(f"bundle: aggregate size exceeds {MAX_BUNDLE_BYTES} bytes")
+    data: dict[str, bytes] = {LOCK_FILE: lock}
+    data[CALIBRATION_FILE] = _encode_dataset(CALIBRATION_FILE, bundle.calibration_jsonl, budget)
+    data[VERIFICATION_FILE] = _encode_dataset(VERIFICATION_FILE, bundle.verification_jsonl, budget)
+    data[RECORDS_FILE] = _encode_rows(RECORDS_FILE, bundle.records, budget)
+    data[FAULTS_FILE] = _encode_rows(FAULTS_FILE, bundle.faults, budget)
+    data[VERDICT_FILE] = _document(bundle.verdict, budget)
+    manifest = _manifest(data, budget)
     return {MANIFEST_FILE: manifest, **data}
 
 
@@ -227,6 +269,27 @@ def _symbol(libc: object, name: str) -> object:
         raise NotImplementedError(f"exclusive rename: {name} is not available") from None
 
 
+def _check_path_text(field: str, path: Path) -> None:
+    """Reject a path that cannot be passed intact to the operating system.
+
+    An embedded NUL terminates C string arguments, so the native call would act
+    on a silently truncated path while Python-level checks saw the full one.
+    """
+    if not isinstance(path, Path):
+        raise SchemaError(f"{field}: must be a Path")
+    if "\x00" in os.fspath(path):
+        raise SchemaError(f"{field}: must not contain NUL")
+
+
+def _c_path(field: str, path: Path) -> bytes:
+    """Filesystem-encode ``path`` for a C string argument, rejecting embedded NUL."""
+    _check_path_text(field, path)
+    encoded = os.fsencode(os.fspath(path))
+    if b"\x00" in encoded:
+        raise SchemaError(f"{field}: must not contain NUL")
+    return encoded
+
+
 def _exclusive_rename(source: Path, destination: Path) -> None:
     """Atomically rename ``source`` to ``destination``, refusing any existing destination.
 
@@ -235,10 +298,11 @@ def _exclusive_rename(source: Path, destination: Path) -> None:
     symbol is :class:`NotImplementedError`; a nonzero result raises
     :class:`OSError` with the reported errno (``EEXIST`` becomes
     :class:`FileExistsError`; ``EINVAL``/``ENOSYS``/``ENOTSUP`` mean the
-    filesystem or kernel does not support the operation). Never falls back.
+    filesystem or kernel does not support the operation). Paths containing NUL
+    are :class:`SchemaError` before any native call. Never falls back.
     """
-    old = os.fsencode(os.fspath(source))
-    new = os.fsencode(os.fspath(destination))
+    old = _c_path("source", source)
+    new = _c_path("destination", destination)
     result: int
     if sys.platform == "darwin":
         renamex_np = _symbol(_load_libc(), "renamex_np")
@@ -284,12 +348,11 @@ def write_bundle(bundle: EvidenceBundle, destination: Path) -> Path:
     """
     if not isinstance(bundle, EvidenceBundle):
         raise SchemaError("bundle: must be EvidenceBundle")
-    if not isinstance(destination, Path):
-        raise SchemaError("destination: must be a Path")
+    _check_path_text("destination", destination)
     if os.path.lexists(destination):
         raise FileExistsError(errno.EEXIST, "destination: already exists")
     _check_semantics(bundle)
-    files = _encode_files(bundle)
+    files = _encode_files(bundle, MAX_BUNDLE_BYTES)
     temporary = Path(tempfile.mkdtemp(prefix=_TEMP_PREFIX, dir=destination.parent))
     try:
         for name in BUNDLE_FILES:
@@ -310,6 +373,25 @@ def _size_limit(name: str) -> int:
     return MAX_LOCK_BYTES if name == LOCK_FILE else MAX_JSON_BYTES
 
 
+def _inventory(bundle: Path) -> dict[str, os.DirEntry[str]]:
+    """Enumerate the directory, stopping at the first entry that breaks the seven-name inventory.
+
+    An unexpected or repeated name ends enumeration immediately, so a malformed
+    directory with an arbitrarily long tail is never traversed or retained.
+    Missing names are reported after the (at most seven) valid entries.
+    """
+    expected = frozenset(BUNDLE_FILES)
+    found: dict[str, os.DirEntry[str]] = {}
+    with os.scandir(bundle) as entries:
+        for entry in entries:
+            if entry.name not in expected or entry.name in found:
+                raise SchemaError("bundle: must contain exactly the seven bundle files")
+            found[entry.name] = entry
+    if len(found) != len(BUNDLE_FILES):
+        raise SchemaError("bundle: must contain exactly the seven bundle files")
+    return found
+
+
 def _inspect(bundle: Path) -> dict[str, int]:
     """Check the directory shape with ``lstat`` and return every file size, reading nothing."""
     info = os.lstat(bundle)
@@ -317,10 +399,7 @@ def _inspect(bundle: Path) -> dict[str, int]:
         raise SchemaError("bundle: must not be a symlink")
     if not stat.S_ISDIR(info.st_mode):
         raise SchemaError("bundle: must be a directory")
-    with os.scandir(bundle) as entries:
-        found = {entry.name: entry for entry in entries}
-    if set(found) != set(BUNDLE_FILES):
-        raise SchemaError("bundle: must contain exactly the seven bundle files")
+    found = _inventory(bundle)
     sizes: dict[str, int] = {}
     for name in BUNDLE_FILES:
         info = found[name].stat(follow_symlinks=False)
@@ -397,8 +476,7 @@ def read_bundle_files(bundle: Path) -> dict[str, bytes]:
     mismatches are :class:`IntegrityError`; operating-system errors propagate.
     Nothing is decoded beyond the manifest.
     """
-    if not isinstance(bundle, Path):
-        raise SchemaError("bundle: must be a Path")
+    _check_path_text("bundle", bundle)
     sizes = _inspect(bundle)
     manifest_data = _read_exact(bundle / MANIFEST_FILE, MANIFEST_FILE, sizes[MANIFEST_FILE])
     entries = _decode_manifest(manifest_data)

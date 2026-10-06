@@ -19,7 +19,7 @@ import json
 import os
 import stat
 import sys
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -1172,3 +1172,335 @@ def test_decoded_records_are_frozen_public_records(tmp_path: Path) -> None:
         lock_digest(decode_document(LOCK_FILE, files[LOCK_FILE], PlanLock))
         == json.loads(files[LOCK_FILE])["sha256"]
     )
+
+
+# --------------------------------------------------------------------------- #
+# REVIEW T40-01 finding 1: embedded NUL must never reach the native call
+# --------------------------------------------------------------------------- #
+
+
+def _no_native_call() -> ctypes.CDLL:
+    pytest.fail("the native helper was reached with an invalid path")
+
+
+@pytest.mark.parametrize(
+    "destination",
+    [
+        pytest.param(Path("new\x00suffix"), id="nul_in_name"),
+        pytest.param(Path("new") / "\x00" / "run", id="nul_component"),
+        pytest.param(Path("p\x00q") / "run", id="nul_in_parent"),
+    ],
+)
+def test_nul_destination_is_rejected_before_any_filesystem_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, destination: Path
+) -> None:
+    monkeypatch.setattr(evidence_module, "_load_libc", _no_native_call)
+    (tmp_path / "sibling").write_bytes(b"sibling")
+    with pytest.raises(SchemaError, match="destination: must not contain NUL") as info:
+        write_bundle(make_bundle(), tmp_path / destination)
+    assert "\x00" not in str(info.value)
+    assert sorted(os.listdir(tmp_path)) == ["sibling"]
+    assert not (tmp_path / "new").exists()
+    assert not (tmp_path / "p").exists()
+    assert temp_leftovers(tmp_path) == []
+
+
+def test_native_helper_rejects_nul_in_either_path_without_publishing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(evidence_module, "_load_libc", _no_native_call)
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "marker").write_bytes(b"marker")
+    with pytest.raises(SchemaError, match="destination: must not contain NUL"):
+        evidence_module._exclusive_rename(source, tmp_path / "new\x00suffix")
+    with pytest.raises(SchemaError, match="source: must not contain NUL"):
+        evidence_module._exclusive_rename(tmp_path / "source\x00x", tmp_path / "new")
+    assert sorted(os.listdir(tmp_path)) == ["source"]
+    assert (source / "marker").read_bytes() == b"marker"
+    assert not (tmp_path / "new").exists()
+
+
+def test_native_helper_still_publishes_a_plain_path_after_the_nul_guard(tmp_path: Path) -> None:
+    """The guard is a pure argument check: the real native publish still runs afterwards."""
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "marker").write_bytes(b"marker")
+    evidence_module._exclusive_rename(source, tmp_path / "new")
+    assert (tmp_path / "new" / "marker").read_bytes() == b"marker"
+    assert not source.exists()
+
+
+def test_reader_and_c_path_reject_nul_paths(tmp_path: Path) -> None:
+    with pytest.raises(SchemaError, match="bundle: must not contain NUL"):
+        read_bundle_files(tmp_path / "run\x00x")
+    with pytest.raises(SchemaError, match="field: must not contain NUL"):
+        evidence_module._c_path("field", Path("a\x00b"))
+    assert evidence_module._c_path("field", Path("plain")) == b"plain"
+
+
+# --------------------------------------------------------------------------- #
+# REVIEW T40-01 finding 2: running aggregate budget with early stop
+# --------------------------------------------------------------------------- #
+
+
+def _counting_canonical_json(monkeypatch: pytest.MonkeyPatch) -> list[int]:
+    """Count canonical serializations made by the evidence module (not by assess)."""
+    sizes: list[int] = []
+
+    def counting(value: object) -> bytes:
+        data = canonical_json(value)
+        sizes.append(len(data))
+        return data
+
+    monkeypatch.setattr(evidence_module, "canonical_json", counting)
+    return sizes
+
+
+def _wire_sizes(bundle: EvidenceBundle) -> tuple[int, int, int, list[int]]:
+    """Independently computed lock/dataset/row wire sizes (each incl. its LF)."""
+    lock = len(canonical_json(to_data(bundle.lock))) + 1
+    calibration = len(bundle.calibration_jsonl.encode("utf-8"))
+    verification = len(bundle.verification_jsonl.encode("utf-8"))
+    rows = [len(canonical_json(to_data(record))) + 1 for record in bundle.records]
+    return lock, calibration, verification, rows
+
+
+def test_budget_charges_every_byte_and_rejects_before_retaining() -> None:
+    budget = evidence_module._Budget(10)
+    budget.charge(4)
+    assert budget.remaining == 6
+    with pytest.raises(SchemaError, match="aggregate size exceeds 10 bytes"):
+        budget.charge(7)
+    assert budget.used == 4
+    budget.charge(6)
+    assert budget.remaining == 0
+    with pytest.raises(SchemaError, match="aggregate"):
+        budget.charge(1)
+
+
+def test_dataset_encoding_rejects_oversized_text_before_allocating_bytes() -> None:
+    budget = evidence_module._Budget(10)
+    with pytest.raises(SchemaError, match="aggregate"):
+        evidence_module._encode_dataset("x", "a" * 11, budget)
+    assert budget.used == 0
+    assert evidence_module._encode_dataset("x", "a" * 10, budget) == b"a" * 10
+    with pytest.raises(SchemaError, match="aggregate"):
+        evidence_module._encode_dataset("y", "b", budget)
+    multibyte = evidence_module._Budget(10)
+    with pytest.raises(SchemaError, match="aggregate"):
+        evidence_module._encode_dataset("z", "é" * 6, multibyte)  # 6 chars, 12 bytes
+    assert multibyte.used == 0
+
+
+def test_small_budget_stops_encoding_at_the_first_overflowing_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = make_bundle()
+    lock, calibration, verification, rows = _wire_sizes(bundle)
+    assert len(rows) == 6
+    # Budget admits the lock, both datasets and exactly two records rows.
+    limit = lock + calibration + verification + rows[0] + rows[1]
+    sizes = _counting_canonical_json(monkeypatch)
+    with pytest.raises(SchemaError, match="aggregate size exceeds"):
+        evidence_module._encode_files(bundle, limit)
+    # lock + rows 0, 1 and the overflowing row 2: nothing after it is serialized.
+    assert len(sizes) == 4
+    assert sizes == [lock - 1, rows[0] - 1, rows[1] - 1, rows[2] - 1]
+
+    # One byte less: the second row itself overflows.
+    sizes.clear()
+    with pytest.raises(SchemaError, match="aggregate size exceeds"):
+        evidence_module._encode_files(bundle, limit - 1)
+    assert len(sizes) == 3
+
+    # A budget that ends inside the raw datasets never serializes a row at all.
+    sizes.clear()
+    with pytest.raises(SchemaError, match="aggregate size exceeds"):
+        evidence_module._encode_files(bundle, lock + calibration + verification - 1)
+    assert len(sizes) == 1
+
+
+def test_many_records_sharing_one_large_body_stop_early_through_the_writer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A small in-memory bundle (one shared padded body) would serialize to far more than
+    the budget; the writer stops after a handful of rows instead of materializing all."""
+    count = 30
+    cases = tuple(
+        (f"v-{index:03d}", f"Verification case {index}.", ALL_LABELS[index % 3])
+        for index in range(count)
+    )
+    verification = verification_jsonl(cases)
+    lock = make_lock(verification=verification)
+    shared_body = json.dumps(
+        {
+            "type": "choice",
+            "choice": "x" * (600 * 1024),
+            "probabilities": dict.fromkeys(ALL_LABELS, 0.0),
+        }
+    )
+    records = tuple(record_for(lock, case, body=shared_body) for case in lock.verification_cases)
+    assert all(record.decision.action == "DENY" for record in records)
+    bundle = make_bundle(lock, records, verification=verification)
+    # Thirty DENY decisions: a = 0, coverage upper < 0.5 -> a valid statistical BLOCK.
+    assert bundle.verdict.status == "BLOCK"
+    assert (bundle.verdict.total, bundle.verdict.accepted) == (count, 0)
+    monkeypatch.setattr(evidence_module, "MAX_BUNDLE_BYTES", 2 * ONE_MIB)
+    sizes = _counting_canonical_json(monkeypatch)
+    with pytest.raises(SchemaError, match="aggregate size exceeds"):
+        write_bundle(bundle, tmp_path / "run")
+    # lock plus at most four ~600 KiB rows before the 2 MiB budget is exhausted.
+    assert 2 <= len(sizes) <= 5
+    assert sum(sizes) < 4 * ONE_MIB
+    assert not (tmp_path / "run").exists()
+    assert temp_leftovers(tmp_path) == []
+    assert os.listdir(tmp_path) == []
+
+
+def test_aggregate_limit_is_exact_including_manifest_and_every_lf(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle = make_bundle()
+    files = read_files(written(tmp_path, bundle, "reference"))
+    total = sum(len(data) for data in files.values())
+    lock, calibration, verification, rows = _wire_sizes(bundle)
+    faults = [len(canonical_json(to_data(fault))) + 1 for fault in bundle.faults]
+    verdict = len(canonical_json(to_data(bundle.verdict))) + 1
+    assert (
+        total
+        == len(files[MANIFEST_FILE])
+        + lock
+        + calibration
+        + verification
+        + sum(rows)
+        + sum(faults)
+        + verdict
+    )
+    assert all(data.endswith(b"\n") for name, data in files.items() if name != CALIBRATION_FILE)
+
+    monkeypatch.setattr(evidence_module, "MAX_BUNDLE_BYTES", total)
+    exact = write_bundle(bundle, tmp_path / "exact")
+    assert read_files(exact) == files
+
+    monkeypatch.setattr(evidence_module, "MAX_BUNDLE_BYTES", total - 1)
+    with pytest.raises(SchemaError, match=f"aggregate size exceeds {total - 1} bytes"):
+        write_bundle(bundle, tmp_path / "over")
+    assert not (tmp_path / "over").exists()
+    assert temp_leftovers(tmp_path) == []
+
+
+def test_full_size_default_budget_is_the_contract_ceiling() -> None:
+    assert MAX_BUNDLE_BYTES == 128 * 1024 * 1024
+    budget = evidence_module._Budget(MAX_BUNDLE_BYTES)
+    budget.charge(MAX_BUNDLE_BYTES)
+    with pytest.raises(SchemaError, match="aggregate"):
+        budget.charge(1)
+
+
+# --------------------------------------------------------------------------- #
+# REVIEW T40-01 finding 3: directory enumeration stops at the first bad entry
+# --------------------------------------------------------------------------- #
+
+
+class _FakeScandir:
+    """Stands in for ``os.scandir``: a context manager over a caller-supplied iterator."""
+
+    def __init__(self, entries: Iterator[object]) -> None:
+        self._entries = entries
+
+    def __enter__(self) -> Iterator[object]:
+        return self._entries
+
+    def __exit__(self, *_exc: object) -> None:
+        return None
+
+
+def _entry(name: str) -> object:
+    return SimpleNamespace(name=name)
+
+
+def _instrumented_inventory(
+    monkeypatch: pytest.MonkeyPatch, names: Sequence[str], *, endless_tail: bool
+) -> list[str]:
+    consumed: list[str] = []
+
+    def entries() -> Iterator[object]:
+        for name in names:
+            consumed.append(name)
+            yield _entry(name)
+        while endless_tail:
+            consumed.append("tail")
+            yield _entry("tail")
+
+    monkeypatch.setattr(os, "scandir", lambda _path: _FakeScandir(entries()))
+    return consumed
+
+
+def test_inventory_stops_at_the_first_unexpected_entry_without_traversing_the_tail(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    consumed = _instrumented_inventory(monkeypatch, ["zzz-unexpected"], endless_tail=True)
+    with pytest.raises(SchemaError, match="exactly the seven"):
+        evidence_module._inventory(tmp_path)
+    assert consumed == ["zzz-unexpected"]
+
+
+def test_inventory_stops_at_an_eighth_entry_after_seven_valid_names(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    consumed = _instrumented_inventory(monkeypatch, [*BUNDLE_FILES, "notes.txt"], endless_tail=True)
+    with pytest.raises(SchemaError, match="exactly the seven"):
+        evidence_module._inventory(tmp_path)
+    assert consumed == [*BUNDLE_FILES, "notes.txt"]
+
+
+def test_inventory_stops_at_a_repeated_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    consumed = _instrumented_inventory(
+        monkeypatch, [LOCK_FILE, VERDICT_FILE, LOCK_FILE], endless_tail=True
+    )
+    with pytest.raises(SchemaError, match="exactly the seven"):
+        evidence_module._inventory(tmp_path)
+    assert consumed == [LOCK_FILE, VERDICT_FILE, LOCK_FILE]
+
+
+def test_inventory_reports_missing_names_after_a_valid_short_listing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    consumed = _instrumented_inventory(monkeypatch, list(BUNDLE_FILES[:-1]), endless_tail=False)
+    with pytest.raises(SchemaError, match="exactly the seven"):
+        evidence_module._inventory(tmp_path)
+    assert consumed == list(BUNDLE_FILES[:-1])
+    consumed = _instrumented_inventory(monkeypatch, [], endless_tail=False)
+    with pytest.raises(SchemaError, match="exactly the seven"):
+        evidence_module._inventory(tmp_path)
+
+
+def test_inventory_accepts_exactly_the_seven_names_in_any_order(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shuffled = list(reversed(BUNDLE_FILES))
+    consumed = _instrumented_inventory(monkeypatch, shuffled, endless_tail=False)
+    found = evidence_module._inventory(tmp_path)
+    assert sorted(found) == sorted(BUNDLE_FILES)
+    assert consumed == shuffled
+
+
+def test_reader_rejects_a_directory_with_many_extra_entries_before_reading(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    out = written(tmp_path)
+    for index in range(300):
+        (out / f"zz-extra-{index:03d}").write_bytes(b"")
+    opened: list[str] = []
+
+    def spying(path: Path, *, limit: int) -> str:
+        opened.append(path.name)
+        return read_input_text(path, limit=limit)
+
+    monkeypatch.setattr(evidence_module, "read_input_text", spying)
+    with pytest.raises(SchemaError, match="exactly the seven"):
+        read_bundle_files(out)
+    assert opened == []
