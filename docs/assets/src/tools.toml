@@ -1,0 +1,102 @@
+# Authoring-only pins for Actseal documentation assets. Nothing here is a
+# runtime dependency. Hashes were verified during the approved v1 audit and are
+# re-verified by setup_tools.py on download and by render.py before any tool
+# executes. Artifact URLs follow the upstream release naming at the pinned
+# tag; the SHA-256 is the authority if a URL is wrong.
+
+[fonttools]
+version = "4.66.1"
+license = "MIT"
+license_url = "https://github.com/fonttools/fonttools/blob/4.66.1/LICENSE"
+source_url = "https://github.com/fonttools/fonttools/tree/4.66.1"
+kind = "python"
+purpose = "Outline pinned banner glyphs; installed through the uv `assets` group, never downloaded here"
+
+[[fonttools.artifacts]]
+platform = "any"
+url = "https://files.pythonhosted.org/packages/f6/10/d45b74135d5d642cb3a4fb0a957c1613ef93de4c8548671dfc3a5bf38299/fonttools-4.66.1-py3-none-any.whl"
+filename = "fonttools-4.66.1-py3-none-any.whl"
+sha256 = "7234ae9e28db64273fbbfa72caebd0a97e3bdba6b05064114741b9539ef339d0"
+
+[jetbrains-mono]
+version = "2.304"
+license = "OFL-1.1"
+license_url = "https://github.com/JetBrains/JetBrainsMono/blob/v2.304/OFL.txt"
+source_url = "https://github.com/JetBrains/JetBrainsMono"
+source_commit = "cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9"
+kind = "font"
+purpose = "Licensed source font for the outlined banner and terminal rendering"
+
+[[jetbrains-mono.artifacts]]
+platform = "any"
+url = "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9/fonts/ttf/JetBrainsMono-Regular.ttf"
+filename = "JetBrainsMono-Regular.ttf"
+sha256 = "a0bf60ef0f83c5ed4d7a75d45838548b1f6873372dfac88f71804491898d138f"
+
+[[jetbrains-mono.artifacts]]
+platform = "any"
+url = "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9/fonts/ttf/JetBrainsMono-Bold.ttf"
+filename = "JetBrainsMono-Bold.ttf"
+sha256 = "5590990c82e097397517f275f430af4546e1c45cff408bde4255dad142479dcb"
+
+# The upstream notice is fetched verbatim from the pinned commit. Its hash was
+# not part of the approved audit, so setup records it in the receipt and the
+# check verifies the notice text markers instead of a pre-pinned digest.
+[[jetbrains-mono.artifacts]]
+platform = "any"
+url = "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9/OFL.txt"
+filename = "OFL.txt"
+verify = "receipt"
+
+[asciinema]
+version = "3.2.1"
+license = "GPL-3.0-or-later"
+license_url = "https://github.com/asciinema/asciinema/blob/v3.2.1/LICENSE"
+source_url = "https://github.com/asciinema/asciinema/releases/tag/v3.2.1"
+source_commit = "70c4af0505fe1dbc7a2170392559d258bd4af92c"
+kind = "binary"
+purpose = "Real terminal recording of the published demo"
+
+[[asciinema.artifacts]]
+platform = "darwin-arm64"
+url = "https://github.com/asciinema/asciinema/releases/download/v3.2.1/asciinema-aarch64-apple-darwin"
+filename = "asciinema-aarch64-apple-darwin"
+sha256 = "1f0c76da7855601df93e5dccdf69b7c683b81beff1411e38b3802de1f5fc7a1c"
+
+[agg]
+version = "1.9.0"
+license = "GPL-3.0-or-later"
+license_url = "https://github.com/asciinema/agg/blob/v1.9.0/LICENSE"
+source_url = "https://github.com/asciinema/agg/releases/tag/v1.9.0"
+source_commit = "26ca84c02523973198fca28533369edcfc7ed929"
+kind = "binary"
+purpose = "GIF rendering of the raw recording at speed 1 without trimming pauses"
+
+[[agg.artifacts]]
+platform = "darwin-arm64"
+url = "https://github.com/asciinema/agg/releases/download/v1.9.0/agg-aarch64-apple-darwin"
+filename = "agg-aarch64-apple-darwin"
+sha256 = "742b2b6230529b72f310acb835e9479496000f2eabc97b0993cabe1d7fe70171"
+
+[resvg]
+version = "0.48.1"
+license = "Apache-2.0 OR MIT"
+license_url = "https://github.com/linebender/resvg/blob/v0.48.1/LICENSE-APACHE"
+source_url = "https://github.com/linebender/resvg/releases/tag/v0.48.1"
+source_commit = "68b14c4c3bccdb60344c777406486b54c36ec1a4"
+kind = "binary"
+purpose = "Social preview PNG rendering at exactly 1280x640"
+
+[[resvg.artifacts]]
+platform = "darwin-arm64"
+url = "https://github.com/linebender/resvg/releases/download/v0.48.1/resvg-macos-arm64.zip"
+filename = "resvg-macos-arm64.zip"
+sha256 = "06440eb5aa14a28cbfc7e40ae39e1ffa71adc051b89fbaa913b4f1d9b905d09f"
+member = "resvg"
+
+[[resvg.artifacts]]
+platform = "linux-x86_64"
+url = "https://github.com/linebender/resvg/releases/download/v0.48.1/resvg-linux-x86_64.tar.gz"
+filename = "resvg-linux-x86_64.tar.gz"
+sha256 = "fa8c26495a187e592c501db15bf9e8a9fdc051d4b2b336b39703d5b59f912b9d"
+member = "resvg"
