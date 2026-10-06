@@ -43,7 +43,7 @@ A model/card license, a selected threshold and a PASS are not general applicatio
 
 ## Sensitive data and local operation
 
-States, labels and raw model bodies may contain sensitive data. Only reviewed synthetic fixtures belong in the public demo; review generated bundles before sharing. The [ADR 0013 demo](decisions/0013-prespecified-synthetic-demo.md) uses the same policy against different authored outputs; it makes no model-repair or deployment-performance claim. Captures exclude credentials, authorization headers and arbitrary exception text; bounded errors identify fields/invariants without echoing source values.
+States, labels and raw model bodies may contain sensitive data, including caller-supplied secrets. Only reviewed synthetic fixtures belong in the public demo; review generated bundles before sharing. The [ADR 0013 demo](decisions/0013-prespecified-synthetic-demo.md) uses the same policy against different authored outputs; it makes no model-repair or deployment-performance claim. Recorded diagnostic and identity metadata excludes credentials, authorization headers and arbitrary exception text; this does not redact preserved raw inputs or responses. Bounded errors identify fields/invariants without echoing source values.
 
 Fixture/demo/replay require no key. Optional local-model preparation is separate from offline evaluation; Hugging Face offline flags are library settings, not a network firewall. Jev and actual fallback execution remain outside v1. A recorded fallback flag always removes ACT authority.
 
