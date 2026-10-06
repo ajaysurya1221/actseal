@@ -123,11 +123,23 @@ refusal.
 
 ```bash
 SESSION="$(mktemp -d /tmp/actseal-recording.XXXXXX)"
-mkdir "$SESSION/uv-cache" "$SESSION/uv-tools"
+mkdir "$SESSION/uv-cache" "$SESSION/uv-tools" "$SESSION/uv-credentials"
 mkdir "$SESSION/asciinema-config" "$SESSION/asciinema-state"
 mkdir "$SESSION/warmup" "$SESSION/wheel"
 mkdir "$SESSION/attempt-1" "$SESSION/attempt-1/work"
+touch "$SESSION/netrc"
+ls -la "$SESSION/netrc" "$SESSION/uv-credentials"
 ```
+
+`$SESSION/netrc` must be an **existing, empty** file and
+`$SESSION/uv-credentials` an **existing, empty** directory, as the `ls`
+line shows (size 0; only `.` and `..`). Pinned uv 0.12.5 falls back to
+`$HOME/.netrc` when the `NETRC` path does not exist
+(`crates/uv-netrc/src/lib.rs` 85-98), so an existing empty file is what
+disables personal netrc reads; `UV_CREDENTIALS_DIR`
+(`crates/uv-static/src/env_vars.rs` 63-65) points the credential store at
+the empty task directory. Neither the personal `~/.netrc` nor any personal
+credential store is read, listed or copied to prepare these.
 
 Every command from step 3 on runs under this exact prefix (a bash/zsh
 array), with no user shell startup files and no inherited variables:
@@ -138,6 +150,7 @@ PREFIX=( env -i
   UV_CACHE_DIR="$SESSION/uv-cache" UV_TOOL_DIR="$SESSION/uv-tools"
   UV_NO_CONFIG=1 UV_NO_ENV_FILE=1
   UV_DEFAULT_INDEX=https://pypi.org/simple UV_KEYRING_PROVIDER=disabled
+  NETRC="$SESSION/netrc" UV_CREDENTIALS_DIR="$SESSION/uv-credentials"
   ASCIINEMA_CONFIG_HOME="$SESSION/asciinema-config"
   ASCIINEMA_STATE_HOME="$SESSION/asciinema-state"
 )
@@ -145,14 +158,17 @@ PREFIX=( env -i
 
 `env -i` starts from an empty environment and sets only the names written
 above; it reads nothing else, so no credential is read, printed or redacted.
-The uv names (confirmed in the pinned local uv 0.12.5 help) mean: task-owned
-cache and tool directories; no `uv.toml`/`pyproject` configuration and no
-`.env` file; the official index as the only default index; no keyring
-lookups. Any other index, extra-index, find-links, netrc, proxy, TLS or
-token override is absent because `env -i` never carries it, and the helper's
-own allowlist (`demo_session.ENV_ALLOWLIST`) forwards to each `uvx` child
-only `PATH`, `HOME`, `TERM`, `LANG` and these uv names, with the child's
-stdin closed. `SHELL=/bin/sh` makes any shell the recorder spawns for
+The uv names (confirmed in the pinned local uv 0.12.5 help and source) mean:
+task-owned cache and tool directories; no `uv.toml`/`pyproject`
+configuration and no `.env` file; the official index as the only default
+index; no keyring lookups; an empty netrc file and an empty credential
+store. Any other index, extra-index, find-links, proxy, TLS or token
+override is absent because `env -i` never carries it, and the helper's own
+allowlist (`demo_session.ENV_ALLOWLIST`) forwards to each `uvx` child only
+`PATH`, `HOME`, `TERM`, `LANG`, these uv names, `NETRC` and
+`UV_CREDENTIALS_DIR`, with the child's stdin closed. Every probe of the
+package or its executable in this procedure, including the direct
+`"$ENV_BIN"` call, runs under the same prefix. `SHELL=/bin/sh` makes any shell the recorder spawns for
 `--command` a non-interactive POSIX shell; with `ENV` unset it reads no
 startup file. `PATH` must contain `uvx`. Confirm the roots took effect:
 
@@ -195,7 +211,7 @@ the identity and show the wrapper points into that environment:
 ls -li "$ENV_BIN"
 head -n 1 "$ENV_BIN"
 cat "$ENV_DIR/pyvenv.cfg"
-"$ENV_BIN" --version
+"${PREFIX[@]}" "$ENV_BIN" --version
 "${PREFIX[@]}" uvx --offline --python 3.12 actseal --version
 find "$SESSION/uv-cache" -type f -path '*/bin/actseal'
 ```
@@ -333,24 +349,35 @@ the header and count event codes with this stdlib snippet (saved beside the
 attempt, not in the repository):
 
 ```python
-import json, sys
+import json
+import sys
+
 lines = [l for l in open(sys.argv[1], encoding="utf-8").read().split("\n") if l.strip()]
 header = json.loads(lines[0])
+events = [json.loads(line) for line in lines[1:]]
 codes: dict[str, int] = {}
-for line in lines[1:]:
-    _, code, _ = json.loads(line)
+for _, code, _ in events:
     codes[code] = codes.get(code, 0) + 1
 print("term:", header.get("term"))
 print("command:", header.get("command"))
 print("env:", header.get("env"))
 print("codes:", codes)
+print("last:", events[-1][1], repr(events[-1][2]))
 ```
 
 Required: `term` cols/rows `100`/`40`; `command` equal to `"$PYTHON $HELPER"`;
 `env` with exactly the keys `TERM` and `LANG` and no other name; `codes`
-with **zero** `"i"` (input) events and no key other than `"o"` (a `"m"`
-marker or `"r"` resize entry means an interactive action or a window change
-occurred; treat it as a failed attempt). Record the parsed duration from
+with exactly two keys, `"o"` (output) and `"x"` with count 1, and
+**zero** `"i"` (input) events; `last` must be `x '0'`, that is the single
+exit event is the final event and its payload is the string `"0"`. The
+pinned recorder (`src/session.rs`, `src/asciicast/v3.rs` at
+`70c4af05…`) always writes that terminal `x` event carrying the recorded
+command's exit status, so its absence, a payload other than `"0"`, or any
+`"m"` marker, `"r"` resize or unknown code means an interactive action, a
+window change or an unexpected recorder path: treat it as a failed attempt.
+The accepted `check_cast` collects only `"o"` payloads and accepts the `x`
+event without conflict; it does not enforce the event-code rule, which is
+why this inspection is separate. Record the parsed duration from
 `check_cast`.
 
 ## 7. Render light and dark GIFs, measure them, verify reproducibility
@@ -378,36 +405,46 @@ measure every file with this stdlib walker (saved beside the attempt):
 
 ```python
 import sys
+
 data = open(sys.argv[1], "rb").read()
 if data[:6] not in (b"GIF87a", b"GIF89a"):
     raise SystemExit("not a GIF")
 pos, flags = 13, data[10]
 if flags & 0x80:
     pos += 3 * (2 << (flags & 7))
+
+
 def skip_subblocks(p: int) -> int:
     while True:
-        n = data[p]; p += 1
+        n = data[p]
+        p += 1
         if n == 0:
             return p
         p += n
+
+
 frames = delay_cs = 0
 while True:
-    block = data[pos]; pos += 1
+    block = data[pos]
+    pos += 1
     if block == 0x3B:
         break
     if block == 0x21:
-        label = data[pos]; pos += 1
+        label = data[pos]
+        pos += 1
         if label == 0xF9:
             if data[pos] != 4:
                 raise SystemExit("bad graphic control extension")
-            delay_cs += int.from_bytes(data[pos + 2:pos + 4], "little")
+            delay_cs += int.from_bytes(data[pos + 2 : pos + 4], "little")
         pos = skip_subblocks(pos)
     elif block == 0x2C:
-        local = data[pos + 8]; pos += 9
+        local = data[pos + 8]
+        pos += 9
         if local & 0x80:
             pos += 3 * (2 << (local & 7))
         pos += 1
-        pos = skip_subblocks(pos); frames += 1
+        pos = skip_subblocks(pos)
+        frames += 1
     else:
         raise SystemExit(f"unexpected block 0x{block:02x} at {pos - 1}")
 print(f"bytes={len(data)} frames={frames} delay_sum_cs={delay_cs} seconds={delay_cs / 100:.2f}")
@@ -435,8 +472,10 @@ header `env` keys and event-code counts; each GIF's SHA-256, byte size,
 frame count, measured delay sum and two-render identity; the exact agg
 commands and theme names; `uv`, asciinema, agg and `$PYTHON` versions and
 paths; the pinned binary digests re-verified by `verified_binary`; the
-checkout commit and the helper's blob hash; the `PREFIX` array and the
-asciinema `config.toml` used; the attempt number and every failed attempt
+checkout commit and the helper's blob hash; the `PREFIX` array, the `ls -la`
+line proving the empty netrc file and credential directory, and the
+asciinema `config.toml` used; the cast header `env` keys, event-code counts
+and final `x` payload; the attempt number and every failed attempt
 directory kept. The receipt is a record; the bytes it describes are the
 evidence.
 

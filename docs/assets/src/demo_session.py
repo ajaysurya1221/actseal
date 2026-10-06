@@ -50,8 +50,9 @@ MAX_PAUSE_SECONDS = 30.0
 #: Nothing else is read, so credentials are never inspected, even to redact them.
 #: The values come from the reviewed controlled prefix in ``recording.md``:
 #: task-owned uv cache/tool directories, no uv config or ``.env`` file, the
-#: official index only and the keyring disabled. No other index, source,
-#: find-links, netrc or token name is forwarded.
+#: official index only, the keyring disabled, an existing empty netrc file
+#: and an empty credential store directory. No other index, source,
+#: find-links or token name is forwarded.
 ENV_ALLOWLIST: tuple[str, ...] = (
     "PATH",
     "HOME",
@@ -68,6 +69,8 @@ ENV_ALLOWLIST: tuple[str, ...] = (
     "UV_NO_ENV_FILE",
     "UV_DEFAULT_INDEX",
     "UV_KEYRING_PROVIDER",
+    "UV_CREDENTIALS_DIR",
+    "NETRC",
 )
 
 

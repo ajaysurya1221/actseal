@@ -316,9 +316,18 @@ def test_allowlisted_environment_copies_only_named_present_keys(session: ModuleT
     assert list(env) == [name for name in session.ENV_ALLOWLIST if name in source]
     assert session.allowlisted_environment({}) == {}
     assert all(name.isupper() for name in session.ENV_ALLOWLIST)
-    secret_words = {"KEY", "API_KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIALS"}
+    # Names that carry a credential *value* are never allowlisted. Two names
+    # configure where uv looks for credentials and are deliberately forwarded
+    # with task-owned empty targets: an existing empty netrc file and an
+    # empty credential-store directory. They are listed explicitly rather
+    # than loosening the word check.
+    secret_words = {"KEY", "API_KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIALS", "NETRC"}
+    safe_path_names = {"NETRC", "UV_CREDENTIALS_DIR"}
     for name in session.ENV_ALLOWLIST:
+        if name in safe_path_names:
+            continue
         assert not secret_words & set(name.split("_")), name
+    assert safe_path_names <= set(session.ENV_ALLOWLIST)
 
 
 SESSION_ROOT = "/recording-session"
@@ -334,6 +343,8 @@ CONTROLLED_PREFIX = {
     "UV_NO_ENV_FILE": "1",
     "UV_DEFAULT_INDEX": "https://pypi.org/simple",
     "UV_KEYRING_PROVIDER": "disabled",
+    "NETRC": f"{SESSION_ROOT}/netrc",
+    "UV_CREDENTIALS_DIR": f"{SESSION_ROOT}/uv-credentials",
     "ASCIINEMA_CONFIG_HOME": f"{SESSION_ROOT}/asciinema-config",
     "ASCIINEMA_STATE_HOME": f"{SESSION_ROOT}/asciinema-state",
 }
@@ -357,7 +368,8 @@ FORBIDDEN_OVERRIDES = (
     "PIP_INDEX_URL",
     "PIP_EXTRA_INDEX_URL",
     "PIP_FIND_LINKS",
-    "NETRC",
+    "UV_PUBLISH_CHECK_URL",
+    "UV_HTTP_TIMEOUT",
     "SSL_CERT_FILE",
     "REQUESTS_CA_BUNDLE",
     "HTTP_PROXY",
@@ -388,6 +400,8 @@ def test_controlled_prefix_values_reach_children_and_overrides_do_not(
         "UV_NO_ENV_FILE",
         "UV_DEFAULT_INDEX",
         "UV_KEYRING_PROVIDER",
+        "NETRC",
+        "UV_CREDENTIALS_DIR",
         "PATH",
         "HOME",
         "TERM",
@@ -396,13 +410,19 @@ def test_controlled_prefix_values_reach_children_and_overrides_do_not(
         assert env[name] == CONTROLLED_PREFIX[name]
     assert env["UV_DEFAULT_INDEX"] == "https://pypi.org/simple"
     assert env["UV_KEYRING_PROVIDER"] == "disabled"
+    # The two credential-location names carry task-owned paths, never values.
+    assert env["NETRC"] == f"{SESSION_ROOT}/netrc"
+    assert env["UV_CREDENTIALS_DIR"] == f"{SESSION_ROOT}/uv-credentials"
+    assert env["NETRC"] != env["HOME"]
+    assert not env["NETRC"].startswith(env["HOME"])
+    assert not env["UV_CREDENTIALS_DIR"].startswith(env["HOME"])
     assert not set(env) & set(FORBIDDEN_OVERRIDES)
     assert not set(session.ENV_ALLOWLIST) & set(FORBIDDEN_OVERRIDES)
     # The recorder's own configuration roots are for the recorder, not for uvx.
     assert "ASCIINEMA_CONFIG_HOME" not in env
     assert "ASCIINEMA_STATE_HOME" not in env
     assert "SHELL" not in env
-    # Only one uv name family is forwarded: task-owned paths plus the four safety settings.
+    # Only one uv name family is forwarded: task-owned paths plus the safety settings.
     uv_names = [name for name in session.ENV_ALLOWLIST if name.startswith("UV_")]
     assert uv_names == [
         "UV_CACHE_DIR",
@@ -412,7 +432,9 @@ def test_controlled_prefix_values_reach_children_and_overrides_do_not(
         "UV_NO_ENV_FILE",
         "UV_DEFAULT_INDEX",
         "UV_KEYRING_PROVIDER",
+        "UV_CREDENTIALS_DIR",
     ]
+    assert "NETRC" in session.ENV_ALLOWLIST
 
 
 def test_home_is_forwarded_unchanged_not_repurposed(session: ModuleType) -> None:
