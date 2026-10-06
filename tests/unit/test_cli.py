@@ -235,7 +235,6 @@ def test_main_reads_sys_argv_by_default(
     [
         (["--responses", "r.jsonl"], "--responses is not accepted with --provider laya"),
         ([], "--responses is required with --provider fixture"),
-        (["--offline"], "--offline is not accepted with --provider fixture"),
     ],
 )
 def test_provider_option_rules(
@@ -255,8 +254,6 @@ def test_provider_option_rules(
         "--out",
         str(tmp_path / "lock.json"),
     ]
-    if "--offline" in argv:
-        base += ["--responses", str(inputs["bad_responses.jsonl"])]
     code, out, err = run([*base, *argv])
     assert code == 3
     assert message in err
@@ -265,6 +262,160 @@ def test_provider_option_rules(
     code, out, err = run([*base, *argv, "--json"])
     assert code == 3
     assert one_json(out)["error"] == f"usage: {message}"
+
+
+def test_fixture_offline_workflow_succeeds(
+    run: Run, inputs: dict[str, Path], tmp_path: Path
+) -> None:
+    """``--offline`` with the fixture provider states its existing behavior: a full real run."""
+    lock = tmp_path / "lock.json"
+    code, stdout, stderr = run(lock_argv(inputs, "fixed", lock, "--offline", "--json"))
+    assert code == 0
+    assert stderr == ""
+    assert one_json(stdout)["ok"] is True
+    out = tmp_path / "evidence"
+    code, stdout, stderr = run(verify_argv(inputs, "fixed", lock, out, "--offline", "--json"))
+    assert code == 0
+    assert stderr == ""
+    document = one_json(stdout)
+    assert document["status"] == "PASS"
+    assert (document["total"], document["accepted"], document["errors"]) == (128, 128, 0)
+    assert replay(out).status == "PASS"
+    assert run(["replay", str(out)])[0] == 0
+    # The same inputs without --offline produce the identical lock: the flag changes nothing.
+    again = tmp_path / "again.json"
+    assert run(lock_argv(inputs, "fixed", again))[0] == 0
+    assert again.read_bytes() == lock.read_bytes()
+
+
+SENTINEL = "PRIVATE_SENTINEL_7f3a"
+
+
+def sentinel_argvs(inputs: dict[str, Path], tmp_path: Path) -> list[list[str]]:
+    """Command lines whose only defect carries a synthetic secret in a raw argv value."""
+    lock = lock_argv(inputs, "fixed", tmp_path / "lock.json")
+    bad_provider = list(lock)
+    bad_provider[bad_provider.index("--provider") + 1] = SENTINEL
+    return [
+        [SENTINEL],
+        [f"--{SENTINEL}"],
+        ["demo", "--out", str(tmp_path / "demo"), SENTINEL],
+        ["demo", "--out", str(tmp_path / "demo"), f"--{SENTINEL}"],
+        ["demo", "--out", str(tmp_path / "demo"), f"--{SENTINEL}={SENTINEL}"],
+        ["demo", "--out", str(tmp_path / "demo"), f"--json={SENTINEL}"],
+        ["demo", f"--out={SENTINEL}", f"--timeout-seconds={SENTINEL}"],
+        ["replay", str(tmp_path / "absent"), "--timeout-seconds", SENTINEL],
+        ["replay", str(tmp_path / "absent"), "--expected-lock-sha256", SENTINEL],
+        bad_provider,
+        [*lock, "--offline", SENTINEL],
+    ]
+
+
+def test_usage_errors_never_echo_argv_values(
+    run: Run, inputs: dict[str, Path], tmp_path: Path
+) -> None:
+    for argv in sentinel_argvs(inputs, tmp_path):
+        for mode in ([], ["--json"]):
+            code, out, err = run([*argv, *mode])
+            assert code == 3, argv
+            assert SENTINEL not in out, argv
+            assert SENTINEL not in err, argv
+            if mode:
+                document = one_json(out)
+                assert document["status"] == "ERROR"
+                assert SENTINEL not in json.dumps(document)
+            else:
+                assert out == ""
+                assert err.startswith("actseal ")
+    assert not (tmp_path / "lock.json").exists()
+    assert not (tmp_path / "demo").exists()
+
+
+@pytest.mark.parametrize(
+    ("argv", "expected"),
+    [
+        (
+            [SENTINEL],
+            "usage: argument COMMAND: invalid choice (choose from lock, verify, replay, demo)",
+        ),
+        ([f"--{SENTINEL}"], "usage: the following arguments are required: COMMAND"),
+        (
+            ["demo", "--out", "x", f"--{SENTINEL}"],
+            "usage: unrecognized arguments: 1 token(s) not accepted; see --help",
+        ),
+        (
+            ["demo", "--out", "x", SENTINEL, f"--{SENTINEL}"],
+            "usage: unrecognized arguments: 2 token(s) not accepted; see --help",
+        ),
+        (
+            ["demo", "--out", "x", f"--json={SENTINEL}"],
+            "usage: argument --json: does not take a value",
+        ),
+        (["demo", "--out"], "usage: argument --out: expected one argument"),
+        (["demo"], "usage: the following arguments are required: --out"),
+        ([], "usage: the following arguments are required: COMMAND"),
+    ],
+)
+def test_usage_diagnostics_stay_bounded_and_useful(
+    run: Run, argv: list[str], expected: str
+) -> None:
+    code, out, _ = run([*argv, "--json"])
+    assert code == 3
+    assert one_json(out)["error"] == expected
+    code, out, err = run(argv)
+    assert code == 3
+    assert out == ""
+    assert err.endswith(f": error: {expected}\n")
+
+
+def test_invalid_provider_choice_lists_only_accepted_choices(
+    run: Run, inputs: dict[str, Path], tmp_path: Path
+) -> None:
+    argv = lock_argv(inputs, "fixed", tmp_path / "lock.json")
+    argv[argv.index("--provider") + 1] = SENTINEL
+    code, out, _ = run([*argv, "--json"])
+    assert code == 3
+    assert one_json(out)["error"] == (
+        "usage: argument --provider: invalid choice (choose from fixture, laya)"
+    )
+    code, _, err = run(argv)
+    assert code == 3
+    assert err == (
+        "actseal lock: error: usage: argument --provider: invalid choice "
+        "(choose from fixture, laya)\n"
+    )
+
+
+def test_bounded_usage_message_rewrites_every_shape() -> None:
+    rewrite = cli_module._bounded_usage_message
+    assert rewrite(f"argument --provider: invalid choice: '{SENTINEL}' (choose from 'a')") == (
+        "argument --provider: invalid choice (choose from fixture, laya)"
+    )
+    assert rewrite(f"argument COMMAND: invalid choice: '{SENTINEL}: x' (choose from 'a')") == (
+        "argument COMMAND: invalid choice (choose from lock, verify, replay, demo)"
+    )
+    assert rewrite(f"argument --other: invalid choice: '{SENTINEL}'") == (
+        "argument --other: invalid choice"
+    )
+    assert (
+        rewrite("argument --out: expected one argument") == "argument --out: expected one argument"
+    )
+    assert (
+        rewrite("argument DIRECTORY: expected 2 arguments")
+        == "argument DIRECTORY: expected 2 arguments"
+    )
+    assert rewrite(f"argument --json: ignored explicit argument '{SENTINEL}'") == (
+        "argument --json: does not take a value"
+    )
+    assert (
+        rewrite(f"argument --out: invalid Path value: '{SENTINEL}'")
+        == "argument --out: invalid value"
+    )
+    assert rewrite(f"unrecognized arguments: {SENTINEL}") == "invalid command line; see --help"
+    assert rewrite(f"something unexpected {SENTINEL}") == "invalid command line; see --help"
+    assert rewrite("the following arguments are required: --lock, --out") == (
+        "the following arguments are required: --lock, --out"
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -442,6 +593,89 @@ def test_verify_json_output_is_complete_and_pure(
     assert faults["fault.low_confidence"] == {"action": "ABSTAIN", "expected_action": "ABSTAIN"}
     assert len(faults) == 6
     assert document["out"] == str(out)
+
+
+def test_failure_summary_counts_a_malformed_body_among_genuine_pass_evidence(
+    run: Run, inputs: dict[str, Path], tmp_path: Path
+) -> None:
+    """One malformed fixture body among 128: statistical PASS with 127 accepted, 1 failure shown."""
+    rows = inputs["fixed_responses.jsonl"].read_bytes().split(b"\n")
+    broken = json.loads(rows[5])
+    broken["body_json"] = "{"
+    rows[5] = json.dumps(broken).encode("utf-8")
+    responses = tmp_path / "one-malformed.jsonl"
+    responses.write_bytes(b"\n".join(rows))
+    lock = tmp_path / "lock.json"
+    argv = lock_argv(inputs, "fixed", lock)
+    argv[argv.index("--responses") + 1] = str(responses)
+    assert run(argv)[0] == 0
+    out = tmp_path / "evidence"
+    argv = verify_argv(inputs, "fixed", lock, out, "--json")
+    argv[argv.index("--responses") + 1] = str(responses)
+    code, stdout, _ = run(argv)
+    assert code == 0
+    document = one_json(stdout)
+    assert document["status"] == "PASS"
+    assert (document["total"], document["accepted"], document["errors"]) == (128, 127, 0)
+    assert document["failures"] == {"malformed_response": 1}
+    assert document["warnings"] == {"normalize.invalid_json": 1}
+    verdict = replay(out)
+    assert (verdict.status, verdict.accepted) == ("PASS", 127)
+    argv = verify_argv(inputs, "fixed", lock, tmp_path / "text")
+    argv[argv.index("--responses") + 1] = str(responses)
+    code, _, stderr = run(argv)
+    assert code == 0
+    assert "actseal verify: failures: malformed_response=1" in stderr
+    assert "actseal verify: warnings: normalize.invalid_json=1" in stderr
+
+
+def test_failure_summary_counts_every_normalized_failure_once(run: Run, tmp_path: Path) -> None:
+    """Malformed, unknown-choice and transport failures each count once; warnings stay exact."""
+    contract = tmp_path / "contract.toml"
+    contract.write_text(CONTRACT_TOML, encoding="utf-8")
+    calibration = tmp_path / "calibration.jsonl"
+    calibration.write_bytes(CALIBRATION.encode("utf-8"))
+    verification = tmp_path / "verification.jsonl"
+    verification.write_bytes(verification_jsonl().encode("utf-8"))
+    rows: dict[str, tuple[str | None, str | None]] = {
+        cid: (answer_json(label), None) for cid, _, label in GOLD
+    }
+    rows["v-002"] = ("{", None)
+    rows["v-003"] = (answer_json("billing").replace('"billing"', '"refunds"', 1), None)
+    rows["v-004"] = (None, "rate_limit")
+    rows["v-005"] = (None, "provider_error")
+    responses = write_responses(tmp_path / "responses.jsonl", rows)
+    common = [
+        "--calibration",
+        str(calibration),
+        "--verification",
+        str(verification),
+        "--provider",
+        "fixture",
+        "--responses",
+        str(responses),
+    ]
+    lock = tmp_path / "lock.json"
+    assert run(["lock", "--contract", str(contract), *common, "--out", str(lock)])[0] == 0
+    out = tmp_path / "evidence"
+    code, stdout, _ = run(["verify", "--lock", str(lock), *common, "--out", str(out), "--json"])
+    assert code == 2
+    document = one_json(stdout)
+    assert document["status"] == "INCONCLUSIVE"
+    assert (document["total"], document["accepted"], document["errors"]) == (6, 2, 0)
+    assert document["failures"] == {
+        "malformed_response": 1,
+        "provider_error": 1,
+        "rate_limit": 1,
+        "unknown_choice": 1,
+    }
+    assert document["warnings"] == {
+        "normalize.invalid_json": 1,
+        "normalize.unknown_choice": 1,
+    }
+    failures = document["failures"]
+    assert isinstance(failures, dict)
+    assert sum(failures.values()) == 4
 
 
 def test_verify_refuses_a_different_fixture_before_any_call(

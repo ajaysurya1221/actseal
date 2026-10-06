@@ -3,7 +3,9 @@
 Commands are exactly ``lock``, ``verify``, ``replay`` and ``demo``; every
 command accepts ``--json``. Exit codes are PASS 0, BLOCK 1, INCONCLUSIVE 2 and
 ERROR 3. Usage errors, setup errors, invalid inputs, existing destinations and
-operating-system failures are ERROR 3 (never argparse's default 2). ``lock``
+operating-system failures are ERROR 3 (never argparse's default 2). Usage
+diagnostics are rewritten to name only option strings, metavars, accepted
+choices and token counts: a raw command-line value is never echoed. ``lock``
 returns 0 on success; ``demo`` returns 0 only when the deliberately bad run is
 BLOCK, the fixed run is PASS and both fresh replays equal the recorded verdicts.
 
@@ -24,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -31,7 +34,14 @@ from typing import Final
 
 from actseal import __version__
 from actseal.errors import ActsealError
-from actseal.records import DecisionRecord, EvidenceBundle, FaultResult, ModelIdentity, Verdict
+from actseal.records import (
+    DecisionRecord,
+    EvidenceBundle,
+    FaultResult,
+    ModelIdentity,
+    ProviderFailure,
+    Verdict,
+)
 from actseal.replay import replay
 from actseal.runner import demo_run, lock_run, open_model, verify_run
 
@@ -41,7 +51,16 @@ EXIT_CODES: Final[Mapping[str, int]] = {"PASS": 0, "BLOCK": 1, "INCONCLUSIVE": 2
 EXIT_ERROR: Final = 3
 
 _PROVIDERS: Final = ("fixture", "laya")
+_COMMAND_NAMES: Final = ("lock", "verify", "replay", "demo")
 _JSON_FLAG: Final = "--json"
+#: Accepted values per choice argument, keyed by the name argparse uses in diagnostics.
+_CHOICES: Final[Mapping[str, tuple[str, ...]]] = {
+    "COMMAND": _COMMAND_NAMES,
+    "--provider": _PROVIDERS,
+}
+_ARGUMENT_MESSAGE: Final = re.compile(r"^argument (?P<name>[^:]+): (?P<rest>.*)$", re.DOTALL)
+_REQUIRED_MESSAGE: Final = re.compile(r"^the following arguments are required: (?P<names>.+)$")
+_COUNT_MESSAGE: Final = re.compile(r"^expected (one|at least one|at most one|\d+) arguments?$")
 _DEMO_NOTE: Final = (
     "Authored synthetic demonstration (evidence_scope=demo): the same frozen policy "
     "evaluated against two authored fixture outcomes. Not a population benchmark, "
@@ -66,9 +85,34 @@ class _ParserExitError(Exception):
         self.status = status
 
 
+def _bounded_usage_message(message: str) -> str:
+    """Rewrite an argparse diagnostic so it names options and invariants, never argv values.
+
+    Argument names come from the parser definition (option strings and metavars),
+    never from the command line; choice inventories come from ``_CHOICES``.
+    Any message shape not recognized here collapses to a generic hint.
+    """
+    required = _REQUIRED_MESSAGE.match(message)
+    if required is not None:
+        return f"the following arguments are required: {required['names']}"
+    argument = _ARGUMENT_MESSAGE.match(message)
+    if argument is None:
+        return "invalid command line; see --help"
+    name, rest = argument["name"], argument["rest"]
+    if rest.startswith("invalid choice"):
+        choices = _CHOICES.get(name)
+        detail = f" (choose from {', '.join(choices)})" if choices else ""
+        return f"argument {name}: invalid choice{detail}"
+    if _COUNT_MESSAGE.match(rest) is not None:
+        return f"argument {name}: {rest}"
+    if rest.startswith("ignored explicit argument"):
+        return f"argument {name}: does not take a value"
+    return f"argument {name}: invalid value"
+
+
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> None:  # type: ignore[override]
-        raise _UsageError(message)
+        raise _UsageError(_bounded_usage_message(message))
 
     def exit(self, status: int = 0, message: str | None = None) -> None:  # type: ignore[override]
         if message:
@@ -116,11 +160,14 @@ def _build_parser() -> _Parser:
 
 
 def _check_provider_options(args: argparse.Namespace) -> None:
+    """``fixture`` requires ``--responses``; ``laya`` forbids it.
+
+    ``--offline`` is accepted by both providers: the fixture adapter performs no
+    network access at all, so the flag simply states its existing behavior.
+    """
     if args.provider == "fixture":
         if args.responses is None:
             raise _UsageError("--responses is required with --provider fixture")
-        if args.offline:
-            raise _UsageError("--offline is not accepted with --provider fixture")
     elif args.responses is not None:
         raise _UsageError("--responses is not accepted with --provider laya")
 
@@ -208,7 +255,16 @@ def _count(values: Sequence[str]) -> dict[str, int]:
 
 
 def _failures(records: Sequence[DecisionRecord]) -> dict[str, int]:
-    return _count([r.capture.failure_code for r in records if r.capture.failure_code is not None])
+    """Terminal failure codes per case: the normalized ``ProviderFailure`` outcome.
+
+    Transport failures pass through normalization unchanged, and bodies rejected
+    by normalization (malformed response, unknown choice, identity mismatch,
+    input too long) become failures only there, so counting outcomes covers both
+    once per case.
+    """
+    return _count(
+        [record.outcome.code for record in records if isinstance(record.outcome, ProviderFailure)]
+    )
 
 
 def _warnings(records: Sequence[DecisionRecord]) -> dict[str, int]:
@@ -405,6 +461,16 @@ def _sanitize(exc: BaseException) -> str:
     return f"unexpected {type(exc).__name__}"
 
 
+def _parse(arguments: Sequence[str]) -> argparse.Namespace:
+    """Parse the full command line; leftover tokens are counted, never echoed."""
+    args, extras = _build_parser().parse_known_args(arguments)
+    if extras:
+        raise _UsageError(
+            f"unrecognized arguments: {len(extras)} token(s) not accepted; see --help"
+        )
+    return args
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run one command; return its exit code (PASS 0, BLOCK 1, INCONCLUSIVE 2, ERROR 3)."""
     arguments = list(sys.argv[1:] if argv is None else argv)
@@ -412,7 +478,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     command = arguments[0] if arguments and arguments[0] in _COMMANDS else "actseal"
     output = _Output(command, as_json=as_json)
     try:
-        args = _build_parser().parse_args(arguments)
+        args = _parse(arguments)
     except _ParserExitError as exit_request:
         return 0 if exit_request.status == 0 else EXIT_ERROR
     except _UsageError as usage:

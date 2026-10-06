@@ -111,8 +111,8 @@ def open_model(provider: str, *, responses: Path | None, offline: bool) -> Decis
     if provider == "fixture":
         if responses is None:
             raise SchemaError("responses: required for the fixture provider")
-        if offline:
-            raise SchemaError("offline: not accepted by the fixture provider")
+        # ``offline`` is accepted and needs no action: the fixture adapter reads one
+        # local file and never touches the network, so it is already offline.
         from actseal.adapters.fixture import FixtureModel  # noqa: PLC0415 - adapter branch only
 
         return FixtureModel(responses)

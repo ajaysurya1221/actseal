@@ -39,6 +39,7 @@ from actseal.locking import create_lock, lock_digest, parse_lock, validate_lock
 from actseal.normalization import request_sha256
 from actseal.records import (
     CapturedOutcome,
+    ChoiceAnswer,
     Contract,
     DecisionRecord,
     DecisionRequest,
@@ -337,11 +338,33 @@ def test_nonfatal_fixture_failure_remains_a_denominator_observation(tmp_path: Pa
     assert replay(out) == bundle.verdict
 
 
+def laya_envelope(label: str) -> str:
+    """The complete native Laya response envelope around a gold-label answer."""
+    envelope = {
+        "model": "laya-rl-agent",
+        "answers": {"department": json.loads(answer_json(label))},
+        "usage": {
+            "input_tokens": 1,
+            "output_tokens": 0,
+            "state_tokens": 1,
+            "state_tokens_dropped": 0,
+            "truncated": False,
+            "truncated_questions": [],
+        },
+    }
+    return json.dumps(envelope)
+
+
+def laya_script(case_id: str) -> tuple[str | None, str | None, tuple[str, ...]]:
+    label = next(label for cid, _, label in GOLD if cid == case_id)
+    return laya_envelope(label), None, ()
+
+
 def worker_loss_script(case_id: str) -> tuple[str | None, str | None, tuple[str, ...]]:
-    """Healthy first case, timeout on the second, explicit unavailable afterwards."""
+    """Healthy native answer first, timeout on the second, explicit unavailable afterwards."""
     index = [cid for cid, _, _ in GOLD].index(case_id)
     if index == 0:
-        return gold_script(case_id)
+        return laya_script(case_id)
     if index == 1:
         return None, "timeout", ()
     return None, "unavailable", ("laya.unavailable:timeout",)
@@ -374,6 +397,11 @@ def test_regular_laya_worker_loss_yields_a_complete_diagnostic_error_bundle(
     assert {timeout for _, timeout in model.calls} == {30.0}
     codes = [record.capture.failure_code for record in bundle.records]
     assert codes == [None, "timeout", "unavailable", "unavailable", "unavailable", "unavailable"]
+    healthy = bundle.records[0]
+    assert isinstance(healthy.outcome, ChoiceAnswer)
+    assert healthy.decision.action == "ACT"
+    assert healthy.decision.choice == GOLD[0][2]
+    assert healthy.decision.reason == "policy.allowed"
     assert bundle.records[1].decision.reason == "provider.timeout"
     assert bundle.records[2].decision.reason == "provider.unavailable"
     verdict = bundle.verdict
@@ -433,23 +461,6 @@ def test_synthetic_fault_campaign_does_not_invalidate_a_healthy_laya_run(tmp_pat
     identity = pinned_identity()
     lock_path = lock_for(tmp_path, identity)
     inputs = tmp_path / "in"
-
-    def laya_script(case_id: str) -> tuple[str | None, str | None, tuple[str, ...]]:
-        label = next(label for cid, _, label in GOLD if cid == case_id)
-        envelope = {
-            "model": "laya-rl-agent",
-            "answers": {"department": json.loads(answer_json(label))},
-            "usage": {
-                "input_tokens": 1,
-                "output_tokens": 0,
-                "state_tokens": 1,
-                "state_tokens_dropped": 0,
-                "truncated": False,
-                "truncated_questions": [],
-            },
-        }
-        return json.dumps(envelope), None, ()
-
     model = ScriptedModel(identity, laya_script)
     bundle, _ = verify_run(
         lock_path,
@@ -462,6 +473,7 @@ def test_synthetic_fault_campaign_does_not_invalidate_a_healthy_laya_run(tmp_pat
     assert bundle.faults[0].capture.failure_code == "timeout"  # synthetic, excluded
     assert bundle.verdict.status == "INCONCLUSIVE"
     assert bundle.verdict.accepted == len(GOLD)
+    assert all(record.decision.action == "ACT" for record in bundle.records)
 
 
 def test_missing_fixture_case_is_a_setup_error_with_no_bundle(tmp_path: Path) -> None:
@@ -858,8 +870,13 @@ def test_open_model_fixture_rules(tmp_path: Path) -> None:
     model.close()
     with pytest.raises(SchemaError, match="responses"):
         open_model("fixture", responses=None, offline=False)
-    with pytest.raises(SchemaError, match="offline"):
-        open_model("fixture", responses=responses, offline=True)
+    with pytest.raises(SchemaError, match="responses"):
+        open_model("fixture", responses=None, offline=True)
+    # --offline states the fixture adapter's existing behavior; it changes nothing.
+    offline = open_model("fixture", responses=responses, offline=True)
+    assert isinstance(offline, FixtureModel)
+    assert offline.identity() == model.identity()
+    offline.close()
     with pytest.raises(SchemaError, match="provider"):
         open_model("jev", responses=None, offline=False)
 
