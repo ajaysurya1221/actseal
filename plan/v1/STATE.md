@@ -27,9 +27,9 @@ Codex is the sole writer of STATE, TODO and REVIEW records. Claude writes its ta
 | 02 | Claude A | ACCEPT0595512;2519core+14packaging+hooks,116manifest; PR15 eight green checks, mergedcef6c474 |
 | 03 | Claude B | Quota-interrupted draft;177 independent tests pass, PT017 lint/report repair required; native permission pending |
 | 04 | Claude C | Quota-interrupted draft;221 independent tests/eight mutations pass; unsafe --workdir cleanup requires repair; further harness permission pending |
-| 05–06 | Claude B | Pending03 and explicit provisional-provider integration amendment; no Jev calls |
+| 05–06 | Claude B | Pending03; V1-011 wiring and V1-013 collection clarifications recorded; no Jev calls |
 | 07–08 | Claude D | Pending approved dependencies; example/docs |
-| 09 | Codex/Claude | e6c967a4 bounded repair ACCEPT; new09R4 strict receipt findings require repair; ordinary asset-CI glue addeda09b69f; final assets/rehearsal pending |
+| 09 | Codex/Claude | CI helper strictness0060f27 scoped ACCEPT;442release/319independent tests; Claude09R4 schemas/docs queued; draftPR18 hosted checks pending, final assets/rehearsal pending |
 | 10 | Claude V | ACCEPT030ef840; PR13 all8checks green and merged6ad1e91 |
 | 11 | Claude V | Pinned font/tool download exception pending |
 | 12 | Claude V | REVISE6ede9eab;231 independent tests pass; missing labelled-input/provider-answer/bounded-bundle meaning; rendered review incomplete |
@@ -57,6 +57,10 @@ Worktree prefix is `/Users/ajay/.codex/worktrees/`. Earlier57407/25815/58170 are
 - PR16 checkpoint e3bff308 independently ACCEPTed, passed eight checks in37512276493/37512436466 and merged594b8be5e5c6cdee85210f15be5e50b15c4b194f.
 - Interrupted03/04 drafts are preserved with SHA256 inventories under `/tmp/actseal-v1-orchestration/{03,04}-quota-interrupted-draft/`; draft reviews retain all failures and permission history. No unfinished work was reverted.
 - Task09 branch incorporated accepted main inca3d6bc6 and adds ordinary push/PR asset checks ina09b69f. Independent284 release tests pass12.01s after integration; asset typing and workflow checks pass. The bootstrap renderer still reports zero actual assets, not release completeness. Final strict receipt schema work is in09R4-request; no product source was written by Codex.
+
+- PR17 checkpoint06452d75 received independent ACCEPT, eight successful hosted checks37514466346/37514786532, and merged9aa1a652cb2d9eeefc8a361f199a4b4c3f601f17.
+- DraftPR18 head a09b69f passed ten source/asset checks37514786111/37515122961. Subsequent CI-only repair0060f27 is pushed; its own hosted checks must finish before any integration.09R4-glue report preserves the seven initial regression failures and final442 passes; independent319 focused tests and exact-hash commit review ACCEPT. No09 merge or publication is approved.
+- Task06 collection supplement independently ACCEPTed as planning only at SHA2560a1c7e0dd3712e75a0b3c98f890d141d5eeea2a3fa3856c6e3d42efbf210452c. A future concrete preregistration/implementation requires fresh review before any call.
 
 ## Blockers and next action
 
