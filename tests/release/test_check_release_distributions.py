@@ -268,6 +268,7 @@ def test_sdist_contains_the_helpers_required_by_its_release_tests(
         for relative in (
             "tools/check_release.py",
             ".github/workflows/publish-pypi.yml",
+            ".github/workflows/ci.yml",
             "tests/release/release_support.py",
         ):
             member = archive.getmember(f"actseal-{version}/{relative}")

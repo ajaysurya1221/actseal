@@ -6,9 +6,50 @@ import types
 from pathlib import Path
 
 import pytest
-from release_support import CONTAINER_DIGEST, WORKFLOW, load_tool, run_main
+from release_support import CONTAINER_DIGEST, ROOT, WORKFLOW, load_tool, run_main
 
 CHECKOUT_PIN = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
+SETUP_UV_PIN = "astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7"
+
+
+@pytest.mark.parametrize(
+    ("filename", "regenerate"),
+    [
+        ("ci.yml", "uv run --frozen --group assets python docs/assets/src/render.py --check"),
+        ("publish-pypi.yml", "uv run --frozen python tools/check_release.py assets"),
+    ],
+)
+def test_asset_jobs_provision_pinned_inputs_before_fail_closed_regeneration(
+    tool: types.ModuleType, filename: str, regenerate: str
+) -> None:
+    """Inspect YAML only: never download tools or execute the renderer in this test."""
+    workflow = tool._load_workflow(ROOT / ".github" / "workflows" / filename)
+    job = workflow["jobs"]["assets"]
+    assert "if" not in job
+    assert "continue-on-error" not in job
+    steps = tool._steps(job)
+    assert [step["uses"] for step in steps if "uses" in step] == [CHECKOUT_PIN, SETUP_UV_PIN]
+    assert steps[0]["with"]["persist-credentials"] is False
+    assert steps[1]["with"]["version"] == "0.12.5"
+    assert steps[1]["with"]["python-version"] == "3.12"
+    runs = [str(step.get("run", "")).strip() for step in steps]
+    install = "uv sync --frozen --group dev --group assets"
+    provision = (
+        "uv run --frozen python docs/assets/src/setup_tools.py --tool jetbrains-mono\n"
+        "uv run --frozen python docs/assets/src/setup_tools.py --tool resvg"
+    )
+    for command in (install, provision, regenerate):
+        assert runs.count(command) == 1
+        step = steps[runs.index(command)]
+        assert "if" not in step
+        assert "continue-on-error" not in step
+        assert "shell" not in step  # Keep GitHub's fail-closed bash invocation.
+    assert runs.index(install) < runs.index(provision) < runs.index(regenerate)
+    assert sum("setup_tools.py" in run for run in runs) == 1
+    if filename == "ci.yml":
+        tests = "uv run --frozen --group assets pytest tests/visual"
+        assert runs.count(tests) == 1
+        assert runs.index(install) < runs.index(tests) < runs.index(provision)
 
 
 @pytest.fixture(scope="module")
