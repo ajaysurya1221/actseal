@@ -82,9 +82,12 @@ def test_every_active_recorded_run_replays_to_its_archived_verdict(
     """V1-020: core replay owns general validation; each active archive must replay non-ERROR.
 
     A run whose producer is neither the running implementation nor a
-    registry-approved pair fails here. That is the intended signal: record a
-    separately identified fresh run with ``run.py --record`` or obtain a
-    reviewed compatibility decision; never edit, reseal or move the archive.
+    registry-approved pair fails here. That is the intended signal: the
+    archive passes only through the planned Task 19 explicit compatibility
+    review approving both its producer fingerprint and the final running
+    fingerprint in the packaged registry; excluding it needs a separately
+    recorded amendment. A new ``run.py --record`` run cannot make this archive
+    pass and never repairs, replaces or reseals it.
     """
     producer = run.load_producer(run_dir)
     recorded = decode_document(

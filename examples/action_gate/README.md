@@ -150,17 +150,23 @@ replay to a non-`ERROR` verdict equal to its archived verdict
 Anything else is an `[error]`, whether the archive is damaged or its producer
 is simply not supported by the running implementation, and it fails `--check`
 and `--route` even beside a valid run. Nothing is skipped as benign, and
-nothing is rewritten, resealed, moved or auto-approved. When an archive is not
-supported, record a separately identified fresh run:
+nothing is rewritten, resealed, moved or auto-approved.
+
+An unsupported active archive, such as `recorded/a5fe090202f7` once the
+product source changes, passes again only through the planned Task 19
+explicit compatibility review, which approves both its producer fingerprint
+(`a5fe0902...`) and the final running fingerprint in the packaged registry.
+Excluding an archive from the active set requires a separately recorded
+amendment; none exists. Adding a new run cannot make an older unsupported
+archive pass, and a new run is never a repair, replacement or reseal of an
+older one; the older archive's bytes stay as recorded in every case.
+
+`--record` exists to produce a separately identified run for a new
+implementation, alongside, not instead of, the existing archives:
 
 ```bash
 uv run --frozen python examples/action_gate/run.py --record examples/action_gate/recorded/<new fingerprint prefix> --source-commit <40-hex commit>
 ```
-
-Whether an older archive is then excluded from the active set or approved in
-the packaged registry is a reviewed decision outside this example (the
-release integration carries an explicit compatibility review); the archive's
-bytes stay as recorded in either case.
 
 ## Where the trust actually sits
 

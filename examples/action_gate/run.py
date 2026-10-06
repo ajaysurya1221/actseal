@@ -29,8 +29,12 @@ recorded-response fixture in this directory, which stands in for a model.
   active run must replay to a non-``ERROR`` verdict equal to its archived
   verdict. An unsupported (unapproved producer) or damaged archive is an
   error, even beside a valid run; nothing is skipped as benign, nothing is
-  rewritten, resealed, moved or auto-approved. Excluding or approving a
-  historical archive is a reviewed decision outside this script;
+  rewritten, resealed, moved or auto-approved. An unsupported active archive
+  passes only through the planned Task 19 explicit compatibility review that
+  approves both its producer fingerprint and the final running fingerprint in
+  the packaged registry; excluding it requires a separately recorded
+  amendment, and none exists. A new ``--record`` run is a separately
+  identified run that does not repair, replace or reseal an older one;
 * performs the routing demonstration (the only queue operations in
   ``--check``) only after every active archive passed.
 
@@ -565,8 +569,10 @@ def route(out: TextIO, recorded_root: Path = RECORDED_DIR) -> int:
     if report.errors or not runs:
         out.write(
             f"route refused: {report.errors} error(s); no queue operation was performed. "
-            "Record a separately identified fresh run with --record DIRECTORY --source-commit SHA "
-            "or seek a reviewed compatibility decision for the archive\n"
+            "An unsupported active archive passes only through the planned Task 19 explicit "
+            "compatibility review approving both its producer fingerprint and the final running "
+            "fingerprint in the packaged registry; excluding it needs a separately recorded "
+            "amendment. A new --record run does not repair, replace or reseal it\n"
         )
         return EXIT_FAILED
     run_dir = runs[0]
