@@ -19,7 +19,10 @@ STAGE_TITLES = ("Freeze", "Run", "Verify", "Seal", "Replay")
 DECISIONS = ("ACT", "ABSTAIN", "ESCALATE", "DENY")
 VERDICT_EXITS = (("PASS", "0"), ("BLOCK", "1"), ("INCONCLUSIVE", "2"), ("ERROR", "3"))
 COMMANDS = ("actseal lock", "actseal verify", "actseal replay")
-MODULES = ("locking", "policy", "assessment", "evidence", "replay")
+# Module names, file inventories and hashes belong to the architecture figure
+# and REPORT 12 (REVIEW 12, P2); the overview must not carry them as labels.
+MODULE_LABELS = ("locking", "policy", "assessment", "evidence", "replay")
+INVENTORY_WORDS = ("hash", "sha256", "manifest", ".json", "file", "records")
 # Words that would suggest response authentication, proof of inference,
 # label truth, tamper resistance or application enforcement.
 FORBIDDEN_WORDS = (
@@ -43,6 +46,7 @@ FORBIDDEN_WORDS = (
     "safe",
 )
 MAX_GROUPS = 7
+MAX_STAGE_LINES = 6
 DESKTOP_MIN_LABEL = 26
 MOBILE_MIN_LABEL = 30
 
@@ -123,17 +127,54 @@ def test_required_content_is_present(rendered: dict[str, bytes], name: str) -> N
     for verdict, code in VERDICT_EXITS:
         # The verdict and its exit code share one label, so the pairing is explicit.
         assert any(re.search(rf"\b{verdict} {code}\b", label) for label in labels), verdict
-    assert "verdict, exit code:" in labels
+    # Freeze: policy + labelled inputs -> lock.
+    assert "frozen policy" in labels
+    assert "+ labelled inputs" in labels
+    assert "→ lock" in labels
+    # Run: provider answers -> the four decisions.
+    assert "provider answers" in labels
+    assert any(label.startswith("→ ACT") for label in labels)
+    assert "+ 6 fault scenarios" in labels
+    # Verify: bounds and fault rules -> verdict with exit code.
+    assert "risk + coverage" in labels
+    assert "bounds, fault rules" in labels
+    assert "→ verdict, exit code:" in labels
+    # Seal: one bounded evidence bundle.
+    assert "→ bounded" in labels
+    assert "evidence bundle" in labels
+    # Replay: offline, provider-free recomputation.
     assert "offline; no model call" in labels
     assert "no provider loaded" in labels
-    assert "bounded size" in labels
-    assert "every file hashed" in labels
-    assert "lock.json + sha256" in labels
-    assert "+ 6 fault scenarios" in labels
+    assert "recomputes verdict" in labels
     for command in COMMANDS:
         assert command in joined, command
-    for module in MODULES:
-        assert re.search(rf"\b{module}\b", joined), module
+
+
+@pytest.mark.parametrize("name", [*DESKTOP, *MOBILE])
+def test_overview_omits_module_names_inventories_and_repeated_exit_codes(
+    rendered: dict[str, bytes], name: str
+) -> None:
+    labels = _texts(_tree(rendered[name]))
+    lowered = [label.lower() for label in labels]
+    for module in MODULE_LABELS:
+        assert module not in lowered, module
+    for word in INVENTORY_WORDS:
+        assert not any(word in label for label in lowered), word
+    # Exit codes appear once, paired with the verdicts in Verify; Replay does
+    # not repeat them.
+    assert sum("exit" in label for label in lowered) == 1
+    digits = [label for label in labels if re.search(r"\d", label)]
+    expected_with_digits = {"+ 6 fault scenarios"} | {
+        label for label in labels if any(f"{v} {c}" in label for v, c in VERDICT_EXITS)
+    }
+    assert set(digits) - expected_with_digits == {f"{i} {t}" for i, t in enumerate(STAGE_TITLES, 1)}
+    # Density: at most six non-heading lines per stage (the mobile command
+    # label counts as one of them).
+    root = _tree(rendered[name])
+    for group in root:
+        if group.get("id", "").startswith("stage-"):
+            body = [t for t in group.iter(f"{SVG_NS}text") if t.get("font-weight") != "bold"]
+            assert len(body) <= MAX_STAGE_LINES, group.get("id")
 
 
 @pytest.mark.parametrize("name", [*DESKTOP, *MOBILE])
@@ -163,9 +204,16 @@ def test_description_names_every_stage_and_limit(rendered: dict[str, bytes]) -> 
         assert decision in text
     for verdict, code in VERDICT_EXITS:
         assert f"{verdict} {code}" in text
+    assert "frozen policy" in text
+    assert "labelled inputs" in text
+    assert "into one lock" in text
+    assert "provider answers" in text
+    assert "bounded evidence bundle" in text
     assert "offline" in text
     assert "no model call" in text
-    assert "size-bounded" in text
+    assert "no provider loaded" in text
+    for word in INVENTORY_WORDS:
+        assert word not in text.lower(), word
 
 
 @pytest.mark.parametrize(
@@ -202,15 +250,26 @@ def test_desktop_and_mobile_carry_the_same_phrases(rendered: dict[str, bytes]) -
     def phrases(name: str) -> set[str]:
         parts: set[str] = set()
         for label in _texts(_tree(rendered[name])):
-            parts.update(p.strip() for p in label.split("·"))
+            parts.update(p.strip().removeprefix("→ ") for p in label.split("·"))
         return parts
 
     desktop, mobile = phrases(DESKTOP[0]), phrases(MOBILE[0])
-    # The mobile variant folds each command into the stage label instead of a
-    # bracket row, and "actseal replay" absorbs the module name "replay";
-    # everything else is identical phrase for phrase.
-    assert desktop - mobile == {"replay"}
-    assert mobile - desktop == set()
+    # The mobile variant writes each command under the stage heading instead
+    # of a bracket row; the phrase sets are otherwise identical. Runs that
+    # wrap differently are compared after splitting on the separator, and the
+    # arrow prefix is stripped so "→ ACT" on desktop equals "ACT" on mobile.
+    assert desktop == mobile
+
+
+def test_arrow_prefix_marks_each_stage_output(rendered: dict[str, bytes]) -> None:
+    labels = _texts(_tree(rendered[DESKTOP[0]]))
+    arrows = [label for label in labels if label.startswith("→ ")]
+    assert arrows == [
+        "→ lock",
+        "→ ACT · ABSTAIN",
+        "→ verdict, exit code:",
+        "→ bounded",
+    ]
 
 
 def test_arrows_connect_consecutive_stages_only(rendered: dict[str, bytes]) -> None:
@@ -239,12 +298,17 @@ def test_phrases_fit_their_boxes_under_the_width_model(kit: ModuleType) -> None:
     assert hiw.text_width("i", 26) < hiw.text_width("W", 26)
     assert hiw.text_width("x", 26, bold=True) > hiw.text_width("x", 26)
     with pytest.raises(ValueError, match="no width metric"):
-        hiw.text_width("→", 26)
+        hiw.text_width("←", 26)
     item = hiw.Item(("PASS 0", "BLOCK 1", "INCONCLUSIVE 2", "ERROR 3"))
     assert hiw.wrap(item, 26, 260) == ["PASS 0 · BLOCK 1", "INCONCLUSIVE 2", "ERROR 3"]
     assert hiw.wrap(item, 30, 632) == ["PASS 0 · BLOCK 1 · INCONCLUSIVE 2", "ERROR 3"]
+    decisions = hiw.Item(("ACT", "ABSTAIN", "ESCALATE", "DENY"), hiw.ACCENT, hiw.ARROW)
+    assert hiw.wrap(decisions, 26, 260) == ["→ ACT · ABSTAIN", "ESCALATE · DENY"]
+    assert hiw.wrap(decisions, 30, 632) == ["→ ACT · ABSTAIN · ESCALATE · DENY"]
     with pytest.raises(ValueError, match="does not fit"):
         hiw.wrap(hiw.Item(("this phrase is far too long for the box",)), 26, 260)
+    with pytest.raises(ValueError, match="does not fit"):
+        hiw.wrap(hiw.Item(("barely fits without the arrow",), prefix=hiw.ARROW), 26, 190)
 
 
 def test_oversized_content_fails_instead_of_shrinking(
@@ -255,7 +319,6 @@ def test_oversized_content_fails_instead_of_shrinking(
     stages[0] = hiw.Stage(
         "freeze",
         "Freeze",
-        "locking",
         (hiw.Item(("a phrase that cannot possibly fit in one column",)),),
     )
     monkeypatch.setattr(hiw, "STAGES", tuple(stages))
@@ -269,9 +332,7 @@ def test_too_many_lines_for_the_desktop_canvas_fails(
 ) -> None:
     hiw = kit.how_it_works
     stages: Any = list(hiw.STAGES)
-    stages[0] = hiw.Stage(
-        "freeze", "Freeze", "locking", tuple(hiw.Item((f"line {i}",)) for i in range(10))
-    )
+    stages[0] = hiw.Stage("freeze", "Freeze", tuple(hiw.Item((f"line {i}",)) for i in range(10)))
     monkeypatch.setattr(hiw, "STAGES", tuple(stages))
     with pytest.raises(ValueError, match="desktop layout needs"):
         hiw.render(kit.inventory.RenderContext(root=REPO_ROOT, work=Path("/nonexistent")))
