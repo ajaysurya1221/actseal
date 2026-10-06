@@ -92,6 +92,10 @@ constants, unsupported fields/types and nesting over 32. strict_json_loads has a
 1 MiB per row. lock.json has a separate 32 MiB ceiling. Bundle aggregate size
 limit is 128 MiB; datasets at most 10,000 cases per split. Input readers enforce
 their limits before provider calls. These are byte limits, not character counts.
+For JSONL, the row limit counts the UTF-8 row after splitting on LF, excluding
+that one LF terminator; any preceding CR remains part of the row byte count.
+The aggregate bundle ceiling counts all seven files, including manifest.json
+and every terminal LF. This matches the accepted dataset/fixture readers.
 
 `implementation_fingerprint` hashes a canonical sorted map of all installed
 `actseal/**/*.py` relative paths to source-byte hashes, excluding caches. It must

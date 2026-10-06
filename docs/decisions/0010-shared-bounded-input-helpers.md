@@ -24,3 +24,11 @@ errors propagate; schema/limit errors use SchemaError.
 Alternatives: duplicate the logic downstream (rejected for inconsistent rules),
 or move it into the frozen T00 module (rejected as unnecessary shared-file churn).
 T10 remains REVISE until its three independently reproduced defects are fixed.
+
+Follow-up clarification before T40 dispatch: JSONL row limits apply after LF-only
+splitting, excluding the LF terminator and counting any CR. This matches accepted
+T10 and T30 behavior and preserves raw CRLF identity. Whole-file and bundle byte
+ceilings count every byte; the bundle aggregate includes its manifest. This
+prevents later readers/writers from introducing a different boundary convention.
+T10's subsequent acceptance is recorded in REVIEW T10-02; the statement above
+describes this ADR's original decision point.

@@ -100,3 +100,10 @@ nonfatal denominator failures, matching ADR0009. A nonblocking T30 test-quality
 follow-up requires an actually injected policy violation while retaining all six
 campaign results; the current straight-line implementation already continues.
 This corrects the advertised test coverage without changing the product contract.
+
+## 2026-10-06 — JSONL terminators and aggregate bundle accounting
+
+Clarified size conventions before T40 dispatch: row payload bytes exclude the LF
+separator, count any CR, and match the accepted T10/T30 readers. Whole bundle
+size includes all seven files and their terminators. No record/signature change;
+the clarification prevents downstream off-by-one or manifest-omission errors.

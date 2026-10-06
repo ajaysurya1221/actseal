@@ -13,5 +13,6 @@ scope. See the [plan](plan/PLAN.md), [frozen contracts](plan/CONTRACTS.md), and
 
 Actseal checks its own policy path. It does not establish that labels are true,
 that another application follows the policy, or that authored demonstrations
-represent deployment populations. Hashes establish consistency; provenance needs
-an externally trusted lock hash.
+represent deployment populations. Hashes establish consistency. An externally
+trusted lock hash anchors the expected identity only; it does not authenticate
+provider responses or execution. See the [trust boundaries](docs/threat-model.md).

@@ -1,6 +1,6 @@
 # Providers: native Laya reference and normalization
 
-Status: implementation contract, historical upstream feasibility and a verified Actseal provider/normalizer milestone, 6 October 2026. Candidate `17ed0875541ecfa6402991dc90e278beb2f4cc01` passed native product tests on macOS and Linux; its receipt is below. Full T30 remains PARTIAL while the fault campaign is integrated, and release acceptance remains pending. [Frozen contracts](../plan/CONTRACTS.md) govern the product boundary.
+Status: full T30 accepted at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7` and merged as `87d2cd1`, 6 October 2026; release acceptance remains pending. Earlier candidate `17ed0875541ecfa6402991dc90e278beb2f4cc01` passed native product tests on macOS and Linux, and [REVIEW T30-03](../plan/reviews/T30-03.md) confirms those adapter/normalization/native-test bytes are unchanged in the accepted task. Historical upstream and product milestone receipts remain distinct below. [Frozen contracts](../plan/CONTRACTS.md) govern the product boundary.
 
 ## Reference runtime
 
@@ -131,7 +131,7 @@ The peak RSS values are whole-process measurements from `resource.getrusage`, no
 
 ## Verified Actseal provider milestone
 
-On **6 October 2026**, root independently reviewed and tested candidate **`17ed0875541ecfa6402991dc90e278beb2f4cc01`**. [REVIEW T30-02](../plan/reviews/T30-02.md) records **ACCEPT for the provider/normalizer milestone only**, with **full T30 PARTIAL**. This is product-adapter evidence, separate from the upstream feasibility probe above.
+On **6 October 2026**, root independently reviewed and tested candidate **`17ed0875541ecfa6402991dc90e278beb2f4cc01`**. [REVIEW T30-02](../plan/reviews/T30-02.md) records **ACCEPT for the provider/normalizer milestone only**, with **full T30 PARTIAL at that time**. This is product-adapter evidence, separate from the upstream feasibility probe above.
 
 | Check | Environment | Observed result |
 | --- | --- | --- |
@@ -147,7 +147,7 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya pytest -m i
 
 At the same candidate, all four ordinary Linux/macOS Python 3.12/3.13 jobs passed in [push CI](https://github.com/ajaysurya1221/actseal/actions/runs/37439252390) and [PR CI](https://github.com/ajaysurya1221/actseal/actions/runs/37439282488). These jobs do not extend native inference coverage to Python 3.13. Root also independently checked targeted lint, formatting and strict typing; [VERIFICATION](../plan/VERIFICATION.md#product-adapter-milestone--6-october-2026) preserves the receipt provenance.
 
-The recorded times are whole test-suite elapsed times, not latency benchmarks. The milestone verifies the tested native paths without establishing broader hardware support, model accuracy, calibration or deployment reliability. The canonical fault campaign, full T30 review, later integration and exact-release-candidate checks still need their own results. No release is asserted here.
+The recorded times are whole test-suite elapsed times, not latency benchmarks. The milestone verifies the tested native paths without establishing broader hardware support, model accuracy, calibration or deployment reliability. The canonical fault campaign and full task subsequently passed [REVIEW T30-03](../plan/reviews/T30-03.md) at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`, merged as `87d2cd1`; the review preserves the earlier native receipt because its relevant source/test bytes are unchanged. Later product integration and exact-release-candidate checks still need their own results. No release is asserted here.
 
 ## Jev: optional and deferred to v2
 
