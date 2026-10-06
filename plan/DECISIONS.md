@@ -19,6 +19,6 @@ The choices above are reported from the parent orchestrator's captured user resp
 
 ## Operational blockers are separate
 
-The reported Claude authentication check currently returns `loggedIn: false`. Implementation permission is already present; executor authentication must be repaired or completed before dispatch to the required Claude executor. Do not silently substitute Codex-authored product code or a different model. Current blocker/resolution status belongs in [STATE](STATE.md); this file records the approved decisions.
+Claude authentication was repaired by the user and independently rechecked as `loggedIn: true`, `authMethod: claude.ai`, `subscriptionType: max`. T00 dispatch has begun. Do not silently substitute Codex-authored product code or a different model. Current execution status belongs in [STATE](STATE.md); this file records the approved decisions.
 
 No repository/package name has been reserved by these decisions. Public repository creation, CI status, release tag, and publication remain execution steps whose results must be recorded when actually performed.

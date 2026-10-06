@@ -11,14 +11,14 @@ The normalizer rejects malformed structures, unsupported labels, non-finite/out-
 
 Policy precedence is deterministic:
 
-1. A matching frozen hard-deny rule returns DENY.
-2. Provider/identity/schema failure or use of an uncertified fallback returns ESCALATE.
-3. A valid primary response below the frozen threshold returns ABSTAIN.
-4. A valid primary response at or above the threshold returns ACT, with its frozen action mapping.
+1. Any fallback_used outcome returns ESCALATE.
+2. An unknown choice returns DENY; other provider/identity/schema failures return ESCALATE.
+3. A valid but disallowed choice returns DENY.
+4. An allowed choice below threshold returns ABSTAIN; at or above threshold returns ACT.
 
-The optional Jev adapter reads `JEV_API_KEY` from the environment; no key is part of a lock, request record, report, or repository. A missing key, timeout, malformed response, or unavailable pinned model must be surfaced. The core and fixture quickstart remain keyless, and the real local model path uses open weights.
+Jev and actual fallback execution are deferred to v2. An eventual adapter reads `JEV_API_KEY` from the environment; no key is part of a lock, request record, report, or repository. A missing key, timeout, malformed response, or unavailable pinned model must be surfaced. The core and fixture quickstart remain keyless, and the real local model path uses open weights.
 
-Jev-to-Laya fallback may supply a diagnostic recommendation. It must preserve `fallback_used`, the triggering failure, and both attempted identities, and return ESCALATE unless a separately certified chain exists. Such chain certification is v2. Fallback success cannot inherit the primary system's certification or enter the ACT numerator. A hard deny remains DENY.
+Future Jev-to-Laya fallback may supply a diagnostic recommendation. It must preserve `fallback_used`, the triggering failure, and both attempted identities, and return ESCALATE unless a separately certified chain exists. Fallback success cannot inherit the primary system's certification or enter the ACT numerator. v1 has no fallback execution.
 
 ## Consequences
 

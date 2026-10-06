@@ -1,0 +1,12 @@
+Actseal
+Copyright 2026 Ajay Surya Senthilrajan
+
+The Clopper-Pearson statistical primitives and their numerical validation are
+adapted from agent-reliability-ci, Copyright 2026 Ajay Surya Senthilrajan,
+Apache License 2.0, at commit d13dd94124cb71d378a4e76224fc115b750e8133:
+https://github.com/ajaysurya1221/agent-reliability-ci
+
+Actseal narrows those primitives to simultaneous selective-risk and coverage
+assessment. It does not incorporate ARCI's execution engine or gate protocol.
+Canonical hashing and self-sealing evidence are also informed by the public
+evalopt-graph design. No evalopt-graph source implementation is included.

@@ -12,7 +12,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 ## Current state
 
 - Planning artifacts: being materialized and reviewed.
-- Product implementation: not started.
+- Product implementation: T00 dispatched in isolated task/t00 worktree.
 - Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
 - Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
 - Preflight: source statistics suite passed in a separate verification lane;
@@ -23,7 +23,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | Task | Owner | State | Accepted commit |
 |---|---|---|---|
 | Planning package | Codex | IN_PROGRESS | none |
-| T00 foundation | Claude A | WAITING_FOR_DISPATCH | none |
+| T00 foundation | Claude A | RUNNING | none |
 | T10 contract/policy | Claude A | WAITING_FOR_T00 | none |
 | T20 statistics | Claude B | WAITING_FOR_T00 | none |
 | T30 providers/faults | Claude C | WAITING_FOR_T00 | none |
@@ -41,9 +41,10 @@ dispatch; never assume a status inherited from memory is still current.
 
 ## Blockers and next action
 
-No authentication blocker remains. Finish the T00 packet, initialize the separate
-repository, and dispatch Claude in an isolated task worktree. Do not substitute
-Codex product code.
+No authentication blocker remains. Repository initialized; T00 dispatched from
+`.worktrees/t00` at documentation base 38900e1. Finish remaining task specs/CI and
+independently review T00 when its REPORT arrives. Raw local dispatch receipts are
+ignored under plan/dispatch; publish only reviewed, credential-free REPORTs.
 
 ## Budget and scope
 

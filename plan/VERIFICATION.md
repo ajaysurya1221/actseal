@@ -75,7 +75,7 @@ The verifier reported primary checks against PyPI JSON, Hugging Face API/model c
 
 **SUPPLIED RECEIPT — parent orchestrator.** Captured option answers were `Decision Contract (Recommended)` and `Focused two-day v1 (Recommended)`. The user delegated naming; the parent selected Actseal after reported no-exact-match GitHub/web searches and a PyPI 404. No name reservation is claimed. The latest user request, `PLEASE IMPLEMENT THIS PLAN`, authorizes implementation; [DECISIONS](DECISIONS.md) records that approval.
 
-The parent reports a Claude authentication probe returning `loggedIn: false`. That is an operational executor-access blocker, not a pending product decision or missing implementation approval. No successful Claude product-code dispatch or validated Fable 5.1 / high execution is established by this receipt. Record its resolution in [STATE](STATE.md) before dispatch.
+The initial Claude authentication probe returned `loggedIn: false`. The user subsequently completed login; a fresh parent probe confirmed `loggedIn: true`, `authMethod: claude.ai`, `subscriptionType: max`. T00 was dispatched with `--model claude-fable-5-1 --effort high`; implementation acceptance is not established by authentication or dispatch. Record task results in [STATE](STATE.md) and the task REVIEW.
 
 **Recorded paid inference API spend for these checks: USD 0.** The reuse-audit lane made no paid model calls; the model-verification lane reports no paid calls and no key reads. No live Jev call was made. This does not price existing coding-agent subscriptions, local electricity, or future execution.
 

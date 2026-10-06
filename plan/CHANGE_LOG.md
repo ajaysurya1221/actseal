@@ -16,3 +16,14 @@
 - Fixture fault injection uses a complete ordered six-scenario inventory; no
   randomness is needed for coverage of this fixed v1 fault set. This replaces
   research's random scheduling without weakening the required fault scenarios.
+
+## 2026-10-06 — contract review before T00 acceptance
+
+Independent review found five specification gaps. Approved amendments: assessment
+must reconstruct requests and normalize raw captures before counting; fault
+captures are canonical and scenario-bound; low-confidence chooses an allowed
+label; generic JSON parsing is bounded at 128 MiB with 1 MiB JSONL rows and a
+32 MiB lock limit; ADR fallback precedence now matches the contract and Jev stays
+deferred. Added fault_capture signature and exact manifest keys. T00 was already
+running against its original packet: its acceptance requires the revised parsing
+limit through a follow-up. T10/T20/T30/T40 receive revised contracts at dispatch.

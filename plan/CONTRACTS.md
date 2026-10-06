@@ -77,8 +77,11 @@ instantiation. Union outcomes use an explicit `kind: 'answer' | 'failure'` tag.
 Canonical JSON is UTF-8, ensure_ascii=False, sorted keys, compact separators,
 allow_nan=False, no terminal newline. Wire files add one LF after each canonical
 JSON object. Deeply bounded strict parsing rejects duplicate JSON keys, nonfinite
-constants, unsupported fields/types, records over 1 MiB and nesting over 32.
-Bundle aggregate size limit is 128 MiB; datasets at most 10,000 cases per split.
+constants, unsupported fields/types and nesting over 32. strict_json_loads has a
+128 MiB input ceiling; individual case/record/fault/fixture JSONL readers enforce
+1 MiB per row. lock.json has a separate 32 MiB ceiling. Bundle aggregate size
+limit is 128 MiB; datasets at most 10,000 cases per split. Input readers enforce
+their limits before provider calls. These are byte limits, not character counts.
 
 `implementation_fingerprint` hashes a canonical sorted map of all installed
 `actseal/**/*.py` relative paths to source-byte hashes, excluding caches. It must
@@ -176,6 +179,7 @@ class LayaModel:
     def __init__(self, *, offline: bool = False) -> None: ...
 
 def run_fault_campaign(lock: PlanLock) -> tuple[FaultResult, ...]: ...
+def fault_capture(lock: PlanLock, spec: FaultSpec) -> tuple[DecisionRequest, CapturedOutcome]: ...
 ```
 
 Protocol is in `adapters/base.py`; implementations in `adapters/fixture.py` and
@@ -221,7 +225,7 @@ No automatic CPU/MPS/device switch. Respect offline mode and actual observed dev
 Fault campaign is separate from the statistical sample. It calls the SAME
 normalizer and evaluator on a fixed synthetic request per scenario, with IDs
 `fault.<kind>`. For identity_mismatch use a changed observed revision. For low_confidence,
-return a known selected label with probability 0 and another known label with 1;
+return the first allowed label with probability 0 and a different known label with 1;
 this tests selected-probability gating, not argmax substitution.
 
 | kind/scenario suffix | expected action |
@@ -237,6 +241,24 @@ Order is the table order, frozen in the lock. Campaign contains all six outcomes
 even after a violation. Tests may wrap DecisionModel to inject scheduled faults;
 no vendor-specific networking belongs in the campaign. No random order is needed
 for this complete inventory; deterministic fixture seeds are recorded in the demo.
+
+`fault_capture` in faults.py is a pure canonical generator. Request case_id is
+the scenario_id, state is exactly `Actseal deterministic fault campaign.`, and
+question is lock.contract.question. Request hash uses canonical serialization.
+Every capture has warnings=(), fallback_used=False. Start with lock.model_identity.
+For timeout/rate_limit use body=None and failure_code=kind. malformed_response
+uses body_json=`{` and no transport failure. All other bodies are canonical JSON
+objects with only type='choice', choice and probabilities; all probabilities are
+zero except the selected first allowed label at 1.0. identity_mismatch changes
+only revision to original revision + ':fault'. unknown_choice changes choice to
+'__actseal_unknown__', appending '_' until outside known labels. low_confidence
+keeps choice as the first allowed label, sets its mass to 0.0 and the first
+different known label's mass to 1.0. These faults intentionally use exact sums.
+Assessment requires exact request/capture equality with this generator before
+re-normalizing; a swapped scenario is ERROR. Only the canonical identity mismatch
+is exempt from equal observed/locked identity. A correctly reconstructed fault
+that violates its expected action is BLOCK. No imports from assessment or replay
+are allowed in faults.py; normalization depends only on records/errors/serialization.
 
 ## 5. Statistical assessment (T20)
 
@@ -254,10 +276,14 @@ vectors, not merely self-comparisons or copied expected values from this port.
 
 Validate lock and case/fault inventory before counting. Exactly one record per
 expected verification ID, in lock order; no duplicates, omissions or foreign IDs.
-Validate each capture request hash against its locked CaseRef + question by
-reconstruction when full cases are available in runner/replay; assessment must at
-minimum validate record IDs, identity references, outcome/decision consistency and
-exact six-fault completeness. Semantic validation is not replaced by hash checks.
+For every record reconstruct DecisionRequest from the corresponding locked Case
+and question, validate its capture request hash, re-normalize the raw capture
+against the locked identity and re-evaluate the policy. Require exact equality
+with the recorded outcome and decision before counting. A captured identity
+mismatch is valid failure evidence only when normalization and decision record
+that failure and ESCALATE. Validate exact six-fault completeness and canonical
+scenario captures as specified above. Semantic checks are mandatory in assess,
+not just in replay; hash consistency alone is insufficient.
 
 n=all verification cases. a=final ACT count. e=ACT choices unequal to gold label.
 Gold labels come from lock.verification_cases. These cases must match the raw
@@ -287,8 +313,8 @@ Bundle is a directory with EXACTLY `manifest.json`, `lock.json`,
 `calibration.jsonl`, `verification.jsonl`, `records.jsonl`, `faults.jsonl`,
 `verdict.json`. No archives, extraction, pickle, executable expressions, environment
 restoration or user module imports. Reject symlinks and nonregular/extra files.
-Manifest schema_version=1, file map (relative fixed filename -> size and sha256),
-and manifest sha256 excluding only its own sha256. Manifest inventories the six
+Manifest exact shape is `{schema_version:1, files:{filename:{size:int,sha256:str}},
+sha256:str}`, with self-hash excluding only its own sha256. Manifest inventories the six
 other files. File ordering and canonical bytes are deterministic; timestamps,
 durations, host paths and PID data are excluded from the sealed core entirely.
 Write to a sibling temporary directory and atomically rename to a NEW destination;
