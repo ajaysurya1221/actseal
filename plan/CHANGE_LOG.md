@@ -116,3 +116,10 @@ before publication. Stdlib ctypes only; fail explicitly on unsupported systems.
 No record/signature or scope expansion. T40/CONTRACTS updated before dispatch.
 ADR0005 also clarifies that a trusted lock hash cannot authenticate same-lock
 rewritten responses or provider execution.
+
+## 2026-10-06 — prespecified demonstration
+
+ADR0013 fixes the T50 synthetic data rules before implementation: two128-case
+runs, same threshold/limits, zero versus32 authored wrong accepted decisions.
+Planning bounds establish expected behavior only; actual receipts must come from
+the installed product. No population, training or paired-model comparison claim.

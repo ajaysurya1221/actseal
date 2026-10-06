@@ -14,7 +14,7 @@ TOML contract + labelled calibration/verification JSONL + observed model identit
   -> pure normalization -> deterministic policy -> DecisionRecord
   -> six canonical fault scenarios, recorded separately
   -> semantic validation and statistical assessment -> Verdict
-  -> atomic new data-only evidence directory
+  -> exclusive atomic publication of a new data-only evidence directory
 
 Evidence directory
   -> bounded file/schema/hash/lock checks
@@ -34,7 +34,7 @@ Locking performs no inference or threshold fitting. The CLI constructs the selec
 | adapters / normalization | Capture provider-shaped data; separately validate identity, schema and selected probability. Normalization imports no model or adapter. |
 | faults | Pure canonical capture generator and six-scenario campaign using the same normalizer/evaluator. No assessment/replay import. |
 | stats / assessment | Audited CP kernel; complete semantic/inventory validation before risk/coverage assessment. |
-| evidence / replay | Atomic data-only bundles and fresh offline semantic recomputation. No provider imports or network calls. |
+| evidence / replay | Exclusive atomic publication of data-only bundles and fresh offline semantic recomputation. No provider imports or network calls. |
 | runner / CLI / packaged demo | Compose accepted interfaces, enforce collection constants, close providers and expose explicit statuses. |
 
 The decision-model boundary is `identity() -> ModelIdentity`, `decide(request, *, timeout_s) -> CapturedOutcome`, and `close() -> None`. v1 has a recorded fixture adapter and an optional pinned native Laya CPU adapter. Core fixture/replay paths require no model library, key or service. Jev and actual fallback execution are outside v1.
@@ -53,4 +53,8 @@ Under [ADR 0009](decisions/0009-worker-loss-invalidates-statistical-run.md), a r
 
 Bundles contain exactly `manifest.json`, `lock.json`, `calibration.jsonl`, `verification.jsonl`, `records.jsonl`, `faults.jsonl` and `verdict.json`. Fresh replay must reconstruct semantics rather than return the archived verdict. An unsupported implementation fingerprint is ERROR; there is no automatic migration or resealing.
 
-Integrity and replay do not authenticate authorship, actual inference, label truth or sampling history. See the [statistical contract](statistical-contract.md) and [threat model](threat-model.md) before interpreting a PASS.
+[ADR 0012](decisions/0012-replay-errors-and-exclusive-publication.md) requires publication of the completed sibling temporary directory through an operation that atomically refuses an existing destination. The private evidence helper uses macOS `renamex_np(RENAME_EXCL)` or Linux `renameat2(RENAME_NOREPLACE)` through stdlib `ctypes` and the system C library. A prior existence check followed by ordinary rename is insufficient. Missing native support, unsupported filesystems/platforms and other publication errors must fail explicitly, with no overwriting fallback. This is a design requirement pending T40 implementation/hosted checks; it promises neither power-loss durability nor protection against a hostile process replacing ancestor directories.
+
+For invalid bundle evidence, replay returns ERROR. Before strict lock decoding succeeds, diagnostics use `evidence_scope=demo` and `lock_sha256` equal to 64 zero characters: an unknown-identity sentinel, never certification. After structural decoding, retain the decoded scope/hash even if later seal or integrity checks fail; these remain untrusted diagnostic values. Never substitute an expected external digest for the observed identity. ERROR counts are zero and intervals `[0,1]`; Python API argument-type misuse may raise `SchemaError`.
+
+Integrity and replay do not authenticate authorship, actual inference, label truth or sampling history. A separately trusted lock hash anchors the expected identity only: an author can keep that lock while rewriting responses and recomputing consistent results. See [ADR 0005](decisions/0005-data-only-replay-and-trust.md), the [statistical contract](statistical-contract.md) and the [threat model](threat-model.md) before interpreting a PASS.
