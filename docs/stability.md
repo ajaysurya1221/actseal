@@ -13,10 +13,16 @@ the [0.1.0 to 1.0.0 migration guide](migration.md) and the published
 
 STABLE means **compatible throughout 1.x**: the name exists, accepts the
 documented inputs with the documented meanings, returns the documented shape,
-and raises or returns the documented failure class. Additive change (a new
-optional argument with a default, a new JSON field, a new command, a new
-constant) is allowed in a minor release; removal or an incompatible change
-waits for 2.0 under the [versioning policy](versioning.md).
+and raises or returns the documented failure class. A minor release may add
+commands, constants, or optional arguments whose defaults preserve existing
+behaviour. It may not add fields to an existing strict schema version
+(lock 2, manifest 2, receipt 1, registry 1) or to the default CLI receipt
+shapes: the published schemas reject unknown fields, so the shapes they
+describe are frozen for 1.x. Additional formats or semantics arrive only as a
+separately versioned, explicitly opt-in interface that preserves every
+existing stable surface. Removal or an incompatible change waits for 2.0 under
+the [versioning policy](versioning.md); see
+[ADR 0015](decisions/0015-v1-stability-and-replay-compatibility.md).
 
 STABLE does **not** freeze:
 
@@ -431,6 +437,11 @@ Within 1.x, evidence produced by an earlier 1.x release replays only when both
 that release's source fingerprint and the running release's source fingerprint
 are registered for the engine. Replay of 0.1.0 evidence uses an isolated pinned
 `actseal==0.1.0` installation.
+
+A new engine may arrive in a minor release only as an explicitly selected
+option; `actseal-choice-v1`, its semantics and its default behaviour are
+preserved. Evidence is always interpreted through the engine recorded in its
+lock and is never reinterpreted under a newer engine.
 
 ## Not stable
 
