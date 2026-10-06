@@ -59,3 +59,17 @@ would change the evaluated system under an identical lock. v1 evidence runners
 always use 30.0s per request and 120s startup, bound by the source fingerprint.
 Low-level provider timeout arguments remain for direct use/tests. Configurable
 deadlines move to a future versioned execution schema. No public record changes.
+
+## 2026-10-06 — persistent worker loss and binomial assumptions
+
+ADR 0009 corrects a cross-case dependence gap discovered before parallel dispatch.
+A regular Laya timeout/unavailable makes statistical assessment infrastructure
+ERROR after complete integrity checks; diagnostic records remain complete. The
+canonical synthetic fault campaign is unaffected. Permanent worker-loss paths
+report unavailable, no silent restart. Population interpretation requires fixed
+independent case behavior and remains unconditional over one prespecified attempt,
+never persistent-process uptime or completion probability. No public signatures
+changed; T20/T30 specs amended before dispatch, T40/T50 inherit the contract.
+This is a correctness correction to research-derived failure semantics, not scope
+expansion. The human's standing approval covers routine execution; original
+material scope, license and budget escalation conditions remain.

@@ -23,6 +23,14 @@ When `n_accepted == 0`, use risk bounds `[0, 1]`, report risk unestimated, and p
 
 Population statements require independent cases sampled from the declared target distribution and a fixed selector before certification. The accepted-case count is random; under IID cases, the errors conditional on that count have the relevant selected-population binomial interpretation. Authored fixed suites report observed performance and demo behavior; their size alone does not justify population inference. Replaying a record creates no additional sample.
 
+The provider's case outcomes must also be independent under the fixed operating
+regime. Persistent worker loss violates that premise even with IID inputs. Under
+[ADR 0009](0009-worker-loss-invalidates-statistical-run.md), regular Laya timeout
+or unavailable invalidates assessment as infrastructure ERROR. Keep every terminal
+record as diagnostic evidence. The guarantee is unconditional over one prespecified
+attempt, not conditioned on completion; never discard ERROR attempts and retry
+until PASS. These intervals do not bound process uptime or run completion.
+
 The fixture demo is explicitly **demo-only** and says nothing about Laya/Jev accuracy, deployment safety, or population calibration. Reusing certification labels to select thresholds, retrying unchanged candidates until one passes, or treating deterministic test repetitions as new observations invalidates the intended inferential interpretation. Hashes expose changes to recorded inputs; they do not prove that a user withheld labels or sampled IID cases.
 
 Paired non-inferiority, sequential looks, threshold sweeps, grouped claims, and certified fallback chains are outside v1. Any later addition needs a separately specified error budget and independent validation. See [CONTRACTS](../../plan/CONTRACTS.md) for exact schemas and [PLAN](../../plan/PLAN.md) for acceptance commands.

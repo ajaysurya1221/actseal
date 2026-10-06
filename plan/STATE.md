@@ -12,7 +12,7 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 ## Current state
 
 - Planning artifacts: complete; 119 material claims and all 18 candidate dispositions recorded.
-- Product implementation: T00 under revision in isolated task/t00 worktree; no product merged.
+- Product implementation: T00 accepted and merged as 86dbca0; parallel lanes are starting.
 - Executor: Claude Code 2.1.281; login independently confirmed, claude.ai Max subscription.
 - Existing .env: contains JEV_API_KEY; value is not read or printed. Ignored.
 - Preflight: source statistics suite passed in a separate verification lane;
@@ -23,10 +23,10 @@ Public launch posts remain drafts. Claude Fable 5.1/high writes all product code
 | Task | Owner | State | Accepted commit |
 |---|---|---|---|
 | Planning package | Codex | COMPLETE | ee99eee plus documented amendments |
-| T00 foundation | Claude A | REVISE | none |
-| T10 contract/policy | Claude A | WAITING_FOR_T00 | none |
-| T20 statistics | Claude B | WAITING_FOR_T00 | none |
-| T30 providers/faults | Claude C | WAITING_FOR_T00 | none |
+| T00 foundation | Claude A | ACCEPT / MERGED | ebe11ff (merge 86dbca0) |
+| T10 contract/policy | Claude A | STARTING | none |
+| T20 statistics | Claude B | NUMERICAL_MILESTONE_STARTING | none |
+| T30 providers/faults | Claude C | PROVIDER_MILESTONE_STARTING | none |
 | T40 evidence/replay | Claude B | WAITING_FOR_ACCEPTED_INTERFACES | none |
 | T50 CLI/demo | Claude A | WAITING_FOR_T10_T20_T30_T40 | none |
 | T60 acceptance | Claude C | WAITING_FOR_T50 | none |
@@ -41,30 +41,24 @@ dispatch; never assume a status inherited from memory is still current.
 
 ## Blockers and next action
 
-No authentication blocker remains. Public repository:
-https://github.com/ajaysurya1221/actseal. Draft foundation PR:
-https://github.com/ajaysurya1221/actseal/pull/1. Candidate af116adbebbfc30ddcc4bc2fe209c91e665a0991
-includes the Unicode correction a70f7c1 and synchronized documentation receipts.
-Root independently passed all six T00 commands (587 tests, lint/format, mypy,
-sync and build). Hosted Linux/macOS Python3.12/3.13 at run37433262328 passes all
-implemented checks except Repository hooks: its config file is absent.
+No authentication blocker remains. T00 PR1 is merged:
+https://github.com/ajaysurya1221/actseal/pull/1. REVIEW T00-05 ACCEPT binds
+commit ebe11ff947b366fa700bf0e1ecf6747fcebe970f; all four hosted jobs passed in
+runs37434438049/37434442393. Root independently passed 587 tests, Ruff, mypy,
+build and the three pre-commit hooks. Shared records/serialization/errors are frozen.
 
-REVIEW T00-04 closes the Unicode constructor finding. All known T00 product
-findings are fixed, including parser, domain validation, CPU-only Linux dependency
-resolution and packaging. Claude revision04 has completed; no executor is running.
-The human approved the three hooks on 2026-10-06. T10/T20/T30 still wait
-for T00 ACCEPT and green CI. Shared types are not yet frozen by acceptance.
+The human approved the three hooks and standing routine execution on 2026-10-06.
+No pending permission question remains. Original scope/license/budget escalations
+and the release quality gates still apply; public launch messages remain drafts.
 
-Claude's earlier sensitive-file denial was escalated. The human explicitly approved
-the three local hooks and standing routine work within this plan. Codex created
-that exact hook configuration; all three hooks pass locally. Await hosted CI.
-Standing approval does not change the required license, scope, budget or release
-quality gates; public launch messages remain drafts.
-Raw local dispatch receipts remain ignored under plan/dispatch.
+Next: isolated Claude T10, T20 numerical and T30 provider milestones in parallel.
+ADR0009/CHANGE_LOG correct permanent-worker-loss statistical dependence before
+these dispatches. All lanes receive the new contract hash. No extra feature scope.
+T20/T30 remain PARTIAL until accepted predecessor integration and full checks.
 
-Claude session25979d71-e2c8-4a20-932b-a18022ec31c7, actual model claude-fable-5-1,
-effort high. Cumulative meter after revision04: $15.7246075 estimated subscription
-usage, not a billed API charge. Incremental paid API spend remains $0 on Max.
+T00 Claude session25979d71-e2c8-4a20-932b-a18022ec31c7 completed. Model was
+claude-fable-5-1/high. Cumulative meter $15.7246075 estimated subscription usage,
+not a billed API charge. Raw receipts remain ignored under plan/dispatch.
 
 ## Budget and scope
 

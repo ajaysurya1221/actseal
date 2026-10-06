@@ -259,6 +259,10 @@ accepts finite positive timeouts for testing/direct calls. On a request timeout 
 return timeout and make later calls explicitly unavailable until a new model object
 is created. close() is idempotent and leaves no worker alive. Unit tests use a tiny
 fake worker; they do not download weights or import the Laya stack.
+Unexpected worker death, EOF or unusable IPC also invalidates the instance and
+returns unavailable; subsequent calls remain unavailable. Nonfatal inference
+exceptions may return provider_error only if the worker remains healthy and its
+request/reply protocol stays synchronized. No automatic worker restart.
 Reject overflow in the full state/question/options token layout before inference;
 never silently truncate. Record and surface upstream calibration/runtime warnings.
 No automatic CPU/MPS/device switch. Respect offline mode and actual observed device.
@@ -333,6 +337,16 @@ that failure and ESCALATE. Validate exact six-fault completeness and canonical
 scenario captures as specified above. Semantic checks are mandatory in assess,
 not just in replay; hash consistency alone is insufficient.
 
+After integrity checks, any **regular** capture with failure_code timeout or
+unavailable under lock.model_identity.provider == 'laya' invalidates the experiment:
+return ERROR with `infrastructure.worker_invalidated`, zero counts and [0,1]
+intervals. Retain all scheduled terminal records as diagnostic evidence. Injected
+fault captures are excluded. Nonfatal failures remain in a valid experiment's
+denominator. Population interpretation requires independent case outcomes under
+the fixed operating regime, not merely independent text inputs. It is unconditional
+over one prespecified attempt, never conditioned on completion. No persistent-process
+uptime or run-completion probability claim; no retries until PASS. See ADR 0009.
+
 n=all verification cases. a=final ACT count. e=ACT choices unequal to gold label.
 Gold labels come from lock.verification_cases. These cases must match the raw
 file/inventory exactly; no caller-supplied separate labels may change assessment.
@@ -347,6 +361,7 @@ partial statistics. Order is ERROR > BLOCK > INCONCLUSIVE > PASS. No early stopp
 Reasons are stable sorted unique codes: `risk.exceeds_limit`,
 `coverage.below_minimum`, `evidence.insufficient`, `risk.no_accepted_cases`,
 `fault.<kind>`, `integrity.<invariant>`, `contract.satisfied`.
+Infrastructure invalidation adds the exact code `infrastructure.worker_invalidated`.
 An infrastructure/setup ERROR is different from a successfully captured failure
 whose policy outcome is ESCALATE. Fault cases never inflate statistical n.
 
