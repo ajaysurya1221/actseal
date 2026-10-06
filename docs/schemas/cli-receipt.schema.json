@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:cli-receipt:1",
+  "title": "Actseal CLI JSON receipt (schema 1)",
+  "description": "The single JSON object written to stdout by `actseal ... --json`. Every variant carries `schema_version` 1 and `command`. Errors (including usage errors, whose command may be `actseal` when the command line could not be parsed) use the error variant.",
+  "oneOf": [
+    { "$ref": "#/$defs/ErrorReceipt" },
+    { "$ref": "#/$defs/LockReceipt" },
+    { "$ref": "#/$defs/VerifyReceipt" },
+    { "$ref": "#/$defs/ReplayReceipt" },
+    { "$ref": "#/$defs/DemoReceipt" }
+  ],
+  "$defs": {
+    "Sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "Status": { "enum": ["PASS", "BLOCK", "INCONCLUSIVE", "ERROR"] },
+    "ExitCode": { "enum": [0, 1, 2, 3] },
+    "Interval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "upper"],
+      "properties": {
+        "lower": { "type": "number", "minimum": 0, "maximum": 1 },
+        "upper": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "Counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
+    "Faults": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "expected_action"],
+        "properties": {
+          "action": { "enum": ["ACT", "ABSTAIN", "ESCALATE", "DENY"] },
+          "expected_action": { "enum": ["ACT", "ABSTAIN", "ESCALATE", "DENY"] }
+        }
+      }
+    },
+    "VerdictFields": {
+      "type": "object",
+      "required": [
+        "status",
+        "reasons",
+        "total",
+        "accepted",
+        "errors",
+        "risk",
+        "coverage",
+        "evidence_scope",
+        "lock_sha256"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/Status" },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "total": { "type": "integer", "minimum": 0 },
+        "accepted": { "type": "integer", "minimum": 0 },
+        "errors": { "type": "integer", "minimum": 0 },
+        "risk": { "$ref": "#/$defs/Interval" },
+        "coverage": { "$ref": "#/$defs/Interval" },
+        "evidence_scope": { "enum": ["demo", "iid"] },
+        "lock_sha256": { "$ref": "#/$defs/Sha256" }
+      }
+    },
+    "ErrorReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "command", "exit_code", "ok", "status", "error"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "command": { "enum": ["lock", "verify", "replay", "demo", "actseal"] },
+        "exit_code": { "const": 3 },
+        "ok": { "const": false },
+        "status": { "const": "ERROR" },
+        "error": { "type": "string", "minLength": 1 }
+      }
+    },
+    "LockReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "command",
+        "exit_code",
+        "ok",
+        "lock_sha256",
+        "implementation_sha256",
+        "replay_engine_version",
+        "evidence_scope",
+        "contract",
+        "model_identity",
+        "verification_cases",
+        "calibration_cases",
+        "out"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "command": { "const": "lock" },
+        "exit_code": { "const": 0 },
+        "ok": { "const": true },
+        "lock_sha256": { "$ref": "#/$defs/Sha256" },
+        "implementation_sha256": { "$ref": "#/$defs/Sha256" },
+        "replay_engine_version": { "type": "string", "minLength": 1 },
+        "evidence_scope": { "enum": ["demo", "iid"] },
+        "contract": { "type": "string", "minLength": 1 },
+        "model_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider", "model", "revision", "adapter_version", "normalizer_version"],
+          "properties": {
+            "provider": { "enum": ["fixture", "laya"] },
+            "model": { "type": "string", "minLength": 1 },
+            "revision": { "type": "string", "minLength": 1 },
+            "adapter_version": { "type": "string", "minLength": 1 },
+            "normalizer_version": { "type": "string", "minLength": 1 }
+          }
+        },
+        "verification_cases": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "calibration_cases": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "out": { "type": "string" }
+      }
+    },
+    "VerifyPayload": {
+      "allOf": [
+        { "$ref": "#/$defs/VerdictFields" },
+        {
+          "type": "object",
+          "required": ["failures", "warnings", "faults", "exit_code", "ok"],
+          "properties": {
+            "failures": { "$ref": "#/$defs/Counts" },
+            "warnings": { "$ref": "#/$defs/Counts" },
+            "faults": { "$ref": "#/$defs/Faults" },
+            "exit_code": { "$ref": "#/$defs/ExitCode" },
+            "ok": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "VerifyReceipt": {
+      "allOf": [
+        { "$ref": "#/$defs/VerifyPayload" },
+        {
+          "type": "object",
+          "required": ["schema_version", "command", "out"],
+          "properties": {
+            "schema_version": { "const": 1 },
+            "command": { "const": "verify" },
+            "out": { "type": "string" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "ReplayReceipt": {
+      "allOf": [
+        { "$ref": "#/$defs/VerdictFields" },
+        {
+          "type": "object",
+          "required": [
+            "schema_version",
+            "command",
+            "exit_code",
+            "ok",
+            "bundle",
+            "expected_lock_sha256",
+            "notes"
+          ],
+          "properties": {
+            "schema_version": { "const": 1 },
+            "command": { "const": "replay" },
+            "exit_code": { "$ref": "#/$defs/ExitCode" },
+            "ok": { "type": "boolean" },
+            "bundle": { "type": "string" },
+            "expected_lock_sha256": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/Sha256" }] },
+            "notes": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "DemoRun": {
+      "allOf": [
+        { "$ref": "#/$defs/VerifyPayload" },
+        {
+          "type": "object",
+          "required": [
+            "expected_status",
+            "as_expected",
+            "lock",
+            "evidence",
+            "replay",
+            "replay_matches"
+          ],
+          "properties": {
+            "expected_status": { "enum": ["BLOCK", "PASS"] },
+            "as_expected": { "type": "boolean" },
+            "lock": { "type": "string" },
+            "evidence": { "type": "string" },
+            "replay": {
+              "allOf": [{ "$ref": "#/$defs/VerdictFields" }],
+              "unevaluatedProperties": false
+            },
+            "replay_matches": { "type": "boolean" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "DemoReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "command",
+        "exit_code",
+        "ok",
+        "status",
+        "evidence_scope",
+        "demo_only",
+        "note",
+        "out",
+        "duration_s",
+        "runs"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "command": { "const": "demo" },
+        "exit_code": { "enum": [0, 3] },
+        "ok": { "type": "boolean" },
+        "status": { "enum": ["PASS", "ERROR"] },
+        "evidence_scope": { "const": "demo" },
+        "demo_only": { "const": true },
+        "note": { "type": "string", "minLength": 1 },
+        "out": { "type": "string" },
+        "duration_s": { "type": "number", "minimum": 0 },
+        "runs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bad", "fixed"],
+          "properties": {
+            "bad": { "$ref": "#/$defs/DemoRun" },
+            "fixed": { "$ref": "#/$defs/DemoRun" }
+          }
+        }
+      }
+    }
+  }
+}

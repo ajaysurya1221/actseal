@@ -267,7 +267,7 @@ def _lock_schema_mutations() -> dict[str, Callable[[bytes], bytes]]:
 
     def unknown_version(data: bytes) -> bytes:
         value = json.loads(data)
-        value["schema_version"] = 2
+        value["schema_version"] = 3
         return compact(value) + b"\n"
 
     def extra_field(data: bytes) -> bytes:
@@ -279,7 +279,7 @@ def _lock_schema_mutations() -> dict[str, Callable[[bytes], bytes]]:
         return data.rstrip(b"\n")
 
     def duplicate_key(data: bytes) -> bytes:
-        return data.replace(b'"schema_version":1', b'"schema_version":1,"schema_version":1', 1)
+        return data.replace(b'"schema_version":2', b'"schema_version":2,"schema_version":2', 1)
 
     def unsupported_provider(data: bytes) -> bytes:
         value = json.loads(data)

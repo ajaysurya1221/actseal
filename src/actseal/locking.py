@@ -17,6 +17,15 @@ record exactly as decoded. Creation, validation and parsing agree on one wire
 ceiling: the canonical lock document plus its single terminal LF must fit
 ``MAX_LOCK_BYTES`` (32 MiB), and :func:`parse_lock` counts every supplied byte.
 
+Since v1.0 a lock is schema 2 and records ``replay_engine_version``
+(``actseal.compatibility.CURRENT_ENGINE``) inside its seal. ``validate_lock``
+accepts a lock whose producer fingerprint is the running implementation, or
+whose producer and running fingerprints are both registered for the lock's
+engine in the reviewed compatibility registry. New collection is stricter and
+is guarded separately in the runner. A real schema-1 (actseal 0.1.0) lock is
+reported by :func:`parse_lock` as :class:`~actseal.compatibility.LegacySchemaError`
+with migration guidance; its bytes are never altered.
+
 Dataset-shape and limit violations (malformed rows, duplicate or leaked cases,
 oversized documents) are :class:`SchemaError`; mismatches between a lock and
 the evidence it claims to describe are :class:`IntegrityError`.
@@ -27,10 +36,17 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Final
 
+from actseal.compatibility import (
+    CURRENT_ENGINE,
+    LEGACY_GUIDANCE,
+    LegacySchemaError,
+    check_replay_compatibility,
+    is_legacy_lock,
+)
 from actseal.contract import parse_cases
 from actseal.errors import IntegrityError, SchemaError
 from actseal.records import (
-    SCHEMA_VERSION,
+    LOCK_SCHEMA_VERSION,
     Case,
     CaseRef,
     Contract,
@@ -209,7 +225,7 @@ def create_lock(
     verification = _parse_split("verification", verification_jsonl, contract)
     _check_cross_split(calibration, verification)
     unsealed = PlanLock(
-        schema_version=SCHEMA_VERSION,
+        schema_version=LOCK_SCHEMA_VERSION,
         contract=contract,
         model_identity=model_identity,
         calibration_sha256=calibration_sha256,
@@ -220,6 +236,7 @@ def create_lock(
         fault_inventory=FAULT_INVENTORY,
         implementation_sha256=implementation_fingerprint(),
         sha256=_UNSEALED,
+        replay_engine_version=CURRENT_ENGINE,
     )
     sealed = replace(unsealed, sha256=lock_digest(unsealed))
     _check_wire_size(sealed)
@@ -227,7 +244,13 @@ def create_lock(
 
 
 def validate_lock(lock: PlanLock) -> None:
-    """Check wire size, self-seal, implementation identity, fault inventory and case coherence.
+    """Check wire size, self-seal, replay compatibility, fault inventory and case coherence.
+
+    Replay compatibility (:func:`actseal.compatibility.check_replay_compatibility`)
+    accepts the exact running implementation under a supported engine, or a
+    producer/running pair both registered for the lock's engine. This shared
+    check is what ``validate_inputs``, ``assess`` and ``replay`` rely on; it does
+    not authorize new collection, which the runner guards separately.
 
     Calibration state texts are not embedded, so cross-split *state* overlap can
     only be checked by :func:`validate_inputs`; cross-split *ID* overlap is
@@ -238,8 +261,7 @@ def validate_lock(lock: PlanLock) -> None:
     _check_wire_size(lock)
     if lock_digest(lock) != lock.sha256:
         raise IntegrityError("sha256: self-seal does not match the lock contents")
-    if lock.implementation_sha256 != implementation_fingerprint():
-        raise IntegrityError("implementation_sha256: does not match the current implementation")
+    check_replay_compatibility(lock)
     if lock.fault_inventory != FAULT_INVENTORY:
         raise IntegrityError("fault_inventory: must equal the frozen six-scenario inventory")
     _check_disjoint_ids(lock.calibration_inventory, lock.verification_inventory)
@@ -272,7 +294,10 @@ def parse_lock(text: str) -> PlanLock:
     """Strictly decode one lock document (at most 32 MiB) without validating its seal.
 
     The returned record carries the recorded ``sha256`` untouched; callers must
-    run :func:`validate_lock` before trusting it.
+    run :func:`validate_lock` before trusting it. A document with exactly the
+    actseal 0.1.0 field set at ``schema_version`` 1 is reported as
+    :class:`~actseal.compatibility.LegacySchemaError` (a :class:`SchemaError`)
+    carrying migration guidance, before any generic field check.
     """
     if not isinstance(text, str):
         raise SchemaError("lock: must be text")
@@ -280,4 +305,7 @@ def parse_lock(text: str) -> PlanLock:
         not text.isascii() and len(text.encode("utf-8", errors="surrogatepass")) > MAX_LOCK_BYTES
     ):
         raise SchemaError(f"lock: document exceeds {MAX_LOCK_BYTES} bytes")
-    return from_data(PlanLock, strict_json_loads(text))
+    value = strict_json_loads(text)
+    if is_legacy_lock(value):
+        raise LegacySchemaError(f"lock.schema_version: {LEGACY_GUIDANCE}")
+    return from_data(PlanLock, value)

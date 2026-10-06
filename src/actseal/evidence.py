@@ -6,9 +6,13 @@ A bundle is a directory holding EXACTLY seven regular files: ``manifest.json``,
 verdict and manifest are one canonical JSON object plus one LF; records and
 faults are one canonical JSON object plus one LF per row; both datasets are the
 exact raw bytes that the lock hashed (CRLF and other line endings preserved,
-nothing appended). The manifest is ``{schema_version: 1, files: {name: {size,
+nothing appended). The manifest is ``{schema_version: 2, files: {name: {size,
 sha256}}, sha256}`` over the other six files; its own ``sha256`` is the
-canonical hash of the manifest with only that field omitted. No timestamps,
+canonical hash of the manifest with only that field omitted. The manifest
+version (``BUNDLE_SCHEMA_VERSION``) also versions the canonical record encoding
+of the contained lock, record, fault and verdict documents. A schema-1
+(actseal 0.1.0) manifest is reported as ``LegacySchemaError`` with migration
+guidance and is never rewritten. No timestamps,
 durations, host paths, PIDs or credentials enter any file, so the same bundle
 written to independent destinations is byte-identical.
 
@@ -55,12 +59,12 @@ from pathlib import Path
 from typing import Final, TypeVar
 
 from actseal.assessment import REASON_INTEGRITY_PREFIX, assess
+from actseal.compatibility import LEGACY_GUIDANCE, LegacySchemaError, is_legacy_manifest
 from actseal.contract import MAX_ROW_BYTES, read_input_text
 from actseal.errors import IntegrityError, SchemaError
 from actseal.locking import MAX_LOCK_BYTES, validate_inputs
 from actseal.records import (
     MAX_CASES_PER_SPLIT,
-    SCHEMA_VERSION,
     DecisionRecord,
     EvidenceBundle,
     FaultResult,
@@ -78,6 +82,7 @@ from actseal.serialization import (
 
 __all__ = [
     "BUNDLE_FILES",
+    "BUNDLE_SCHEMA_VERSION",
     "CALIBRATION_FILE",
     "DATA_FILES",
     "FAULTS_FILE",
@@ -112,6 +117,8 @@ DATA_FILES: Final[tuple[str, ...]] = (
 )
 #: All seven bundle files, in bundle order.
 BUNDLE_FILES: Final[tuple[str, ...]] = (MANIFEST_FILE, *DATA_FILES)
+#: Manifest schema version; also versions the contained canonical record encoding.
+BUNDLE_SCHEMA_VERSION: Final = 2
 MAX_BUNDLE_BYTES: Final = 128 * 1024 * 1024
 
 _LF: Final = b"\n"
@@ -198,7 +205,7 @@ def _manifest(files: Mapping[str, bytes], budget: _Budget) -> bytes:
     inventory: dict[str, object] = {
         name: {"size": len(data), "sha256": sha256_bytes(data)} for name, data in files.items()
     }
-    unsealed: dict[str, object] = {"schema_version": SCHEMA_VERSION, "files": inventory}
+    unsealed: dict[str, object] = {"schema_version": BUNDLE_SCHEMA_VERSION, "files": inventory}
     sealed: dict[str, object] = {**unsealed, "sha256": sha256_bytes(canonical_json(unsealed))}
     data = canonical_json(sealed) + _LF
     budget.charge(len(data))
@@ -436,10 +443,12 @@ def _utf8(name: str, data: bytes) -> str:
 def _decode_manifest(data: bytes) -> dict[str, tuple[int, str]]:
     """Strictly decode the manifest; return ``{name: (size, sha256)}`` for the six files."""
     value = strict_json_loads(_utf8(MANIFEST_FILE, data))
+    if is_legacy_manifest(value):
+        raise LegacySchemaError(f"manifest.schema_version: {LEGACY_GUIDANCE}")
     if type(value) is not dict or set(value) != _MANIFEST_KEYS:
         raise SchemaError("manifest: expected exactly schema_version, files, sha256")
     version = value["schema_version"]
-    if type(version) is not int or version != SCHEMA_VERSION:
+    if type(version) is not int or version != BUNDLE_SCHEMA_VERSION:
         raise SchemaError("manifest.schema_version: unsupported schema version")
     files = value["files"]
     if type(files) is not dict or set(files) != set(DATA_FILES):

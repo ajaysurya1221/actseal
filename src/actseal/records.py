@@ -6,7 +6,13 @@ deserialization enforces, convert caller-owned sequences into tuples so that no
 mutable alias survives construction, and raise :class:`SchemaError` naming the
 offending field or invariant without echoing the offending value.
 
-Field order below is constructor order and matches plan/CONTRACTS.md section 1.
+Field order below is constructor order and matches plan/CONTRACTS.md section 1,
+with the one v1.0 amendment (plan/v1/CHANGE_LOG.md V1-003): ``PlanLock`` carries
+a final ``replay_engine_version`` field after ``sha256``, so every earlier
+positional field keeps its v0.1 position. Format versions are separate
+constants: ``CONTRACT_SCHEMA_VERSION`` (contract TOML, 1) and
+``LOCK_SCHEMA_VERSION`` (lock document, 2). ``SCHEMA_VERSION`` remains the
+contract TOML schema version for existing callers.
 """
 
 from __future__ import annotations
@@ -19,7 +25,9 @@ from typing import Final, Literal, TypeVar, get_args
 from actseal.errors import SchemaError
 
 __all__ = [
+    "CONTRACT_SCHEMA_VERSION",
     "FAILURE_CODES",
+    "LOCK_SCHEMA_VERSION",
     "MASS_TOLERANCE",
     "MAX_CASES_PER_SPLIT",
     "MAX_OPTIONS",
@@ -56,7 +64,12 @@ Action = Literal["ACT", "ABSTAIN", "ESCALATE", "DENY"]
 Status = Literal["PASS", "BLOCK", "INCONCLUSIVE", "ERROR"]
 EvidenceScope = Literal["demo", "iid"]
 
+#: Contract TOML schema version. Kept under its v0.1 name; the lock document
+#: has its own version, ``LOCK_SCHEMA_VERSION``.
 SCHEMA_VERSION: Final = 1
+CONTRACT_SCHEMA_VERSION: Final = SCHEMA_VERSION
+#: ``PlanLock`` document schema version (2 since v1.0: ``replay_engine_version``).
+LOCK_SCHEMA_VERSION: Final = 2
 MIN_OPTIONS: Final = 2
 MAX_OPTIONS: Final = 16
 MAX_CASES_PER_SPLIT: Final = 10_000
@@ -271,9 +284,9 @@ def _probabilities(field: str, value: object) -> tuple[tuple[str, float], ...]:
     return tuple(pairs)
 
 
-def _schema_version(field: str, value: object) -> int:
+def _schema_version(field: str, value: object, expected: int) -> int:
     version = _int(field, value)
-    if version != SCHEMA_VERSION:
+    if version != expected:
         raise _fail(field, "unsupported schema version")
     return version
 
@@ -509,7 +522,11 @@ class Contract:
     population: str
 
     def __post_init__(self) -> None:
-        _set(self, "schema_version", _schema_version("schema_version", self.schema_version))
+        _set(
+            self,
+            "schema_version",
+            _schema_version("schema_version", self.schema_version, CONTRACT_SCHEMA_VERSION),
+        )
         _set(self, "name", _str("name", self.name))
         if not isinstance(self.question, ChoiceQuestion):
             raise _fail("question", "must be ChoiceQuestion")
@@ -557,9 +574,14 @@ class PlanLock:
     fault_inventory: tuple[FaultSpec, ...]
     implementation_sha256: str
     sha256: str
+    replay_engine_version: str
 
     def __post_init__(self) -> None:
-        _set(self, "schema_version", _schema_version("schema_version", self.schema_version))
+        _set(
+            self,
+            "schema_version",
+            _schema_version("schema_version", self.schema_version, LOCK_SCHEMA_VERSION),
+        )
         if not isinstance(self.contract, Contract):
             raise _fail("contract", "must be Contract")
         if not isinstance(self.model_identity, ModelIdentity):
@@ -594,6 +616,13 @@ class PlanLock:
             _sha256("implementation_sha256", self.implementation_sha256),
         )
         _set(self, "sha256", _sha256("sha256", self.sha256))
+        # Engine *support* is a verifier decision (actseal.compatibility); the
+        # record only requires a nonempty identifier so foreign locks decode.
+        _set(
+            self,
+            "replay_engine_version",
+            _str("replay_engine_version", self.replay_engine_version),
+        )
 
 
 @dataclass(frozen=True, slots=True)

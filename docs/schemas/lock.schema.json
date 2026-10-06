@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:lock:2",
+  "title": "Actseal PlanLock document (schema 2)",
+  "description": "The canonical JSON object written to lock.json plus one LF. Field order on the wire is sorted by key; constructor order is documented in docs/stability.md. The seal `sha256` is the canonical hash of the document with only `sha256` omitted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract",
+    "model_identity",
+    "calibration_sha256",
+    "verification_sha256",
+    "calibration_inventory",
+    "verification_inventory",
+    "verification_cases",
+    "fault_inventory",
+    "implementation_sha256",
+    "sha256",
+    "replay_engine_version"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "contract": { "$ref": "#/$defs/Contract" },
+    "model_identity": { "$ref": "#/$defs/ModelIdentity" },
+    "calibration_sha256": { "$ref": "#/$defs/Sha256" },
+    "verification_sha256": { "$ref": "#/$defs/Sha256" },
+    "calibration_inventory": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/CaseRef" }
+    },
+    "verification_inventory": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/CaseRef" }
+    },
+    "verification_cases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/Case" }
+    },
+    "fault_inventory": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/FaultSpec" }
+    },
+    "implementation_sha256": { "$ref": "#/$defs/Sha256" },
+    "sha256": { "$ref": "#/$defs/Sha256" },
+    "replay_engine_version": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "Sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "NonEmpty": { "type": "string", "minLength": 1 },
+    "Option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "description"],
+      "properties": {
+        "label": { "$ref": "#/$defs/NonEmpty" },
+        "description": { "$ref": "#/$defs/NonEmpty" }
+      }
+    },
+    "ChoiceQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question_id", "instructions", "options"],
+      "properties": {
+        "question_id": { "$ref": "#/$defs/NonEmpty" },
+        "instructions": { "$ref": "#/$defs/NonEmpty" },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/Option" }
+        }
+      }
+    },
+    "LockedPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["known_labels", "allowed_labels", "threshold"],
+      "properties": {
+        "known_labels": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/NonEmpty" }
+        },
+        "allowed_labels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/NonEmpty" }
+        },
+        "threshold": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+      }
+    },
+    "GateLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_risk", "min_coverage", "alpha"],
+      "properties": {
+        "max_risk": { "type": "number", "minimum": 0, "maximum": 1 },
+        "min_coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+        "alpha": { "type": "number", "minimum": 1e-6, "exclusiveMaximum": 1 }
+      }
+    },
+    "Contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "name",
+        "question",
+        "policy",
+        "limits",
+        "evidence_scope",
+        "population"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "name": { "$ref": "#/$defs/NonEmpty" },
+        "question": { "$ref": "#/$defs/ChoiceQuestion" },
+        "policy": { "$ref": "#/$defs/LockedPolicy" },
+        "limits": { "$ref": "#/$defs/GateLimits" },
+        "evidence_scope": { "enum": ["demo", "iid"] },
+        "population": { "$ref": "#/$defs/NonEmpty" }
+      }
+    },
+    "ModelIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "model",
+        "revision",
+        "artifact_hashes",
+        "adapter_version",
+        "normalizer_version",
+        "runtime"
+      ],
+      "properties": {
+        "provider": { "enum": ["fixture", "laya"] },
+        "model": { "$ref": "#/$defs/NonEmpty" },
+        "revision": { "$ref": "#/$defs/NonEmpty" },
+        "artifact_hashes": {
+          "type": "object",
+          "propertyNames": { "minLength": 1 },
+          "additionalProperties": { "$ref": "#/$defs/Sha256" }
+        },
+        "adapter_version": { "$ref": "#/$defs/NonEmpty" },
+        "normalizer_version": { "$ref": "#/$defs/NonEmpty" },
+        "runtime": {
+          "type": "object",
+          "propertyNames": { "minLength": 1 },
+          "additionalProperties": { "$ref": "#/$defs/NonEmpty" }
+        }
+      }
+    },
+    "Case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "state", "expected_label"],
+      "properties": {
+        "case_id": { "$ref": "#/$defs/NonEmpty" },
+        "state": { "$ref": "#/$defs/NonEmpty" },
+        "expected_label": { "$ref": "#/$defs/NonEmpty" }
+      }
+    },
+    "CaseRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "sha256"],
+      "properties": {
+        "case_id": { "$ref": "#/$defs/NonEmpty" },
+        "sha256": { "$ref": "#/$defs/Sha256" }
+      }
+    },
+    "FaultSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_id", "kind", "expected_action"],
+      "properties": {
+        "scenario_id": { "$ref": "#/$defs/NonEmpty" },
+        "kind": { "$ref": "#/$defs/NonEmpty" },
+        "expected_action": { "enum": ["ACT", "ABSTAIN", "ESCALATE", "DENY"] }
+      }
+    }
+  }
+}

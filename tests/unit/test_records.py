@@ -156,6 +156,7 @@ def test_constructor_field_order_matches_contract() -> None:
             "fault_inventory",
             "implementation_sha256",
             "sha256",
+            "replay_engine_version",
         ),
         "PolicyDecision": ("action", "choice", "reason", "fallback_used"),
         "DecisionRecord": ("case_id", "capture", "outcome", "decision"),
@@ -489,6 +490,17 @@ BAD_CONSTRUCTIONS: list[tuple[str, Any, str]] = [
     ),
     ("FaultSpec empty kind", lambda: FaultSpec("fault.x", "", "ACT"), "kind"),
     ("Lock version 0", lambda: _replace(make_lock(), schema_version=0), "schema_version"),
+    ("Lock version 1", lambda: _replace(make_lock(), schema_version=1), "schema_version"),
+    (
+        "Lock empty engine",
+        lambda: _replace(make_lock(), replay_engine_version=""),
+        "replay_engine_version",
+    ),
+    (
+        "Lock engine not text",
+        lambda: _replace(make_lock(), replay_engine_version=1),
+        "replay_engine_version",
+    ),
     ("Lock bad hash", lambda: _replace(make_lock(), sha256="deadbeef"), "sha256"),
     (
         "Lock bad implementation hash",

@@ -95,7 +95,8 @@ def test_identical_inputs_produce_identical_locks() -> None:
 
 def test_lock_binds_raw_bytes_inventories_cases_faults_and_implementation() -> None:
     lock = fresh_lock()
-    assert lock.schema_version == 1
+    assert lock.schema_version == 2
+    assert lock.replay_engine_version == "actseal-choice-v1"
     assert lock.contract == make_contract()
     assert lock.model_identity == make_identity()
     assert lock.calibration_sha256 == sha(CALIBRATION.encode())
@@ -124,7 +125,8 @@ def test_independently_specified_digests() -> None:
     assert lock.calibration_inventory[0].sha256 == hashlib.sha256(canonical_case).hexdigest()
     # The seal: canonical JSON of the whole lock minus its own sha256 field.
     expected_wire: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
+        "replay_engine_version": "actseal-choice-v1",
         "contract": {
             "schema_version": 1,
             "name": "support-triage",
@@ -729,8 +731,12 @@ def test_parse_lock_keeps_the_recorded_seal_and_never_reseals() -> None:
     [
         (lambda d: d.update(extra=1), "unknown field"),
         (lambda d: d.pop("fault_inventory"), "missing fields fault_inventory"),
-        (lambda d: d.update(schema_version=2), "unsupported schema version"),
+        (lambda d: d.update(schema_version=3), "unsupported schema version"),
+        # Version 1 with the v1.0 field still present is not a real 0.1.0 document.
+        (lambda d: d.update(schema_version=1), "unsupported schema version"),
         (lambda d: d.update(schema_version=True), "expected integer"),
+        (lambda d: d.update(replay_engine_version=""), "replay_engine_version: must be nonempty"),
+        (lambda d: d.pop("replay_engine_version"), "missing fields replay_engine_version"),
         (lambda d: d.update(sha256="xyz"), "lowercase 64-character SHA256 hex"),
         (lambda d: d.update(verification_cases=[]), "ids must match verification_inventory"),
         (lambda d: d.update(calibration_inventory=[]), "must contain 1..10000 cases"),
@@ -757,7 +763,7 @@ def test_parse_lock_rejects_non_lock_documents(text: str) -> None:
 def test_parse_lock_rejects_duplicate_keys_and_nonfinite_numbers() -> None:
     wire = canonical_json(to_data(fresh_lock())).decode("utf-8")
     with pytest.raises(SchemaError, match="duplicate object key"):
-        parse_lock(wire[:-1] + ',"schema_version":1}')
+        parse_lock(wire[:-1] + ',"schema_version":2}')
     with pytest.raises(SchemaError, match="nonfinite"):
         parse_lock(wire.replace('"threshold":0.9', '"threshold":NaN'))
 
@@ -886,12 +892,13 @@ FORBIDDEN_MODULES = (
 def test_t10_modules_import_only_stdlib_and_t00() -> None:
     package = Path(__file__).resolve().parents[2] / "src" / "actseal"
     allowed = {
+        "actseal.compatibility",  # v1.0 pure replay-compatibility rules used by validate_lock
         "actseal.contract",
         "actseal.errors",
         "actseal.records",
         "actseal.serialization",
     }
-    for name in ("contract", "locking", "policy"):
+    for name in ("compatibility", "contract", "locking", "policy"):
         source = (package / f"{name}.py").read_text(encoding="utf-8")
         for line in source.splitlines():
             stripped = line.strip()
@@ -901,7 +908,7 @@ def test_t10_modules_import_only_stdlib_and_t00() -> None:
             assert not stripped.startswith("import actseal"), (name, line)
     script = (
         "import sys\n"
-        "import actseal.contract, actseal.locking, actseal.policy\n"
+        "import actseal.compatibility, actseal.contract, actseal.locking, actseal.policy\n"
         f"loaded = [m for m in {FORBIDDEN_MODULES!r} if m in sys.modules]\n"
         "assert not loaded, loaded\n"
         "print('ok')\n"

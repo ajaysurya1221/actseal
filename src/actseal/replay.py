@@ -12,17 +12,23 @@ Stages, each ending the replay with an ERROR verdict when it fails:
 1. **Structure.** Directory shape, symlink/regular-file checks, per-file and
    aggregate size ceilings before any content is read, strict manifest
    decoding, manifest self-hash and per-file hashes
-   (``integrity.bundle_io``/``bundle_schema``/``bundle_hash``).
+   (``integrity.bundle_io``/``bundle_schema``/``bundle_hash``). A real
+   actseal 0.1.0 manifest is ``integrity.legacy_schema`` instead of the
+   generic schema reason, so the operator is pointed at the pinned legacy
+   replay path (docs/migration.md).
 2. **Lock decoding.** Strict structural decoding of ``lock.json`` in its exact
-   canonical form (``integrity.lock_schema``). Until this succeeds the ERROR
-   carries ``evidence_scope='demo'`` and a 64-zero ``lock_sha256`` sentinel:
-   an explicitly unknown identity (ADR 0012). From here on every verdict
-   carries the *decoded* scope and seal, never the expected external digest.
+   canonical form (``integrity.lock_schema``; a real schema-1 lock is again
+   ``integrity.legacy_schema``). Until this succeeds the ERROR carries
+   ``evidence_scope='demo'`` and a 64-zero ``lock_sha256`` sentinel: an
+   explicitly unknown identity (ADR 0012). From here on every verdict carries
+   the *decoded* scope and seal, never the expected external digest.
 3. **Identity.** The optional externally trusted lock digest must equal the
    decoded seal (``integrity.expected_lock``); ``validate_lock`` checks the
-   seal, current implementation fingerprint, frozen fault inventory and case
-   coherence (``integrity.lock``); ``validate_inputs`` checks both raw dataset
-   byte hashes, inventories and literal leakage (``integrity.inputs``).
+   seal, replay-engine compatibility (exact running implementation, or a
+   producer/running pair registered for the lock's engine), frozen fault
+   inventory and case coherence (``integrity.lock``); ``validate_inputs``
+   checks both raw dataset byte hashes, inventories and literal leakage
+   (``integrity.inputs``).
 4. **Records.** Strict canonical decoding of records, faults and the stored
    verdict with the frozen row limits (``integrity.records_schema``,
    ``integrity.faults_schema``, ``integrity.verdict_schema``).
@@ -48,6 +54,7 @@ from pathlib import Path
 from typing import Final
 
 from actseal.assessment import REASON_INTEGRITY_PREFIX, assess
+from actseal.compatibility import LegacySchemaError
 from actseal.errors import ActsealError, IntegrityError, SchemaError
 from actseal.evidence import (
     CALIBRATION_FILE,
@@ -78,6 +85,7 @@ __all__ = [
     "REASON_EXPECTED_LOCK",
     "REASON_FAULTS_SCHEMA",
     "REASON_INPUTS",
+    "REASON_LEGACY_SCHEMA",
     "REASON_LOCK",
     "REASON_LOCK_SCHEMA",
     "REASON_RECORDS_SCHEMA",
@@ -92,6 +100,8 @@ REASON_BUNDLE_IO: Final = f"{REASON_INTEGRITY_PREFIX}bundle_io"
 REASON_BUNDLE_SCHEMA: Final = f"{REASON_INTEGRITY_PREFIX}bundle_schema"
 REASON_BUNDLE_HASH: Final = f"{REASON_INTEGRITY_PREFIX}bundle_hash"
 REASON_LOCK_SCHEMA: Final = f"{REASON_INTEGRITY_PREFIX}lock_schema"
+#: A real actseal 0.1.0 (schema 1) manifest or lock: replay it with a pinned 0.1.0.
+REASON_LEGACY_SCHEMA: Final = f"{REASON_INTEGRITY_PREFIX}legacy_schema"
 REASON_EXPECTED_LOCK: Final = f"{REASON_INTEGRITY_PREFIX}expected_lock"
 REASON_LOCK: Final = f"{REASON_INTEGRITY_PREFIX}lock"
 REASON_INPUTS: Final = f"{REASON_INTEGRITY_PREFIX}inputs"
@@ -161,6 +171,8 @@ def _load_files(bundle: Path) -> dict[str, bytes]:
         raise _unknown_error(REASON_BUNDLE_IO) from None
     except IntegrityError:
         raise _unknown_error(REASON_BUNDLE_HASH) from None
+    except LegacySchemaError:
+        raise _unknown_error(REASON_LEGACY_SCHEMA) from None
     except SchemaError:
         raise _unknown_error(REASON_BUNDLE_SCHEMA) from None
 
@@ -176,6 +188,8 @@ def _decode_lock(data: bytes) -> PlanLock:
     """Stage 2: strict structural decoding (seal untouched) of the exact canonical document."""
     try:
         return _parse_canonical_lock(data)
+    except LegacySchemaError:
+        raise _unknown_error(REASON_LEGACY_SCHEMA) from None
     except SchemaError:
         raise _unknown_error(REASON_LOCK_SCHEMA) from None
 
