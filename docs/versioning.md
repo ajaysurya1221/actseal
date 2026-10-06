@@ -104,8 +104,8 @@ willing to treat as equivalent for replay.
 
 Release tooling (`tools/check_release.py`), not the package, emits three JSON
 receipts per release, all at `RELEASE_RECEIPT_SCHEMA_VERSION` 1 and described by
-the strict promotion-profile schemas in `docs/release-schemas/` (indexed from
-the [wire schemas](schemas/README.md#release-receipts-release-tooling-not-the-package)).
+the strict promotion-profile schemas in `docs/schemas/` (see the
+[wire schemas index](schemas/README.md#release-receipts-release-tooling-not-the-package)).
 The build receipt records the tag, the source commit, the originating workflow
 run and the two built distributions. The post-publication receipt records the
 official-PyPI download hashes, the published metadata, the attestation
@@ -114,10 +114,14 @@ binds the package version, the git tag, the source commit, the CI workflow run
 with its build and verification attempts, the immutable Actions artifact ID and
 digest, every distribution filename with its size and SHA-256, the verify-matrix
 result and the embedded post-publication evidence; it is mirrored with
-`SHA256SUMS` to the draft GitHub release. In every receipt `lock_sha256` is the
-SHA-256 of the repository `uv.lock` dependency lockfile at the source commit; it
-is **not** an Actseal decision lock (`lock.json`) and binds the release
-environment, not any evidence bundle. The receipts contain no credentials.
+`SHA256SUMS` to the draft GitHub release. In the build and release receipts
+`lock_sha256` is the SHA-256 of the repository `uv.lock` dependency lockfile at
+the source commit; it is **not** an Actseal decision lock (`lock.json`) and
+binds the release environment, not any evidence bundle. The post-publication
+receipt has no such field. The receipts contain no credentials, and neither
+they nor `SHA256SUMS` prove on their own that CI ran: when the pipeline
+succeeds, each job compares the distribution hashes against the build
+checksums and the receipts record those comparisons.
 Their attestation fields record that PEP 740 attestation presence, the trusted
 publisher identity and the statement subjects were inspected; they do not claim
 cryptographic verification. Unknown fields are rejected at every level, so these

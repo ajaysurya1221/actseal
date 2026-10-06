@@ -1,6 +1,6 @@
 """Published release-receipt schemas agree with the receipts the release helper actually writes.
 
-The three Draft 2020-12 schemas under ``docs/release-schemas`` describe the
+The three release Draft 2020-12 schemas under ``docs/schemas`` describe the
 promotion profile of the build, post-publication and release receipts. They are
 validated here with the dev-only ``jsonschema`` validator over a local,
 non-fetching registry, against documents produced by ``tools/check_release.py``
@@ -44,7 +44,7 @@ from release_support import (
     write_sums,
 )
 
-SCHEMAS = ROOT / "docs" / "release-schemas"
+SCHEMAS = ROOT / "docs" / "schemas"
 SCHEMA_FILES = (
     "build-receipt.schema.json",
     "postpublish-receipt.schema.json",
@@ -146,9 +146,10 @@ def test_cross_schema_references_resolve_locally_and_unknown_ones_fail() -> None
 def test_schema_index_lists_every_release_schema() -> None:
     readme = (ROOT / "docs" / "schemas" / "README.md").read_text(encoding="utf-8")
     for name in SCHEMA_FILES:
-        assert f"[{name}](../release-schemas/{name})" in readme, name
+        assert f"[{name}]({name})" in readme, name
+        assert (SCHEMAS / name).is_file(), name
     assert "uv.lock" in readme
-    assert sorted(path.name for path in SCHEMAS.iterdir()) == sorted(SCHEMA_FILES)
+    assert "no cryptographic signature verification is claimed" in readme
 
 
 # --------------------------------------------------------------------------- #
@@ -480,18 +481,54 @@ def test_cross_field_rules_stay_with_the_helper(
 
 
 def test_zero_major_metadata_may_keep_alpha_but_1x_requires_stable(
-    dist: Path, tmp_path: Path
+    tool: types.ModuleType, dist: Path, tmp_path: Path
 ) -> None:
     files = {name: dist / name for name in names(VERSION)}
     document = postpublish_document(VERSION, files)
     at(document, ("published_metadata",))["classifiers"] = [ALPHA]
     invalid("postpublish-receipt.schema.json", document)
     legacy_files = write_fake_distributions(tmp_path / "dist-0.9.0", "0.9.0")
+    legacy_inventory = tool.inspect_distributions(tmp_path / "dist-0.9.0", "0.9.0")
     legacy = postpublish_document("0.9.0", legacy_files)
-    at(legacy, ("published_metadata",))["classifiers"] = [ALPHA]
-    valid("postpublish-receipt.schema.json", legacy)
-    at(legacy, ("published_metadata",))["classifiers"] = []
-    invalid("postpublish-receipt.schema.json", legacy)
+    for classifiers in ([ALPHA], [], [ALPHA, ALPHA]):
+        at(legacy, ("published_metadata",))["classifiers"] = classifiers
+        # Schema and accepted helper agree: 0.x may be Alpha, empty or repeated.
+        valid("postpublish-receipt.schema.json", legacy)
+        tool.validate_postpublish_receipt(legacy, "0.9.0", legacy_inventory, official_index=True)
+
+
+def test_duplicate_classifiers_emitted_by_the_helper_validate(
+    tool: types.ModuleType, dist: Path, tmp_path: Path
+) -> None:
+    """REVIEW 09R5 finding 1: the helper records PyPI's classifier list as found."""
+    files = {name: dist / name for name in names(VERSION)}
+    post = postpublish_document(VERSION, files)
+    at(post, ("published_metadata",))["classifiers"] = [STABLE, STABLE, "Topic :: Utilities"]
+    tool.validate_postpublish_receipt(
+        post, VERSION, tool.inspect_distributions(dist, VERSION), official_index=True
+    )
+    valid("postpublish-receipt.schema.json", post)
+    sums = write_sums(tmp_path / "SHA256SUMS", files)
+    out = tmp_path / "release-receipt.json"
+    emitted = tool.release_receipt(
+        version=VERSION,
+        dist=dist,
+        sums_path=sums,
+        build_receipt_path=write_json(
+            tmp_path / "build.json", build_receipt_document(VERSION, files)
+        ),
+        postpublish_path=write_json(tmp_path / "post.json", post),
+        artifact_id="987654321",
+        artifact_digest="b" * 64,
+        run_id="42",
+        run_attempt="1",
+        verify_result="success",
+        out=out,
+    )
+    valid("release-receipt.schema.json", emitted)
+    valid("release-receipt.schema.json", tool._read_json(out, "release receipt"))
+    classifiers = emitted["verification"]["postpublish"]["published_metadata"]["classifiers"]
+    assert classifiers == [STABLE, STABLE, "Topic :: Utilities"]
 
 
 def test_ambiguous_json_never_reaches_the_schemas(tool: types.ModuleType, tmp_path: Path) -> None:

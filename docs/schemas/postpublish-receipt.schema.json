@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:actseal:schema:postpublish-receipt:1",
   "title": "Actseal post-publication receipt (schema 1, promotion profile)",
-  "description": "postpublish-receipt.json written by `tools/check_release.py postpublish` after installing the published version from the official PyPI index in the pinned clean container. The promotion profile requires the official index and file host, non-yanked metadata, both distributions with provenance present, and the exact demo/replay smoke outcomes (demo 0 with bad BLOCK and fixed PASS, fixed replay 0, bad replay 1). A local or test-index run (for example a `file://` index or a run that allowed missing attestations) is inspection-only and never validates. The provenance fields record that PEP 740 attestation presence, trusted-publisher identity and statement subjects were inspected; they do not claim cryptographic verification. Unknown fields are rejected everywhere; the helper additionally enforces exact integer counts, inventory equality with the verified distributions and the Production/Stable classifier for 1.x.",
+  "description": "postpublish-receipt.json written by `tools/check_release.py postpublish` after installing the published version from the official PyPI index in the pinned clean container. The promotion profile requires the official index and file host, non-yanked metadata, both distributions with provenance present, and the exact demo/replay smoke outcomes (demo 0 with bad BLOCK and fixed PASS, fixed replay 0, bad replay 1). A local or test-index run (for example a `file://` index or a run that allowed missing attestations) is inspection-only and never validates. The provenance fields record that PEP 740 attestation presence, trusted-publisher identity and statement subjects were inspected; they do not claim cryptographic verification. This receipt carries no lock_sha256; the uv.lock hash lives in the build and release receipts. Unknown fields are rejected everywhere; the helper additionally enforces exact integer counts, inventory equality with the verified distributions and the Production/Stable classifier for 1.x.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -57,9 +57,8 @@
         "version": { "$ref": "#/$defs/Version" },
         "summary": { "type": "string", "minLength": 1 },
         "classifiers": {
+          "description": "The published classifier list as PyPI reports it, sorted; duplicates and, for 0.x releases, an empty list are recorded as found. 1.x releases must contain the Production/Stable classifier (see the if/then at the receipt root).",
           "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
           "items": { "type": "string", "minLength": 1 }
         },
         "yanked": { "const": false }
@@ -149,7 +148,7 @@
       }
     },
     "EmbeddedPostpublish": {
-      "description": "The post-publication evidence as embedded in the release receipt: the same body without the receipt-level schema_version, kind, version and ok fields, which the release receipt carries itself.",
+      "description": "The post-publication evidence as embedded in the release receipt: the same body without the standalone receipt's schema_version, kind, version and ok fields. The release receipt carries its own schema_version, kind and version and has no ok field; the post-publication receipt has no lock_sha256.",
       "type": "object",
       "additionalProperties": false,
       "required": ["index", "published_metadata", "files", "checks", "note"],

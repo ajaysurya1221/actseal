@@ -41,7 +41,7 @@ bytes; missing receipts are never promoted.
 
 **Strict receipts.** The build, post-publication and release receipts are
 schema 1 documents with exact required field sets at every object level,
-published as Draft 2020-12 schemas in `docs/release-schemas/`. Promotion decodes
+published as Draft 2020-12 schemas in `docs/schemas/`. Promotion decodes
 receipts rejecting duplicate keys and nonfinite numbers, requires exact
 integers, positive ASCII decimal identifiers and positive sizes, and enforces
 the cross-field rules the schemas cannot express: version/tag/ref/commit
@@ -50,9 +50,11 @@ the build receipt, the post-publication receipt, the artifact bytes and
 `SHA256SUMS`, workflow URLs derived from the fixed repository, run and respective
 attempts, build attempt not later than verification attempt, the official index
 and file host, the expected trusted-publisher identity and the literal notes.
-`lock_sha256` is the SHA-256 of `uv.lock` at the source commit, not an Actseal
-decision lock. Inspection-only receipts (rehearsal builds, local indexes,
-tolerated missing attestations) never match the promotion profile.
+In the build and release receipts `lock_sha256` is the SHA-256 of `uv.lock` at
+the source commit, not an Actseal decision lock; the post-publication receipt
+has no such field, and the release receipt has no `ok` field. Inspection-only
+receipts (rehearsal builds, local indexes, tolerated missing attestations)
+never match the promotion profile.
 
 **Attestation inspection is not verification.** The helper decodes each
 attestation's in-toto statement and requires the PyPI Publish predicate type
@@ -63,14 +65,17 @@ verified; the receipts say so verbatim.
 
 ## Consequences
 
-The bytes PyPI serves, the bytes on the GitHub release and the bytes the verify
-matrix tested are provably the same artifact. A release receipt can be checked
-offline against its schema and against `SHA256SUMS`; a defective or ambiguous
-receipt stops the pipeline before any GitHub mutation rather than being
-repaired. Independent cryptographic verification of attestations remains a
-separate, unclaimed step. The release schemas live beside, not inside,
-`docs/schemas/`, because that directory is enumerated exactly by the product
-schema tests as the formats the package itself reads and writes.
+When the pipeline succeeds, every job has compared the distribution hashes it
+handled against the build checksums, so the bytes PyPI serves, the bytes on the
+GitHub release and the bytes the verify matrix tested were checked to be the
+same artifact; the receipts record those comparisons and do not by themselves
+prove that the workflow ran. A release receipt can be checked offline against
+its schema and against `SHA256SUMS`; a defective or ambiguous receipt stops the
+pipeline before any GitHub mutation rather than being repaired. Independent
+cryptographic verification of attestations remains a separate, unclaimed step.
+The release schemas sit in `docs/schemas/` beside the product schemas under
+amendment V1-016, which extends the exact inventory test without altering any
+product schema check.
 
 ## Evidence and validation
 
