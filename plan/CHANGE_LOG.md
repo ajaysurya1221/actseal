@@ -27,3 +27,11 @@ label; generic JSON parsing is bounded at 128 MiB with 1 MiB JSONL rows and a
 deferred. Added fault_capture signature and exact manifest keys. T00 was already
 running against its original packet: its acceptance requires the revised parsing
 limit through a follow-up. T10/T20/T30/T40 receive revised contracts at dispatch.
+
+Laya capture now explicitly preserves the full native response envelope instead
+of extracting its answer in the adapter. Pure normalization can therefore replay
+question-ID and native truncation/option-collapse checks. The exact usage schema
+was verified against Laya0.3.28 source and a fresh offline smoke. The canonical
+fault generator wraps Laya answers in a synthetic zero-usage envelope. No provider
+interface or product scope changes. Added explicit record-local normalized mass,
+provider-domain, overflow and verdict-count invariants from the T00 static review.

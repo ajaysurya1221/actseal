@@ -46,6 +46,12 @@ No authentication blocker remains. Repository initialized; T00 dispatched from
 independently review T00 when its REPORT arrives. Raw local dispatch receipts are
 ignored under plan/dispatch; publish only reviewed, credential-free REPORTs.
 
+Public repository created: https://github.com/ajaysurya1221/actseal. Initial docs
+are published. No product release or green product CI is claimed. Claude's
+permission layer denied creating the sensitive .pre-commit-config.yaml in its
+non-interactive session; explicit approval for the three proposed local hooks is
+pending with the user. Other product work continues.
+
 ## Budget and scope
 
 Measured preflight API spend: $0. No Jev calls. No mandatory hosting. Subscription

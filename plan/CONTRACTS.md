@@ -51,6 +51,12 @@ revision (a provider-defined nonempty string). Tuple key maps reject duplicates;
 artifact/runtime pairs serialize sorted by key. Probability pairs follow question
 option order. Unknown object fields and enum values are schema errors.
 
+ChoiceAnswer has 2..16 unique probability labels, contains its choice, and has
+normalized total mass within 1e-12 of 1. selected_probability equals the recorded
+probability of choice. Numeric conversion overflow is a SchemaError. ModelIdentity
+rejects providers outside fixture/laya. Non-ERROR verdicts require total>0; PASS
+also requires accepted>0. ERROR has zero counts and [0,1] intervals.
+
 `CapturedOutcome` has exactly one of body_json or failure_code. A raw body may be
 malformed JSON: that is valid recorded provider-failure evidence, not damaged
 bundle structure. Headers, credentials and arbitrary exception text are excluded.
@@ -194,10 +200,28 @@ file_hash),), adapter_version=1, normalizer_version=1, runtime=(). Unknown or du
 case IDs are errors; a missing requested case is `ProviderSetupError`, not a skip.
 Captured request hash is canonical serialized DecisionRequest SHA256.
 
-Response body format for both current adapters:
+Fixture response body format:
 `{type:'choice', choice:str, probabilities:{label:number,...}, confidence?:number,
 answer_confidence?:number, action?:object}`. Unknown envelope fields are ignored
 only when explicitly documented in docs/providers.md; no guessed schema repair.
+
+Laya body_json preserves the ENTIRE native predict response object: model, answers
+and usage, serialized without dropping fields. This is the native Python response
+object, not HTTP bytes. After observed identity validation, normalize dispatches
+by expected_identity.provider. Require model='laya-rl-agent' and exactly the
+requested question_id in answers, then normalize that inner answer. The generic
+model marker is only a wire-schema check, never checkpoint identity. Required
+usage fields are input_tokens, output_tokens, state_tokens, state_tokens_dropped
+(nonnegative ints, never bools), truncated (bool), truncated_questions (list[str]).
+Positive state_tokens_dropped, true truncated or nonempty truncated_questions ->
+input_too_long. Optional usage.options is the native collapsed-options mapping;
+require a dict of question IDs to {total:int,distinct:int,tokens_per_option:int|None}
+with nonnegative counts (no bools). Any nonempty options mapping -> input_too_long.
+Malformed/missing required fields -> malformed_response. Unknown outer/usage/answer
+fields are rejected unless explicitly listed as ignored in providers.md. Keep
+pre-inference full token-packing validation: native usage alone misses instruction
+clipping. Fixture has no native envelope or usage requirement.
+
 Unknown choice -> ProviderFailure(unknown_choice). Otherwise require exactly all
 declared probability keys, finite values in [0,1], and positive sum. Fixture sum
 tolerance is 1e-12; Laya tolerance is `0.00005 * option_count + 1e-12`. Reject beyond
@@ -254,6 +278,12 @@ only revision to original revision + ':fault'. unknown_choice changes choice to
 '__actseal_unknown__', appending '_' until outside known labels. low_confidence
 keeps choice as the first allowed label, sets its mass to 0.0 and the first
 different known label's mass to 1.0. These faults intentionally use exact sums.
+For fixture serialize that answer directly. For Laya wrap it in
+{model:'laya-rl-agent',answers:{question_id:answer},usage:{input_tokens:0,
+output_tokens:0,state_tokens:0,state_tokens_dropped:0,truncated:false,
+truncated_questions:[]}} before serialization. Zero usage is synthetic fault data,
+not measured inference. Transport failures and the literal malformed body remain
+unchanged. The native full envelope is therefore checked in the fault campaign.
 Assessment requires exact request/capture equality with this generator before
 re-normalizing; a swapped scenario is ERROR. Only the canonical identity mismatch
 is exempt from equal observed/locked identity. A correctly reconstructed fault

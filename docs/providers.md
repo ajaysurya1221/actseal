@@ -44,7 +44,11 @@ Record the loaded checkpoint revision, artifact hashes, package versions, device
 
 ## Exact output and normalization
 
-Native output is a dictionary with `model`, `answers`, and `usage`. Answers are keyed by the caller's question id. The smoke returned this answer identically online and in a fresh offline process:
+Native output is a dictionary with `model`, `answers`, and `usage`. Answers are keyed by the caller's question id. For Laya, `CapturedOutcome.body_json` must preserve the **complete native response dictionary**, serialized without removing or repairing fields. The adapter must not extract only `answers[question_id]`: doing so would discard the evidence needed to replay answer-id and truncation checks. The fixture adapter retains its separately documented inner-answer format.
+
+The pure normalizer checks the observed `CapturedOutcome.identity` against the expected identity before interpreting the body, then dispatches on the expected provider. For Laya it validates the envelope's generic model marker `laya-rl-agent`, requires exactly the requested answer id, and validates usage before extracting the answer internally. The marker is a wire-shape check, never checkpoint identity. Replay performs these same checks without importing Laya, Torch, a tokenizer, or an adapter. Rejected bodies remain captured in full. Provider-shaped synthetic fault bodies follow the canonical generator in [CONTRACTS](../plan/CONTRACTS.md).
+
+The smoke returned this inner answer identically online and in a fresh offline process:
 
 ```json
 {
@@ -62,6 +66,23 @@ Native output is a dictionary with `model`, `answers`, and `usage`. Answers are 
 ```
 
 The probabilities sum to **1.0001** because Laya serializes rounded values. This is an observed provider representation, not a malformed distribution to reject under an exact-sum check.
+
+A separate offline rerun on 6 October 2026 captured the entire native response and verified this exact `usage` object:
+
+```json
+{
+  "input_tokens": 59,
+  "output_tokens": 0,
+  "state_tokens": 15,
+  "state_tokens_dropped": 0,
+  "truncated": false,
+  "truncated_questions": []
+}
+```
+
+The first four fields are integers, `truncated` is a boolean, and `truncated_questions` is a list of question-id strings. Their upstream construction is [agent.py lines 1548-1557](https://github.com/NandhaKishorM/laya/blob/v0.3.28/laya/agent.py#L1548); lines 1567-1571 construct the full envelope. Native usage optionally includes `options`, a **mapping keyed by question id**. Its values contain `total: int`, `distinct: int`, and `tokens_per_option: int | None`. [collapsed_options](https://github.com/NandhaKishorM/laya/blob/v0.3.28/laya/common.py#L486) includes a question only when `options_distinct < options`; agent.py lines 1564-1566 omit `usage.options` entirely when the mapping is empty. The smoke emitted no `options` key. These diagnostics are separate from the answer's optional `action` object.
+
+Pure normalization requires the six ordinary usage fields and validates their types; counts must be nonnegative integers excluding booleans. A missing or malformed required field is a malformed response. Reported dropped tokens, true truncation, nonempty truncated question ids, or well-formed nonempty collapsed-option diagnostics prevent answer acceptance. If `options` is present, validate its mapping and per-question fields rather than treating arbitrary truthy data as a valid diagnostic. The frozen contract determines the resulting failure code. These checks supplement preflight: usage cannot prove that instruction and option text survived their earlier token caps.
 
 1. Require exactly the requested answer id, `type="choice"`, the frozen label inventory, a supported selected label, and finite numeric probabilities in `[0, 1]`. Booleans are not probabilities. Validate loaded identity separately.
 2. For this pinned Laya adapter, accept only positive totals satisfying `abs(sum(p) - 1) <= 0.00005 * number_of_options + 1e-12`. This tolerance is specific to four-decimal serialization. Do not reuse it for arbitrary providers.
