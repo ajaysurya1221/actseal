@@ -28,7 +28,7 @@ Codex is the sole writer of this state and REVIEW records. Executors write their
 | 01 | Codex | REVISE: 2300 passed, 2 process-contamination failures; see Task 01R |
 | 02 | Claude A | Held for 01R and independent full-baseline ACCEPT |
 | 03–08 | Claude B/C/D | Waiting for frozen Task 02 contracts and specified dependencies |
-| 09 | Codex | Asset dependency prerequisite in codex/v1-09-assets; review/CI pending |
+| 09 | Codex | Asset dependency and exact receipt formatter fix ACCEPT in PR #9; updated hosted CI pending |
 | 10 | Claude V | Ready after assets dependency glue; independent of baseline repair |
 | 11–18 | Claude V | Waiting for their specified dependencies |
 | 19–22 | Claude A/D and Codex | Waiting for integration/release gates |
@@ -39,4 +39,4 @@ Task 00 ACCEPT at b2332bff1dfb92bc63408e98ef1e699b6c6329d8. All 2302 baseline te
 
 ## Next action
 
-Prepare manual Claude Task 01R for the baseline repair and Task 10 for visuals after the optional authoring dependency is reviewed. Do not dispatch Task 02 until the baseline is ACCEPT. Do not launch Claude or substitute another product implementer.
+Manual Claude Task 01R is ready in the baseline worktree. Task 10 dispatch is prepared; create its worktree after PR #9 has green CI and merges. Do not dispatch Task 02 until the baseline is ACCEPT. Do not launch Claude or substitute another product implementer.

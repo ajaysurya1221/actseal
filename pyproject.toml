@@ -157,6 +157,8 @@ max-branches = 20
 max-statements = 60
 
 [tool.ruff.format]
+# Verbatim approval receipt: formatting its code fences would alter approved text.
+exclude = ["plan/v1/PLAN.md"]
 quote-style = "double"
 docstring-code-format = true
 
