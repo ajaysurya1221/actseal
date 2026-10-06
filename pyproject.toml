@@ -42,6 +42,9 @@ laya = [
 ]
 
 [dependency-groups]
+assets = [
+  "fonttools==4.66.1",
+]
 dev = [
   "ruff==0.16.10",
   "mypy==2.4.0",
