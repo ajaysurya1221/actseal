@@ -1,0 +1,23 @@
+schema_version = 1
+name = "action-gate-triage"
+evidence_scope = "demo"
+population = "Authored support-routing example for the application action gate; demo evidence only, no deployment, population or calibration claim"
+
+[question]
+question_id = "queue"
+instructions = "Select the queue that should handle this ticket."
+options = [
+  {label = "billing", description = "Payments, invoices and refunds"},
+  {label = "technical", description = "Errors, outages and technical support"},
+  {label = "sales", description = "Purchasing, quotes and plan questions"},
+  {label = "other", description = "Anything else; a person chooses the queue"},
+]
+
+[policy]
+allowed_labels = ["billing", "technical", "sales"]
+threshold = 0.90
+
+[risk]
+max_risk = 0.05
+min_coverage = 0.50
+alpha = 0.05
