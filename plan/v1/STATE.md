@@ -4,7 +4,39 @@ Codex owns state/plans/REVIEWs. ClaudeCode claude-fable-5-1,efforthigh writes
 product code/tests/general docs/visuals. Reports are claims until independently
 reviewed. Normal permissions/account/billing remain; denials stay binding.
 
-## Current checkpoint and next action
+## Latest release checkpoint — 7 October, approximately15:31IST
+
+v1.0.0 annotated tag is pushed onmain04c10d3fec60727310cf65acf6528f13264a26d4.
+PR47 merged afterconsolidatedACCEPT on4d7966f and10greenhostedchecks
+37602503653/37602539917 plusfullrehearsal37602547044SUCCESS. Main04tree equals
+reviewed4dtree byteforbyte; bareclean candidatecheckerexit0. MainCI37603576993
+alsoSUCCESS. Pre-tag decision is reviews/20-pretag.md; source/evidence unchanged.
+
+Taggedrelease37603727302: build,assets andallfour exactartifactplatformjobs
+SUCCESS. **publish jobWAITING onhumanpypiapproval**. Ajay notifiedinchat and
+askedtoopen https://github.com/ajaysurya1221/actseal/actions/runs/37603727302
+→Reviewdeployments→pypi→Approveanddeploy. Neverapprove/remove thisgateourselves.
+NoPyPI1.0upload yet atthischeckpoint; donotclaimreleasecomplete.
+
+Taggedwheel SHA4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf
+(101900bytes); sdistSHAaa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6
+(2054855bytes). Distributionartifact11474201373; metadataartifact11474031865.
+These are built/taggedchecksums, notyet publicPyPIreceipts. Metadata savedprivate
+under/tmp/actseal-v1-orchestration/release-37603727302/metadata.
+
+Afterhumanapproval: verifyofficialPyPIcontainer/results/attestations/hashes,
+downloadactualpublicverifiedwheel, thenresume SAMEClaude14session forrealcapture
+frompreparedbranchclaude/v1-14-published-recording at04. Rawcaptureparentreview
+precedesinventory/mediaactivation. ThenClaude21 SAMEdocumentation session on
+claude/v1-21-release-receipts produces finalreport/notes/READMEdemo/launchdraft.
+Bothworktreesclean/prepared, no postpublicationClaude taskstarted. Private
+active.json hasexactpaths/sessions;14packettemplate is NOT dispatched andneeds
+actualpostpublicationinputs. Rootnowcodex/v1-postpublication-review; tagimmutable.
+
+The following checkpoint is preserved aspre-tag context; thissection supersedes
+its current/nextaction descriptions. No re-run ofsupersededcuts/blockedJev.
+
+## Earlier checkpoint and next action
 
 7October2026 approximately15:06IST. Main277d729c192a7e41ffc4432e5943e74cd4a87c35
 merged PR46 after independentintegrationACCEPT and all10exact-head checks on
