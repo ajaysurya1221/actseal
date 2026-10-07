@@ -6,7 +6,7 @@ Codex owns this state, plans and REVIEWs. Claude Code Fable5.1/high authors prod
 
 Approved PLAN SHA256: `bb3538db868f929c1f779dcbcd105936f521acba51fbfe7c08988fedcd0fdcaa`. Decisions1A/2A/3A; original approval2026-10-06T16:04:49.582Z. Human authorized autonomous Claude CLI while AFK (V1-005), then explicitly approved all five scoped requests on7October (V1-029): pinned official fonts/tools; cached native/mutation checks and actual visual previews; example tests/temp files; placeholder-only `.env.example`; read-only public Banking77 cache. Those five approval blockers are resolved. Normal permissions/hooks remain. Those five requests did not include actual `.env` or credential access. Later V1-041 separately authorized narrow JEV_API_KEY loading, but effective harness denials still block it; no key access occurred.
 
-All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; static P1/social/recording procedure15:59; optional cut17:59; publication23:59. Mandatory failures stop publication. No model/billing substitution, threshold tuning, resealing or weakened acceptance. Core remains zero third-party runtime dependencies.
+All deadlines are7October2026, Asia/Kolkata. The14:00 Jev-cut trigger is superseded by the human inV1-049; retain the reviewed adapter. Static P1/social/recording procedure15:59; optional cut17:59; publication23:59. Mandatory failures stop publication. No model/billing substitution, threshold tuning, resealing or weakened acceptance. Core remains zero third-party runtime dependencies.
 
 ## Current constraint and next action
 
@@ -18,14 +18,13 @@ the isolated cut branch; never treat that dirty checkout as the candidate.
 The immutable candidate5e7931a and its original branch remain intact.
 PR45 records activation plus the superseding human decision; no cut merges.
 
-1. **Task13 blocked:** the human added both exact merge Bash rules; Codex
-   fixed only one missing JSON comma without changing a permission entry.
-   The same session's fourth attempt used a merge with an output pipe and
-   was denied Auto-Mode Bypass. Report6ba49ae is preserved; its claimed cd
-   prefix was absent from the raw stream and is corrected in the review.
-   Rule mismatch is an unverified hypothesis. No merge or architecture
-   output exists. A concrete manual Terminal request is pending with the
-   user. No automated retry or alternate executor/command route is allowed.
+1. **Task13 unblocked by human action:** both manual merges are complete,
+   independently verified at head05eca93e6623c181927a53100114b85d17459968.
+   First mergebb35cfa integrates7820dba; second05eca93 integrates1fd9d08.
+   Checkout is clean and accepted hero/workflow/social bytes match7820dba.
+   Continue only the owned architecture generation/tests; no merge retry.
+   Four earlier denial receipts remain historical. No actual output yet.
+
 2. **Task06 unstarted/blocked:** V1-041 authorized narrowly loading the key
    for the already reviewed audit; later normal resumptions were denied by
    the actual harness. No key was read, no launcher/--execute ran, no journal
@@ -74,7 +73,7 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 | 10 | Toolchain ACCEPT030ef840, merged6ad1e91. |
 | 11 | Actual hero/font/OFL bytes independently accepted and preserved in combinedPR31, merged7820dba after8 green checks. IsolatedPR25 closed as superseded; source history retained. Final README blind test remains. |
 | 12 | ACCEPTf712dae after actual offline pixel review and regeneration. PR22 merged227c7da. No browser workaround. |
-| 13 | Originalsource2e2a7b2 scoped ACCEPT; completion blocked after fourth effective harness denial at6ba49ae despite actual human-added rules. Manual Terminal request pending. No merge or output generation. |
+| 13 | Human manually completed both prerequisite merges; parent verified cleanhead05eca93, ancestry and unchanged accepted assets. Resume owned architecture generation only; prior denials preserved. No final output ACCEPT yet. |
 | 14 | Procedure/helper11a31fc scoped ACCEPT/greenPR30; standalone renderer a47a320 scoped ACCEPT after all bounded repairs, parent425visual+103independentfocused checks. Fulltask pending genuine PyPI cast/GIF, provenance, rendering and activation. |
 | 15 | ACCEPTfcdcfe4;283 parent+independent visual tests,2,958 parent core tests,types/hooks,actualpixels/regeneration and8 hosted checks pass. PR31 merged7820dba. Social1280x640 exists; user upload not done. |
 | 16–18 | Optional P2, only after mandatory P1 acceptance; not dispatched. |

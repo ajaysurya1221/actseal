@@ -430,3 +430,19 @@ The14:00 heartbeat must observe this human override and cancelled task state;
 it must not dispatch a duplicate removal or live audit. Static P1, optional
 17:59cut and23:59publication timing remain as previously approved unless the
 human changes them. Continue accepted-scope completion, not speculative ideas.
+
+## V1-050 — Human completed both Task13 prerequisite merges
+
+The human supplied terminal output showing both exact merges completed via
+ort. Codex independently verified cleanhead05eca93e6623c181927a53100114b85d17459968,
+first mergebb35cfa075fe74fa0c6d2407820fe02d2b9e3925 with7820dba and second
+merge05eca93 with1fd9d08. Both target commits are ancestors; accepted hero,
+how-it-works and social outputs are byte-identical to7820dba. No tool retried
+the denied merges. Preserve the earlier failed attempts and the human receipt.
+
+Resume the existing Task13 Fable5.1/high terminal session for only its V1-036
+owned architecture generation, tests and additive REPORT. Do not execute any
+merge command. The actual prerequisite state changed through human action;
+this is not permission bypass or an alternate automated integration route.
+Jev remains explicit and experimental per V1-049. All original quality, pixel,
+regeneration, hosted CI and independent acceptance gates remain.
