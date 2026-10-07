@@ -10,7 +10,7 @@ All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; s
 
 ## Current constraint and next action
 
-Claude sessions hit the Fable `seven_day_overage_included` limit. The returned reset is **10:30 IST today**, epoch1791349200; overage is organization-disabled, `isUsingOverage=false`. Do not retry before reset or substitute a model/account/API billing path. Both sessions are terminal; preserve partial work and resume the same sessions after reset.
+Claude sessions hit the Fable `seven_day_overage_included` limit. The returned reset is **10:30 IST today**, epoch1791349200; overage is organization-disabled, `isUsingOverage=false`. Do not retry before reset or substitute a model/account/API billing path. Both sessions are terminal; preserve partial work and resume the same sessions after reset. A one-time thread heartbeat `resume-actseal-after-fable-reset` is scheduled for10:30IST; do not create a duplicate.
 
 1. Resume Task15 session315ec8a1-beba-47fb-8913-1d275a0629ae with `/tmp/actseal-v1-orchestration/15-resvg-completion.prompt.md`: independently verified naming-only resvg mac URL repair, then social PNG generation/review. No repair was executed before the quota rejection.
 2. Resume Task06 sessiona344fc86-fb34-49d7-8e28-8b97772d2713, incorporating `reviews/06-draft-preregistration.md` before completing the offline benchmark. No live calls until concrete preregistration review and separate dispatch.
@@ -30,9 +30,9 @@ Claude sessions hit the Fable `seven_day_overage_included` limit. The returned r
 | 06 | Quota-interrupted offline draft has3 untracked benchmark source files; no tests/accepted protocol/live calls. Static P1 binding finding recorded. Prior stopped scratch script preserved and not executed. |
 | 07 | Exact-source branch277d8e2 independently passes57 tests, command, lint/types/hooks. PR35 push CI passes; merge-preview37566923811 fails7 archive compatibility tests after stats source change. Task19 must repair integration. |
 | 08 | General docs/ADRs scoped ACCEPTeb21e87, PR26 green. README/P1/example/release notes remain. |
-| 09 | CI provisioningbdedc1e and architecture-output gated3413a4 independently ACCEPT; PR18 updated. Release branch synced reviewed mainbaecd26;8acbf38 explicitly includes the mutation helper in the sdist, with54 parent tests and1 independent real-packaging test passing. Full rehearsal/candidate metadata/artifacts still pending. |
+| 09 | CI provisioningbdedc1e and architecture-output gated3413a4 independently ACCEPT; PR18 updated. Release branch synced reviewed mainbaecd26;8acbf38 explicitly includes the mutation helper in the sdist, with54 parent tests and1 independent real-packaging test passing. Ten exact-head hosted jobs at8acbf38 passed. Full rehearsal/candidate metadata/artifacts still pending; the current branch lacks final README fixes and all13 required static assets, so its release rehearsal would stop before building. |
 | 10 | Toolchain ACCEPT030ef840, merged6ad1e91. |
-| 11 | Claude authored real fonts/OFL, four hero SVGs and report at7bb32f4. Independent pixels PASS in both themes/layouts. Task11-only branch736d912 preserves those bytes,226 visual tests/hooks pass; PR25 CI pending. |
+| 11 | Claude authored real fonts/OFL, four hero SVGs and report at7bb32f4. Independent pixels PASS in both themes/layouts. Task11-only branch736d912 preserves those bytes,226 visual tests/hooks and four hosted push jobs pass; PR25 conflicts with merged Task12. V1-030 assigns the two shared-file resolutions to Claude15 on the original social branch, preserving both test sets. |
 | 12 | ACCEPTf712dae after actual offline pixel review and regeneration. PR22 merged227c7da. No browser workaround. |
 | 13 | Source2e2a7b2 scoped ACCEPT,286 parent/50 independent tests. Final provider mapping, registered/generated SVGs and final rendering remain; draft pixels passed independent review in all four variants (reviews/13-draft-pixels.md), without final acceptance. |
 | 14 | Recording preparation11a31fc scoped ACCEPT, PR30 green. Genuine v1 PyPI cast/GIF follows publication under Decision2. |
@@ -42,7 +42,7 @@ Claude sessions hit the Fable `seven_day_overage_included` limit. The returned r
 
 ## Branches, processes and receipts
 
-Root checkpoint work is on `codex/v1-checkpoint-13`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
+Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). The next planning-only amendment is on `codex/v1-assets-integration-contract`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
 
 - Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, original social branch preserved at7bb32f4. No source/manifest repair after quota rejection.
 - Reused former baseline worktree: Task03 branch preserved. Now Task11-only completion branch736d912, cherry-picking Claude commits461f9ee/db56f36/7bb32f4 onto5f3fee5; files byte-identical. This isolates finished hero assets from unfinished social registration.
