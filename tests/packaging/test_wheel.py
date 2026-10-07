@@ -43,7 +43,7 @@ pytestmark = pytest.mark.packaging
 
 ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES = ROOT / "examples" / "support_triage"
-#: Reviewed two-entry registry (V1-037); wheel and sdist must ship it byte for byte.
+#: Reviewed three-entry registry (V1-037, V1-055); wheel and sdist must ship it byte for byte.
 REGISTRY = ROOT / "src" / "actseal" / "compatibility_registry.json"
 #: Retained action-gate archive produced by the approved original producer.
 ARCHIVE_EVIDENCE = ROOT / "examples" / "action_gate" / "recorded" / "a5fe090202f7" / "evidence"
@@ -263,7 +263,7 @@ def test_installed_fingerprint_equals_the_checkout_fingerprint(venv: Path, outsi
 
 
 # --------------------------------------------------------------------------- #
-# Reviewed registry bytes (V1-037) in the wheel and the sdist
+# Reviewed registry bytes (V1-037, V1-055) in the wheel and the sdist
 # --------------------------------------------------------------------------- #
 
 
@@ -296,14 +296,14 @@ def test_wheel_ships_the_reviewed_registry_byte_identically(venv: Path, outside:
     assert installed.read_bytes() == REGISTRY.read_bytes()
     document = json.loads(installed.read_text(encoding="utf-8"))
     assert document["schema_version"] == 1
-    assert len(document["implementations"]) == 2
+    assert len(document["implementations"]) == 3
     script = (
         "from actseal.compatibility import load_registry as l; "
         "from actseal.serialization import implementation_fingerprint as f; "
         "r = l(); print(r.engine_for(f()), len(r.implementations))"
     )
     result = run([str(python(venv)), "-c", script], cwd=outside)
-    assert result.stdout.strip() == "actseal-choice-v1 2"
+    assert result.stdout.strip() == "actseal-choice-v1 3"
 
 
 def test_sdist_ships_the_reviewed_registry_byte_identically(sdist: Path) -> None:

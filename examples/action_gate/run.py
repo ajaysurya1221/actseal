@@ -33,8 +33,10 @@ recorded-response fixture in this directory, which stands in for a model.
   passes only through an explicit compatibility review that registers both
   its producer fingerprint and the running fingerprint for the engine in the
   packaged registry (producer/engine approval, never an archive allowlist);
-  for ``recorded/a5fe090202f7`` that review is complete (amendment V1-037,
-  see docs/versioning.md). Excluding an archive requires a separately
+  for ``recorded/a5fe090202f7`` that review is complete (amendment V1-037
+  approved its producer and the 1.0.0 source; amendment V1-055 approved the
+  1.0.1 source beside both, so the unchanged archive keeps replaying under
+  1.0.1; see docs/versioning.md). Excluding an archive requires a separately
   recorded amendment, and none exists. A new ``--record`` run is a separately
   identified run that does not repair, replace or reseal an older one;
 * performs the routing demonstration (the only queue operations in

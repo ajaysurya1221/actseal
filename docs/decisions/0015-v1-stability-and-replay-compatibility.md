@@ -97,3 +97,37 @@ source change invalidates the first entry and requires a new fingerprint and
 review ([versioning policy](../versioning.md)). That fingerprint is unchanged
 through the pre-tag documentation and asset commits; the tag and publication
 receipts are recorded in `plan/v1/RELEASE_NOTES.md`.
+
+## Addendum — 8 October 2026: the 1.0.1 registry
+
+Decision. Amendment V1-055 ([change log](../../plan/v1/CHANGE_LOG.md))
+bundles the 1.0.1 hardening (streaming JSONL readers, the native IPC sequence
+type check and the corrected numerical-kernel exception guide) with the
+version bump and one registry entry. Replay semantics are unchanged, so this
+is an addendum, not a new decision record. After every packaged Python change,
+including the `1.0.1` version metadata, was final, the reviewed final
+candidate's source fingerprint was computed by
+`actseal.serialization.implementation_fingerprint()` and recomputed
+independently with `hashlib` over the same sorted path-to-hash map:
+
+`dced01d79e64799a19a75c0957f3684a48249c58ebb27d346336e7420195bcb4`
+
+That exact mapping is added for `actseal-choice-v1` beside both entries
+recorded above, which stay approved: the 1.0.1 registry holds exactly three
+entries. This approves a reviewed release candidate before tagging and
+publication; it does not record a release, and the tag and publication remain
+separate steps with their own receipts. The pre-bump hardening fingerprint
+was never a candidate and is not registered. As the
+[versioning policy](../versioning.md#registry-approval-process) now states, a
+later source change leaves an earlier entry approved for replay; that entry
+simply no longer identifies the running source.
+
+Evidence. With the three-entry registry the unchanged retained archive
+`examples/action_gate/recorded/a5fe090202f7` replays to its entire stored
+PASS verdict through the packaged registry, and
+`examples/action_gate/run.py --check` reports no errors. The empty,
+one-sided, other-producer and wrong-engine temporary registries still reject
+it with `integrity.lock`, and its lock is still refused for new collection.
+The exact-registry tests pin the three fingerprints as reviewed literals.
+Merging the bundle requires its independent acceptance and green hosted CI on
+the exact reviewed commit, recorded under `plan/v1/reviews/`.
