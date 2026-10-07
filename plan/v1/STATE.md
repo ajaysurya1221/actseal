@@ -61,7 +61,7 @@ Core stayszero third-party runtime dependencies; no model/billing substitution.
 |05|Reviewedexperimentaladapter retained byV1-049/052, integratedmain277; mockedtransportonly.|
 |06|Unstarted,harness-blocked; deferred1.1 byV1-052. Preserve offlineACCEPTd3edbab/candidate3/allpreviousdrafts.|
 |07|Originalsyntheticarchive unchanged; exactsource277d8e2 scopedACCEPT andnowintegrated; twoentryregistry andinstalledreplaypass.|
-|08|Responsive95e17b4ACCEPT/merged; finalblindtestACCEPT. Pretag08F0363124/88a5b30REVISE forfactual wording/checkerhashcompatibility;08F2running.|
+|08|Responsive95e17b4ACCEPT/merged; finalblindtestACCEPT. Pretag75626ae scopedACCEPT after08F2/08F3corrections,parent110docstests/docs gate/hooks andindependentreview.|
 |09|AcceptedCI/packagingglue integrated; rehearsal37599844342SUCCESS. Finalcandidate/release/postpublish remain.|
 |10–13|Toolchain/hero/workflow/architecture andresponsivecorrectionACCEPT/merged.|
 |14|Procedure11a31fc/renderera47a320scopedACCEPT; no actualcast/GIF. MandatorycaptureafterrealPyPIpublicationunder2A.|
@@ -85,8 +85,7 @@ inventories andthreshold0.80/risk0.05/coverage0.50/alpha0.05/demo scope frozen.
 
 ## Processes, preserved drafts and permissions
 
-Rootcontinuationbranchcodex/v1-final-gates startsorigin/main277. CurrentClaude
-08F2uses SAMEsession83514ea3-48d0-4c6e-8728-e4a607318bc7,docsworktree,
+Rootcontinuationbranchcodex/v1-final-gates startsorigin/main277. Claude08F2/08F3finished scopedACCEPT75626ae usingSAMEsession83514ea3-48d0-4c6e-8728-e4a607318bc7,docsworktree,
 claude/v1-08-pretag,normalpermissions. Privatepackets/processes:
 /tmp/actseal-v1-orchestration/active.json. Nootherproductwriter active.
 
