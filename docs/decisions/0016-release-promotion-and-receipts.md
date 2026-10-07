@@ -1,8 +1,10 @@
 # ADR 0016: Release promotion of exact bytes with strict receipts
 
 - Status: accepted with the v1.0.0 plan (Task 09, amendments V1-006 and
-  V1-012) and REVIEW 09R2–09R4; recorded here after implementation. Hosted
-  rehearsal and the final asset gate remain pending at the time of writing.
+  V1-012) and REVIEW 09R2–09R4; recorded here after implementation. The
+  static-asset inputs to the pre-upload gate are complete (see "Evidence and
+  validation"); the tagged pipeline's own receipts are recorded in
+  `plan/v1/RELEASE_NOTES.md`.
 - Date: 2026-10-07.
 
 ## Decision
@@ -83,4 +85,16 @@ Reports 09, 09R2, 09R3, 09R4-glue (Codex-authored CI-glue repair) and 09R4
 record the implementation. `tests/release/` exercises the workflow contract,
 every helper gate and its negatives, the supplied-artifact no-rebuild proof and,
 in `test_release_schemas.py`, the schemas against receipts the helper actually
-writes. Hosted rehearsal and the final asset gate are external acceptance steps.
+writes. The release workflow's own glue was exercised at PR 18 head `0e32c6c`
+(runs 37581140052 and 37581142565, ten green hosted jobs, including the
+hash-verified Linux agg execution); that was a rehearsal of the branch
+workflow, not a tagged run.
+
+Status on 7 October 2026: the four required static asset groups the
+pre-upload gate regenerates (hero, how-it-works, architecture, social) are
+committed and accepted at `77a13bd` (`plan/v1/reviews/13-readability.md`,
+byte-identical regeneration of twelve SVGs and the social PNG) with the
+README's responsive selection at `95e17b4`. The demo recording stays the
+approved post-PyPI exception. The tagged build, verify, publish and
+post-publication receipts are produced by the pipeline itself and recorded
+in `plan/v1/RELEASE_NOTES.md`; this ADR claims none of them.

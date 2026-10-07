@@ -1,6 +1,8 @@
 # Dependency and model provenance
 
-Verification date: **6 October 2026**. Versions below are explicit sprint pins, not promises that they remain the newest releases. The committed `uv.lock` must record the complete resolved graph and hashes. This document separates a tested native stack from registry/license metadata checks and pending product verification.
+Verification date: **6 October 2026**. Versions below are explicit sprint pins, not promises that they remain the newest releases. The committed `uv.lock` must record the complete resolved graph and hashes. This document separates a tested native stack from registry/license metadata checks and the product verification recorded in task reports.
+
+Status on 7 October 2026: the pins, lock and licence findings below are unchanged in the 1.0.0 source (fingerprint `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3`); the runtime core still has no third-party dependency, and the authoring-only asset toolchain is pinned separately in `docs/assets/src/tools.toml` ([ADR 0020](decisions/0020-reproducible-visual-assets.md)). The milestone paragraphs that follow are dated history of how each pin was verified; the 1.0.0 release receipts are in `plan/v1/RELEASE_NOTES.md`.
 
 ## Core and development tooling
 
@@ -25,7 +27,7 @@ GitHub Actions use immutable commit pins selected and license-checked by the pla
 | [actions/checkout](https://github.com/actions/checkout) | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` | [MIT](https://github.com/actions/checkout/blob/3d3c42e5aac5ba805825da76410c181273ba90b1/LICENSE) |
 | [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) | v10.2.0 | `c18668ad3cf93ea998bef934396af7bb5c839dc7` | [MIT](https://github.com/astral-sh/setup-uv/blob/c18668ad3cf93ea998bef934396af7bb5c839dc7/LICENSE) |
 
-Source pins alone are not execution evidence. The provider milestone below has green hosted Linux/macOS jobs at its exact candidate; green checks on the final release candidate remain a separate acceptance condition.
+Source pins alone are not execution evidence. The provider milestone below has green hosted Linux/macOS jobs at its exact milestone commit; the 1.0.0 release pipeline's own build, verify and publication receipts are recorded separately in `plan/v1/RELEASE_NOTES.md`.
 
 ## Tested optional Laya stack
 
@@ -82,7 +84,7 @@ The [3.12 metadata](https://download.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp31
 
 Keep macOS on PyPI to preserve the tested Python 3.12 arm64 wheel: `torch-2.14.1-cp312-cp312-macosx_14_0_arm64.whl`, 127,307,099 bytes, SHA256 `420dbf314c180ee4b86e9bc00aee5746a7d6e5bacdd7df925af671ed393f0b2e`. The CPU index serves a differently hashed macOS artifact, so an all-platform index switch would change the tested binary.
 
-**Verified:** CPU artifact availability, published hashes, license declarations, declared dependency metadata, and the corrected resolution in the final T00 lock audited below. That lock has no CUDA/NVIDIA/Triton package and retains the tested macOS hash. Earlier direct metadata requests to some `download-r2.pytorch.org` index links returned HTTP 403, while equivalent `download.pytorch.org` requests returned HTTP 200. Successful locking was not itself a Linux runtime test; the later native product workflow below supplies that separate evidence for its exact candidate/environment. Full T30 is now accepted as recorded below; remaining product integration and final-release checks are pending. No support claim extends to other Linux architectures or libc variants from these checks.
+**Verified:** CPU artifact availability, published hashes, license declarations, declared dependency metadata, and the corrected resolution in the final T00 lock audited below. That lock has no CUDA/NVIDIA/Triton package and retains the tested macOS hash. Earlier direct metadata requests to some `download-r2.pytorch.org` index links returned HTTP 403, while equivalent `download.pytorch.org` requests returned HTTP 200. Successful locking was not itself a Linux runtime test; the later native product workflow below supplies that separate evidence for its exact candidate/environment. Full T30 is now accepted as recorded below; later product integration is recorded in the v1 task reports. No support claim extends to other Linux architectures or libc variants from these checks.
 
 ## Verified provider milestone on macOS and Linux
 
@@ -184,7 +186,7 @@ Every third-party record was checked against its exact-version PyPI JSON endpoin
 
 **Audit result:** no unresolved missing, ambiguous, or proprietary package-level license remains in this inspected lock. No `cuda*`, `nvidia*`, or Triton package is present. The macOS Python 3.12 Torch wheel retains SHA256 `420dbf314c180ee4b86e9bc00aee5746a7d6e5bacdd7df925af671ed393f0b2e`; Linux Torch resolves to the official CPU registry and `2.14.1+cpu`. This establishes the corrected resolution recorded in the lock; this audit did not execute a Linux installation or inference.
 
-This is an exact-version declaration and selected license-file audit, not an exhaustive audit of every file embedded in every platform wheel. Keep compound expressions and applicable notices intact when redistributing dependencies. Any changed locked version, source, or license must be rechecked; an unresolved declaration or incompatible license blocks publication of the affected dependency path. The separate provider milestone above now records Linux installation/native execution and hosted CI. Remaining product integration and release-candidate checks must still pass; historical license auditing is not their substitute.
+This is an exact-version declaration and selected license-file audit, not an exhaustive audit of every file embedded in every platform wheel. Keep compound expressions and applicable notices intact when redistributing dependencies. Any changed locked version, source, or license must be rechecked; an unresolved declaration or incompatible license blocks publication of the affected dependency path. The separate provider milestone above now records Linux installation/native execution and hosted CI. Product integration and release checks are recorded in their own reports and receipts; historical license auditing is not their substitute.
 
 ## Changes and release gate
 

@@ -92,7 +92,7 @@ approved by amendment V1-037 after an independent compatibility probe:
 
 | Fingerprint | Source | Status |
 |---|---|---|
-| `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3` | the 1.0.0 candidate source itself (final version metadata commit `0b57933`) | the running implementation of this release |
+| `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3` | the 1.0.0 source itself (final version metadata commit `0b57933`) | the running implementation of this release |
 | `a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642` | reviewed source `76758d7084e396c8960718d28c1cad5fb70bac03`, the producer of the retained `examples/action_gate/recorded/a5fe090202f7` archive | an **unreleased prerelease** tree carrying a `0.1.0` version string; it is not the released actseal 0.1.0 implementation, and its archive is schema-2 evidence, not legacy schema-1 evidence |
 
 Each entry maps one exact producer fingerprint to one replay engine; that is
