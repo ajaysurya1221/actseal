@@ -78,7 +78,54 @@ from conftest import make_contract, make_identity
 
 FOREIGN = "2" * 64
 OTHER = "3" * 64
-PACKAGE = Path(__file__).resolve().parents[2] / "src" / "actseal"
+ROOT = Path(__file__).resolve().parents[2]
+PACKAGE = ROOT / "src" / "actseal"
+
+# Amendment V1-037 (REVIEW 19, final-candidate compatibility probe): exactly two
+# reviewed producer fingerprints are approved for ``actseal-choice-v1``.
+#: Final 1.0.0 candidate source (Codex metadata commit 0b57933). Any packaged
+#: Python edit changes this value and invalidates the approval.
+FINAL_CANDIDATE = "8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3"
+#: Original producer of the retained action-gate archive: reviewed source
+#: 76758d7084e396c8960718d28c1cad5fb70bac03, an UNRELEASED prerelease tree with a
+#: 0.1.0 version string (not the released 0.1.0 implementation; its evidence is
+#: schema 2, not legacy schema 1).
+ORIGINAL_EXAMPLE_PRODUCER = "a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642"
+APPROVED = {
+    FINAL_CANDIDATE: CURRENT_ENGINE,
+    ORIGINAL_EXAMPLE_PRODUCER: CURRENT_ENGINE,
+}
+#: The retained archive (Task 07 source 277d8e2), bytes preserved as produced.
+ARCHIVE = ROOT / "examples" / "action_gate" / "recorded" / "a5fe090202f7"
+ARCHIVE_EVIDENCE = ARCHIVE / "evidence"
+#: External trusted lock digest recorded in PRODUCER.json and the review.
+EXTERNAL_LOCK_SHA256 = "cb009be0039afefd995f6eac3a8bd9767d6bf026a73273b47e87a51fc9fbd715"
+#: Exact file inventory of the retained archive; replay must never alter it.
+ARCHIVE_INVENTORY = dict(
+    zip(
+        (
+            "lock.json",
+            "evidence/calibration.jsonl",
+            "evidence/faults.jsonl",
+            "evidence/lock.json",
+            "evidence/manifest.json",
+            "evidence/records.jsonl",
+            "evidence/verdict.json",
+            "evidence/verification.jsonl",
+        ),
+        (
+            "e80c7a29927f3b13ce9d664f01b5254ead6b1c2a441ea4a2165e808f02686abf",
+            "8e5c86656e7bd4e4ec9ab4f238c5c23fe0dfbc7f3fb0e183dac75a04b824d999",
+            "7d1d6d3f5fcf9a538931c14b84fe05c762f4947669c6f6fb3aa257a122b8fd09",
+            "e80c7a29927f3b13ce9d664f01b5254ead6b1c2a441ea4a2165e808f02686abf",
+            "4640f41e8ed53632a33cd50efaba32a8490782ff08a5aec8e864a822f7caa4a7",
+            "a261287d48b6b8f0c790a864b4e7a3211030fd5f6646d5ade3ef65ae46916555",
+            "943935a8649e474957a49cb8fc80029fe32ca5fc102f8b4456a6523069293b8a",
+            "ac7f1a78545323d26085cf63bac05004673bcefc4e0953574f07fb96544a3229",
+        ),
+        strict=True,
+    )
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -216,14 +263,31 @@ def test_new_locks_record_schema_2_and_the_current_engine() -> None:
         validate_lock(replace(lock, replay_engine_version="actseal-choice-v2"))
 
 
-def test_packaged_registry_is_valid_strict_json_and_currently_empty() -> None:
+def test_packaged_registry_holds_exactly_the_two_approved_entries() -> None:
+    """V1-037: the final candidate and the original example producer, nothing else."""
     path = PACKAGE / REGISTRY_FILE
-    document = json.loads(path.read_text(encoding="utf-8"))
-    assert document == {"schema_version": 1, "implementations": {}}
+    text = path.read_text(encoding="utf-8")
+    document = json.loads(text)
+    assert document == {"schema_version": 1, "implementations": APPROVED}
     loaded = load_registry()
-    assert loaded == CompatibilityRegistry(1, ())
-    assert loaded.engine_for(implementation_fingerprint()) is None
-    assert parse_registry(path.read_text(encoding="utf-8")) == loaded
+    assert loaded == CompatibilityRegistry(
+        1,
+        (
+            (FINAL_CANDIDATE, CURRENT_ENGINE),
+            (ORIGINAL_EXAMPLE_PRODUCER, CURRENT_ENGINE),
+        ),
+    )
+    assert loaded.engine_for(FINAL_CANDIDATE) == CURRENT_ENGINE
+    assert loaded.engine_for(ORIGINAL_EXAMPLE_PRODUCER) == CURRENT_ENGINE
+    assert loaded.engine_for(FOREIGN) is None
+    assert parse_registry(text) == loaded
+    assert text.endswith("}\n")
+
+
+def test_running_source_is_the_approved_final_candidate() -> None:
+    """The approval binds the exact packaged Python bytes: any edit needs a new review."""
+    assert implementation_fingerprint() == FINAL_CANDIDATE
+    assert load_registry().engine_for(implementation_fingerprint()) == CURRENT_ENGINE
 
 
 def test_registry_file_is_outside_the_implementation_fingerprint() -> None:
@@ -238,10 +302,16 @@ def test_registry_file_is_outside_the_implementation_fingerprint() -> None:
     assert PACKAGE.joinpath("compatibility.py").relative_to(PACKAGE).as_posix() in fingerprinted
 
 
-def test_exact_current_source_validates_with_the_empty_packaged_registry() -> None:
+def test_exact_current_source_validates_without_consulting_any_registry(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Exact source needs no entry: an explicit empty registry and a missing file both pass."""
     lock = make_lock()
     check_replay_compatibility(lock)
     check_replay_compatibility(lock, registry=CompatibilityRegistry(1, ()))
+    point_registry_at(monkeypatch, tmp_path, registry_text({}))
+    check_replay_compatibility(lock)
+    point_registry_at(monkeypatch, tmp_path, None)
     validate_lock(lock)
     require_exact_implementation(lock)
 
@@ -754,3 +824,173 @@ def test_created_lock_round_trips_through_parse_and_validate() -> None:
     validate_lock(parsed)
     assert parsed.replay_engine_version == CURRENT_ENGINE
     assert isinstance(parsed.verification_cases[0], Case)
+
+
+# --------------------------------------------------------------------------- #
+# Retained example archive (V1-037): real foreign-producer evidence, bytes preserved
+# --------------------------------------------------------------------------- #
+
+
+def archive_inventory() -> dict[str, str]:
+    return {name: sha256_hex((ARCHIVE / name).read_bytes()) for name in ARCHIVE_INVENTORY}
+
+
+def archive_lock() -> PlanLock:
+    return parse_lock((ARCHIVE / "lock.json").read_text(encoding="utf-8"))
+
+
+def archive_verdict() -> object:
+    from actseal.evidence import decode_document  # noqa: PLC0415 - test-local import
+    from actseal.records import Verdict  # noqa: PLC0415 - test-local import
+
+    return decode_document(VERDICT_FILE, read_bundle_files(ARCHIVE_EVIDENCE)[VERDICT_FILE], Verdict)
+
+
+def test_retained_archive_bytes_and_identity_are_the_recorded_ones() -> None:
+    assert archive_inventory() == ARCHIVE_INVENTORY
+    lock = archive_lock()
+    assert lock.implementation_sha256 == ORIGINAL_EXAMPLE_PRODUCER
+    assert lock.sha256 == EXTERNAL_LOCK_SHA256
+    assert lock.replay_engine_version == CURRENT_ENGINE
+    assert lock.implementation_sha256 != implementation_fingerprint()
+    producer = json.loads((ARCHIVE / "PRODUCER.json").read_text(encoding="utf-8"))
+    assert producer["implementation_sha256"] == ORIGINAL_EXAMPLE_PRODUCER
+    assert producer["lock_sha256"] == EXTERNAL_LOCK_SHA256
+    assert producer["source_commit"] == "76758d7084e396c8960718d28c1cad5fb70bac03"
+    assert producer["actseal_version"] == "0.1.0"  # a prerelease version string, schema 2 evidence
+    assert lock.schema_version == LOCK_SCHEMA_VERSION == 2
+
+
+def test_retained_archive_replays_its_stored_verdict_through_the_packaged_registry(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Both approved mappings reproduce the entire stored PASS with the external seal."""
+    before = archive_inventory()
+    lock = archive_lock()
+    validate_lock(lock)  # dual registration through the real packaged registry
+    check_replay_compatibility(lock)
+    stored = archive_verdict()
+    replayed = replay(ARCHIVE_EVIDENCE, expected_lock_sha256=EXTERNAL_LOCK_SHA256)
+    assert replayed == stored
+    assert replay(ARCHIVE_EVIDENCE) == stored
+    assert replayed.status == "PASS"
+    assert replayed.reasons == ("contract.satisfied",)
+    assert (replayed.total, replayed.accepted, replayed.errors) == (160, 136, 1)
+    assert (replayed.risk.lower, replayed.risk.upper) == (
+        0.00009248676847378344,
+        0.046001047099948664,
+    )
+    assert (replayed.coverage.lower, replayed.coverage.upper) == (
+        0.7754989626187914,
+        0.9075527563470258,
+    )
+    assert replayed.lock_sha256 == EXTERNAL_LOCK_SHA256
+    assert replayed.evidence_scope == "demo"
+    code, document, err = run_cli(
+        capsys,
+        [
+            "replay",
+            str(ARCHIVE_EVIDENCE),
+            "--expected-lock-sha256",
+            EXTERNAL_LOCK_SHA256,
+            "--json",
+        ],
+    )
+    assert code == 0
+    assert err == ""
+    assert document["schema_version"] == 1
+    assert document["status"] == "PASS"
+    assert document["lock_sha256"] == EXTERNAL_LOCK_SHA256
+    assert (document["total"], document["accepted"], document["errors"]) == (160, 136, 1)
+    assert document["notes"] == []
+    assert archive_inventory() == before  # replay never alters the archive
+
+
+def test_retained_archive_negative_controls_use_explicit_temporary_registries(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Empty, producer-only, verifier-only, other-producer, wrong-engine: ERROR/integrity.lock."""
+    before = archive_inventory()
+    current = implementation_fingerprint()
+    negatives: dict[str, str] = {
+        "empty": registry_text({}),
+        "producer_only": registry_text({ORIGINAL_EXAMPLE_PRODUCER: CURRENT_ENGINE}),
+        "verifier_only": registry_text({current: CURRENT_ENGINE}),
+        "other_producer": registry_text({OTHER: CURRENT_ENGINE, current: CURRENT_ENGINE}),
+        "wrong_engine": json.dumps(
+            {
+                "schema_version": 1,
+                "implementations": {
+                    ORIGINAL_EXAMPLE_PRODUCER: "actseal-choice-v2",
+                    current: "actseal-choice-v2",
+                },
+            }
+        ),
+    }
+    for name, text in negatives.items():
+        point_registry_at(monkeypatch, tmp_path, text)
+        verdict = replay(ARCHIVE_EVIDENCE, expected_lock_sha256=EXTERNAL_LOCK_SHA256)
+        assert verdict.status == "ERROR", name
+        assert verdict.reasons == (REASON_LOCK,), name
+        assert verdict.lock_sha256 == EXTERNAL_LOCK_SHA256, name  # decoded identity retained
+        assert (verdict.total, verdict.accepted, verdict.errors) == (0, 0, 0), name
+        code, document, _ = run_cli(capsys, ["replay", str(ARCHIVE_EVIDENCE), "--json"])
+        assert code == 3, name
+        assert document["reasons"] == [REASON_LOCK], name
+    # With the real packaged registry a wrong external seal is the expected-lock failure.
+    monkeypatch.setattr(compatibility_module, "_REGISTRY_PATH", PACKAGE / REGISTRY_FILE)
+    wrong = replay(ARCHIVE_EVIDENCE, expected_lock_sha256="0" * 64)
+    assert wrong.status == "ERROR"
+    assert wrong.reasons == ("integrity.expected_lock",)
+    assert wrong.lock_sha256 == EXTERNAL_LOCK_SHA256
+    assert archive_inventory() == before
+
+
+def test_retained_archive_lock_is_never_collected_against(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Approved for replay only: collect and verify_run refuse before any decide/factory."""
+    lock = archive_lock()
+    validate_lock(lock)
+    model = CountingModel(lock)
+    with pytest.raises(IntegrityError, match="new collection requires the exact current"):
+        collect(model, lock, lock.verification_cases)  # type: ignore[arg-type]
+    assert model.calls == 0
+
+    def never_called() -> object:
+        pytest.fail("model factory must not be called for the retained archive's producer")
+
+    example = ARCHIVE.parents[1]
+    with pytest.raises(IntegrityError, match="new collection requires the exact current"):
+        verify_run(
+            ARCHIVE / "lock.json",
+            example / "calibration.jsonl",
+            example / "verification.jsonl",
+            tmp_path / "run",
+            provider="fixture",
+            model_factory=never_called,  # type: ignore[arg-type]
+        )
+    assert not (tmp_path / "run").exists()
+    code, document, _ = run_cli(
+        capsys,
+        [
+            "verify",
+            "--lock",
+            str(ARCHIVE / "lock.json"),
+            "--calibration",
+            str(example / "calibration.jsonl"),
+            "--verification",
+            str(example / "verification.jsonl"),
+            "--provider",
+            "fixture",
+            "--responses",
+            str(example / "responses.jsonl"),
+            "--out",
+            str(tmp_path / "cli-run"),
+            "--json",
+        ],
+    )
+    assert code == 3
+    assert str(document["error"]).startswith("IntegrityError: implementation_sha256")
+    assert not (tmp_path / "cli-run").exists()
+    assert archive_inventory() == ARCHIVE_INVENTORY

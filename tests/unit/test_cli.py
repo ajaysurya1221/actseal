@@ -24,6 +24,7 @@ from test_evidence import CALIBRATION, GOLD, answer_json, verification_jsonl
 from test_providers import pinned_identity
 from test_runner import CONTRACT_TOML, RESOURCE_NAMES, ScriptedModel, write_responses
 
+import actseal
 import actseal.cli as cli_module
 import actseal.experimental.providers.jev as jev_module
 import actseal.runner as runner_module
@@ -230,9 +231,13 @@ def test_help_lists_exactly_the_frozen_commands(run: Run) -> None:
 
 
 def test_version_exits_0(run: Run) -> None:
-    code, out, _ = run(["--version"])
+    code, out, err = run(["--version"])
     assert code == 0
-    assert out.startswith("actseal 0.1.0")
+    assert err == ""
+    # The 1.0.0 release candidate (Codex metadata commit 0b57933); the printed
+    # version is always the installed package's own version string.
+    assert actseal.__version__ == "1.0.0"
+    assert out == f"actseal {actseal.__version__}\n"
 
 
 def test_exit_code_table_is_frozen() -> None:

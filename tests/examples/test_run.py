@@ -35,6 +35,16 @@ HEX_F = "f" * 64
 COMMIT = "0123456789abcdef0123456789abcdef01234567"
 ENGINE = "actseal-choice-v1"
 PACKAGED_REGISTRY = REPO_ROOT / "src" / "actseal" / "compatibility_registry.json"
+#: The reviewed packaged registry (amendment V1-037): the 1.0.0 candidate source and the
+#: committed archive's original (unreleased prerelease) producer. The committed run is
+#: therefore a registry-approved, not exact, implementation for the running source.
+APPROVED_REGISTRY = {
+    "schema_version": 1,
+    "implementations": {
+        "8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3": ENGINE,
+        "a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642": ENGINE,
+    },
+}
 
 
 def approve(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, *fingerprints: str) -> Path:
@@ -189,10 +199,13 @@ def test_unapproved_foreign_archive_fails_with_no_queue_effect_and_preserved_byt
     )
     assert "[info] recorded/000000000000" not in text  # never a benign notice
     if beside_valid_run:
-        assert f"[ok] recorded/{committed_run().name}: replay equals the recorded PASS" in text
+        assert (
+            f"[ok] recorded/{committed_run().name}: replay equals the recorded PASS "
+            "(registry-approved implementation)" in text
+        )
     assert snapshot(root) == before
     assert read_json(foreign / "PRODUCER.json")["lock_sha256"] == seal
-    assert read_json(PACKAGED_REGISTRY) == {"schema_version": 1, "implementations": {}}
+    assert read_json(PACKAGED_REGISTRY) == APPROVED_REGISTRY
 
 
 def test_dual_approved_foreign_archive_passes_check_and_route(
@@ -226,7 +239,7 @@ def test_dual_approved_foreign_archive_passes_check_and_route(
     assert registry.read_text(encoding="utf-8") == registry_text(
         {HEX_F: ENGINE, implementation_fingerprint(): ENGINE}
     )
-    assert read_json(PACKAGED_REGISTRY) == {"schema_version": 1, "implementations": {}}
+    assert read_json(PACKAGED_REGISTRY) == APPROVED_REGISTRY
 
 
 @pytest.mark.parametrize("registered", ["producer", "running"])
@@ -330,7 +343,11 @@ def test_invalid_archived_seal_fails_beside_a_valid_current_run(
         "[error] recorded/ffffffffffff: replay ERROR ['integrity.lock'] does not reproduce the "
         "recorded PASS",
     )
-    assert f"[ok] recorded/{committed_run().name}: replay equals the recorded PASS (exact" in text
+    # The committed archive's producer is the approved original, not the running source.
+    assert (
+        f"[ok] recorded/{committed_run().name}: replay equals the recorded PASS "
+        "(registry-approved implementation)" in text
+    )
 
 
 def test_damaged_or_mismatched_runs_fail_the_check(

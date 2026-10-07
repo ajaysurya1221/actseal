@@ -25,7 +25,7 @@ import pytest
 
 import actseal.compatibility as compatibility_module
 from actseal.cli import main
-from actseal.compatibility import CURRENT_ENGINE, REGISTRY_FILE
+from actseal.compatibility import CURRENT_ENGINE, REGISTRY_FILE, load_registry
 from actseal.contract import read_input_text
 from actseal.errors import IntegrityError
 from actseal.locking import parse_lock
@@ -221,7 +221,9 @@ def test_other_release_evidence_replays_here_only_with_dual_registration(
     assert lock.implementation_sha256 == other_fingerprint != implementation_fingerprint()
     current = implementation_fingerprint()
 
-    # Default: the packaged registry is empty, so this is a foreign producer.
+    # Default: the packaged registry approves only the two reviewed fingerprints
+    # (V1-037), and the copied tree's fingerprint is neither: a foreign producer.
+    assert load_registry().engine_for(other_fingerprint) is None
     rejected = replay(bundle)
     assert rejected.status == "ERROR"
     assert rejected.reasons == (REASON_LOCK,)
