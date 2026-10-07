@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import re
+import ssl  # noqa: F401 - loaded before the offline fixture patches socket.socket
 from importlib.metadata import distribution
 from pathlib import Path
 
@@ -12,6 +13,13 @@ import pytest
 import actseal.cli as cli_module
 from actseal.records import PROVIDERS
 from docs.conftest import DOCS, ROOT
+
+# The autouse offline fixture replaces ``socket.socket`` with a function for
+# every unit test. The experimental Jev module imports ``http.client`` and
+# therefore ``ssl``; if ``ssl`` is first imported inside a test, its
+# ``class SSLSocket(socket)`` subclasses the patched function and raises
+# ``TypeError``. Importing ``ssl`` at module load keeps ``pytest tests/docs``
+# deterministic regardless of which other test modules ran first.
 
 SECURITY = ROOT / "SECURITY.md"
 AGENTS = ROOT / "AGENTS.md"
@@ -66,7 +74,7 @@ def test_providers_doc_distinguishes_stable_providers_from_provisional_jev() -> 
     for phrase in (
         "--provider jev --experimental-provider",
         "`JEV_API_KEY`",
-        "No live Jev request has been made or verified",
+        "as of 7 October 2026 no live Jev request has been accepted as evidence",
         "mocked",
         "not part of the default quickstart, demo or stable provider set",
         "`replay` never imports",
