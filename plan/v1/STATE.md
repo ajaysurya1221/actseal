@@ -4,43 +4,51 @@ Codex owns this state, plans and REVIEWs. Claude Code Fable5.1/high authors prod
 
 ## Authority, clock and approvals
 
-Approved PLAN SHA256: `bb3538db868f929c1f779dcbcd105936f521acba51fbfe7c08988fedcd0fdcaa`. Decisions1A/2A/3A; original approval2026-10-06T16:04:49.582Z. Human authorized autonomous Claude CLI while AFK (V1-005), then explicitly approved all five scoped requests on7October (V1-029): pinned official fonts/tools; cached native/mutation checks and actual visual previews; example tests/temp files; placeholder-only `.env.example`; read-only public Banking77 cache. Those five approval blockers are resolved. Normal permissions/hooks remain. No actual `.env` or credential access was included.
+Approved PLAN SHA256: `bb3538db868f929c1f779dcbcd105936f521acba51fbfe7c08988fedcd0fdcaa`. Decisions1A/2A/3A; original approval2026-10-06T16:04:49.582Z. Human authorized autonomous Claude CLI while AFK (V1-005), then explicitly approved all five scoped requests on7October (V1-029): pinned official fonts/tools; cached native/mutation checks and actual visual previews; example tests/temp files; placeholder-only `.env.example`; read-only public Banking77 cache. Those five approval blockers are resolved. Normal permissions/hooks remain. Those five requests did not include actual `.env` or credential access. Later V1-041 separately authorized narrow JEV_API_KEY loading, but effective harness denials still block it; no key access occurred.
 
 All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; static P1/social/recording procedure15:59; optional cut17:59; publication23:59. Mandatory failures stop publication. No model/billing substitution, threshold tuning, resealing or weakened acceptance. Core remains zero third-party runtime dependencies.
 
 ## Current constraint and next action
 
-Latest approximately13:10IST: Task14 preparation c788dad is REVISE after
-parent56 passing tests and independent probes exposed GIF duration/structure
-validation defects. V1-046 freezes bounded repairs; genuine capture remains
-post-publication. Task08 scoped ACCEPT2ccdac6 was fast-forwarded only into
-the isolated Task19 integration branch, no main merge. Planning checkpoint
-PR42 is at reviewed265bfb8; one initial macOS3.13 install hit a PyPI timeout,
-preserved as failed attempt1, and only failed jobs were rerun. Full exact-head
-green remains pending. The user has a concrete manual Terminal merge request
-for Task13; no further automated retry of the denied outcome occurred.
+Current checkpoint: 7 October, approximately13:15IST. Main is
+`5c9a3d01eda239f0f6231a79833b1719c3410645` after planning checkpointPR42
+(reviewed265bfb8) passed all eight hosted checks and merged. Initial
+macOS3.13 dependency installation timed out fetching Hatchling from PyPI;
+failed attempt1 is preserved, and the failed-job rerun passed. This is a
+planning checkpoint, not acceptance of the still-red release candidate.
 
-Latest 7 October, approximately 13:00 IST: the human added both exact Task13 Bash merge allow rules. The settings file had one missing comma; Codex repaired only that punctuation byte and verified valid JSON plus both unchanged rules. The normal same-session retry still received Auto-Mode Bypass. The raw stream shows a merge command with an output pipe rather than the bare approved command; rule mismatch is suspected, not proven. Report6ba49ae records the fourth denial. No merge or architecture output exists; do not reissue the denied outcome in a different command shape or executor. Task06 remains separately unstarted and blocked, without any key access or request.
+1. **Task13 blocked:** the human added both exact merge Bash rules; Codex
+   fixed only one missing JSON comma without changing a permission entry.
+   The same session's fourth attempt used a merge with an output pipe and
+   was denied Auto-Mode Bypass. Report6ba49ae is preserved; its claimed cd
+   prefix was absent from the raw stream and is corrected in the review.
+   Rule mismatch is an unverified hypothesis. No merge or architecture
+   output exists. A concrete manual Terminal request is pending with the
+   user. No automated retry or alternate executor/command route is allowed.
+2. **Task06 unstarted/blocked:** V1-041 authorized narrowly loading the key
+   for the already reviewed audit; later normal resumptions were denied by
+   the actual harness. No key was read, no launcher/--execute ran, no journal
+   or request exists, and no Jev credit was used. The Task13 rules do not
+   clear Task06. Do not fabricate a failed-run receipt for an unstarted run.
+3. **Task08 scoped ACCEPT2ccdac6:** parent105 docs checks pass, one known
+   missing-architecture failure remains; hooks and independent factual
+   re-review pass. This accepted delta was fast-forwarded only into Task19's
+   isolated candidate branch. Full Task08 remains PARTIAL.
+4. **Task14 correction running:** preparationc788dad is REVISE for demonstrated
+   GIF delay/structure defects, bounds, cast validation and per-execution
+   tool verification. V1-046 freezes ownership/repairs; sameFable5.1/high
+   session continues. No actual cast/GIF or inventory activation exists.
+5. **Release candidate:** localTask19 head2ccdac6, remotePR39 stillb05aed85.
+   Both completed b05 hosted runs fail only the two tests identifying four
+   missing architecture images. Final hosted green, rehearsal, actual
+   artifacts, tag and publication remain. Packaged source fingerprint stays
+   8f316f67…98ed3. No v1 tag or PyPI publication exists.
 
-Task08 correction2ccdac6 is independently scoped ACCEPT: all three factual/test findings fixed, parent105 docs checks pass with the same one missing-architecture failure, hooks pass. Task14 standalone renderer preparation continues in its original Fable5.1/high session. Full Task08/19 remain PARTIAL; main is ae43065 and no v1 tag/publication exists. Earlier status paragraphs below are dated history, superseded where this update differs.
-
-Current 7 October, approximately 12:45 IST: user-confirmed harness resumptions still failed. Task13 head52321db records a third Auto-Mode Bypass denial, with no merge/source/output change. Task06's re-hash preflight was denied under the same reason; no key/read/execute/journal/request. A read-only settings diagnostic found no exact approved merge grants or git-merge allow prefix in the inspected user settings and no project/worktree settings files. User has the two exact entries to add; no agent edits or alternate routes. Task08 delivered9519324: parent105 docs tests pass,1 known missing-architecture test fails, hooks pass; independent factual review underway. Full release remains blocked on actual architecture completion and final gates.
-
-Latest update: the human confirmed "Claude permissions updated for both tasks" and reiterated approval. V1-043 records the actual permission-system update. The same13/06 sessions are now resuming the exact approved operations; outcomes are pending, not assumed successful. Task08 documentation work continues separately. Prior denials remain historical and no acceptance gate is removed.
-
-Latest 7 October, approximately 12:40 IST: both approved resumptions hit new harness denials. Task13 stopped at the first exact local merge (Auto-Mode Bypass), report8c089ce; no source/output change. Task06 stopped at the .env existence preflight (Real-World Transactions), before key read/--execute/request; no live journal or credit use. No alternative route is permitted. The pending request now concerns actual user-side Claude /permissions grants, not another chat approval. See reviews/harness-resumption-denials.md. Task08 independently finalizes accepted implementation facts under V1-042, on its separate branch fast-forwarded to reviewed b05aed85; no architecture action occurs there.
-
-Update 7 October, approximately 12:27 IST: the human explicitly approved Task13 merges and granted standing approval for future actions within the sprint. V1-041 records the scope. The prior architecture denial remains historical; resume the same Claude13 session with the two exact local merges. Narrow Task06 key loading is covered for its already reviewed one-attempt audit after exact-state rechecks and a separate live dispatch. No key has yet been accessed or live request made at this update. Prior pending-approval statements below describe the pre-approval checkpoint and are superseded only within V1-041's scope. All acceptance/publication gates remain.
-
-The one-time10:30IST heartbeat resumed the same Task15 and Task06 Fable5.1/high sessions after the verified reset. Both now report allowance available, no overage use and no model/account/billing substitution. Prior quota rejections remain historical. Do not start duplicate sessions.
-
-1. Task15 accepted and merged7820dba; actual social.png delivered, manual upload remains.
-2. Task06 preparation5184aab was REVISE for journal timing/binding defects. Repaird3edbab is now offline ACCEPT:87 parent tests/checker/hooks and independent edge probes pass. Candidate3 sealc7bbc525…a2c is approved for the fixed959-case protocol, but live dispatch still requires the separate key-access answer. No live authorization/key access/calls.
-3. Task19 final registry/source corrections b0031f5 and receipt f43291d are scoped ACCEPT. Both approved mappings are installed; all nine original archive files remain unchanged. Parent172 focused checks/hooks passed, then accepted08 and14 preparation merged locally:46 focused+6 cached native tests pass with no skips. Accepted Linuxagg CI glue is locally integrated;106 release checks/hooks pass (one explicit obsolete-manifest observation skipped). Source fingerprint stays8f316f67…98ed3. PR39 remote is now b05aed85; both completed hosted runs37581583411/37581585915 fail only the two tests identifying four missing architecture images. All ten jobs are red; packaging/reproduction/hooks after the test step did not run. Main merge/full Task19 remain blocked. See reviews/19-hosted-candidate-b05aed8.md.
-4. Task08 publishing correction710ae55 scoped ACCEPT and locally integrated; public draftPR41 supports rendered review. A fresh blind reviewer correctly identified purpose/audience and all three evidence limits from the actual GitHub first screen. Browser CSS viewport1366x900 was independently observed; the screenshot export is1351x890. Final candidate/public-state visual acceptance remains. Task13 local merge is still denied as Untrusted Code Integration, awaiting the scoped human answer; no retry/substitute route.
-5. Finish archived-example/registry packaging, P1 integration, blind review, exact-artifact rehearsal and publication by23:59IST.
-
-`JEV_API_KEY` was not exported at the last presence-only check. Parent and independent reviewer confirmed exactly one empty placeholder assignment in `.env.example`. A separate human question about loading only the real key from the ignored `.env` is pending; do not access it without that answer. Live Jev behavior remains unverified; no Jev requests or credit use occurred.
+The one-time10:30IST heartbeat already resumed the original15/06 sessions;
+no duplicate automation/session. Earlier checkpoint narratives remain in
+Git history, CHANGE_LOG and immutable reports/reviews. Exact active process
+IDs and private packet paths are in `/tmp/actseal-v1-orchestration/active.json`.
+No model/account/billing substitution; normal hooks and all review gates stay.
 
 ## Task status
 
@@ -50,18 +58,18 @@ The one-time10:30IST heartbeat resumed the same Task15 and Task06 Fable5.1/high 
 | 03 | ACCEPT212a1d6 after independent177 conformance/provider +5 cached native tests and hooks. PR20 mergeda47c7f5. |
 | 04 | ACCEPT732914d after252 tests, all8 targeted mutations killed, hooks and strict helper types. PR21 mergedbaecd26; main CI37566825489 passed. |
 | 05 | Offline source5849c68/headc2e27d2 scoped ACCEPT. New independent390 focused +5 native tests pass; placeholder verified. Explicit CLI integration, final inclusion/live gates remain. PR28 still draft. |
-| 06 | Offline source/preregistration ACCEPTd3edbab after87 parent tests and independent probes. Candidate3c7bbc525…a2c approved; actualkeyaccess/live dispatch pending. Candidates1/2 and scratch preserved. |
+| 06 | Offline ACCEPTd3edbab/candidate3 after87 parent checks and independent probes. Live phase authorized but harness-blocked and unstarted; no key/request/journal. Candidates1/2 and scratch preserved. |
 | 07 | Exactsource277d8e2 scoped ACCEPT and locally integrated. Final two-entry registry and corrected tests now replay the original nine-file archive unchanged; parent focused/installed tests pass. Earlier failed merge-preview remains history; final candidate hostedCI/main merge still pending. |
-| 08 | Final publishing clarification710ae55 scoped ACCEPT; parent6 publishing checks/hooks pass and changes locally integrated. DraftPR41 exposes README for actual browser/blind preflight (purpose and limits correctly understood). Architecture, final provider/current-status facts and complete final gates remain. |
+| 08 | Final-facts correction2ccdac6 scoped ACCEPT; parent105 docs tests pass with1 missing-architecture failure, hooks pass, independent re-review passes. Locally integrated into19; fullvisual/hosted/release gates pending. DraftPR41 still710ae55 supports prior blind preflight only. |
 | 09 | Scoped CI/packaging source accepted, including Linuxagg probebb3b8f8 and actual-sdist checks. PR18 head0e32c6c has ten green hosted jobs37581140052/37581142565; Linuxagg1.9.0 hash-verified execution confirmed in job112660836035. Parent882 tests pass plus1 explicit obsolete-manifest observation skip. Accepted glue integrated locally into19. Final release rehearsal, exact artifacts and publication remain pending; green PR18 does not establish the combined candidate's acceptance. |
 | 10 | Toolchain ACCEPT030ef840, merged6ad1e91. |
 | 11 | Actual hero/font/OFL bytes independently accepted and preserved in combinedPR31, merged7820dba after8 green checks. IsolatedPR25 closed as superseded; source history retained. Final README blind test remains. |
 | 12 | ACCEPTf712dae after actual offline pixel review and regeneration. PR22 merged227c7da. No browser workaround. |
-| 13 | Source2e2a7b2 scoped ACCEPT; V1-036 completion blocked by automatic approval review rejecting first local merge. BLOCKED report1d9ef40 preserved; separate user answer pending. No merge/output generation occurred. |
-| 14 | Recording preparation11a31fc scoped ACCEPT, PR30 green. Genuine v1 PyPI cast/GIF follows publication under Decision2. |
+| 13 | Originalsource2e2a7b2 scoped ACCEPT; completion blocked after fourth effective harness denial at6ba49ae despite actual human-added rules. Manual Terminal request pending. No merge or output generation. |
+| 14 | Procedure/helper11a31fc scoped ACCEPT/greenPR30. New renderer c788dad REVISE; V1-046 correction running. Genuine PyPI cast/GIF, provenance, rendering and activation remain after publication. |
 | 15 | ACCEPTfcdcfe4;283 parent+independent visual tests,2,958 parent core tests,types/hooks,actualpixels/regeneration and8 hosted checks pass. PR31 merged7820dba. Social1280x640 exists; user upload not done. |
 | 16–18 | Optional P2, only after mandatory P1 acceptance; not dispatched. |
-| 19–22 | Scoped source/registry corrections b0031f5 and receiptf43291d ACCEPT; original source fingerprint8f316f67…98ed3 stays fixed. Accepted08/14/09 integrated locally through61fce433. Mandatory architecture, final docs/current-status facts, exact-head full hostedCI/rehearsal, release/publication/final receipts remain. No v1 tag or PyPI publication. |
+| 19–22 | Scoped source/registry corrections b0031f5 and receiptf43291d ACCEPT; original source fingerprint8f316f67…98ed3 stays fixed. Accepted08/14procedure/09 integrated locally, now2ccdac6 after final-facts08 correction. Mandatory architecture, final docs/current-status facts, exact-head full hostedCI/rehearsal, release/publication/final receipts remain. No v1 tag or PyPI publication. |
 
 ## Branches, processes and receipts
 
@@ -69,7 +77,7 @@ Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2
 
 - Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, completed atfcdcfe4 and merged7820dba; all accepted asset bytes preserved.
 - Reused former baseline worktree: Task03 branch preserved. Now Task11-only completion branch736d912, cherry-picking Claude commits461f9ee/db56f36/7bb32f4 onto5f3fee5; files byte-identical. This isolates finished hero assets from unfinished social registration.
-- Jev worktree: sourcec2e27d2, branch`claude/v1-06-audit-preparation`; offline sourced3edbab and candidate3 approved; same Claude06 session is terminal, awaiting separate actualkey authorization/live dispatch. Old scratch and candidates1/2 stay unchanged. No live provider writer.
+- Jev worktree: sourcec2e27d2, branch`claude/v1-06-audit-preparation`; offline sourced3edbab and candidate3 approved; same Claude06 session is terminal with an effective harness denial despite scoped user authorization. Old scratch and candidates1/2 stay unchanged. No live provider writer.
 - Release worktree: Codex-owned CI/packaging branch; no product code authored by Codex. Exact current head/status must be read before continuation.
 - Owned keepawake handle19481 runs `caffeinate -i -t 54000`. Stop only this owned process on completion or an impasse; no permanent power change.
 
