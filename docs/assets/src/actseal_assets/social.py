@@ -1,12 +1,13 @@
 """The GitHub social preview: the approved hero composition as one 1280x640 PNG.
 
 The composition is the hero's, unchanged in copy and symbolism: the "Actseal"
-wordmark, the approved tagline, one freeze/run/replay loop and the
-evidence-boundary caption, stacked on a 1280x640 canvas in the hero's light
-palette. Nothing is added: no further claim, no padlock, shield or other
-security symbol, no new copy. Every visible string is outlined through the
-hero's helpers from the pinned JetBrains Mono files, so the intermediate SVG
-carries no ``<text>``; its generic title and description are the hero's.
+wordmark, the approved two-line tagline and one forward freeze/run/replay
+sequence, stacked on a 1280x640 canvas in the hero's light palette. Like the
+hero, it carries no caption paragraph and no return arrow. Nothing is added:
+no further claim, no padlock, shield, checkmark, badge or other security
+symbol, no new copy. Every visible string is outlined through the hero's
+helpers from the pinned JetBrains Mono files, so the intermediate SVG carries
+no ``<text>``; its generic title and description are the hero's.
 
 Rasterization uses only the pinned resvg binary, re-verified against
 ``tools.toml`` by ``tools.verified_binary`` and run through
@@ -50,9 +51,9 @@ DISPLAY_WIDTH = 640
 RESVG = "resvg"
 PALETTE = hero.LIGHT
 
-# Stacked like the hero's mobile variant, at social-card proportions. The
-# motif spans the full text column; the caption keeps the hero's desktop line
-# break. All sizes are in SVG units on the 1280x640 canvas.
+# Stacked like the hero's mobile variant, at social-card proportions, with the
+# block centred vertically on the card. The motif spans the full text column.
+# All sizes are in SVG units on the 1280x640 canvas.
 CANVAS = hero.Canvas(
     name="social",
     width=WIDTH,
@@ -60,23 +61,18 @@ CANVAS = hero.Canvas(
     margin=40,
     text_x=64,
     text_width=1152,
-    wordmark=120,
-    wordmark_baseline=150,
-    tagline=48,
-    tagline_baseline=222,
-    tagline_step=58,
-    caption=36,
-    caption_baseline=532,
-    caption_step=46,
-    caption_lines=hero.DESKTOP_CAPTION_LINES,
-    label=36,
+    wordmark=144,
+    wordmark_baseline=204,
+    tagline=56,
+    tagline_baseline=294,
+    tagline_step=68,
+    label=40,
     motif_x=64,
-    motif_top=330,
+    motif_top=446,
     pill_width=320,
-    pill_height=80,
+    pill_height=88,
     pill_gap=96,
     pill_pad=16,
-    loop_drop=60,
 )
 
 
@@ -95,8 +91,8 @@ def require_resvg(context: RenderContext) -> Path:
 def compose(fonts: hero.Fonts) -> bytes:
     """The outlined 1280x640 SVG, serialized canonically.
 
-    Reuses the hero's variant builder so the wordmark, tagline, motif and
-    caption are drawn by the same code as the banner; only the canvas differs.
+    Reuses the hero's variant builder so the wordmark, tagline and motif are
+    drawn by the same code as the banner; only the canvas differs.
     """
     # hero exposes no public composition entry point; its variant builder is
     # reused as-is rather than duplicating the layout code here.
