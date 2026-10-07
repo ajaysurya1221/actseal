@@ -27,3 +27,25 @@ After the human answered "Claude permissions updated for both tasks", Codex resu
 Codex inspected only permission configuration fields, without changing them or reading credentials. In `/Users/ajay/.claude/settings.json`, defaultMode is auto, classifyAllShell is unset, with52 allow rules and39 deny rules. Neither exact approved merge command nor a git-merge allow prefix is present. No Bash allow/ask/deny pattern in that file matched the two exact merge commands in the diagnostic; two env-related Read deny rules exist, whose contents were not printed. User settings.local has no permission rules. The main checkout and both affected worktrees have neither .claude/settings.json nor .claude/settings.local.json. This describes the inspected files, not every possible managed setting or an assurance that another rule cannot apply.
 
 The human received the two exact merge allow-rule entries and the official permission documentation. No configuration was edited by Codex. Executor suggestions to reroute merges, accept an alternate hash check, or infer permission from omitting a preflight remain unapproved. Pending authority is an effective harness grant, not missing user intent.
+
+## Actual rule additions and fourth denial
+
+The human subsequently added both exact Task13 Bash allow entries. Codex found
+one missing JSON comma, repaired that single punctuation byte without changing
+any permission entry, and verified valid JSON with both exact rules present.
+This supersedes the earlier no-configuration-edit observation only for that
+syntax repair. The same normal-permission session resumed and stopped on a
+fourth Auto-Mode Bypass denial; report `13-blocked-04.md` at `6ba49ae` preserves
+the attempt. The worktree is clean, no merge is active, and architecture source
+and outputs did not change.
+
+The raw latest Bash input was `git merge --no-ff --no-edit
+7820dba49f68f347f42fbdc06044de256c06efa2 2>&1 | tail -8`. The report
+incorrectly adds a cd prefix and describes all four commands as identical;
+independent stream review found differing compound/piped shapes and no such
+prefix. Preserve the original report as history; its diagnosis is not ACCEPTed.
+The executor used an output pipe, not the bare command in the allow entry. Its hypothesis that this prevented the match
+has not been independently established. Its suggestion to reissue the bare
+command is not adopted: the new denial explicitly applies to the outcome and
+to reshaped commands. No alternate route was attempted. The new entries concern
+Task13 only; they do not clear the separate Task06 preflight/key/live denial.

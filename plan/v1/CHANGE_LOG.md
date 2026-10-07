@@ -283,3 +283,25 @@ Read-only Task14 review confirms accepted preparation11a31fc has no final GIF re
 Freeze demo-light.gif and demo-dark.gif as the eventual two outputs. Reuse existing pinned-tool/font verification, run_tool and agg_command with its reviewed speed1, ceil(duration)+1 idle limit, theme and last-frame arguments. Validate the real input under the existing procedure: v3, approved geometry,20–40seconds, output events plus exactly one final x with payload0, no input/resize/marker events, and required ordered commands/exit markers. Never execute a cast header command. Validate actual GIF frame delays, complete bounded structure, at least one frame,20–40seconds and each file strictly below3,000,000bytes; do not treat header dimensions or configured flags as measured duration.
 
 Offline unit fixtures/doubles must exercise malformed/missing casts, invalid events, tampered/missing prerequisites, renderer failure, stale/missing outputs, malformed/oversized/short/long GIFs and deterministic repeated rendering. Temporary synthetic test data is labelled as such and never committed under docs/assets as a product demonstration. Leave inventory unimplemented and create no actual docs/assets/src/demo.cast or GIF; actual post-PyPI capture, provenance binding, repeated real rendering, pixels and activation remain Task14's later acceptance gate. This preparation creates no new public surface or packaged Python fingerprint change.
+
+## V1-045 — Actual Task13 rule additions and fourth denied resumption
+
+The human added the two exact Bash merge allow rules for main7820dba and
+integration1fd9d08. A single missing comma made the edited user settings invalid;
+Codex repaired only that punctuation byte, validated JSON and confirmed both
+exact entries. No permission entry, deny rule or mode was changed by Codex.
+The same Task13 Fable5.1/high session resumed under normal permissions and
+received a fourth Auto-Mode Bypass denial, preserved in report6ba49ae.
+
+The issued command included an output pipe instead of the bare approved
+command. The report incorrectly describes a cd prefix absent from the raw
+stream; preserve that report and record this correction. That is a possible rule-matching cause, not an independently
+established diagnosis. The new denial stops the outcome; do not retry a bare
+command, split the operation, change executor or infer a further grant. Source,
+outputs and main remain unchanged. Task06 has no new effective grant and no
+key read, execution, journal, request or spend. Keep both blocked outcomes
+separate from continuing documentation and standalone-renderer preparation.
+
+Task08 correction2ccdac6 is scoped ACCEPT after parent and independent review;
+full Task08 remains PARTIAL for its existing mandatory gates. No policy,
+schema, statistical rule, registry or accepted asset changes are authorized.
