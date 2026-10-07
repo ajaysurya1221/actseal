@@ -1,10 +1,13 @@
 # Changelog
 
-## v1.0.0 — unreleased candidate
+## v1.0.0
 
-No 1.0.0 tag has been pushed and no 1.0.0 distribution is on PyPI; this
-entry describes the reviewed candidate and is finalized with the release
-receipts. The [migration guide](docs/migration.md) and
+This entry describes the 1.0.0 implementation as reviewed and accepted before
+the tag (source fingerprint
+`8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3`). The
+tag, distribution and publication receipts are recorded in
+[plan/v1/RELEASE_NOTES.md](plan/v1/RELEASE_NOTES.md) as the release pipeline
+produces them, not here. The [migration guide](docs/migration.md) and
 [stability manifest](docs/stability.md) are normative for the changes below.
 
 ### Stability and compatibility
@@ -52,8 +55,9 @@ receipts. The [migration guide](docs/migration.md) and
   PROVISIONAL, selectable only as `--provider jev --experimental-provider`
   (or `open_model("jev", ...)`), bring-your-own `JEV_API_KEY`, one attempt
   per request, no retry, redirect or fallback, no 1.x promise. Its tests use
-  mocked transports only; no live Jev request has been accepted as evidence
-  and the optional preregistered audit has not run.
+  mocked transports only. The optional preregistered live audit was not run
+  for 1.0.0: no key was read, no request was made, and no journal, request
+  count or verdict exists; no live Jev result is accepted as evidence.
 
 ### Platforms, release and documentation
 
@@ -67,16 +71,15 @@ receipts. The [migration guide](docs/migration.md) and
   draft GitHub release. Branch runs are rehearsals that never upload.
 - Concepts, CLI reference, Python guide, FAQ, version-neutral quickstart and
   a rewritten publishing guide, with executable documentation tests.
-- Reproducible README figures (hero, how-it-works, social preview) from a
-  pinned authoring-only toolchain; the architecture figure and the genuine
-  post-publication demo recording are pending.
-
-Pending before this entry is final: the architecture figure, final visual
-acceptance, the exact-head candidate CI and release rehearsal. This entry,
-with its "unreleased candidate" heading and every pending statement, must be
-resolved to the shipped facts **before** the release build and the immutable
-`v1.0.0` tag, because the tagged bytes are what ships; the publication
-receipts are recorded afterwards in `plan/v1/RELEASE_NOTES.md`, not here.
+- Reproducible README figures from a pinned authoring-only toolchain: hero,
+  how-it-works and architecture, each as light/dark desktop and vertical
+  mobile SVGs validated against the measured GitHub README image widths
+  (838 px desktop, 254 px mobile, 14 px label floor), plus the 1280×640
+  social preview; the README selects the vertical variants below a 1280 px
+  viewport. The where-it-sits, decision/verdict-matrix and evidence-boundary
+  figures are not part of 1.0.0; the evidence limits stay in plain text. The
+  genuine demo recording is captured from the published PyPI release after
+  publication (Decision 2A) and is not in the tagged tree.
 
 ## v0.1.0 — 2026-10-06
 

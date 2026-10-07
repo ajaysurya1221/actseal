@@ -1,8 +1,10 @@
 # ADR 0016: Release promotion of exact bytes with strict receipts
 
 - Status: accepted with the v1.0.0 plan (Task 09, amendments V1-006 and
-  V1-012) and REVIEW 09R2–09R4; recorded here after implementation. Hosted
-  rehearsal and the final asset gate remain pending at the time of writing.
+  V1-012) and REVIEW 09R2–09R4; recorded here after implementation. The
+  static-asset inputs to the pre-upload gate are complete (see "Evidence and
+  validation"); the tagged pipeline's own receipts are recorded in
+  `plan/v1/RELEASE_NOTES.md`.
 - Date: 2026-10-07.
 
 ## Decision
@@ -83,4 +85,27 @@ Reports 09, 09R2, 09R3, 09R4-glue (Codex-authored CI-glue repair) and 09R4
 record the implementation. `tests/release/` exercises the workflow contract,
 every helper gate and its negatives, the supplied-artifact no-rebuild proof and,
 in `test_release_schemas.py`, the schemas against receipts the helper actually
-writes. Hosted rehearsal and the final asset gate are external acceptance steps.
+writes. Runs 37581140052 and 37581142565 at PR 18 head `0e32c6c` were the
+ordinary push and pull-request CI workflow (`ci.yml`, ten green hosted jobs
+including the hash-verified Linux agg execution in the assets job); they
+exercised the release helper's tests and the asset pipeline, not
+`publish-pypi.yml`, and were not a rehearsal of this workflow.
+
+Status on 7 October 2026: the four required static asset groups the
+pre-upload gate regenerates (hero, how-it-works, architecture, social) are
+committed and accepted at `77a13bd` (`plan/v1/reviews/13-readability.md`,
+byte-identical regeneration of twelve SVGs and the social PNG) with the
+README's responsive selection at `95e17b4`. The combined head `ff0f66c` was
+accepted for integration (`plan/v1/reviews/19-combined-static.md`), passed
+all ten hosted source and assets jobs (runs 37599734305 and 37599764080) and
+merged to `main` as `277d729`. A real, non-publishing `publish-pypi.yml`
+rehearsal, run 37599844342 at `ff0f66c`, completed SUCCESS: the build job
+built once, the assets job regenerated the figures, and all four
+exact-artifact platform verify jobs passed; the publish, post-publish and
+mirror jobs were intentionally skipped. That rehearsal is pre-tag evidence
+that the workflow runs end to end on these bytes; it produced no tag,
+promoted artifact, attestation or PyPI receipt, and the final tagged
+candidate still has to pass every gate. The demo recording stays the
+approved post-PyPI exception. The tagged build, verify, publish and
+post-publication receipts are produced by the pipeline itself and recorded
+in `plan/v1/RELEASE_NOTES.md`; this ADR claims none of them.
