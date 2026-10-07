@@ -10,7 +10,7 @@ All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; s
 
 ## Current constraint and next action
 
-Current checkpoint: 7 October, approximately13:15IST. Main is
+Current checkpoint: 7 October, approximately13:30IST. Main is
 `5c9a3d01eda239f0f6231a79833b1719c3410645` after planning checkpointPR42
 (reviewed265bfb8) passed all eight hosted checks and merged. Initial
 macOS3.13 dependency installation timed out fetching Hatchling from PyPI;
@@ -34,15 +34,18 @@ planning checkpoint, not acceptance of the still-red release candidate.
    missing-architecture failure remains; hooks and independent factual
    re-review pass. This accepted delta was fast-forwarded only into Task19's
    isolated candidate branch. Full Task08 remains PARTIAL.
-4. **Task14 correction running:** preparationc788dad is REVISE for demonstrated
-   GIF delay/structure defects, bounds, cast validation and per-execution
-   tool verification. V1-046 freezes ownership/repairs; sameFable5.1/high
-   session continues. No actual cast/GIF or inventory activation exists.
-5. **Release candidate:** localTask19 head2ccdac6, remotePR39 stillb05aed85.
-   Both completed b05 hosted runs fail only the two tests identifying four
-   missing architecture images. Final hosted green, rehearsal, actual
-   artifacts, tag and publication remain. Packaged source fingerprint stays
-   8f316f67…98ed3. No v1 tag or PyPI publication exists.
+4. **Task14 renderer preparation scoped ACCEPTa47a320:** all bounded
+   findings are fixed; parent425 visual tests pass with1 known architecture
+   failure, strict typing/hooks pass; independent103 focused checks pass.
+   The same Fable session is terminal. No actual cast/GIF or inventory
+   activation exists; full Task14 remains post-publication.
+5. **Release candidate:** localTask19 head5e7931a after accepted08/14 and
+   main5c9a3d0 integration; parent530 docs/visual tests pass with2 known
+   missing-architecture failures, hooks pass. PR39 is being updated to this
+   exact head for hosted checks. Prior b05 runs remain failed history.
+   Final green CI, rehearsal, actual artifacts, tag and publication remain.
+   Packaged source fingerprint stays8f316f67…98ed3; no product source,
+   pyproject or lockfile delta in this integration. No v1 publication exists.
 
 The one-time10:30IST heartbeat already resumed the original15/06 sessions;
 no duplicate automation/session. Earlier checkpoint narratives remain in
@@ -66,10 +69,10 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 | 11 | Actual hero/font/OFL bytes independently accepted and preserved in combinedPR31, merged7820dba after8 green checks. IsolatedPR25 closed as superseded; source history retained. Final README blind test remains. |
 | 12 | ACCEPTf712dae after actual offline pixel review and regeneration. PR22 merged227c7da. No browser workaround. |
 | 13 | Originalsource2e2a7b2 scoped ACCEPT; completion blocked after fourth effective harness denial at6ba49ae despite actual human-added rules. Manual Terminal request pending. No merge or output generation. |
-| 14 | Procedure/helper11a31fc scoped ACCEPT/greenPR30. New renderer c788dad REVISE; V1-046 correction running. Genuine PyPI cast/GIF, provenance, rendering and activation remain after publication. |
+| 14 | Procedure/helper11a31fc scoped ACCEPT/greenPR30; standalone renderer a47a320 scoped ACCEPT after all bounded repairs, parent425visual+103independentfocused checks. Fulltask pending genuine PyPI cast/GIF, provenance, rendering and activation. |
 | 15 | ACCEPTfcdcfe4;283 parent+independent visual tests,2,958 parent core tests,types/hooks,actualpixels/regeneration and8 hosted checks pass. PR31 merged7820dba. Social1280x640 exists; user upload not done. |
 | 16–18 | Optional P2, only after mandatory P1 acceptance; not dispatched. |
-| 19–22 | Scoped source/registry corrections b0031f5 and receiptf43291d ACCEPT; original source fingerprint8f316f67…98ed3 stays fixed. Accepted08/14procedure/09 integrated locally, now2ccdac6 after final-facts08 correction. Mandatory architecture, final docs/current-status facts, exact-head full hostedCI/rehearsal, release/publication/final receipts remain. No v1 tag or PyPI publication. |
+| 19–22 | Scoped source/registry corrections b0031f5 and receiptf43291d ACCEPT; original source fingerprint8f316f67…98ed3 stays fixed. Accepted08/14renderer/09 andmain5c9a3d0 integrated locally at5e7931a; parent530 docs/visual checks pass with2 known architecture failures. Mandatory architecture, final docs/current-status facts, exact-head full hostedCI/rehearsal, release/publication/final receipts remain. No v1 tag or PyPI publication. |
 
 ## Branches, processes and receipts
 
