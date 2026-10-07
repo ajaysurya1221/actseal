@@ -393,6 +393,27 @@ is a `SchemaError` raised for actseal 0.1.0 locks and manifests; see the
 [migration guide](migration.md). Messages name fields and invariants and never
 echo input values.
 
+The numerical kernel is the exception to that hierarchy.
+`actseal.stats.clopper_pearson_tail` validates its arguments like a numeric
+function and raises built-in exceptions, never `SchemaError` or another
+`ActsealError`:
+
+- `TypeError` when `successes` or `n` is not an `int` (booleans included) or
+  `tail` is not an `int` or `float` (booleans included);
+- `ValueError` when a value is outside the domain: `n` outside 1 to 10,000,
+  `successes` outside 0 to `n`, a nonfinite `tail` (including an integer too
+  large for binary64, such as `10**400`) or a `tail` outside
+  `[2.5e-7, 0.5)`.
+
+```python
+from actseal.stats import clopper_pearson_tail
+
+try:
+    clopper_pearson_tail(1, 2, 10**400)
+except ValueError:
+    pass  # out of the numerical domain; not an ActsealError
+```
+
 ## Related
 
 - [Stability manifest](stability.md): the normative inventory and constants.

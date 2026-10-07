@@ -86,9 +86,9 @@ def test_every_active_recorded_run_replays_to_its_archived_verdict(
     archive passes only through an explicit compatibility review registering
     both its producer fingerprint and the running fingerprint for the engine in
     the packaged registry (for ``recorded/a5fe090202f7`` that review is
-    complete: amendment V1-037); excluding it needs a separately recorded
-    amendment. A new ``run.py --record`` run cannot make an unsupported archive
-    pass and never repairs, replaces or reseals it.
+    complete: amendments V1-037 and, for the 1.0.1 source, V1-055); excluding it
+    needs a separately recorded amendment. A new ``run.py --record`` run cannot
+    make an unsupported archive pass and never repairs, replaces or reseals it.
     """
     producer = run.load_producer(run_dir)
     recorded = decode_document(

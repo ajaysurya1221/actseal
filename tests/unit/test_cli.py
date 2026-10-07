@@ -234,9 +234,9 @@ def test_version_exits_0(run: Run) -> None:
     code, out, err = run(["--version"])
     assert code == 0
     assert err == ""
-    # The 1.0.0 release candidate (Codex metadata commit 0b57933); the printed
-    # version is always the installed package's own version string.
-    assert actseal.__version__ == "1.0.0"
+    # The 1.0.1 release candidate (amendment V1-055); the printed version is
+    # always the installed package's own version string.
+    assert actseal.__version__ == "1.0.1"
     assert out == f"actseal {actseal.__version__}\n"
 
 

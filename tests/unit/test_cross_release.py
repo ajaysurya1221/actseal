@@ -221,8 +221,9 @@ def test_other_release_evidence_replays_here_only_with_dual_registration(
     assert lock.implementation_sha256 == other_fingerprint != implementation_fingerprint()
     current = implementation_fingerprint()
 
-    # Default: the packaged registry approves only the two reviewed fingerprints
-    # (V1-037), and the copied tree's fingerprint is neither: a foreign producer.
+    # Default: the packaged registry approves only the three reviewed fingerprints
+    # (V1-037, V1-055), and the copied tree's fingerprint is none of them: a foreign
+    # producer.
     assert load_registry().engine_for(other_fingerprint) is None
     rejected = replay(bundle)
     assert rejected.status == "ERROR"
