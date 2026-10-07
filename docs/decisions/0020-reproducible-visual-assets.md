@@ -156,9 +156,12 @@ and the committed SVG canvases (`hero-*.svg` and `how-it-works-*.svg` are
 1600 units wide on desktop and 720 units wide on mobile): a 26-unit desktop
 label is 13.6 px at 838 px and a 30-unit mobile label is 12.3 px at 294 px
 and 10.6 px at 254 px, both below the floor; the hero's 28-unit desktop
-labels are 14.7 px at 838 px and fit. Under the old 600 px switch, 800 to
+labels are 14.7 px at 838 px and fit. Under the old 600 px switch, 1000 to
 1200 px windows received desktop canvases scaled to 638 to 758 px, where
-even 28-unit labels are below 14 px.
+even 28-unit labels are below 14 px. The table establishes repository-view
+widths only for those viewports; review 13's 800 px observation (a 702 px
+image, still on the desktop variant) was taken on the wider file-preview
+surface and is not evidence for the repository view.
 
 **Decision.** The README now selects the existing vertical (`-mobile-`)
 variants for every viewport below 1280 px and the desktop variants at
