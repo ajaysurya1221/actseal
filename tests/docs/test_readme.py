@@ -53,8 +53,28 @@ ARCHITECTURE_FILES = (
     "architecture-mobile-light.svg",
     "architecture-mobile-dark.svg",
 )
+FIGURES = ("hero", "how-it-works", "architecture")
+#: Narrowest browser viewport (CSS px) that selects the desktop variants.
+#: Read-only measurements of the public repository view at candidate 5e7931a
+#: (review 13) gave the README image 838 px at 1280 and 1366 px viewports and
+#: only 758 px at 1200; a 1600-unit desktop canvas with 26-unit labels drops
+#: below the 14 px floor anywhere under 1280 px, so every narrower viewport
+#: selects the vertical variants.
+DESKTOP_MIN_VIEWPORT = 1280
+MOBILE_MEDIA = f"(max-width: {DESKTOP_MIN_VIEWPORT - 1}px)"
+MOBILE_VIEWPORTS = (320, 360, 800, 1000, 1200, DESKTOP_MIN_VIEWPORT - 1)
+DESKTOP_VIEWPORTS = (DESKTOP_MIN_VIEWPORT, 1366, 1920)
+MEDIA_FEATURE = re.compile(r"^\((?P<name>[a-z-]+):\s*(?P<value>[^)]+)\)$")
 MARKDOWN_IMAGE = re.compile(r"!\[(?P<alt>[^\]]*)\]\((?P<target>[^)\s]+)\)")
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]*\]\((?P<target>[^)\s]+)\)")
+
+
+class _Picture:
+    """One ``<picture>`` block: its ``<source>`` rows in order and the ``<img>`` fallback."""
+
+    def __init__(self) -> None:
+        self.sources: list[tuple[str, str]] = []  # (media, target) in document order
+        self.fallback: str | None = None
 
 
 class _Images(HTMLParser):
@@ -64,23 +84,88 @@ class _Images(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.images: list[tuple[str, str | None]] = []  # (target, alt or None for sources)
         self.pictures = 0
+        self.picture_blocks: list[_Picture] = []
+        self._open: _Picture | None = None
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = {key.lower(): value or "" for key, value in attrs}
         if tag == "picture":
             self.pictures += 1
+            assert self._open is None, "nested <picture>"
+            self._open = _Picture()
+            self.picture_blocks.append(self._open)
         elif tag == "img":
             assert "src" in values, "<img> without src"
             self.images.append((values["src"], values.get("alt", "")))
             for candidate in values.get("srcset", "").split(","):
                 if candidate.strip():
                     self.images.append((candidate.split()[0], None))
+            if self._open is not None:
+                assert self._open.fallback is None, "two <img> in one <picture>"
+                self._open.fallback = values["src"]
         elif tag == "source":
-            for candidate in values.get("srcset", "").split(","):
-                if candidate.strip():
-                    self.images.append((candidate.split()[0], None))
+            assert self._open is not None, "<source> outside <picture>"
+            assert self._open.fallback is None, "<source> after the <img> fallback is ignored"
+            candidates = [c.split()[0] for c in values.get("srcset", "").split(",") if c.strip()]
+            assert len(candidates) == 1, values.get("srcset")
+            self.images.append((candidates[0], None))
+            self._open.sources.append((values.get("media", ""), candidates[0]))
         else:
             assert tag not in {"object", "embed", "iframe", "video"}, tag
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "picture":
+            assert self._open is not None, "</picture> without <picture>"
+            assert self._open.fallback is not None, "<picture> without <img>"
+            self._open = None
+
+
+def _media_matches(media: str, *, viewport: int, dark: bool) -> bool:
+    """Evaluate the small media-query subset the README is allowed to use.
+
+    Only ``prefers-color-scheme`` and ``max-width``/``min-width`` joined by
+    ``and`` are understood; anything else fails loudly rather than being
+    silently treated as matching or non-matching.
+    """
+    for clause in media.split(" and "):
+        feature = MEDIA_FEATURE.match(clause.strip())
+        assert feature is not None, media
+        name, value = feature["name"], feature["value"].strip()
+        if name == "prefers-color-scheme":
+            assert value in {"dark", "light"}, media
+            if (value == "dark") != dark:
+                return False
+        elif name in {"max-width", "min-width"}:
+            assert value.endswith("px"), media
+            limit = int(value[: -len("px")])
+            if (name == "max-width" and viewport > limit) or (
+                name == "min-width" and viewport < limit
+            ):
+                return False
+        else:
+            raise AssertionError(f"unsupported media feature in README: {media}")
+    return True
+
+
+def _selected(picture: _Picture, *, viewport: int, dark: bool) -> str:
+    """Asset name a browser picks: the first matching ``<source>``, else the ``<img>``."""
+    for media, target in picture.sources:
+        if _media_matches(media, viewport=viewport, dark=dark):
+            return _local_asset(target).name
+    assert picture.fallback is not None
+    return _local_asset(picture.fallback).name
+
+
+def _figure_pictures() -> dict[str, _Picture]:
+    blocks = _html_images().picture_blocks
+    by_figure: dict[str, _Picture] = {}
+    for block in blocks:
+        assert block.fallback is not None
+        name = _local_asset(block.fallback).name
+        figure = next(f for f in FIGURES if name == f"{f}-light.svg")
+        by_figure[figure] = block
+    assert list(by_figure) == list(FIGURES), list(by_figure)
+    return by_figure
 
 
 def _text() -> str:
@@ -256,10 +341,79 @@ def test_architecture_filenames_are_the_frozen_four() -> None:
 
 def test_picture_variants_cover_light_dark_desktop_and_mobile() -> None:
     names = [_local_asset(t).name for t, _ in _html_images().images if not _is_badge(t)]
-    for figure in ("hero", "how-it-works", "architecture"):
+    for figure in FIGURES:
         assert [n for n in names if n.startswith(figure)] == [
             f"{figure}-mobile-dark.svg",
             f"{figure}-mobile-light.svg",
             f"{figure}-dark.svg",
             f"{figure}-light.svg",
         ], figure
+
+
+# --------------------------------------------------------------------------- #
+# Responsive selection at real GitHub widths (review 13, V1-051)
+# --------------------------------------------------------------------------- #
+
+
+def test_every_picture_uses_the_measured_breakpoint_with_dark_before_light() -> None:
+    """Source order is what a browser evaluates: dark+mobile, mobile, dark, then the light img.
+
+    A ``<picture>`` takes the first ``<source>`` whose media query matches, so
+    the dark mobile row must precede the scheme-agnostic mobile row and the
+    dark desktop row must precede the light ``<img>`` fallback. Every width
+    clause must be the single measured breakpoint; the historical 600 px
+    switch left 800 to 1200 px windows on undersized desktop canvases.
+    """
+    for figure, picture in _figure_pictures().items():
+        assert [(media, _local_asset(target).name) for media, target in picture.sources] == [
+            (f"(prefers-color-scheme: dark) and {MOBILE_MEDIA}", f"{figure}-mobile-dark.svg"),
+            (MOBILE_MEDIA, f"{figure}-mobile-light.svg"),
+            ("(prefers-color-scheme: dark)", f"{figure}-dark.svg"),
+        ], figure
+        assert picture.fallback is not None
+        assert _local_asset(picture.fallback).name == f"{figure}-light.svg"
+    assert "600px" not in _text()
+
+
+def test_viewports_below_1280_select_the_vertical_variants() -> None:
+    """320 to 1279 px viewports (254 to under 838 px images) get the mobile files, both schemes."""
+    for figure, picture in _figure_pictures().items():
+        for viewport in MOBILE_VIEWPORTS:
+            assert (
+                _selected(picture, viewport=viewport, dark=True) == f"{figure}-mobile-dark.svg"
+            ), (
+                figure,
+                viewport,
+            )
+            assert (
+                _selected(picture, viewport=viewport, dark=False) == f"{figure}-mobile-light.svg"
+            ), (
+                figure,
+                viewport,
+            )
+
+
+def test_viewports_at_1280_and_above_select_the_desktop_variants() -> None:
+    """1280 and 1366 px viewports render the README image at 838 px and get the desktop files."""
+    for figure, picture in _figure_pictures().items():
+        for viewport in DESKTOP_VIEWPORTS:
+            assert _selected(picture, viewport=viewport, dark=True) == f"{figure}-dark.svg", (
+                figure,
+                viewport,
+            )
+            assert _selected(picture, viewport=viewport, dark=False) == f"{figure}-light.svg", (
+                figure,
+                viewport,
+            )
+
+
+def test_breakpoint_change_kept_every_picture_full_width_without_new_paths() -> None:
+    """The responsive fix changes media queries only: same four files per figure, same width."""
+    text = _text()
+    assert text.count('width="100%"') == 3
+    referenced = {_local_asset(t).name for t, _ in _html_images().images if not _is_badge(t)}
+    assert referenced == {
+        f"{figure}{variant}.svg"
+        for figure in FIGURES
+        for variant in ("-light", "-dark", "-mobile-light", "-mobile-dark")
+    }

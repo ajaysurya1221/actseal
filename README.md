@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-mobile-dark.svg">
-  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark) and (max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-mobile-dark.svg">
+  <source media="(max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-dark.svg">
   <img alt="Actseal wordmark with the tagline Test model-chosen actions. Replay the evidence. Beside it, one loop of three steps: freeze, run and replay. Caption: Replay cannot authenticate responses, prove inference occurred, or establish label truth." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-light.svg" width="100%">
 </picture>
@@ -13,8 +13,8 @@ Actseal verifies model-chosen application actions for developers: freeze a polic
 [![Apache-2.0 license](https://img.shields.io/badge/license-Apache--2.0-blue)](https://github.com/ajaysurya1221/actseal/blob/main/LICENSE)
 
 <picture>
-  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-mobile-dark.svg">
-  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark) and (max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-mobile-dark.svg">
+  <source media="(max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-dark.svg">
   <img alt="How Actseal works in five stages. Freeze turns the frozen policy, labelled inputs and model identity into one lock. Run collects provider answers and six synthetic faults into decisions: ACT, ABSTAIN, ESCALATE or DENY. Verify applies the risk and coverage bounds and fault rules to one verdict with its exit code: PASS 0, BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes one bounded evidence bundle. Replay recomputes the verdict offline with no model call." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-light.svg" width="100%">
 </picture>
@@ -50,8 +50,8 @@ explains each output, the exit codes and how to pin one exact release.
 - Population claims require the stated sampling assumptions; Actseal does not enforce application execution.
 
 <picture>
-  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-mobile-dark.svg">
-  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark) and (max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-mobile-dark.svg">
+  <source media="(max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-dark.svg">
   <img alt="Actseal architecture in seven groups: the CLI and typed API; contracts and locks; providers; normalization and policy; assessment, statistics and faults; evidence; and replay. Replay reads the evidence bundle and never reaches a provider." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-light.svg" width="100%">
 </picture>
