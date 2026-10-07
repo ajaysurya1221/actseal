@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "observed_at_utc": "2026-10-07T10:57:21.322475+00:00",
+  "method": "Maximum terminal cumulative total_cost_usd per session; never sum resumed-session totals.",
+  "streams": 95,
+  "terminal_results": 99,
+  "sessions": 17,
+  "api_equivalent_usd": "564.3217587499999632",
+  "models_api_equivalent_usd": {
+    "claude-fable-5-1": "554.8808769999999622",
+    "claude-sonnet-5": "3.2063510000000004",
+    "claude-haiku-4-5-20251001": "0.022664",
+    "claude-opus-5[1m]": "6.211866750000003"
+  },
+  "actual_billed_cost": "UNKNOWN",
+  "jev_sprint_requests_observed": 0,
+  "jev_account_credit_change": "UNKNOWN; account balance not inspected",
+  "excluded": [
+    "Codex usage",
+    "manual usage",
+    "Claude work after observation timestamp"
+  ],
+  "observations": [
+    {
+      "session_id": "a4814ebe-58b4-4077-8b7d-f3b344078549",
+      "source_stream": "01R.stream.jsonl",
+      "line": 176,
+      "api_equivalent_usd": "1.9279320000000002",
+      "models": {
+        "claude-fable-5-1": "1.9279320000000002"
+      }
+    },
+    {
+      "session_id": "55bc88af-619e-4aff-97ac-4d7c42d31418",
+      "source_stream": "02R3.stream.jsonl",
+      "line": 71,
+      "api_equivalent_usd": "35.429802099999996",
+      "models": {
+        "claude-fable-5-1": "33.204950499999995",
+        "claude-sonnet-5": "2.2248516"
+      }
+    },
+    {
+      "session_id": "da80547c-fab0-4926-8c79-3a6d66f6b7b3",
+      "source_stream": "03R2.stream.jsonl",
+      "line": 58,
+      "api_equivalent_usd": "17.081603750000006",
+      "models": {
+        "claude-fable-5-1": "17.081603750000006"
+      }
+    },
+    {
+      "session_id": "36334c93-ddb9-413b-a094-2549b02efef3",
+      "source_stream": "04R2.stream.jsonl",
+      "line": 99,
+      "api_equivalent_usd": "19.231238000000005",
+      "models": {
+        "claude-fable-5-1": "19.231238000000005"
+      }
+    },
+    {
+      "session_id": "50efd940-2c54-4c5f-ab0b-cd8cfbbc22aa",
+      "source_stream": "05R2.stream.jsonl",
+      "line": 138,
+      "api_equivalent_usd": "28.324416999999997",
+      "models": {
+        "claude-fable-5-1": "28.324416999999997"
+      }
+    },
+    {
+      "session_id": "a344fc86-fb34-49d7-8e28-8b97772d2713",
+      "source_stream": "06-harness-granted.stream.jsonl",
+      "line": 37,
+      "api_equivalent_usd": "56.69125974999999",
+      "models": {
+        "claude-fable-5-1": "56.69125974999999"
+      }
+    },
+    {
+      "session_id": "eeb42150-bc57-422f-8406-8b15797a9027",
+      "source_stream": "07R3.stream.jsonl",
+      "line": 62,
+      "api_equivalent_usd": "23.696693249999992",
+      "models": {
+        "claude-fable-5-1": "23.696693249999992"
+      }
+    },
+    {
+      "session_id": "59a17d7b-61f6-4e7a-a4fc-2964bd4463eb",
+      "source_stream": "19D-activated.stream.jsonl",
+      "line": 116,
+      "api_equivalent_usd": "62.970541000000004",
+      "models": {
+        "claude-fable-5-1": "62.970541000000004"
+      }
+    },
+    {
+      "session_id": "83514ea3-48d0-4c6e-8728-e4a607318bc7",
+      "source_stream": "21-ci-provenance.stream.jsonl",
+      "line": 57,
+      "api_equivalent_usd": "23.385402250000006",
+      "models": {
+        "claude-fable-5-1": "23.385402250000006"
+      }
+    },
+    {
+      "session_id": "b3ff94c7-3730-4f74-8c97-51ca08412f31",
+      "source_stream": "09-linux-agg.stream.jsonl",
+      "line": 280,
+      "api_equivalent_usd": "86.41180465000001",
+      "models": {
+        "claude-fable-5-1": "79.19577450000001",
+        "claude-haiku-4-5-20251001": "0.022664",
+        "claude-opus-5[1m]": "6.211866750000003",
+        "claude-sonnet-5": "0.9814994000000004"
+      }
+    },
+    {
+      "session_id": "6d75b60a-06d9-4a39-a69b-fbe105277f4a",
+      "source_stream": "10CI.stream.jsonl",
+      "line": 67,
+      "api_equivalent_usd": "27.548711499999992",
+      "models": {
+        "claude-fable-5-1": "27.548711499999992"
+      }
+    },
+    {
+      "session_id": "315ec8a1-beba-47fb-8913-1d275a0629ae",
+      "source_stream": "15-linux-assertions.stream.jsonl",
+      "line": 43,
+      "api_equivalent_usd": "26.280933749999985",
+      "models": {
+        "claude-fable-5-1": "26.280933749999985"
+      }
+    },
+    {
+      "session_id": "f3f4a433-fd6f-4b98-a084-a5a4996d858b",
+      "source_stream": "11R.stream.jsonl",
+      "line": 108,
+      "api_equivalent_usd": "9.404226750000003",
+      "models": {
+        "claude-fable-5-1": "9.404226750000003"
+      }
+    },
+    {
+      "session_id": "96db6a5b-dd17-4a10-b820-1aadc37f7873",
+      "source_stream": "12R2.stream.jsonl",
+      "line": 59,
+      "api_equivalent_usd": "17.847292250000002",
+      "models": {
+        "claude-fable-5-1": "17.847292250000002"
+      }
+    },
+    {
+      "session_id": "9e0493aa-2bfb-4994-ba43-4dc5638e725b",
+      "source_stream": "13-readability.stream.jsonl",
+      "line": 534,
+      "api_equivalent_usd": "42.791523499999975",
+      "models": {
+        "claude-fable-5-1": "42.791523499999975"
+      }
+    },
+    {
+      "session_id": "241e6a45-571b-4ca9-ad83-243d7c53b003",
+      "source_stream": "14-receipt-correction.stream.jsonl",
+      "line": 22,
+      "api_equivalent_usd": "45.88264774999999",
+      "models": {
+        "claude-fable-5-1": "45.88264774999999"
+      }
+    },
+    {
+      "session_id": "4abfb8f5-7009-4af2-bf1f-7091b6055992",
+      "source_stream": "19C-activated.stream.jsonl",
+      "line": 161,
+      "api_equivalent_usd": "39.41572950000001",
+      "models": {
+        "claude-fable-5-1": "39.41572950000001"
+      }
+    }
+  ]
+}
