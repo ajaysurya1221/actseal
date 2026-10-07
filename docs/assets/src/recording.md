@@ -43,12 +43,12 @@ VERIFIED_WHEEL=        # the wheel file the Task 20 receipt hashed
 The recorder and renderer are the pinned binaries in `tools.toml`:
 asciinema 3.2.1 (commit `70c4af0505fe1dbc7a2170392559d258bd4af92c`) and agg
 1.9.0 (commit `26ca84c02523973198fca28533369edcfc7ed929`), plus JetBrains
-Mono 2.304 for GIF rendering. They are fetched only by `setup_tools.py` in a
-session where the official downloads are permitted; as of this writing those
-downloads are permission-blocked and no substitute downloader may be used.
-Before any capture, `actseal_assets.tools.verified_binary` must re-hash both
-binaries against the pins (it does so on every call), and `check_fonts` must
-accept the font files and `OFL.txt`.
+Mono 2.304 for GIF rendering. They are fetched only by `setup_tools.py`
+(the accepted provisioning path; no substitute downloader may be used), and
+provisioning history is separate from this task's own unrun genuine
+rendering. Before any capture, `actseal_assets.tools.verified_binary` must
+re-hash both binaries against the pins (it does so on every call), and
+`check_fonts` must accept the font files and `OFL.txt`.
 
 Record for the receipt, each from its own command, before capture:
 
@@ -401,58 +401,34 @@ before encoding, so the GIF's duration is measured, never derived.
 
 Render each variant twice into separate directories
 (`render-light-a`, `render-light-b`, `render-dark-a`, `render-dark-b`) and
-measure every file with this stdlib walker (saved beside the attempt):
+measure every file from the checkout with the shared validator, which is the
+same code the renderer will apply to the committed files:
 
-```python
-import sys
-
-data = open(sys.argv[1], "rb").read()
-if data[:6] not in (b"GIF87a", b"GIF89a"):
-    raise SystemExit("not a GIF")
-pos, flags = 13, data[10]
-if flags & 0x80:
-    pos += 3 * (2 << (flags & 7))
-
-
-def skip_subblocks(p: int) -> int:
-    while True:
-        n = data[p]
-        p += 1
-        if n == 0:
-            return p
-        p += n
-
-
-frames = delay_cs = 0
-while True:
-    block = data[pos]
-    pos += 1
-    if block == 0x3B:
-        break
-    if block == 0x21:
-        label = data[pos]
-        pos += 1
-        if label == 0xF9:
-            if data[pos] != 4:
-                raise SystemExit("bad graphic control extension")
-            delay_cs += int.from_bytes(data[pos + 2 : pos + 4], "little")
-        pos = skip_subblocks(pos)
-    elif block == 0x2C:
-        local = data[pos + 8]
-        pos += 9
-        if local & 0x80:
-            pos += 3 * (2 << (local & 7))
-        pos += 1
-        pos = skip_subblocks(pos)
-        frames += 1
-    else:
-        raise SystemExit(f"unexpected block 0x{block:02x} at {pos - 1}")
-print(f"bytes={len(data)} frames={frames} delay_sum_cs={delay_cs} seconds={delay_cs / 100:.2f}")
+```bash
+uv run --frozen --group assets python -c 'import sys; sys.path.insert(0, "docs/assets/src"); from pathlib import Path; from actseal_assets import demo; p = Path(sys.argv[1]); print(p.name, demo.validate_gif(demo.read_bounded(p), p.name))' "$SESSION/attempt-1/render-light-a/demo-light.gif"
 ```
 
-Required for each GIF: the frame-delay sum between 2000 and 4000
-centiseconds (20 to 40 s) and `bytes` below 3,000,000; for each variant the
-two renders have identical SHA-256 digests:
+Run it once per file (the four paths differ only in their directory and
+variant name). `read_bounded` reads at most the cap plus one byte and
+refuses an oversized file unread; `validate_gif` rejects a file at or above
+3,000,000 bytes before parsing, then walks every block with bounded reads
+(signature, logical screen descriptor, colour tables, extensions, image
+descriptors, code sizes, non-empty image data, terminators, trailer) and
+sums only the delays of graphic control extensions that are each followed
+by exactly one image. Duplicate or dangling controls, images without data,
+unknown blocks, truncation and trailing bytes are errors, not estimates.
+The printed `GifFacts` carry `size`, `frames` and `delay_centiseconds`.
+This is structural validation; it does not decode pixels. The rendered
+images are reviewed by eye separately, and the recorded text markers
+checked in step 6 are consistency checks: they cannot authenticate the
+output or establish that the commands ran or that the package came from
+PyPI. The separately recorded step 3/5 binding and its receipt provide
+supporting evidence for those claims; no structural check proves them.
+
+Required for each GIF: `validate_gif` returns facts (no `DemoError`) with
+`delay_centiseconds` between 2000 and 4000 (20 to 40 s), at least one frame
+and `size` below 3,000,000; for each variant the two renders have identical
+SHA-256 digests:
 
 ```bash
 shasum -a 256 "$SESSION/attempt-1"/render-*/demo*.gif
