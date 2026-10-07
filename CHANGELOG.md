@@ -1,5 +1,32 @@
 # Changelog
 
+## Unreleased
+
+## v1.0.1 — unreleased
+
+### Fixes
+
+- Iterate LF-delimited JSONL rows without first building a list of every
+  row. Preserve row boundaries, validation order, diagnostics and existing
+  limits; the fixture adapter still has no row-count limit.
+- Require native Laya worker reply sequences to be JSON integers matching
+  the pending request. Boolean, floating-point and missing sequences
+  invalidate the worker and return `unavailable` with `laya.unavailable:ipc`.
+
+### Replay compatibility
+
+- Add the reviewed 1.0.1 implementation fingerprint to the
+  `actseal-choice-v1` registry, retaining both existing mappings.
+  The retained action-gate archive remains unchanged and replays to its
+  stored verdict. New collection continues to require an exact-source lock.
+
+### Documentation
+
+- Correct the numerical-kernel exception guide: `clopper_pearson_tail`
+  raises built-in `TypeError` or `ValueError`, not `ActsealError`.
+  This documentation correction changes neither numerical behaviour nor
+  results.
+
 ## v1.0.0
 
 This entry describes the 1.0.0 implementation as reviewed and accepted before

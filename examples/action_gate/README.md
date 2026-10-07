@@ -158,9 +158,11 @@ fingerprint and the running fingerprint for the engine in the packaged
 registry. For `recorded/a5fe090202f7` that review is complete: amendment
 V1-037 approved its producer (`a5fe0902...`, unreleased prerelease source
 `76758d70...`) and the 1.0.0 source (`8f316f67...`) for `actseal-choice-v1`,
-so the archive replays as `(registry-approved implementation)` under 1.0.0;
+so the archive replays as `(registry-approved implementation)` under 1.0.0.
+Amendment V1-055 added the reviewed 1.0.1 source (`dced01d7...`) beside both,
+so the unchanged archive keeps replaying to its stored verdict under 1.0.1;
 the [versioning policy](../../docs/versioning.md#registry-approval-process)
-records both entries. The registry approves producers for an engine, not
+records all three entries. The registry approves producers for an engine, not
 archives: it holds no lock digests. Any later packaged Python change needs
 its own fingerprint and review before this archive passes again. Excluding an
 archive from the active set requires a separately recorded amendment; none

@@ -10,7 +10,7 @@ Actseal follows `MAJOR.MINOR.PATCH`.
 
 | Change | Allowed in |
 |---|---|
-| Bug fixes that preserve every STABLE behaviour; reviewed compatibility registry entries approving an exact reviewed source fingerprint (a released tree, or the named reviewed prerelease producer of retained schema-2 evidence) for an existing engine | patch |
+| Bug fixes that preserve every STABLE behaviour; reviewed compatibility registry entries approving an exact reviewed source fingerprint (a released tree, the reviewed final candidate of the release that ships the entry, or the named reviewed prerelease producer of retained schema-2 evidence) for an existing engine | patch |
 | New commands, new constants, new optional arguments or flags whose defaults preserve existing behaviour; a new replay engine that must be explicitly selected; a separately versioned, explicitly opt-in interface for an additional format or semantics | minor |
 | Adding a field to an existing strict schema version or to a default CLI receipt shape, removal of a STABLE name or flag, an incompatible change to a STABLE behaviour or schema, a new required constructor field | 2.0 only |
 
@@ -79,10 +79,14 @@ The registry ships as `{"schema_version": 1, "implementations": {"<full
 lowercase 64-hex source SHA-256>": "<engine>"}}`. Approval of an entry requires:
 
 - the exact fingerprint of a reviewed source tree (never a speculative or
-  future hash, never a wildcard or range). Ordinarily that is a released tree;
-  the one exception is a named, reviewed prerelease source whose retained
-  schema-2 evidence ships with the package and is approved by an explicit,
-  per-fingerprint amendment;
+  future hash, never a wildcard or range). Ordinarily that is a released tree.
+  Two exceptions exist, each approved by an explicit, per-fingerprint
+  amendment: a named, reviewed prerelease source whose retained schema-2
+  evidence ships with the package; and the concrete, reviewed final candidate
+  of the release that ships the entry, approved before tagging and
+  publication once every packaged Python change, including the version bump,
+  is final (so that the release replays retained evidence from its first
+  commit). Approving a candidate does not claim that it was released;
 - an archived-evidence regression test showing that evidence produced by that
   fingerprint replays under the engine with unchanged verdicts;
 - review and acceptance recorded in the release plan.
@@ -106,14 +110,30 @@ archived-evidence regression test that justified the second entry, not a
 special case consulted at replay time. The second entry does not approve
 other prerelease trees, any hash range, or evidence from any other producer,
 and it does not claim that a release occurred at that source. Any later
-change to the packaged Python sources changes the running fingerprint,
-invalidates the first entry and requires a new fingerprint and review. The
-exact-source path (rule 2) never consults the registry.
+change to the packaged Python sources changes the running fingerprint: an
+earlier entry remains approved for replay, but it no longer identifies the
+running source, so the changed source needs its own fingerprint and review
+before evidence from other producers replays under it. The exact-source path
+(rule 2) never consults the registry.
+
+The 1.0.1 registry holds exactly three entries, all for `actseal-choice-v1`.
+It retains both 1.0.0 approvals unchanged and adds the reviewed final 1.0.1
+candidate, approved by amendment V1-055 before tagging:
+
+| Fingerprint | Source | Status |
+|---|---|---|
+| `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3` | the released 1.0.0 source (V1-037) | still approved, so 1.0.0 evidence replays under 1.0.1; no longer the running implementation |
+| `a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642` | the unreleased prerelease producer of the retained archive (V1-037) | unchanged; the archive bytes are unchanged and replay to their stored verdict |
+| `dced01d79e64799a19a75c0957f3684a48249c58ebb27d346336e7420195bcb4` | the reviewed final 1.0.1 candidate source, version metadata included (V1-055) | the running implementation of 1.0.1; approved as a candidate before tagging, which by itself does not establish that a release occurred |
+
+The pre-bump hardening tree of 1.0.1 was never a release candidate and is not
+registered; nothing beyond these three fingerprints is approved.
 
 Because every source change, including a patch release, changes the
-fingerprint, a reviewed entry approving an exact released fingerprint for an
-existing engine may ship in a patch release. Approval is always explicit and
-per fingerprint; there is no wildcard, range or "all patches of" form.
+fingerprint, a reviewed entry approving an exact released fingerprint, or the
+exact reviewed final candidate of that patch release, for an existing engine
+may ship in a patch release. Approval is always explicit and per fingerprint;
+there is no wildcard, range or "all patches of" form.
 
 A new engine is a minor release and must be explicitly selected; existing
 engines keep their semantics and remain the default behaviour. Evidence is

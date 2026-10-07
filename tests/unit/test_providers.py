@@ -798,6 +798,100 @@ def test_stale_sequence_reply_is_unavailable_and_invalidates(fake_worker: Path) 
         model.close()
 
 
+#: A stdlib worker whose reply frame splices the ``seq`` member as raw JSON text so the
+#: parent sees exactly the token under test: the echoed integer, ``true``, ``<n>.0`` or no
+#: member at all. Everything else matches the round-trip reply of the shared fake worker.
+SEQ_WORKER = r"""
+import json
+import os
+import sys
+
+mode = sys.argv[1]
+out = sys.stdout.buffer
+inp = sys.stdin.buffer
+
+
+def send_line(text):
+    out.write(text.encode("utf-8") + b"\n")
+    out.flush()
+
+
+identity = json.loads(os.environ["ACTSEAL_FAKE_IDENTITY"])
+send_line(json.dumps({"kind": "ready", "identity": identity, "warnings": []}))
+while True:
+    line = inp.readline()
+    if not line:
+        sys.exit(0)
+    msg = json.loads(line)
+    if msg["kind"] == "close":
+        sys.exit(0)
+    seq = msg["seq"]
+    labels = list(msg["question"]["criteria"])
+    probabilities = {label: 0.0 for label in labels}
+    probabilities[labels[0]] = 1.0
+    body = {
+        "model": "laya-rl-agent",
+        "answers": {msg["question_id"]: {"type": "choice", "choice": labels[0],
+                                          "probabilities": probabilities}},
+        "usage": {"input_tokens": len(msg["state"]), "output_tokens": 0,
+                  "state_tokens": 1, "state_tokens_dropped": 0,
+                  "truncated": False, "truncated_questions": []},
+    }
+    token = {"seq-int": str(seq), "seq-true": "true", "seq-float": str(seq) + ".0",
+             "seq-missing": None}[mode]
+    member = "" if token is None else '"seq": ' + token + ", "
+    send_line('{"kind": "reply", ' + member + '"body": ' + json.dumps(body)
+              + ', "warnings": []}')
+"""
+
+
+@pytest.fixture
+def seq_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    write_fake_worker(tmp_path, monkeypatch)  # exports the pinned identity
+    script = tmp_path / "seq_worker.py"
+    script.write_text(SEQ_WORKER, encoding="utf-8")
+    return script
+
+
+def test_integer_sequence_reply_is_captured(seq_worker: Path) -> None:
+    """Control: the echoed JSON integer is the pending request's sequence on every call."""
+    model = spawn(seq_worker, "seq-int")
+    try:
+        for _ in range(2):
+            capture = model.decide(make_request(), timeout_s=5.0)
+            assert capture.failure_code is None
+            assert capture.body_json is not None
+            assert capture.warnings == ()
+            answer = normalize(capture, make_question(), pinned_identity())
+            assert isinstance(answer, ChoiceAnswer)
+            assert answer.choice == "billing"
+        assert child_alive(model)
+    finally:
+        model.close()
+    assert not child_alive(model)
+
+
+@pytest.mark.parametrize("mode", ["seq-true", "seq-float", "seq-missing"])
+def test_non_integer_sequence_reply_is_unavailable_and_invalidates(
+    seq_worker: Path, mode: str
+) -> None:
+    """``true`` and ``1.0`` compare equal to the first sequence ``1`` in Python but are not
+    the JSON integer that was sent; like a missing sequence they are unusable IPC."""
+    model = spawn(seq_worker, mode)
+    try:
+        capture = model.decide(make_request(), timeout_s=5.0)
+        assert capture.failure_code == "unavailable"
+        assert capture.body_json is None
+        assert capture.warnings == ("laya.unavailable:ipc",)
+        assert not child_alive(model)
+        later = model.decide(make_request(), timeout_s=5.0)
+        assert later.failure_code == "unavailable"
+        assert later.warnings == ("laya.unavailable:ipc",)
+        assert not child_alive(model)
+    finally:
+        model.close()
+
+
 def test_worker_death_is_unavailable_and_stays_unavailable(fake_worker: Path) -> None:
     model = spawn(fake_worker, "exit-on-decide")
     try:
