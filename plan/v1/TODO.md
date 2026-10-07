@@ -19,7 +19,7 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work: all five scoped approvals are resolved. Independent native03, mutations04 and exact-source example07 checks pass; workflow12 is accepted/merged; real hero11 is independently reviewed and its isolated PR25 is in CI. Example PR35 merge preview fails the planned compatibility registry gate; keep its original archive unchanged and fix through Task19.
+Current work: all five scoped approvals are resolved. Independent native03, mutations04 and exact-source example07 checks pass; workflow12 is accepted/merged; real hero11 is independently reviewed with green push CI, but PR25 conflicts with the merged workflow registration. V1-030 assigns the narrow combined resolution to Claude15. Example PR35 merge preview fails the planned compatibility registry gate; keep its original archive unchanged and fix through Task19.
 
 Fable quota resets10:30IST today; the two implementation sessions are terminal. Resume the exact existing sessions after reset, preserving the untracked Task06 draft and applying its preregistration-binding review. Social15 needs only the verified resvg filename repair before real generation. No model/billing substitution.
 
