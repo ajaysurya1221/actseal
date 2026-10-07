@@ -1,0 +1,160 @@
+{"case_id": "gate-v-000", "state": "Ticket GATE-V-000: I was charged twice for invoice 3000; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-001", "state": "Ticket GATE-V-001: The app crashes on launch since update 3001.", "expected_label": "technical"}
+{"case_id": "gate-v-002", "state": "Ticket GATE-V-002: We need a quote for 3002 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-003", "state": "Ticket GATE-V-003: My refund for order 3003 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-004", "state": "Ticket GATE-V-004: Login returns error 3004 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-005", "state": "Ticket GATE-V-005: Does plan 3005 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-006", "state": "Ticket GATE-V-006: The receipt for payment 3006 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-007", "state": "Ticket GATE-V-007: Export job 3007 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-008", "state": "Ticket GATE-V-008: Can we trial the enterprise tier before contract 3008 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-009", "state": "Ticket GATE-V-009: Please update the card on file before invoice 3009 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-010", "state": "Ticket GATE-V-010: Notifications stopped arriving on device 3010.", "expected_label": "technical"}
+{"case_id": "gate-v-011", "state": "Ticket GATE-V-011: What discount applies when ordering 3011 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-012", "state": "Ticket GATE-V-012: I was charged twice for invoice 3012; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-013", "state": "Ticket GATE-V-013: The app crashes on launch since update 3013.", "expected_label": "technical"}
+{"case_id": "gate-v-014", "state": "Ticket GATE-V-014: We need a quote for 3014 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-015", "state": "Ticket GATE-V-015: My refund for order 3015 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-016", "state": "Ticket GATE-V-016: Login returns error 3016 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-017", "state": "Ticket GATE-V-017: Does plan 3017 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-018", "state": "Ticket GATE-V-018: The receipt for payment 3018 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-019", "state": "Ticket GATE-V-019: Export job 3019 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-020", "state": "Ticket GATE-V-020: Can we trial the enterprise tier before contract 3020 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-021", "state": "Ticket GATE-V-021: Please update the card on file before invoice 3021 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-022", "state": "Ticket GATE-V-022: Notifications stopped arriving on device 3022.", "expected_label": "technical"}
+{"case_id": "gate-v-023", "state": "Ticket GATE-V-023: What discount applies when ordering 3023 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-024", "state": "Ticket GATE-V-024: I was charged twice for invoice 3024; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-025", "state": "Ticket GATE-V-025: The app crashes on launch since update 3025.", "expected_label": "technical"}
+{"case_id": "gate-v-026", "state": "Ticket GATE-V-026: We need a quote for 3026 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-027", "state": "Ticket GATE-V-027: My refund for order 3027 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-028", "state": "Ticket GATE-V-028: Login returns error 3028 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-029", "state": "Ticket GATE-V-029: Does plan 3029 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-030", "state": "Ticket GATE-V-030: The receipt for payment 3030 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-031", "state": "Ticket GATE-V-031: Export job 3031 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-032", "state": "Ticket GATE-V-032: Can we trial the enterprise tier before contract 3032 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-033", "state": "Ticket GATE-V-033: Please update the card on file before invoice 3033 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-034", "state": "Ticket GATE-V-034: Notifications stopped arriving on device 3034.", "expected_label": "technical"}
+{"case_id": "gate-v-035", "state": "Ticket GATE-V-035: What discount applies when ordering 3035 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-036", "state": "Ticket GATE-V-036: I was charged twice for invoice 3036; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-037", "state": "Ticket GATE-V-037: The app crashes on launch since update 3037.", "expected_label": "technical"}
+{"case_id": "gate-v-038", "state": "Ticket GATE-V-038: We need a quote for 3038 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-039", "state": "Ticket GATE-V-039: My refund for order 3039 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-040", "state": "Ticket GATE-V-040: Login returns error 3040 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-041", "state": "Ticket GATE-V-041: Does plan 3041 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-042", "state": "Ticket GATE-V-042: The receipt for payment 3042 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-043", "state": "Ticket GATE-V-043: Export job 3043 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-044", "state": "Ticket GATE-V-044: Can we trial the enterprise tier before contract 3044 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-045", "state": "Ticket GATE-V-045: Please update the card on file before invoice 3045 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-046", "state": "Ticket GATE-V-046: Notifications stopped arriving on device 3046.", "expected_label": "technical"}
+{"case_id": "gate-v-047", "state": "Ticket GATE-V-047: What discount applies when ordering 3047 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-048", "state": "Ticket GATE-V-048: I was charged twice for invoice 3048; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-049", "state": "Ticket GATE-V-049: The app crashes on launch since update 3049.", "expected_label": "technical"}
+{"case_id": "gate-v-050", "state": "Ticket GATE-V-050: We need a quote for 3050 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-051", "state": "Ticket GATE-V-051: My refund for order 3051 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-052", "state": "Ticket GATE-V-052: Login returns error 3052 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-053", "state": "Ticket GATE-V-053: Does plan 3053 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-054", "state": "Ticket GATE-V-054: The receipt for payment 3054 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-055", "state": "Ticket GATE-V-055: Export job 3055 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-056", "state": "Ticket GATE-V-056: Can we trial the enterprise tier before contract 3056 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-057", "state": "Ticket GATE-V-057: Please update the card on file before invoice 3057 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-058", "state": "Ticket GATE-V-058: Notifications stopped arriving on device 3058.", "expected_label": "technical"}
+{"case_id": "gate-v-059", "state": "Ticket GATE-V-059: What discount applies when ordering 3059 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-060", "state": "Ticket GATE-V-060: I was charged twice for invoice 3060; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-061", "state": "Ticket GATE-V-061: The app crashes on launch since update 3061.", "expected_label": "technical"}
+{"case_id": "gate-v-062", "state": "Ticket GATE-V-062: We need a quote for 3062 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-063", "state": "Ticket GATE-V-063: My refund for order 3063 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-064", "state": "Ticket GATE-V-064: Login returns error 3064 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-065", "state": "Ticket GATE-V-065: Does plan 3065 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-066", "state": "Ticket GATE-V-066: The receipt for payment 3066 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-067", "state": "Ticket GATE-V-067: Export job 3067 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-068", "state": "Ticket GATE-V-068: Can we trial the enterprise tier before contract 3068 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-069", "state": "Ticket GATE-V-069: Please update the card on file before invoice 3069 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-070", "state": "Ticket GATE-V-070: Notifications stopped arriving on device 3070.", "expected_label": "technical"}
+{"case_id": "gate-v-071", "state": "Ticket GATE-V-071: What discount applies when ordering 3071 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-072", "state": "Ticket GATE-V-072: I was charged twice for invoice 3072; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-073", "state": "Ticket GATE-V-073: The app crashes on launch since update 3073.", "expected_label": "technical"}
+{"case_id": "gate-v-074", "state": "Ticket GATE-V-074: We need a quote for 3074 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-075", "state": "Ticket GATE-V-075: My refund for order 3075 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-076", "state": "Ticket GATE-V-076: Login returns error 3076 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-077", "state": "Ticket GATE-V-077: Does plan 3077 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-078", "state": "Ticket GATE-V-078: The receipt for payment 3078 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-079", "state": "Ticket GATE-V-079: Export job 3079 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-080", "state": "Ticket GATE-V-080: Can we trial the enterprise tier before contract 3080 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-081", "state": "Ticket GATE-V-081: Please update the card on file before invoice 3081 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-082", "state": "Ticket GATE-V-082: Notifications stopped arriving on device 3082.", "expected_label": "technical"}
+{"case_id": "gate-v-083", "state": "Ticket GATE-V-083: What discount applies when ordering 3083 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-084", "state": "Ticket GATE-V-084: I was charged twice for invoice 3084; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-085", "state": "Ticket GATE-V-085: The app crashes on launch since update 3085.", "expected_label": "technical"}
+{"case_id": "gate-v-086", "state": "Ticket GATE-V-086: We need a quote for 3086 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-087", "state": "Ticket GATE-V-087: My refund for order 3087 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-088", "state": "Ticket GATE-V-088: Login returns error 3088 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-089", "state": "Ticket GATE-V-089: Does plan 3089 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-090", "state": "Ticket GATE-V-090: The receipt for payment 3090 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-091", "state": "Ticket GATE-V-091: Export job 3091 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-092", "state": "Ticket GATE-V-092: Can we trial the enterprise tier before contract 3092 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-093", "state": "Ticket GATE-V-093: Please update the card on file before invoice 3093 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-094", "state": "Ticket GATE-V-094: Notifications stopped arriving on device 3094.", "expected_label": "technical"}
+{"case_id": "gate-v-095", "state": "Ticket GATE-V-095: What discount applies when ordering 3095 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-096", "state": "Ticket GATE-V-096: I was charged twice for invoice 3096; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-097", "state": "Ticket GATE-V-097: The app crashes on launch since update 3097.", "expected_label": "technical"}
+{"case_id": "gate-v-098", "state": "Ticket GATE-V-098: We need a quote for 3098 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-099", "state": "Ticket GATE-V-099: My refund for order 3099 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-100", "state": "Ticket GATE-V-100: Login returns error 3100 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-101", "state": "Ticket GATE-V-101: Does plan 3101 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-102", "state": "Ticket GATE-V-102: The receipt for payment 3102 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-103", "state": "Ticket GATE-V-103: Export job 3103 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-104", "state": "Ticket GATE-V-104: Can we trial the enterprise tier before contract 3104 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-105", "state": "Ticket GATE-V-105: Please update the card on file before invoice 3105 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-106", "state": "Ticket GATE-V-106: Notifications stopped arriving on device 3106.", "expected_label": "technical"}
+{"case_id": "gate-v-107", "state": "Ticket GATE-V-107: What discount applies when ordering 3107 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-108", "state": "Ticket GATE-V-108: I was charged twice for invoice 3108; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-109", "state": "Ticket GATE-V-109: The app crashes on launch since update 3109.", "expected_label": "technical"}
+{"case_id": "gate-v-110", "state": "Ticket GATE-V-110: We need a quote for 3110 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-111", "state": "Ticket GATE-V-111: My refund for order 3111 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-112", "state": "Ticket GATE-V-112: Login returns error 3112 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-113", "state": "Ticket GATE-V-113: Does plan 3113 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-114", "state": "Ticket GATE-V-114: The receipt for payment 3114 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-115", "state": "Ticket GATE-V-115: Export job 3115 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-116", "state": "Ticket GATE-V-116: Can we trial the enterprise tier before contract 3116 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-117", "state": "Ticket GATE-V-117: Please update the card on file before invoice 3117 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-118", "state": "Ticket GATE-V-118: Notifications stopped arriving on device 3118.", "expected_label": "technical"}
+{"case_id": "gate-v-119", "state": "Ticket GATE-V-119: What discount applies when ordering 3119 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-120", "state": "Ticket GATE-V-120: I was charged twice for invoice 3120; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-121", "state": "Ticket GATE-V-121: The app crashes on launch since update 3121.", "expected_label": "technical"}
+{"case_id": "gate-v-122", "state": "Ticket GATE-V-122: We need a quote for 3122 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-123", "state": "Ticket GATE-V-123: My refund for order 3123 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-124", "state": "Ticket GATE-V-124: Login returns error 3124 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-125", "state": "Ticket GATE-V-125: Does plan 3125 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-126", "state": "Ticket GATE-V-126: The receipt for payment 3126 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-127", "state": "Ticket GATE-V-127: Export job 3127 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-128", "state": "Ticket GATE-V-128: Can we trial the enterprise tier before contract 3128 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-129", "state": "Ticket GATE-V-129: Please update the card on file before invoice 3129 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-130", "state": "Ticket GATE-V-130: Notifications stopped arriving on device 3130.", "expected_label": "technical"}
+{"case_id": "gate-v-131", "state": "Ticket GATE-V-131: What discount applies when ordering 3131 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-132", "state": "Ticket GATE-V-132: I was charged twice for invoice 3132; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-133", "state": "Ticket GATE-V-133: The app crashes on launch since update 3133.", "expected_label": "technical"}
+{"case_id": "gate-v-134", "state": "Ticket GATE-V-134: We need a quote for 3134 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-135", "state": "Ticket GATE-V-135: My refund for order 3135 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-136", "state": "Ticket GATE-V-136: Login returns error 3136 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-137", "state": "Ticket GATE-V-137: Does plan 3137 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-138", "state": "Ticket GATE-V-138: The receipt for payment 3138 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-139", "state": "Ticket GATE-V-139: Export job 3139 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-140", "state": "Ticket GATE-V-140: Can we trial the enterprise tier before contract 3140 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-141", "state": "Ticket GATE-V-141: Please update the card on file before invoice 3141 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-142", "state": "Ticket GATE-V-142: Notifications stopped arriving on device 3142.", "expected_label": "technical"}
+{"case_id": "gate-v-143", "state": "Ticket GATE-V-143: What discount applies when ordering 3143 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-144", "state": "Ticket GATE-V-144: I was charged twice for invoice 3144; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-145", "state": "Ticket GATE-V-145: The app crashes on launch since update 3145.", "expected_label": "technical"}
+{"case_id": "gate-v-146", "state": "Ticket GATE-V-146: We need a quote for 3146 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-147", "state": "Ticket GATE-V-147: My refund for order 3147 has not arrived after cancellation.", "expected_label": "billing"}
+{"case_id": "gate-v-148", "state": "Ticket GATE-V-148: Login returns error 3148 after a password reset.", "expected_label": "technical"}
+{"case_id": "gate-v-149", "state": "Ticket GATE-V-149: Does plan 3149 include single sign-on for our team?", "expected_label": "sales"}
+{"case_id": "gate-v-150", "state": "Ticket GATE-V-150: The receipt for payment 3150 shows the wrong amount.", "expected_label": "billing"}
+{"case_id": "gate-v-151", "state": "Ticket GATE-V-151: Export job 3151 never finishes and shows no progress.", "expected_label": "technical"}
+{"case_id": "gate-v-152", "state": "Ticket GATE-V-152: Can we trial the enterprise tier before contract 3152 renews?", "expected_label": "sales"}
+{"case_id": "gate-v-153", "state": "Ticket GATE-V-153: Please update the card on file before invoice 3153 is due.", "expected_label": "billing"}
+{"case_id": "gate-v-154", "state": "Ticket GATE-V-154: Notifications stopped arriving on device 3154.", "expected_label": "technical"}
+{"case_id": "gate-v-155", "state": "Ticket GATE-V-155: What discount applies when ordering 3155 licences?", "expected_label": "sales"}
+{"case_id": "gate-v-156", "state": "Ticket GATE-V-156: I was charged twice for invoice 3156; please refund the duplicate.", "expected_label": "billing"}
+{"case_id": "gate-v-157", "state": "Ticket GATE-V-157: The app crashes on launch since update 3157.", "expected_label": "technical"}
+{"case_id": "gate-v-158", "state": "Ticket GATE-V-158: We need a quote for 3158 seats on the annual plan.", "expected_label": "sales"}
+{"case_id": "gate-v-159", "state": "Ticket GATE-V-159: My refund for order 3159 has not arrived after cancellation.", "expected_label": "billing"}
