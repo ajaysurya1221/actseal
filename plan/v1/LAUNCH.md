@@ -1,10 +1,9 @@
 # Actseal 1.0.0 launch draft
 
-**DRAFT — not posted.** Publish only after Task 22 closes the publication
-checklist (accepted media, green exact-head CI, the published GitHub release)
-and an explicit request to send the post. The [final report](FINAL_REPORT.md)
-and [release notes](RELEASE_NOTES.md) carry the receipts; this post adds no
-claim they do not support.
+**DRAFT — not posted.** The release is public (PyPI and the GitHub release
+below); send this post only on an explicit request. The
+[final report](FINAL_REPORT.md) and [release notes](RELEASE_NOTES.md) carry
+the receipts; this post adds no claim they do not support.
 
 ## Proposed post
 
@@ -42,6 +41,7 @@ mocked-transport tests only and no live evidence.
 
 [Repository](https://github.com/ajaysurya1221/actseal) ·
 [PyPI 1.0.0](https://pypi.org/project/actseal/1.0.0/) ·
+[v1.0.0 release](https://github.com/ajaysurya1221/actseal/releases/tag/v1.0.0) ·
 [Release notes](RELEASE_NOTES.md) ·
 [Verification and limitations](FINAL_REPORT.md)
 
@@ -50,6 +50,6 @@ failure record and offline replay would make a deployment review easier.
 
 ## Not to be added before posting
 
-No GitHub release link until the draft is published; no live Jev result,
-performance number or adoption claim. The recording may be linked from the
-repository README once this documentation gate and Task 22 close.
+No live Jev result, performance number or adoption claim. The recorded demo
+is on the repository README and may be linked from there; it is an
+illustrative receipt, not model evidence.

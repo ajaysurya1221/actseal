@@ -1,7 +1,9 @@
 # Actseal v1.0.0 — release report
 
-**PUBLISHED TO PyPI — 7 October 2026.** `actseal` 1.0.0 is live on PyPI from
-the annotated immutable tag `v1.0.0` (`04c10d3fec60727310cf65acf6528f13264a26d4`).
+**PUBLISHED — 7 October 2026.** `actseal` 1.0.0 is live on PyPI and as the
+public GitHub release
+[v1.0.0](https://github.com/ajaysurya1221/actseal/releases/tag/v1.0.0), both
+from the annotated immutable tag `v1.0.0` (`04c10d3fec60727310cf65acf6528f13264a26d4`).
 Tagged workflow run [37603727302](https://github.com/ajaysurya1221/actseal/actions/runs/37603727302)
 completed all nine jobs after the owner approved the `pypi` environment:
 build once, four-platform verification of the exact bytes, static asset
@@ -10,15 +12,26 @@ public index, and mirroring to a draft GitHub release. Publication-scope
 ACCEPT is recorded in [REVIEW 20](reviews/20-publication.md); the pre-tag
 gate in [REVIEW 20 pre-tag](reviews/20-pretag.md).
 
-**Current checkpoint (this report's finalization).** The post-publication
-media merged to `main` as `0a0a2288bed813e9fcbf7116ef97294912ca04b1` (PR 48,
-2026-10-07T10:37:34Z) after scoped independent ACCEPT and all ten hosted
-source and assets jobs (runs 37607862358 and 37607886554). GitHub release
-405628842 is still a **draft**, awaiting this documentation gate and the
-Task 22 closure; it is not published by this report. A bounded follow-up
-after the actual publication of that release will record its final status.
+**Release closure (dated checkpoint, 7 October 2026).** The post-publication
+media was reviewed at PR 48 head `f26af8ff43302020be5dbc8eeb6c497d089fdbc2`
+(ten hosted source and assets jobs SUCCESS, runs 37607862358 and
+37607886554) and merged to `main` as `0a0a2288bed813e9fcbf7116ef97294912ca04b1`
+(2026-10-07T10:37:34Z). The accepted post-publication documentation was
+reviewed at PR 49 head `814059a78dfad9eb1aad51fe1802fbf85b98302d` (ten
+hosted source and assets jobs SUCCESS, runs 37609789928 and 37609797286)
+and merged as `3c3a339e86f0c17fd55bf529b90f1c26c38d0c0e` (10:54:59Z). GitHub
+release 405628842 was then published at 2026-10-07T10:55:05Z (`draft`
+false, `prerelease` false, shown as Latest, title "Actseal 1.0.0") with the
+accepted release notes byte-equal to `plan/v1/RELEASE_NOTES.md` (SHA-256
+`9cc94039…`) and its four uploaded assets unchanged; the receipt is
+[`plan/v1/receipts/github-publication.json`](receipts/github-publication.json)
+and the public verification is [REVIEW 22](reviews/22.md), which accepts
+the public release scope. The tag was never moved and no distribution was
+rebuilt or replaced. This closing update to the report is itself subject to
+independent review and exact-head hosted CI before it merges; no result of
+that review or CI is claimed here, and no second container run was made.
 This report records what shipped, what did not, and the receipt for each
-claim; it predicts no CI or publication result.
+claim.
 
 | Release field | Verified result |
 |---|---|
@@ -29,10 +42,10 @@ claim; it predicts no CI or publication result.
 | Actions artifact | id 11474201373, digest `sha256:30fff8a3ad125cfee12f1101b047ade5cadf445919402fcefa4c32df9fa0d8af`. The four verify-matrix jobs, the publish job and the mirror job downloaded this exact artifact by id and compared its hashes with the build checksums; verify-published downloaded the official PyPI files instead and compared them with the build checksums; the assets job downloads no distribution |
 | Public index verification | Pinned clean container, installed outside the checkout: `actseal 1.0.0`; demo exit 0 (bad BLOCK, fixed PASS); fixed replay 0; bad replay 1; both files match the build checksums and PyPI's declared digests |
 | Attestations | One PEP 740 attestation per file from GitHub `ajaysurya1221/actseal`, workflow `publish-pypi.yml`, environment `pypi`, subjects equal to the file digests. Presence, identity and subjects inspected; no independent cryptographic verification is claimed |
-| Independent download comparison | Codex downloaded the official PyPI files and the GitHub draft assets separately; both pairs byte-identical and equal to the build checksums; independent receipt reviewer ACCEPT ([REVIEW 20](reviews/20-publication.md)) |
-| GitHub release | 405628842, **draft**, four assets uploaded; publishing it is Task 22 |
-| Hosted CI | Pre-tag head `4d7966f`: ten source/assets jobs SUCCESS (runs 37602503653, 37602539917) and final rehearsal 37602547044 SUCCESS; `git diff 4d7966f..04c10d3` empty; `main` CI 37603576993 at the tagged source SUCCESS; reviewed PR 48 head `f26af8ff43302020be5dbc8eeb6c497d089fdbc2`: ten source/assets jobs SUCCESS (runs 37607862358, 37607886554), then merged as `0a0a2288bed813e9fcbf7116ef97294912ca04b1` |
-| Receipts | `plan/v1/receipts/release-receipt.json`, `postpublish-receipt.json`, `SHA256SUMS` (committed at `712fb78`), `claude-usage.json` (observed usage, `04e8c8d`); [RELEASE_NOTES](RELEASE_NOTES.md) maps each claim to them |
+| Independent download comparison | Codex downloaded the official PyPI files and the assets of release 405628842 (then still a draft) separately; both pairs byte-identical and equal to the build checksums; independent receipt reviewer ACCEPT ([REVIEW 20](reviews/20-publication.md)) |
+| GitHub release | 405628842, published 2026-10-07T10:55:05Z at [releases/tag/v1.0.0](https://github.com/ajaysurya1221/actseal/releases/tag/v1.0.0), not draft, not prerelease, Latest. Four uploaded assets: `actseal-1.0.0-py3-none-any.whl` (id 618308471, 101,900 bytes, `sha256:4497fef4…`), `actseal-1.0.0.tar.gz` (id 618308469, 2,054,855 bytes, `sha256:aa31ccf9…`), `release-receipt.json` (id 618308475, 4,263 bytes, `sha256:bd69dcad…`), `SHA256SUMS` (id 618308468, 184 bytes, `sha256:f96cf664…`); GitHub also offers its automatic source archives. Public rendering observed: the notes' how-it-works SVG loaded at 1600×400 and the repository README's recording loaded at 979×918 ([REVIEW 22](reviews/22.md), `github-publication.json`) |
+| Hosted CI | Pre-tag head `4d7966f`: ten source/assets jobs SUCCESS (runs 37602503653, 37602539917) and final rehearsal 37602547044 SUCCESS; `git diff 4d7966f..04c10d3` empty; `main` CI 37603576993 at the tagged source SUCCESS; reviewed PR 48 head `f26af8ff43302020be5dbc8eeb6c497d089fdbc2`: ten source/assets jobs SUCCESS (runs 37607862358, 37607886554), then merged as `0a0a2288bed813e9fcbf7116ef97294912ca04b1`; reviewed PR 49 head `814059a78dfad9eb1aad51fe1802fbf85b98302d`: ten source/assets jobs SUCCESS (runs 37609789928, 37609797286), then merged as `3c3a339e86f0c17fd55bf529b90f1c26c38d0c0e`. The closing-document commit after `3c3a339` has its own pending review and CI, not claimed here |
+| Receipts | `plan/v1/receipts/release-receipt.json`, `postpublish-receipt.json`, `SHA256SUMS` (committed at `712fb78`), `github-publication.json` (public release event), `claude-usage.json` and `claude-usage-final.json` (dated usage observations); [RELEASE_NOTES](RELEASE_NOTES.md) maps each release claim to them |
 | Paid inference | Zero Jev requests observed in the sprint; no paid model API. Subscription usage is recorded below as an API-equivalent observation, not a charge |
 
 ## Shipped versus planned
@@ -59,7 +72,7 @@ history and are not rewritten.
 | 19 release candidate integration | ACCEPT `ff0f66c` → `main` `277d729` ([REVIEW 19](reviews/19-combined-static.md)) |
 | 20 release gate and publication | ACCEPT ([REVIEW 20 pre-tag](reviews/20-pretag.md), [REVIEW 20](reviews/20-publication.md)) |
 | 21 final documentation | This report, the release notes, the launch draft and the README recording section; see [REPORT 21](reports/21.md) and [REPORT 21 finalization](reports/21-finalization.md) |
-| 22 publication closure | Open: after this documentation gate, publish the draft GitHub release with the receipt-backed notes. The social preview upload is manual and non-blocking |
+| 22 publication closure | ACCEPT for the public release scope ([REVIEW 22](reviews/22.md)): release 405628842 published 2026-10-07T10:55:05Z with the accepted notes and four unchanged assets after PR 49 head `814059a7` passed ten hosted jobs and merged as `3c3a339`. The integration of this closing documentation update is the remaining review step. The social preview upload is optional, non-blocking and not claimed |
 
 No mandatory 1.0 scope was cut. Optional scope frozen under V1-052: the
 live Jev audit and the three P2 figures.
@@ -133,10 +146,10 @@ drafts, and their usage is included in the spend observation below.
 - The experimental Jev adapter's identity is a vendor-reported version; its
   key-exclusion guard covers adapter-generated metadata and diagnostics, not
   arbitrary raw inputs or provider bodies.
-- The live Jev audit and the P2 figures are deferred to 1.1. The GitHub
-  release is still a draft (Task 22). The social preview file is delivered;
-  its upload in GitHub settings is a manual, non-blocking step that is not
-  done.
+- The live Jev audit and the P2 figures are deferred to 1.1. The social
+  preview file is delivered under `docs/assets/social.png`; its upload in
+  GitHub settings is an optional, non-blocking manual step that is not
+  claimed. The launch post remains a draft and has not been sent.
 - Post-publication media (the recording and its GIFs) is absent from the
   immutable tag, the wheel, the sdist and the PyPI package page; it exists
   only in the later repository from `0a0a228`, as Decision 2A approved.
@@ -158,29 +171,32 @@ session and never summing resumed-session totals. It records about
 billed cost is UNKNOWN, and Codex usage, manual work and any Claude work
 after the observation timestamp are excluded. Later observations supersede
 it by date; this report does not assert a final cost. The earlier pre-tag
-observation (USD 536.13327225, same method) is preserved as history. The
-Sonnet and Opus amounts are the rejected delegated drafts noted above.
+observation (USD 536.13327225, same method) is preserved as history. A
+later terminal metadata snapshot,
+[`plan/v1/receipts/claude-usage-final.json`](receipts/claude-usage-final.json),
+records its own observation cutoff, method and exclusions under the same
+rules; it is likewise not an invoice, this report does not restate its
+total, and Codex refreshes the final ledger after this closing update and
+before final review. The Sonnet and Opus amounts are the rejected delegated
+drafts noted above.
 Publication completed on 7 October 2026 within the planned window; the
 optional 17:59 cut was unused because scope was frozen earlier (V1-052).
 
-## Next steps
+## Next three steps after v1.0.0
 
-Release closure (Task 22, owned by Codex):
+The release itself is closed ([REVIEW 22](reviews/22.md)); the tag and the
+published distributions are never moved or rebuilt. The post-release
+roadmap, in priority order:
 
-1. After this documentation gate passes independent review with exact-head
-   green hosted CI, publish the draft GitHub release 405628842 with the
-   receipt-backed notes, then record its final status in a bounded
-   follow-up. Never move the tag or rebuild the released distributions. The
-   social preview upload remains a manual, non-blocking step.
-
-Post-release roadmap (1.1, in priority order):
-
-2. Run the preregistered live Jev audit only once the key-loading
-   prerequisite is effectively available, with a fresh compatible
-   implementation review and the frozen 959-case preregistration, thresholds
-   and inventories unchanged before inference; report it in full, including
-   BLOCK, INCONCLUSIVE or ERROR.
-3. Record one independently reproduced external application integration
-   with held-out data and publish its exact scope, and implement the
-   where-it-sits, decision/verdict-matrix and evidence-boundary figures
-   through the same pinned renderer and review gates.
+1. **Gated preregistered Jev audit.** Run the live audit only once the
+   key-loading prerequisite is effectively permitted, with the frozen
+   959-case preregistration, thresholds and inventories unchanged before
+   inference and a fresh compatible-implementation review; report it in
+   full, including BLOCK, INCONCLUSIVE or ERROR.
+2. **Independently reproduced application integration.** Record one
+   external application integration with genuinely held-out data under a
+   prespecified policy, publish its exact scope and limitations with
+   permission, and use its friction points to prioritize 1.1.
+3. **Deferred P2 figures.** Implement the where-it-sits,
+   decision/verdict-matrix and evidence-boundary figures through the same
+   pinned renderer, measured-width validation and review gates.

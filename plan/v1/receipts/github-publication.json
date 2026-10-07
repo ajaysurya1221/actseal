@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "release_id": 405628842,
+  "url": "https://github.com/ajaysurya1221/actseal/releases/tag/v1.0.0",
+  "published_at": "2026-10-07T10:55:05Z",
+  "draft": false,
+  "prerelease": false,
+  "tag": "v1.0.0",
+  "tag_target": "04c10d3fec60727310cf65acf6528f13264a26d4",
+  "release_notes_sha256": "9cc940395fa69cff628a07d1b4bc51b7267387a4e06f858c3605736386eef0a1",
+  "reviewed_docs_head": "814059a78dfad9eb1aad51fe1802fbf85b98302d",
+  "ci_runs": [
+    37609789928,
+    37609797286
+  ],
+  "ci_conclusions": "all ten source/assets jobs SUCCESS",
+  "docs_merge": "3c3a339e86f0c17fd55bf529b90f1c26c38d0c0e",
+  "assets": [
+    {
+      "id": 618308471,
+      "name": "actseal-1.0.0-py3-none-any.whl",
+      "size": 101900,
+      "digest": "sha256:4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf",
+      "url": "https://github.com/ajaysurya1221/actseal/releases/download/v1.0.0/actseal-1.0.0-py3-none-any.whl"
+    },
+    {
+      "id": 618308469,
+      "name": "actseal-1.0.0.tar.gz",
+      "size": 2054855,
+      "digest": "sha256:aa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6",
+      "url": "https://github.com/ajaysurya1221/actseal/releases/download/v1.0.0/actseal-1.0.0.tar.gz"
+    },
+    {
+      "id": 618308475,
+      "name": "release-receipt.json",
+      "size": 4263,
+      "digest": "sha256:bd69dcad09470abe84fb839f6ef426826c7635a4c5694fe059fb2376203a6f49",
+      "url": "https://github.com/ajaysurya1221/actseal/releases/download/v1.0.0/release-receipt.json"
+    },
+    {
+      "id": 618308468,
+      "name": "SHA256SUMS",
+      "size": 184,
+      "digest": "sha256:f96cf664ac3c0ab0ca9b9cdd0c5af0ba6a480b0d3ecd06dd6ed0c524fa7828d4",
+      "url": "https://github.com/ajaysurya1221/actseal/releases/download/v1.0.0/SHA256SUMS"
+    }
+  ],
+  "rendered_public_checks": {
+    "release_title": "Actseal 1.0.0",
+    "latest": true,
+    "how_it_works_image_loaded": true,
+    "how_it_works_natural_dimensions": [
+      1600,
+      400
+    ],
+    "readme_demo_loaded": true,
+    "readme_demo_natural_dimensions": [
+      979,
+      918
+    ]
+  },
+  "notes": "No tag moved or distribution replaced. Four uploaded assets; GitHub also offers automatic source archives."
+}
