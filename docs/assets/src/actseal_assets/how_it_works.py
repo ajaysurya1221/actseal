@@ -13,12 +13,13 @@ the stages to the three CLI commands; the mobile canvas writes the command
 under each stage heading instead.
 
 Two canvases are rendered, each in a light and a dark palette. The desktop
-canvas is 1600x400 and is displayed at about 880 CSS px in the README, so
-every label is at least 26 SVG units (14.3 rendered px) and headings are
-larger. The mobile canvas stacks the stages vertically at 720 units wide for
-a 360 CSS px column, so its labels are at least 30 units. Nothing is shrunk
-to fit: every line is measured against a conservative width model and the
-renderer fails explicitly when a phrase would overflow its box.
+canvas is 1600x400 and measures 838 CSS px in the README at 1280 px and
+wider viewports, so every label is at least 27 SVG units (14.1 rendered px)
+and headings are larger. The mobile canvas stacks the stages vertically at
+720 units wide and is validated at the narrowest measured column, 254 CSS px
+at a 320 px viewport, so its labels are at least 40 units (14.1 rendered px).
+Nothing is shrunk to fit: every line is measured against a conservative width
+model and the renderer fails explicitly when a phrase would overflow its box.
 """
 
 from __future__ import annotations
@@ -262,10 +263,10 @@ class Metrics:
 
 DESKTOP = Metrics(
     heading=34,
-    label=26,
-    body=26,
+    label=27,
+    body=27,
     line=34,
-    pad=14,
+    pad=12,
     heading_top=16,
     label_gap=8,
     divider_gap=16,
@@ -273,10 +274,10 @@ DESKTOP = Metrics(
     bottom=22,
 )
 MOBILE = Metrics(
-    heading=44,
-    label=30,
-    body=30,
-    line=38,
+    heading=48,
+    label=40,
+    body=40,
+    line=50,
     pad=20,
     heading_top=18,
     label_gap=10,
@@ -285,8 +286,8 @@ MOBILE = Metrics(
     bottom=26,
 )
 
-DESKTOP_MARGIN = 20
-DESKTOP_GAP = 30
+DESKTOP_MARGIN = 16
+DESKTOP_GAP = 24
 DESKTOP_TOP = 24
 DESKTOP_BRACKET_GAP = 14
 DESKTOP_TICK = 6

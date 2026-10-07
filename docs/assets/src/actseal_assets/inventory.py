@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import hero, how_it_works, social
+from . import architecture, hero, how_it_works, social
 
 ASSET_DIR = "docs/assets"
 SOURCE_DIR = "docs/assets/src"
@@ -21,12 +21,15 @@ FONT_DIR = "docs/assets/src/fonts"
 RECEIPT_DIR = "docs/assets/src/receipts"
 MANIFEST_FILE = "docs/assets/src/tools.toml"
 
-# Assumed CSS width of GitHub's README column at a 1366 px viewport. The
-# ten-second acceptance screenshot confirms or corrects it; nothing here
-# measures it. Labels are checked against this width, not against the
-# native SVG size.
-README_DISPLAY_WIDTH = 880
-MOBILE_DISPLAY_WIDTH = 360
+# Measured CSS widths of a README image on the public repository page
+# (REVIEW 13, real README sizing, read-only browser measurements): 838 px at
+# 1280 and 1366 px viewports, 294 px at 360 and 254 px at 320. The desktop
+# variants are validated at the 1280-and-wider width and the mobile variants
+# at the narrowest measured width, so every label clears the floor across the
+# whole measured range. Labels are checked against these widths, not against
+# the native SVG size.
+README_DISPLAY_WIDTH = 838
+MOBILE_DISPLAY_WIDTH = 254
 
 SOCIAL_WIDTH = 1280
 SOCIAL_HEIGHT = 640
@@ -125,13 +128,13 @@ def _svg(
 
 
 def _mobile_svg(path: str, width: int, height: int) -> Output:
-    """A vertical variant displayed in a 360 CSS px column."""
+    """A vertical variant validated at the narrowest measured 254 CSS px column."""
     return _svg(path, width, height, display_width=MOBILE_DISPLAY_WIDTH)
 
 
-# Heights other than the hero, how-it-works and social preview are
-# provisional; the task that implements each figure finalizes them together
-# with its renderer.
+# Heights other than the hero, how-it-works, architecture and social preview
+# are provisional; the task that implements each figure finalizes them
+# together with its renderer.
 ASSETS: tuple[Asset, ...] = (
     Asset(
         name="hero",
@@ -141,7 +144,7 @@ ASSETS: tuple[Asset, ...] = (
         outputs=(
             _svg("hero-light.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
             _svg("hero-dark.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
-            # Stacked variants for a 360 CSS px column; outlined like the desktop files.
+            # Stacked variants validated at 254 CSS px; outlined like the desktop files.
             Output(
                 path="hero-mobile-light.svg",
                 kind="svg",
@@ -196,7 +199,29 @@ ASSETS: tuple[Asset, ...] = (
         priority="P1",
         task="13",
         summary="At most seven shipped groups traced to modules; replay never reaches providers.",
-        outputs=(_svg("architecture.svg", 1600, 900),),
+        outputs=(
+            _svg(
+                "architecture-light.svg",
+                architecture.DESKTOP_WIDTH,
+                architecture.DESKTOP_HEIGHT,
+            ),
+            _svg(
+                "architecture-dark.svg",
+                architecture.DESKTOP_WIDTH,
+                architecture.DESKTOP_HEIGHT,
+            ),
+            _mobile_svg(
+                "architecture-mobile-light.svg",
+                architecture.MOBILE_WIDTH,
+                architecture.mobile_height(),
+            ),
+            _mobile_svg(
+                "architecture-mobile-dark.svg",
+                architecture.MOBILE_WIDTH,
+                architecture.mobile_height(),
+            ),
+        ),
+        renderer=architecture.render,
     ),
     Asset(
         name="demo",

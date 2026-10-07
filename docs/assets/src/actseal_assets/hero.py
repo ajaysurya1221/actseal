@@ -9,10 +9,11 @@ the font hashes against ``tools.toml`` before calling ``render``; this module
 only checks presence so that a direct call still fails loudly.
 
 Two canvases are rendered, each in a light and a dark palette. The desktop
-canvas is 1600x400 and is displayed at about 880 CSS px in the README, so its
-smallest text is 28 units (15.4 rendered px). The mobile canvas stacks the
-same content at 720 units wide for a 360 CSS px column, so its smallest text
-is 30 units (15 rendered px). Line breaks are fixed in this file and every
+canvas is 1600x400 and measures 838 CSS px in the README at 1280 px and wider
+viewports, so its smallest text is 28 units (14.7 rendered px). The mobile
+canvas stacks the same content at 720 units wide and is validated at the
+narrowest measured column, 254 CSS px at a 320 px viewport, so its smallest
+text is 40 units (14.1 rendered px). Line breaks are fixed in this file and every
 line is measured with the real glyph advances at render time; a line that
 would not fit raises ``ValueError``. Text is never shrunk to fit.
 
@@ -48,9 +49,10 @@ DESKTOP_CAPTION_LINES: tuple[str, ...] = (
     "inference occurred, or establish label truth.",
 )
 MOBILE_CAPTION_LINES: tuple[str, ...] = (
-    "Replay cannot authenticate responses,",
-    "prove inference occurred,",
-    "or establish label truth.",
+    "Replay cannot authenticate",
+    "responses, prove inference",
+    "occurred, or establish",
+    "label truth.",
 )
 MOTIF_STEPS: tuple[str, ...] = ("freeze", "run", "replay")
 
@@ -78,10 +80,11 @@ OUTPUTS: tuple[str, ...] = (
 DESKTOP_WIDTH = 1600
 DESKTOP_HEIGHT = 400
 MOBILE_WIDTH = 720
-# Assumed CSS widths of the README column; the same values as inventory.py,
-# repeated here because inventory imports this module.
-DESKTOP_DISPLAY_WIDTH = 880
-MOBILE_DISPLAY_WIDTH = 360
+# Measured CSS widths of a README image (838 px at 1280/1366 px viewports,
+# 254 px at 320 px); the same values as inventory.py, repeated here because
+# inventory imports this module.
+DESKTOP_DISPLAY_WIDTH = 838
+MOBILE_DISPLAY_WIDTH = 254
 # Same floor as checks.MIN_LABEL_PX; outlined assets are exempt from that
 # validator, so this module enforces the floor on its own type sizes.
 MIN_LABEL_PX = 14.0
@@ -224,18 +227,18 @@ MOBILE = Canvas(
     text_width=680,
     wordmark=84,
     wordmark_baseline=96,
-    tagline=40,
+    tagline=42,
     tagline_baseline=160,
-    tagline_step=50,
-    caption=30,
-    caption_baseline=452,
-    caption_step=40,
+    tagline_step=52,
+    caption=40,
+    caption_baseline=476,
+    caption_step=50,
     caption_lines=MOBILE_CAPTION_LINES,
-    label=30,
+    label=40,
     motif_x=20,
-    motif_top=262,
+    motif_top=264,
     pill_width=200,
-    pill_height=68,
+    pill_height=76,
     pill_gap=40,
     pill_pad=12,
     loop_drop=52,

@@ -1,65 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg aria-labelledby="title desc" height="1790" role="img" viewBox="0 0 720 1790" width="720" xmlns="http://www.w3.org/2000/svg">
+<svg aria-labelledby="title desc" height="2152" role="img" viewBox="0 0 720 2152" width="720" xmlns="http://www.w3.org/2000/svg">
   <title id="title">How Actseal works: freeze, run, verify, seal, replay</title>
   <desc id="desc">Five stages in order. Freeze turns the frozen policy, the labelled inputs and the model identity into one lock. Run collects provider answers for the locked verification cases and evaluates six synthetic fault scenarios, turning each into a decision: ACT, ABSTAIN, ESCALATE or DENY. Verify applies risk and coverage bounds and the fault rules to reach one verdict with its exit code: PASS 0, BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes the lock, answers, decisions and verdict into one bounded evidence bundle. Replay recomputes the verdict from that bundle offline, with no model call and no provider loaded. The lock command performs Freeze, the verify command performs Run, Verify and Seal, and the replay command performs Replay.</desc>
-  <rect fill="#0d1117" height="1790" width="720" x="0" y="0"/>
+  <rect fill="#0d1117" height="2152" width="720" x="0" y="0"/>
   <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="stage-freeze">
-    <rect fill="#161b22" height="296" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="24"/>
-    <text fill="#e6edf3" font-size="44" font-weight="bold" x="44" y="86"><tspan fill="#58a6ff">1</tspan> <tspan dx="6">Freeze</tspan></text>
-    <text fill="#8b949e" font-size="30" x="44" y="126">actseal lock</text>
-    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="142" y2="142"/>
-    <text fill="#c9d1d9" font-size="30" x="44" y="180">frozen policy</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="218">+ labelled inputs</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="256">+ model identity</text>
-    <text fill="#58a6ff" font-size="30" x="44" y="294">→ lock</text>
-    <line stroke="#58a6ff" stroke-width="3" x1="360" x2="360" y1="323" y2="361"/>
-    <polygon fill="#58a6ff" points="360,373 352,361 368,361"/>
+    <rect fill="#161b22" height="356" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="24"/>
+    <text fill="#e6edf3" font-size="48" font-weight="bold" x="44" y="90"><tspan fill="#58a6ff">1</tspan> <tspan dx="6">Freeze</tspan></text>
+    <text fill="#8b949e" font-size="40" x="44" y="140">actseal lock</text>
+    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="156" y2="156"/>
+    <text fill="#c9d1d9" font-size="40" x="44" y="204">frozen policy</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="254">+ labelled inputs</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="304">+ model identity</text>
+    <text fill="#58a6ff" font-size="40" x="44" y="354">→ lock</text>
+    <line stroke="#58a6ff" stroke-width="3" x1="360" x2="360" y1="383" y2="421"/>
+    <polygon fill="#58a6ff" points="360,433 352,421 368,421"/>
   </g>
   <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="stage-run">
-    <rect fill="#161b22" height="296" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="376"/>
-    <text fill="#e6edf3" font-size="44" font-weight="bold" x="44" y="438"><tspan fill="#58a6ff">2</tspan> <tspan dx="6">Run</tspan></text>
-    <text fill="#8b949e" font-size="30" x="44" y="478">actseal verify</text>
-    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="494" y2="494"/>
-    <text fill="#c9d1d9" font-size="30" x="44" y="532">provider answers</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="570">verification cases</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="608">+ 6 synthetic faults</text>
-    <text fill="#58a6ff" font-size="30" x="44" y="646">→ ACT · ABSTAIN · ESCALATE · DENY</text>
-    <line stroke="#58a6ff" stroke-width="3" x1="360" x2="360" y1="675" y2="713"/>
-    <polygon fill="#58a6ff" points="360,725 352,713 368,713"/>
+    <rect fill="#161b22" height="406" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="436"/>
+    <text fill="#e6edf3" font-size="48" font-weight="bold" x="44" y="502"><tspan fill="#58a6ff">2</tspan> <tspan dx="6">Run</tspan></text>
+    <text fill="#8b949e" font-size="40" x="44" y="552">actseal verify</text>
+    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="568" y2="568"/>
+    <text fill="#c9d1d9" font-size="40" x="44" y="616">provider answers</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="666">verification cases</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="716">+ 6 synthetic faults</text>
+    <text fill="#58a6ff" font-size="40" x="44" y="766">→ ACT · ABSTAIN · ESCALATE</text>
+    <text fill="#58a6ff" font-size="40" x="44" y="816">DENY</text>
+    <line stroke="#58a6ff" stroke-width="3" x1="360" x2="360" y1="845" y2="883"/>
+    <polygon fill="#58a6ff" points="360,895 352,883 368,883"/>
   </g>
   <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="stage-verify">
-    <rect fill="#161b22" height="334" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="728"/>
-    <text fill="#e6edf3" font-size="44" font-weight="bold" x="44" y="790"><tspan fill="#58a6ff">3</tspan> <tspan dx="6">Verify</tspan></text>
-    <text fill="#8b949e" font-size="30" x="44" y="830">actseal verify</text>
-    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="846" y2="846"/>
-    <text fill="#c9d1d9" font-size="30" x="44" y="884">risk + coverage</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="922">bounds, fault rules</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="960">→ verdict, exit code:</text>
-    <text fill="#58a6ff" font-size="30" x="44" y="998">PASS 0 · BLOCK 1 · INCONCLUSIVE 2</text>
-    <text fill="#58a6ff" font-size="30" x="44" y="1036">ERROR 3</text>
-    <line stroke="#58a6ff" stroke-width="3" x1="360" x2="360" y1="1065" y2="1103"/>
-    <polygon fill="#58a6ff" points="360,1115 352,1103 368,1103"/>
+    <rect fill="#161b22" height="406" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="898"/>
+    <text fill="#e6edf3" font-size="48" font-weight="bold" x="44" y="964"><tspan fill="#58a6ff">3</tspan> <tspan dx="6">Verify</tspan></text>
+    <text fill="#8b949e" font-size="40" x="44" y="1014">actseal verify</text>
+    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="1030" y2="1030"/>
+    <text fill="#c9d1d9" font-size="40" x="44" y="1078">risk + coverage</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="1128">bounds, fault rules</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="1178">→ verdict, exit code:</text>
+    <text fill="#58a6ff" font-size="40" x="44" y="1228">PASS 0 · BLOCK 1</text>
+    <text fill="#58a6ff" font-size="40" x="44" y="1278">INCONCLUSIVE 2 · ERROR 3</text>
+    <line stroke="#58a6ff" stroke-width="3" x1="360" x2="360" y1="1307" y2="1345"/>
+    <polygon fill="#58a6ff" points="360,1357 352,1345 368,1345"/>
   </g>
   <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="stage-seal">
-    <rect fill="#161b22" height="296" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="1118"/>
-    <text fill="#e6edf3" font-size="44" font-weight="bold" x="44" y="1180"><tspan fill="#58a6ff">4</tspan> <tspan dx="6">Seal</tspan></text>
-    <text fill="#8b949e" font-size="30" x="44" y="1220">actseal verify</text>
-    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="1236" y2="1236"/>
-    <text fill="#c9d1d9" font-size="30" x="44" y="1274">lock + answers</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="1312">decisions + verdict</text>
-    <text fill="#58a6ff" font-size="30" x="44" y="1350">→ bounded</text>
-    <text fill="#58a6ff" font-size="30" x="44" y="1388">evidence bundle</text>
-    <line stroke="#58a6ff" stroke-width="3" x1="360" x2="360" y1="1417" y2="1455"/>
-    <polygon fill="#58a6ff" points="360,1467 352,1455 368,1455"/>
+    <rect fill="#161b22" height="356" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="1360"/>
+    <text fill="#e6edf3" font-size="48" font-weight="bold" x="44" y="1426"><tspan fill="#58a6ff">4</tspan> <tspan dx="6">Seal</tspan></text>
+    <text fill="#8b949e" font-size="40" x="44" y="1476">actseal verify</text>
+    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="1492" y2="1492"/>
+    <text fill="#c9d1d9" font-size="40" x="44" y="1540">lock + answers</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="1590">decisions + verdict</text>
+    <text fill="#58a6ff" font-size="40" x="44" y="1640">→ bounded</text>
+    <text fill="#58a6ff" font-size="40" x="44" y="1690">evidence bundle</text>
+    <line stroke="#58a6ff" stroke-width="3" x1="360" x2="360" y1="1719" y2="1757"/>
+    <polygon fill="#58a6ff" points="360,1769 352,1757 368,1757"/>
   </g>
   <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="stage-replay">
-    <rect fill="#161b22" height="296" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="1470"/>
-    <text fill="#e6edf3" font-size="44" font-weight="bold" x="44" y="1532"><tspan fill="#58a6ff">5</tspan> <tspan dx="6">Replay</tspan></text>
-    <text fill="#8b949e" font-size="30" x="44" y="1572">actseal replay</text>
-    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="1588" y2="1588"/>
-    <text fill="#58a6ff" font-size="30" x="44" y="1626">offline; no model call</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="1664">no provider loaded</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="1702">recomputes verdict</text>
-    <text fill="#c9d1d9" font-size="30" x="44" y="1740">from the bundle</text>
+    <rect fill="#161b22" height="356" rx="10" stroke="#30363d" stroke-width="2" width="672" x="24" y="1772"/>
+    <text fill="#e6edf3" font-size="48" font-weight="bold" x="44" y="1838"><tspan fill="#58a6ff">5</tspan> <tspan dx="6">Replay</tspan></text>
+    <text fill="#8b949e" font-size="40" x="44" y="1888">actseal replay</text>
+    <line stroke="#30363d" stroke-width="2" x1="44" x2="676" y1="1904" y2="1904"/>
+    <text fill="#58a6ff" font-size="40" x="44" y="1952">offline; no model call</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="2002">no provider loaded</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="2052">recomputes verdict</text>
+    <text fill="#c9d1d9" font-size="40" x="44" y="2102">from the bundle</text>
   </g>
 </svg>
