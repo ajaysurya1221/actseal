@@ -13,7 +13,10 @@ The v1 live-model path uses the optional Laya dependency. The fixture quickstart
 | Native Linux | x86_64, glibc >=2.28, official Torch CPU distribution; actual native receipt uses Ubuntu/Python 3.12.3. Python 3.13 wheel availability was checked, but native inference on 3.13 was not established by that check. |
 
 The native receipts do not establish Intel Mac, Linux ARM, musl, Windows or GPU
-support. There is no automatic device or model substitution. Exact stack pins:
+support. Windows is unsupported in v1 for the core as well: exclusive bundle
+publication depends on macOS/Linux filesystem operations, and no Windows
+classifier or partial-support claim is made. There is no automatic device or
+model substitution. Exact stack pins:
 Laya 0.3.28; Torch 2.14.1 on macOS / 2.14.1+cpu on Linux; Transformers 5.18.0;
 huggingface-hub 1.33.0; Safetensors 0.8.0; NumPy 2.5.3. See
 [dependencies](dependencies.md) for the full locked graph and notices.
@@ -33,7 +36,7 @@ standard wheel metadata preserves `torch==2.14.1+cpu`, but installers do not
 inherit the repository's `tool.uv.sources` CPU-index mapping. Without an explicit
 CPU source, installation should fail rather than resolve proprietary CUDA
 packages. [The dependency guide](dependencies.md#linux-cpu-selection-and-rejected-cuda-dependencies)
-explains this distinction. The fixture GitHub-wheel quickstart needs no extra.
+explains this distinction. The fixture [PyPI quickstart](quickstart.md) needs no extra.
 
 Download the five pinned public artifacts once, separately from evaluation:
 
@@ -155,7 +158,9 @@ imports or invokes the provider and does not require that extra.
 ## Public Python boundaries
 
 Use the documented submodules; the package root exports records/errors and
-serialization helpers, not every callable:
+serialization helpers, not every callable. The [stability manifest](stability.md)
+is the exhaustive inventory and the [Python guide](python-api.md) shows runnable
+examples. The provider-facing boundary is:
 
 | Import | Public boundary |
 |---|---|
@@ -314,12 +319,22 @@ At the same candidate, all four ordinary Linux/macOS Python 3.12/3.13 jobs passe
 
 The recorded times are whole test-suite elapsed times, not latency benchmarks. The milestone verifies the tested native paths without establishing broader hardware support, model accuracy, calibration or deployment reliability. The canonical fault campaign and full task subsequently passed [REVIEW T30-03](../plan/reviews/T30-03.md) at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`, merged as `87d2cd1`; the review preserves the earlier native receipt because its relevant source/test bytes are unchanged. The native CLI receipt above and [release report](../plan/FINAL_REPORT.md) record later integration and publication checks.
 
-## Jev: optional and deferred to v2
+## Jev: conditional experimental work, not shipped
 
-No proprietary provider is required in v1. The future TypeSafe/Jev adapter reads **`JEV_API_KEY`**, despite the vendor examples' different variable name. It must never serialize credentials into requests-at-rest, evidence, logs, or locks.
+No proprietary provider is required in 1.x, and the current source ships no
+Jev adapter: the stable provider set is exactly `fixture` and `laya`, and the
+runner rejects any other name. The v1.0.0 plan (plan/v1/PLAN.md, sections C
+and E) permits an **optional, experimental** Jev transport under
+`actseal.experimental.providers.jev`, selectable only with
+`--provider jev --experimental-provider`, PROVISIONAL under the
+[stability manifest](stability.md) and subject to a fixed integration deadline
+after which it moves to a later 1.x release. Whether and when it ships is
+decided at integration; nothing below is a description of released behaviour.
+
+If implemented, the TypeSafe/Jev adapter reads **`JEV_API_KEY`**, despite the vendor examples' different variable name. It must never serialize credentials into requests-at-rest, evidence, logs, or locks.
 
 The [official API](https://docs.typesafe.ai/api) uses Bearer authentication and `POST https://api.typesafe.ai/v1/systemone` with `state`, `model`, and `questions`; responses contain `model`, `answers`, and `usage`. [OpenAPI](https://api.typesafe.ai/openapi.json) reports API version 0.2.0. [Model docs](https://docs.typesafe.ai/models) listed `jev-1.13.0`, $0.042 per million input tokens, and free output tokens on 6 October 2026. Account availability was not tested.
 
 Jev's [Choice confidence](https://docs.typesafe.ai/confidence) is `(max(p) - 1/n) / (1 - 1/n)`, while Laya reports a separate top-probability `answer_confidence` and an entropy-derived `confidence`. Provider confidence fields cannot be interchanged under a common threshold. The future adapter must expose explicitly named normalized scores and preserve raw fields.
 
-A Jev-to-Laya fallback cannot inherit certification of Jev alone. Record both attempted identities and the reason, surface fallback use, and ESCALATE unless the entire chain has separately approved evidence. Chain certification is outside v1. The [TypeSafe MCA](https://typesafe.ai/legal/mca), updated 23 September 2026, permits customer application integration but restricts standalone resale and use of service/output to develop similar or competing products. Do not train the local model from Jev outputs or expose pooled credentials.
+A Jev-to-Laya fallback cannot inherit certification of Jev alone. Record both attempted identities and the reason, surface fallback use, and ESCALATE unless the entire chain has separately approved evidence. Chain certification is outside the v1.0 scope; v1.0 performs no automatic fallback, and any later certified chain would need its own reviewed sampling rule and error budget. The [TypeSafe MCA](https://typesafe.ai/legal/mca), updated 23 September 2026, permits customer application integration but restricts standalone resale and use of service/output to develop similar or competing products. Do not train the local model from Jev outputs or expose pooled credentials.
