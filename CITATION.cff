@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata in this file."
+type: software
+title: "Actseal"
+abstract: "Verify frozen categorical decision policies with risk/coverage bounds, provider-fault tests and offline replay."
+authors:
+  - given-names: "Ajay Surya"
+    family-names: "Senthilrajan"
+version: "1.0.0"
+date-released: "2026-10-07"
+license: "Apache-2.0"
+repository-code: "https://github.com/ajaysurya1221/actseal"

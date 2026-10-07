@@ -1,0 +1,47 @@
+version: 2
+updates:
+  # Python dependencies: `uv` updates pyproject.toml and uv.lock together.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps"
+    groups:
+      # The optional `laya` extra is tested as one stack. Merge an update to it
+      # only after the manual "Native CPU integration" workflow passes on the
+      # update's branch; ordinary CI does not exercise native inference.
+      native-stack:
+        patterns:
+          - "laya"
+          - "torch"
+          - "transformers"
+          - "huggingface-hub"
+          - "safetensors"
+          - "numpy"
+      # Authoring-only asset toolchain. fonttools is also pinned, with its wheel
+      # hash, in docs/assets/src/tools.toml; update both pins in the same PR.
+      asset-toolchain:
+        patterns:
+          - "fonttools"
+
+  # Workflow actions are pinned by commit SHA with a version comment.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "ci"
+    groups:
+      # CodeQL init and analyze must stay on the same commit.
+      codeql:
+        patterns:
+          - "github/codeql-action*"

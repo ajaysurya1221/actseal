@@ -2,10 +2,14 @@
 
 ## Unreleased
 
+- Repository automation: weekly Dependabot updates for `uv` and GitHub Actions, CodeQL Python analysis, pull-request dependency review and full-history Gitleaks scanning.
+- `CI / required` aggregate check that passes only when every CI job succeeds; a failed, cancelled or skipped job fails it.
+- Package metadata project URLs for the quickstart documentation, repository, issue tracker and changelog.
+- `CITATION.cff` software citation metadata for the 1.0.0 release.
 - Added the 8 October 2026 Jev audit archive: 959 recorded single-attempt captures across separate calibration and verification cohorts, with an INCONCLUSIVE verification verdict. Collection used benchmark snapshot d3edbab, not the released Actseal 1.0.0 package; results are finite-benchmark, demo-scope evidence.
 - Corrected GitHub README figure selection to use dark or light desktop variants at every viewport width. This supersedes the v1.0.0 statement that the README selects vertical variants below 1280 px. Mobile SVGs remain committed; phone text legibility remains a known limitation.
 
-## v1.0.0
+## v1.0.0 — 2026-10-07
 
 This entry describes the 1.0.0 implementation as reviewed and accepted before
 the tag (source fingerprint
