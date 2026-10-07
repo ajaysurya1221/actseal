@@ -1,4 +1,10 @@
-"""README composition and image validation (PLAN section D).
+"""README composition and image validation.
+
+The opening order and copy follow the 2026-10-08 editorial review, which
+superseded the PLAN section D opening: compact hero, the bold line and one
+paragraph on why, badges, the three commands, a selected excerpt of real demo
+output and three links come first; the workflow figure, guarantees and limits,
+architecture, recording, documentation table and related projects follow.
 
 Every image in README.md, including each ``<source srcset>`` and ``<img src>``
 inside ``<picture>`` markup, must be an absolute same-repository URL that maps
@@ -11,7 +17,10 @@ allowlist are exempt from the file check only.
 
 from __future__ import annotations
 
+import json
 import re
+import subprocess
+import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -26,9 +35,66 @@ BADGES = (
     re.compile(r"^https://img\.shields\.io/"),
     re.compile(rf"^https://github\.com/{re.escape(REPO)}/actions/workflows/[^/]+/badge\.svg$"),
 )
-DESCRIPTION = (
-    "Actseal verifies model-chosen application actions for developers: freeze a "
-    "policy, check its recorded decisions, and replay the evidence offline."
+TAGLINE = "Frozen policy. Measured risk and coverage. Offline replay."
+WHY = (
+    "A model can choose the right label often and still act on the wrong cases. "
+    "Actseal checks a frozen action policy against labelled cases, bounds errors "
+    "among accepted actions and coverage across all scheduled cases, and saves "
+    "evidence for offline replay."
+)
+HERO_ALT = (
+    "Actseal. Test model-chosen actions. Replay the evidence. Three steps: freeze, run, replay."
+)
+EXCERPT_INTRO = "Expected result from synthetic fixtures, showing selected output:"
+EXIT_SUMMARY = (
+    "Demo exit: `{demo}`. Fixed replay: `{fixed_status}` / `{fixed}`. "
+    "Bad replay: `{bad_status}` / `{bad}`."
+)
+OPENING_LINKS = (
+    f"[Use it in an application]({BLOB_PREFIX}examples/action_gate/README.md) · "
+    f"[Read the limits]({BLOB_PREFIX}docs/threat-model.md) · "
+    f"[Quickstart]({BLOB_PREFIX}docs/quickstart.md)"
+)
+#: The opening (hero through the three links) must fit in this many lines.
+OPENING_LINES = 40
+#: The retained raw recording; the excerpt's lines must be lines of its output.
+CAST = ASSETS / "src" / "demo.cast"
+#: Limit and scope statements carried over from the earlier README; each must
+#: survive somewhere in the prose (compared with whitespace collapsed).
+SURVIVING_STATEMENTS = (
+    "The third command intentionally exits 1.",
+    "Windows is unsupported.",
+    (
+        "The Jev adapter is PROVISIONAL and requires explicit opt-in: "
+        "`--provider jev --experimental-provider`. It has no 1.x compatibility promise."
+    ),
+    "no live audit result is accepted",
+    "Replay never imports a provider",
+    "the packaged demonstration establishes no population or model-quality result",
+    "The packaged demo and action-gate example are synthetic (`evidence_scope=demo`).",
+    (
+        "Population interpretation requires independent cases and one prespecified attempt "
+        "under a fixed policy. Do not retry until PASS."
+    ),
+    (
+        "Actseal supports one categorical question with 2\N{EN DASH}16 labels and a frozen "
+        "allowlist and threshold."
+    ),
+    (
+        "The runtime core uses only the Python standard library on Python 3.12 and 3.13, "
+        "macOS and Linux."
+    ),
+    "Native Laya support is limited to the documented tested CPU configurations.",
+    "it does not execute, intercept or enforce the application's action",
+    "it is not a statement that the answer is correct",
+    "it never relabels the bad run",
+    "it is not authenticated model evidence",
+)
+RELATED_REPOSITORIES = (
+    "https://github.com/ajaysurya1221/agent-reliability-ci",
+    "https://github.com/ajaysurya1221/frontier-scout",
+    "https://github.com/ajaysurya1221/dorian",
+    "https://github.com/ajaysurya1221/evalopt-graph",
 )
 QUICKSTART = [
     "uvx --python 3.12 actseal demo --out ./actseal-demo",
@@ -56,7 +122,8 @@ ARCHITECTURE_FILES = (
 )
 FIGURES = ("hero", "how-it-works", "architecture")
 #: The genuine post-publication recording (Task 14, Decision 2A), one GIF per
-#: colour scheme, integrated by Task 21 below the frozen opening sequence.
+#: colour scheme, placed after the architecture figure and before the
+#: documentation table.
 DEMO_FILES = ("demo-light.gif", "demo-dark.gif")
 #: Narrowest browser viewport (CSS px) that selects the desktop variants.
 #: Read-only measurements of the public repository view at candidate 5e7931a
@@ -240,21 +307,179 @@ def _implemented_outputs() -> set[str]:
 # --------------------------------------------------------------------------- #
 
 
-def test_opening_order_follows_plan_section_d() -> None:
+def _prose() -> str:
+    """README text outside ``<picture>`` blocks, with whitespace collapsed."""
+    without_pictures = re.sub(r"<picture>.*?</picture>", " ", _text(), flags=re.DOTALL)
+    return re.sub(r"\s+", " ", without_pictures)
+
+
+def _section(heading: str) -> str:
+    """Body of the ``## heading`` section up to the next second-level heading."""
+    text = _text()
+    start = text.index(f"\n## {heading}\n") + len(f"\n## {heading}\n")
+    end = text.find("\n## ", start)
+    return text[start:] if end == -1 else text[start:end]
+
+
+def _excerpt() -> list[str]:
+    """Lines of the first ``text`` fence: the selected demo output."""
+    blocks = fences(README, "text")
+    assert blocks, "README must show a selected excerpt of the demo output"
+    return blocks[0].strip().splitlines()
+
+
+def _cast_output_lines() -> list[str]:
+    """Every terminal output line of the retained raw recording, in order."""
+    rows = CAST.read_text(encoding="utf-8").splitlines()
+    header = json.loads(rows[0])
+    assert isinstance(header, dict)
+    assert header["version"] == 3
+    output = ""
+    for row in rows[1:]:
+        event = json.loads(row)
+        if event[1] == "o":
+            output += event[2]
+    return [line.rstrip("\r") for line in output.split("\n")]
+
+
+def _appear_in_order(lines: list[str], wanted: list[str]) -> bool:
+    """Whether every ``wanted`` line is a whole line of ``lines``, in the same order."""
+    position = 0
+    for line in wanted:
+        if line not in lines[position:]:
+            return False
+        position = lines.index(line, position) + 1
+    return True
+
+
+def _run_actseal(arguments: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(  # noqa: S603 - fixed interpreter and literal arguments
+        [sys.executable, "-m", "actseal", *arguments],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
+    )
+
+
+def test_opening_puts_commands_and_a_result_before_any_explanatory_figure() -> None:
+    """Hero, bold line, why, badges, commands, excerpt and links, then everything else."""
     text = _text()
     hero = text.index("hero-light.svg")
-    description = text.index(DESCRIPTION)
+    tagline = text.index(f"**{TAGLINE}**")
+    why = text.index(WHY)
     badges = [m.start() for m in re.finditer(r"\[!\[", text)]
-    workflow = text.index("how-it-works-light.svg")
+    try_it = text.index("\n## Try it\n")
     quickstart = text.index(QUICKSTART[0])
+    excerpt = text.index("```text")
+    links = text.index(OPENING_LINKS)
+    application = text.index("\n## Use it in an application\n")
+    workflow = text.index("how-it-works-light.svg")
+    result = text.index("\n## Read a result\n")
+    guarantees_and_limits = text.index("\n## Guarantees and limits\n")
     guarantees = text.index("**Guarantees**")
     limits = text.index("**Limits**")
     architecture = text.index("architecture-light.svg")
-    links = text.index("docs/stability.md")
+    demo = text.index(DEMO_FILES[0])
+    table = text.index("docs/stability.md")
+    related = text.index("\n## Related projects\n")
+    contributing = text.index("Contributions: [CONTRIBUTING]")
     assert len(badges) == 4
-    assert hero < description < badges[0] < badges[3] < workflow < quickstart
-    assert quickstart < guarantees < limits < architecture < links
-    assert text.index(DESCRIPTION) == text.index(DESCRIPTION.split(":", maxsplit=1)[0])
+    assert hero < tagline < why < badges[0] < badges[3] < try_it < quickstart < excerpt < links
+    assert links < application < workflow < result < guarantees_and_limits < guarantees < limits
+    assert limits < architecture < demo < table < related < contributing
+    # Nothing but the hero is drawn before the commands, the excerpt and the links.
+    assert text[:links].count("<picture>") == 1
+    # The whole opening, through the three links, fits in the first 40 lines.
+    assert OPENING_LINKS in text.splitlines()[:OPENING_LINES]
+    assert text.count(WHY) == 1
+
+
+def test_opening_links_promote_the_application_example() -> None:
+    text = _text()
+    example = f"{BLOB_PREFIX}examples/action_gate/README.md"
+    assert (ROOT / "examples" / "action_gate" / "README.md").is_file()
+    assert example in OPENING_LINKS
+    assert f"[action-gate example]({example})" in _section("Use it in an application")
+    assert "The application owns execution." in text
+
+
+def test_excerpt_is_selected_output_of_the_retained_recording() -> None:
+    """Each excerpt line is a whole line the recorded demo printed, in the printed order."""
+    text = _text()
+    excerpt = _excerpt()
+    assert excerpt == [
+        "[bad] expected BLOCK, observed BLOCK, replay BLOCK (match)",
+        "[fixed] expected PASS, observed PASS, replay PASS (match)",
+        "result: success",
+    ]
+    assert text.index(EXCERPT_INTRO) < text.index("```text") < text.index(OPENING_LINKS)
+    assert "selected output" in EXCERPT_INTRO  # the excerpt is labelled as a selection
+    assert _appear_in_order(_cast_output_lines(), excerpt)
+
+
+def test_excerpt_and_exit_summary_match_executable_demo_behaviour(task_tmpdir: Path) -> None:
+    """The checked-out package prints the excerpt and the stated exits and statuses.
+
+    This runs the three command shapes through ``python -m actseal`` from the
+    locked environment, not the PyPI release the ``uvx`` commands resolve.
+    """
+    demo = _run_actseal(["demo", "--out", "./actseal-demo"], task_tmpdir)
+    assert demo.returncode == 0, demo.stderr
+    assert _appear_in_order(demo.stdout.splitlines(), _excerpt())
+    observed: dict[str, object] = {"demo": demo.returncode}
+    for run in ("fixed", "bad"):
+        replay = _run_actseal(["replay", f"./actseal-demo/{run}/evidence", "--json"], task_tmpdir)
+        receipt = json.loads(replay.stdout)
+        assert receipt["exit_code"] == replay.returncode
+        observed[run] = replay.returncode
+        observed[f"{run}_status"] = receipt["status"]
+    summary = EXIT_SUMMARY.format(**observed)
+    assert summary == EXIT_SUMMARY.format(
+        demo=0, fixed_status="PASS", fixed=0, bad_status="BLOCK", bad=1
+    )
+    assert summary in _text()
+
+
+def test_hero_alt_describes_the_artwork_and_the_prose_carries_the_limits() -> None:
+    """The caption left the artwork; its three limits must stay in the README prose."""
+    hero_alt = next(alt for target, alt in _html_images().images if "hero-light.svg" in target)
+    assert hero_alt == HERO_ALT
+    for gone in ("authenticate", "inference", "label truth", "Caption", "loop"):
+        assert gone not in hero_alt, gone
+    for variant in ("-light", "-dark", "-mobile-light", "-mobile-dark"):
+        name = f"hero{variant}.svg"
+        svg = (ASSETS / name).read_text(encoding="utf-8")
+        assert "Test model-chosen actions. Replay the evidence." in svg, name
+        assert "Replay cannot authenticate" not in svg, name
+        assert "Caption" not in svg, name
+        for step in ("freeze", "run", "replay"):
+            assert step in svg, (name, step)
+    prose = _prose()
+    for limit in (
+        "cannot authenticate coherently rewritten responses",
+        "cannot prove inference occurred",
+        "that labels are true",
+    ):
+        assert limit in prose, limit
+
+
+def test_scope_and_limit_statements_survive_in_the_prose() -> None:
+    prose = _prose()
+    for statement in SURVIVING_STATEMENTS:
+        assert statement in prose, statement
+
+
+def test_related_projects_are_three_sentences_naming_four_repositories() -> None:
+    section = _section("Related projects").strip()
+    assert "\n\n" not in section  # one paragraph
+    # A sentence ends at a full stop followed by whitespace or the end; the
+    # dots inside link targets are followed by other characters.
+    assert len(re.findall(r"\.(?=\s|$)", section)) == 3, section
+    assert section.endswith("against supplied evidence.")
+    for repository in RELATED_REPOSITORIES:
+        assert f"({repository})" in section, repository
 
 
 def test_quickstart_guarantees_and_limits_are_verbatim() -> None:
@@ -312,20 +537,6 @@ def test_navigation_links_the_release_notes_absolutely_and_labels_their_state() 
     assert label.startswith("release notes"), label
     notes_are_draft = "DRAFT" in notes_path.read_text(encoding="utf-8")
     assert ("draft" in label) == notes_are_draft, (label, notes_are_draft)
-
-
-def test_hero_alt_text_states_the_three_evidence_limits() -> None:
-    """The hero already draws its caption; the alt text must carry it too."""
-    hero_alt = next(alt for target, alt in _html_images().images if "hero-light.svg" in target)
-    assert hero_alt is not None
-    for limit in ("authenticate responses", "prove inference occurred", "label truth"):
-        assert limit in hero_alt, limit
-    svg = (ASSETS / "hero-light.svg").read_text(encoding="utf-8")
-    caption = (
-        "Replay cannot authenticate responses, prove inference occurred, or establish label truth."
-    )
-    assert caption in svg
-    assert caption in hero_alt
 
 
 def test_every_image_has_alt_text_and_is_absolute() -> None:
@@ -454,20 +665,19 @@ def test_breakpoint_change_kept_every_picture_full_width_without_new_paths() -> 
 # --------------------------------------------------------------------------- #
 
 
-def test_demo_recording_sits_below_the_frozen_opening_with_dark_before_light() -> None:
-    """The recording is added after the navigation table and never touches the first screen.
+def test_demo_recording_sits_below_the_opening_with_dark_before_light() -> None:
+    """The recording follows the architecture figure and never touches the first screen.
 
     Decision 2A captures the recording from the published PyPI release, so it
-    is absent from the tagged tree; the README integrates it below the frozen
-    opening sequence (hero, description, badges, how-it-works, quickstart,
-    guarantees, limits, architecture, navigation table). One GIF per colour
-    scheme, dark ``<source>`` first, light ``<img>`` fallback, no responsive
-    width variants, and alt text that states the three exits.
+    is absent from the tagged tree; the README places it after the guarantees,
+    limits and architecture figure and before the documentation table. One GIF
+    per colour scheme, dark ``<source>`` first, light ``<img>`` fallback, no
+    responsive width variants, and alt text that states the three exits.
     """
     text = _text()
-    links = text.index("docs/stability.md")
     demo = text.index(DEMO_FILES[0])
-    assert links < demo < text.index("## Read a result")
+    assert text.index(OPENING_LINKS) < text.index("**Limits**") < demo
+    assert text.index("architecture-light.svg") < demo < text.index("docs/stability.md")
     assert text.index("## Watch the recorded demo") < demo
     picture = _demo_picture()
     assert [(media, _local_asset(target).name) for media, target in picture.sources] == [

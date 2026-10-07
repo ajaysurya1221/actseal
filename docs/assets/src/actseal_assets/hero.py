@@ -1,4 +1,4 @@
-"""The hero banner: wordmark, approved tagline, one loop motif, boundary caption.
+"""The hero banner: wordmark, approved tagline and one forward freeze/run/replay sequence.
 
 Every visible string is converted to path data with the pinned JetBrains Mono
 files through ``outline.outline_text``; the committed files contain no
@@ -9,17 +9,21 @@ the font hashes against ``tools.toml`` before calling ``render``; this module
 only checks presence so that a direct call still fails loudly.
 
 Two canvases are rendered, each in a light and a dark palette. The desktop
-canvas is 1600x400 and measures 838 CSS px in the README at 1280 px and wider
-viewports, so its smallest text is 28 units (14.7 rendered px). The mobile
-canvas stacks the same content at 720 units wide and is validated at the
-narrowest measured column, 254 CSS px at a 320 px viewport, so its smallest
-text is 40 units (14.1 rendered px). Line breaks are fixed in this file and every
-line is measured with the real glyph advances at render time; a line that
-would not fit raises ``ValueError``. Text is never shrunk to fit.
+canvas is 1600x280 and measures 838 CSS px in the README at 1280 px and wider
+viewports; its smallest text, the 32-unit step labels, renders at 16.8 px and
+the 28-unit desktop label minimum would render at 14.7 px. The mobile canvas
+is 720x400 and stacks the same content; it is validated at the narrowest
+measured column, 254 CSS px at a 320 px viewport, so its smallest text is
+40 units (14.1 rendered px). Line breaks are fixed in this file and every line
+is measured with the real glyph advances at render time; a line that would
+not fit raises ``ValueError``. Text is never shrunk to fit.
 
-Copy is frozen by the approved plan and the reviewed layout supplement. The
-motif is a single loop of three steps (freeze, run, replay); there are no
-padlocks, shields or other security symbols.
+The copy is the approved wordmark and two-line tagline; the 2026-10-08
+editorial review removed the caption paragraph from the artwork, and the
+evidence limits it carried are stated in the README prose instead. The motif
+is one forward sequence of three steps (freeze, run, replay) joined by two
+arrows; there is no return arrow, and no padlock, shield, checkmark, badge or
+other security symbol.
 """
 
 from __future__ import annotations
@@ -36,33 +40,18 @@ from .outline import OutlineError, outline_text
 if TYPE_CHECKING:
     from .inventory import RenderContext
 
-# Frozen copy. The joined lines must equal the single-string originals;
+# Frozen copy. The joined lines must equal the single-string original;
 # ``validate_copy`` enforces that before anything is rendered.
 WORDMARK = "Actseal"
 TAGLINE = "Test model-chosen actions. Replay the evidence."
 TAGLINE_LINES: tuple[str, ...] = ("Test model-chosen actions.", "Replay the evidence.")
-CAPTION = (
-    "Replay cannot authenticate responses, prove inference occurred, or establish label truth."
-)
-DESKTOP_CAPTION_LINES: tuple[str, ...] = (
-    "Replay cannot authenticate responses, prove",
-    "inference occurred, or establish label truth.",
-)
-MOBILE_CAPTION_LINES: tuple[str, ...] = (
-    "Replay cannot authenticate",
-    "responses, prove inference",
-    "occurred, or establish",
-    "label truth.",
-)
 MOTIF_STEPS: tuple[str, ...] = ("freeze", "run", "replay")
 
 TITLE = "Actseal: test model-chosen actions and replay the evidence"
 DESC = (
     "Actseal wordmark with the tagline: Test model-chosen actions. Replay the "
-    "evidence. Beside it, one loop of three steps, freeze, run and replay, with "
-    "arrows from freeze to run, from run to replay, and from replay back to "
-    "freeze. Caption: Replay cannot authenticate responses, prove inference "
-    "occurred, or establish label truth."
+    "evidence. Three steps in one forward sequence, freeze, run and replay, "
+    "with one arrow from freeze to run and one from run to replay."
 )
 
 # Pinned font files, installed by setup_tools.py and hash-checked by the
@@ -78,8 +67,9 @@ OUTPUTS: tuple[str, ...] = (
 )
 
 DESKTOP_WIDTH = 1600
-DESKTOP_HEIGHT = 400
+DESKTOP_HEIGHT = 280
 MOBILE_WIDTH = 720
+MOBILE_HEIGHT = 400
 # Measured CSS widths of a README image (838 px at 1280/1366 px viewports,
 # 254 px at 320 px); the same values as inventory.py, repeated here because
 # inventory imports this module.
@@ -88,6 +78,9 @@ MOBILE_DISPLAY_WIDTH = 254
 # Same floor as checks.MIN_LABEL_PX; outlined assets are exempt from that
 # validator, so this module enforces the floor on its own type sizes.
 MIN_LABEL_PX = 14.0
+# Smallest step-label sizes the editorial specification allows per canvas.
+MIN_DESKTOP_LABEL = 28
+MIN_MOBILE_LABEL = 40
 
 BORDER = 2
 ARROW_STROKE = 3
@@ -97,7 +90,11 @@ ARROW_CLEARANCE = 3
 # Baseline offset below the pill's vertical centre for lowercase labels, as a
 # fraction of the type size.
 LABEL_BASELINE_SHIFT = 0.32
-# Descender allowance below the last baseline, as a fraction of the type size.
+# Ascender allowance above the wordmark baseline and descender allowance below
+# the last tagline baseline, as fractions of the type size. The pinned faces
+# reach 0.777 em above and 0.18 em below the baseline for this copy; both
+# allowances are deliberately larger.
+ASCENT = 0.8
 DESCENDER = 0.3
 
 
@@ -156,10 +153,6 @@ class Canvas:
     tagline: int
     tagline_baseline: int
     tagline_step: int
-    caption: int
-    caption_baseline: int
-    caption_step: int
-    caption_lines: tuple[str, ...]
     label: int
     motif_x: int
     motif_top: int
@@ -167,11 +160,10 @@ class Canvas:
     pill_height: int
     pill_gap: int
     pill_pad: int
-    loop_drop: int
 
     @property
     def sizes(self) -> tuple[int, ...]:
-        return (self.wordmark, self.tagline, self.caption, self.label)
+        return (self.wordmark, self.tagline, self.label)
 
     @property
     def motif_width(self) -> int:
@@ -180,13 +172,19 @@ class Canvas:
 
     @property
     def motif_bottom(self) -> int:
-        """Lowest extent of the motif: the return route below the pills."""
-        return self.motif_top + self.pill_height + self.loop_drop
+        """Lowest extent of the motif: the bottom edge of the pills."""
+        return self.motif_top + self.pill_height
 
     @property
-    def caption_bottom(self) -> int:
-        last = self.caption_baseline + (len(self.caption_lines) - 1) * self.caption_step
-        return last + math.ceil(self.caption * DESCENDER)
+    def text_top(self) -> int:
+        """Highest extent of the text block: the wordmark's ascender allowance."""
+        return self.wordmark_baseline - math.ceil(self.wordmark * ASCENT)
+
+    @property
+    def text_bottom(self) -> int:
+        """Lowest extent of the text block: the last tagline line's descender allowance."""
+        last = self.tagline_baseline + (len(TAGLINE_LINES) - 1) * self.tagline_step
+        return last + math.ceil(self.tagline * DESCENDER)
 
     def rendered_px(self, size: float) -> float:
         """Size of ``size`` units after scaling the canvas to its display width."""
@@ -199,24 +197,19 @@ DESKTOP = Canvas(
     display_width=DESKTOP_DISPLAY_WIDTH,
     margin=24,
     text_x=72,
-    text_width=800,
+    text_width=760,
     wordmark=104,
-    wordmark_baseline=136,
+    wordmark_baseline=110,
     tagline=44,
-    tagline_baseline=206,
+    tagline_baseline=180,
     tagline_step=52,
-    caption=28,
-    caption_baseline=326,
-    caption_step=36,
-    caption_lines=DESKTOP_CAPTION_LINES,
-    label=28,
-    motif_x=940,
-    motif_top=158,
-    pill_width=160,
-    pill_height=64,
-    pill_gap=60,
+    label=32,
+    motif_x=848,
+    motif_top=104,
+    pill_width=184,
+    pill_height=72,
+    pill_gap=64,
     pill_pad=16,
-    loop_drop=56,
 )
 MOBILE = Canvas(
     name="mobile",
@@ -226,41 +219,25 @@ MOBILE = Canvas(
     text_x=20,
     text_width=680,
     wordmark=84,
-    wordmark_baseline=96,
+    wordmark_baseline=108,
     tagline=42,
-    tagline_baseline=160,
+    tagline_baseline=172,
     tagline_step=52,
-    caption=40,
-    caption_baseline=476,
-    caption_step=50,
-    caption_lines=MOBILE_CAPTION_LINES,
     label=40,
     motif_x=20,
-    motif_top=264,
+    motif_top=276,
     pill_width=200,
     pill_height=76,
     pill_gap=40,
     pill_pad=12,
-    loop_drop=52,
 )
 
 
-def mobile_height() -> int:
-    """Canvas height of the stacked variant, derived from its baselines."""
-    return MOBILE.caption_bottom + MOBILE.margin
-
-
 def validate_copy() -> None:
-    """The fixed line breaks must reproduce the approved strings exactly."""
-    expected = (
-        (TAGLINE_LINES, TAGLINE, "tagline"),
-        (DESKTOP_CAPTION_LINES, CAPTION, "desktop caption"),
-        (MOBILE_CAPTION_LINES, CAPTION, "mobile caption"),
-    )
-    for lines, whole, what in expected:
-        if " ".join(lines) != whole:
-            msg = f"{what} lines do not rejoin to the approved copy: {lines!r}"
-            raise ValueError(msg)
+    """The fixed line breaks must reproduce the approved tagline exactly."""
+    if " ".join(TAGLINE_LINES) != TAGLINE:
+        msg = f"tagline lines do not rejoin to the approved copy: {TAGLINE_LINES!r}"
+        raise ValueError(msg)
 
 
 def require_readable(canvas: Canvas) -> None:
@@ -273,6 +250,13 @@ def require_readable(canvas: Canvas) -> None:
                 f"{canvas.display_width} CSS px; minimum is {MIN_LABEL_PX:g}px"
             )
             raise ValueError(msg)
+
+
+def require_label_minimum(canvas: Canvas, minimum: int) -> None:
+    """The step labels must be at least the specified size for their canvas."""
+    if canvas.label < minimum:
+        msg = f"{canvas.name}: step labels are {canvas.label} units; minimum is {minimum} units"
+        raise ValueError(msg)
 
 
 def require_fonts(context: RenderContext) -> Fonts:
@@ -364,12 +348,11 @@ def _arrow_right(group: svg.Node, x1: float, x2: float, y: float, color: str) ->
 
 
 def _motif(root: svg.Node, fonts: Fonts, palette: Palette, canvas: Canvas) -> None:
-    """Three pills in a row, forward arrows between them, a return route below."""
+    """Three pills in a row joined by forward arrows; nothing returns to the start."""
     group = root.add("g", id="motif")
     top = canvas.motif_top
     height = canvas.pill_height
     middle = top + height / 2
-    centers: list[float] = []
     for index, step in enumerate(MOTIF_STEPS):
         left = canvas.motif_x + index * (canvas.pill_width + canvas.pill_gap)
         pill = group.add("g", id=f"step-{step}")
@@ -384,14 +367,12 @@ def _motif(root: svg.Node, fonts: Fonts, palette: Palette, canvas: Canvas) -> No
             stroke=palette.border,
             stroke_width=BORDER,
         )
-        center = left + canvas.pill_width / 2
-        centers.append(center)
         _glyphs(
             pill,
             fonts.regular,
             step,
             size=canvas.label,
-            x=center,
+            x=left + canvas.pill_width / 2,
             y=middle + canvas.label * LABEL_BASELINE_SHIFT,
             fill=palette.heading,
             max_width=canvas.pill_width - 2 * canvas.pill_pad,
@@ -401,40 +382,27 @@ def _motif(root: svg.Node, fonts: Fonts, palette: Palette, canvas: Canvas) -> No
             x1 = left + canvas.pill_width + ARROW_CLEARANCE
             x2 = left + canvas.pill_width + canvas.pill_gap - ARROW_CLEARANCE
             _arrow_right(pill, x1, x2, middle, palette.accent)
-    bottom = top + height
-    route_y = bottom + canvas.loop_drop
-    tip_y = bottom + ARROW_CLEARANCE
-    route = (
-        f"M{svg.fmt(centers[-1])} {svg.fmt(bottom)} V{svg.fmt(route_y)} "
-        f"H{svg.fmt(centers[0])} V{svg.fmt(tip_y + ARROW_HEAD)}"
-    )
-    group.add(
-        "path",
-        d=route,
-        fill="none",
-        stroke=palette.accent,
-        stroke_width=ARROW_STROKE,
-        stroke_linejoin="round",
-    )
-    head = (
-        (centers[0], tip_y),
-        (centers[0] - ARROW_HALF, tip_y + ARROW_HEAD),
-        (centers[0] + ARROW_HALF, tip_y + ARROW_HEAD),
-    )
-    group.add("polygon", points=_polygon(head), fill=palette.accent)
 
 
 def _require_extents(canvas: Canvas, height: int) -> None:
-    """The fixed geometry must stay inside the canvas with its margin."""
+    """The fixed geometry must stay inside the canvas margins without overlap."""
     problems: list[str] = []
     if canvas.text_x + canvas.text_width > canvas.width - canvas.margin:
         problems.append("text column exceeds the canvas width")
     if canvas.motif_x + canvas.motif_width > canvas.width - canvas.margin:
         problems.append("motif exceeds the canvas width")
-    if canvas.caption_bottom > height - canvas.margin:
-        problems.append(f"caption needs {canvas.caption_bottom} units of height")
+    if canvas.text_top < canvas.margin:
+        problems.append(f"wordmark reaches {canvas.text_top} units from the top")
+    if canvas.text_bottom > height - canvas.margin:
+        problems.append(f"tagline needs {canvas.text_bottom} units of height")
+    if canvas.motif_top < canvas.margin:
+        problems.append(f"motif starts {canvas.motif_top} units from the top")
     if canvas.motif_bottom > height - canvas.margin:
         problems.append(f"motif needs {canvas.motif_bottom} units of height")
+    beside = canvas.text_x + canvas.text_width <= canvas.motif_x
+    below = canvas.text_bottom <= canvas.motif_top
+    if not (beside or below):
+        problems.append("text column overlaps the motif")
     if problems:
         msg = f"{canvas.name} layout does not fit a {canvas.width}x{height} canvas: " + "; ".join(
             problems
@@ -467,20 +435,6 @@ def _text_blocks(root: svg.Node, fonts: Fonts, palette: Palette, canvas: Canvas)
     )
 
 
-def _caption(root: svg.Node, fonts: Fonts, palette: Palette, canvas: Canvas) -> None:
-    _lines(
-        root.add("g", id="caption"),
-        fonts.regular,
-        canvas.caption_lines,
-        size=canvas.caption,
-        x=canvas.text_x,
-        baseline=canvas.caption_baseline,
-        step=canvas.caption_step,
-        fill=palette.muted,
-        max_width=canvas.text_width,
-    )
-
-
 def _variant(canvas: Canvas, height: int, palette: Palette, fonts: Fonts) -> svg.Node:
     require_readable(canvas)
     _require_extents(canvas, height)
@@ -488,18 +442,18 @@ def _variant(canvas: Canvas, height: int, palette: Palette, fonts: Fonts) -> svg
     root.add("rect", x=0, y=0, width=canvas.width, height=height, fill=palette.canvas)
     _text_blocks(root, fonts, palette, canvas)
     _motif(root, fonts, palette, canvas)
-    _caption(root, fonts, palette, canvas)
     return root
 
 
 def render(context: RenderContext) -> Mapping[str, bytes]:
     """Render every declared output from the pinned fonts, or fail before drawing."""
     validate_copy()
+    require_label_minimum(DESKTOP, MIN_DESKTOP_LABEL)
+    require_label_minimum(MOBILE, MIN_MOBILE_LABEL)
     fonts = require_fonts(context)
-    height = mobile_height()
     return {
         "hero-light.svg": svg.serialize_bytes(_variant(DESKTOP, DESKTOP_HEIGHT, LIGHT, fonts)),
         "hero-dark.svg": svg.serialize_bytes(_variant(DESKTOP, DESKTOP_HEIGHT, DARK, fonts)),
-        "hero-mobile-light.svg": svg.serialize_bytes(_variant(MOBILE, height, LIGHT, fonts)),
-        "hero-mobile-dark.svg": svg.serialize_bytes(_variant(MOBILE, height, DARK, fonts)),
+        "hero-mobile-light.svg": svg.serialize_bytes(_variant(MOBILE, MOBILE_HEIGHT, LIGHT, fonts)),
+        "hero-mobile-dark.svg": svg.serialize_bytes(_variant(MOBILE, MOBILE_HEIGHT, DARK, fonts)),
     }

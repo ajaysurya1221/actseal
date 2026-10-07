@@ -440,6 +440,14 @@ def test_real_inventory_is_structurally_valid(kit: ModuleType) -> None:
     )
     social = kit.inventory.get_asset("social")
     assert (social.outputs[0].width, social.outputs[0].height) == (1280, 640)
+    # The compact hero: 1600x280 desktop and 720x400 stacked mobile canvases.
+    hero_sizes = {o.path: (o.width, o.height) for o in kit.inventory.get_asset("hero").outputs}
+    assert hero_sizes == {
+        "hero-light.svg": (1600, 280),
+        "hero-dark.svg": (1600, 280),
+        "hero-mobile-light.svg": (720, 400),
+        "hero-mobile-dark.svg": (720, 400),
+    }
     demo = kit.inventory.get_asset("demo")
     assert demo.outputs[0].max_bytes == 3_000_000
     assert (demo.sources[0].min_seconds, demo.sources[0].max_seconds) == (20.0, 40.0)

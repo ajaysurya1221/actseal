@@ -551,6 +551,17 @@ def test_docs_gate_passes_on_the_fixture_tree(tool: types.ModuleType, tmp_path: 
     tool.check_docs(tmp_path)
 
 
+def test_opening_copy_is_the_same_in_the_gate_the_fixture_and_the_readme(
+    tool: types.ModuleType,
+) -> None:
+    """The gate's approved opening, the fixture README and the real README cannot drift."""
+    real = (Path(__file__).resolve().parents[2] / "README.md").read_text(encoding="utf-8")
+    for copy in (tool.README_TAGLINE, tool.README_DESCRIPTION):
+        assert copy in readme_text()
+        assert copy in real
+    assert "verifies model-chosen application actions" not in tool.README_DESCRIPTION
+
+
 def test_html_picture_markup_with_absolute_same_repo_sources_passes(
     tool: types.ModuleType, tmp_path: Path
 ) -> None:
@@ -697,6 +708,18 @@ def test_relative_html_sources_in_docs_must_resolve(tool: types.ModuleType, tmp_
                 readme_text().replace("--offline ", ""), encoding="utf-8"
             ),
             "lacks quickstart command",
+        ),
+        (
+            lambda root: (root / "README.md").write_text(
+                readme_text().replace("Offline replay.**", "Replay.**"), encoding="utf-8"
+            ),
+            "lacks the approved bold opening line",
+        ),
+        (
+            lambda root: (root / "README.md").write_text(
+                readme_text().replace("still act on the wrong cases", "act"), encoding="utf-8"
+            ),
+            "lacks the approved opening description",
         ),
         (
             lambda root: (root / "docs" / "quickstart.md").write_text(

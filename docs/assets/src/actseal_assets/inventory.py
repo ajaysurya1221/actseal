@@ -37,8 +37,12 @@ DEMO_GIF_MAX_BYTES = 3_000_000
 DEMO_MIN_SECONDS = 20.0
 DEMO_MAX_SECONDS = 40.0
 
+# The compact banner (2026-10-08 editorial review): 1600x280 desktop and
+# 720x400 stacked mobile canvases, the same values as hero.py.
 HERO_WIDTH = 1600
-HERO_HEIGHT = 400
+HERO_HEIGHT = 280
+HERO_MOBILE_WIDTH = 720
+HERO_MOBILE_HEIGHT = 400
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,7 +144,7 @@ ASSETS: tuple[Asset, ...] = (
         name="hero",
         priority="P1",
         task="11",
-        summary="Wordmark, approved tagline and one freeze/run/replay motif; outlined text.",
+        summary="Wordmark, approved tagline and one forward freeze/run/replay sequence; outlined.",
         outputs=(
             _svg("hero-light.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
             _svg("hero-dark.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
@@ -148,16 +152,16 @@ ASSETS: tuple[Asset, ...] = (
             Output(
                 path="hero-mobile-light.svg",
                 kind="svg",
-                width=hero.MOBILE_WIDTH,
-                height=hero.mobile_height(),
+                width=HERO_MOBILE_WIDTH,
+                height=HERO_MOBILE_HEIGHT,
                 display_width=MOBILE_DISPLAY_WIDTH,
                 outlined=True,
             ),
             Output(
                 path="hero-mobile-dark.svg",
                 kind="svg",
-                width=hero.MOBILE_WIDTH,
-                height=hero.mobile_height(),
+                width=HERO_MOBILE_WIDTH,
+                height=HERO_MOBILE_HEIGHT,
                 display_width=MOBILE_DISPLAY_WIDTH,
                 outlined=True,
             ),
