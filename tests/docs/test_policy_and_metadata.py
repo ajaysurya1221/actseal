@@ -74,7 +74,9 @@ def test_providers_doc_distinguishes_stable_providers_from_provisional_jev() -> 
     for phrase in (
         "--provider jev --experimental-provider",
         "`JEV_API_KEY`",
-        "as of 7 October 2026 no live Jev request has been accepted as evidence",
+        # A labelled, dated verification status is required; its content may
+        # later record an accepted live receipt without failing this test.
+        "Verification status (as of ",
         "mocked",
         "not part of the default quickstart, demo or stable provider set",
         "`replay` never imports",

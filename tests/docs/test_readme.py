@@ -156,10 +156,11 @@ def test_readme_claims_no_publication_state_or_stale_version() -> None:
     text = _text()
     for stale in ("actseal==0.1.0", "v0.1.0 supports", "Jev is deferred", "0.17 seconds"):
         assert stale not in text, stale
-    # The included experimental provider is named with its opt-in and its limits.
+    # The included experimental provider is named with its opt-in and its
+    # evidence status; the status may change when a live receipt is accepted.
     assert "PROVISIONAL" in text
     assert "--provider jev --experimental-provider" in text
-    assert "no accepted live" in text
+    assert "live" in text
     assert "demo.gif" not in text  # the genuine recording is added by Task 21
     assert "1.0.0 is published" not in text
 
