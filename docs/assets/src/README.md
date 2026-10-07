@@ -131,6 +131,38 @@ its column, or a canvas that would overflow 400 units, makes the renderer
 raise instead of shrinking anything. Decision and verdict runs wrap greedily
 on ` · ` separators, so the same phrases pack differently per canvas.
 
+## Architecture figure (Task 13)
+
+`actseal_assets/architecture.py` renders four outputs from one content table:
+`architecture-light.svg` and `architecture-dark.svg` (1600×980, seven group
+boxes in three rows) and `architecture-mobile-light.svg` /
+`architecture-mobile-dark.svg` (720 wide, the seven boxes stacked; height
+derived from the measured content). Each box names the `actseal` modules that
+implement it, so every node maps to a file under `src/actseal`: Contracts /
+locks (`contract`, `records`, `errors`, `serialization`, `locking`,
+`compatibility`); CLI / typed API (`cli`, `runner`, `__init__`, `__main__`,
+`demo_data`); Providers (`adapters.base`, `adapters.fixture`, and inside a
+dashed live-inference boundary `adapters.laya` and the PROVISIONAL
+`experimental.providers.jev`); Normalization / policy (`normalization`,
+`policy`); Assessment / statistics / faults (`assessment`, `stats`, `faults`);
+Evidence (`evidence`); Replay (`replay`). The only source files not drawn are
+the three package markers. Nine arrows carry `data-source`/`data-target`
+attributes: CLI → contracts and CLI → providers → normalization → assessment →
+evidence → replay for collection; contracts → assessment for the six synthetic
+faults, which need no provider; and replay → contracts and replay → assessment
+for offline recomputation. No arrow joins replay and providers. The fixture
+adapter sits outside the live boundary because it reads a recorded file; Jev
+is labelled `PROVISIONAL opt-in` and nothing in the figure or its description
+says the cloud service was exercised. The figure is a component diagram, not
+an authenticity or enforcement claim.
+
+The palette, font stack and width model are the how-it-works figure's,
+imported unchanged. Desktop headings are 32 units bold and labels 26 (14.3 px
+at the 880 px README column); mobile headings 36 and labels 30 (15 px at
+360 px). Headings and module runs wrap on their separators; a phrase that
+would not fit its column, or a desktop layout taller than 980 units, makes
+the renderer raise instead of shrinking anything.
+
 ## Adding a figure
 
 1. Implement `render(context) -> {output path: bytes}` for the asset, building
