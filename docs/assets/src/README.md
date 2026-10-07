@@ -119,9 +119,28 @@ fault rules → verdict with exit code; lock, answers,
 decisions and verdict → bounded evidence bundle; replay recomputes the
 verdict offline with no model call. Module names, file inventories and hashes
 are deliberately absent from this overview (they belong to the architecture
-figure). Light and dark differ only in colour. Desktop labels are 26 units
-(14.3 px at the 880 px README column) with 34-unit headings; mobile labels
-are 30 units (15 px at 360 px) with 44-unit headings.
+figure). Light and dark differ only in colour. Desktop labels are 27 units
+(14.1 px at the measured 838 px README image width) with 34-unit headings;
+mobile labels are 40 units (14.1 px at the narrowest measured 254 px image
+width) with 48-unit headings.
+
+## Measured display widths
+
+Read-only browser measurements of the public repository page (REVIEW 13,
+real README sizing) give a README image 838 CSS px wide at 1280 and 1366 px
+viewports, 294 px at 360 and 254 px at 320. `inventory.py` therefore validates
+desktop variants at `README_DISPLAY_WIDTH = 838` and mobile variants at
+`MOBILE_DISPLAY_WIDTH = 254`, the two ends of the measured range; the
+rendered size of a label is its SVG font size times display width over SVG
+width, and every label must reach 14 px. At those widths the earlier 26-unit
+desktop and 30-unit mobile sizes fell to 13.6 and 10.6 px, so the how-it-works
+and architecture figures now use 27-unit desktop and 40-unit mobile labels, the
+hero mobile variant uses 40-unit caption and step labels with a four-line
+caption, and layouts wrap or widen rather than shrink. The desktop hero (28-unit
+captions, 14.7 px) and the social preview were already above the floor and
+their bytes are unchanged. These are measurements of one repository page on
+one date, not a GitHub guarantee; the README's responsive selection decides
+which variant each viewport receives.
 
 Text uses `Helvetica, Arial, Liberation Sans, sans-serif`, three
 metric-compatible faces that resolve on macOS, Windows and Linux before the
@@ -157,11 +176,12 @@ says the cloud service was exercised. The figure is a component diagram, not
 an authenticity or enforcement claim.
 
 The palette, font stack and width model are the how-it-works figure's,
-imported unchanged. Desktop headings are 32 units bold and labels 26 (14.3 px
-at the 880 px README column); mobile headings 36 and labels 30 (15 px at
-360 px). Headings and module runs wrap on their separators; a phrase that
-would not fit its column, or a desktop layout taller than 980 units, makes
-the renderer raise instead of shrinking anything.
+imported unchanged. Desktop headings are 32 units bold and labels 27 (14.1 px
+at the measured 838 px README image width); mobile headings 44 and labels 40
+(14.1 px at the narrowest measured 254 px width). Headings and module runs
+wrap on their separators, notes and arrow labels wrap on word boundaries; a
+word that would not fit its column, or a desktop layout taller than 980
+units, makes the renderer raise instead of shrinking anything.
 
 ## Adding a figure
 
