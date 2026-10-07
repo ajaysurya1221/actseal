@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "actseal"
-version = "0.1.0"
+version = "1.0.0"
 description = "Verify frozen categorical decision policies with risk/coverage bounds, provider-fault tests and offline replay."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,7 +12,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 dependencies = []
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Operating System :: MacOS",
   "Operating System :: POSIX :: Linux",
