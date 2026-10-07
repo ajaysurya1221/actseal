@@ -10,7 +10,7 @@ Actseal follows `MAJOR.MINOR.PATCH`.
 
 | Change | Allowed in |
 |---|---|
-| Bug fixes that preserve every STABLE behaviour; reviewed compatibility registry entries approving an exact released source fingerprint for an existing engine | patch |
+| Bug fixes that preserve every STABLE behaviour; reviewed compatibility registry entries approving an exact reviewed source fingerprint (a released tree, or the named reviewed prerelease producer of retained schema-2 evidence) for an existing engine | patch |
 | New commands, new constants, new optional arguments or flags whose defaults preserve existing behaviour; a new replay engine that must be explicitly selected; a separately versioned, explicitly opt-in interface for an additional format or semantics | minor |
 | Adding a field to an existing strict schema version or to a default CLI receipt shape, removal of a STABLE name or flag, an incompatible change to a STABLE behaviour or schema, a new required constructor field | 2.0 only |
 
@@ -78,13 +78,31 @@ shared `validate_lock`):
 The registry ships as `{"schema_version": 1, "implementations": {"<full
 lowercase 64-hex source SHA-256>": "<engine>"}}`. Approval of an entry requires:
 
-- the exact fingerprint of a reviewed, released source tree (never a
-  speculative or future hash, never a wildcard or range);
+- the exact fingerprint of a reviewed source tree (never a speculative or
+  future hash, never a wildcard or range). Ordinarily that is a released tree;
+  the one exception is a named, reviewed prerelease source whose retained
+  schema-2 evidence ships with the package and is approved by an explicit,
+  per-fingerprint amendment;
 - an archived-evidence regression test showing that evidence produced by that
   fingerprint replays under the engine with unchanged verdicts;
-- review and acceptance recorded in the release plan. Codex approves the final
-  1.0.0 runtime hash at integration (Task 19); the registry is empty until
-  then, and the exact-source path works with an empty registry.
+- review and acceptance recorded in the release plan.
+
+The 1.0.0 registry holds exactly two entries, both for `actseal-choice-v1`,
+approved by amendment V1-037 after an independent compatibility probe:
+
+| Fingerprint | Source | Status |
+|---|---|---|
+| `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3` | the 1.0.0 candidate source itself (final version metadata commit `0b57933`) | the running implementation of this release |
+| `a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642` | reviewed source `76758d7084e396c8960718d28c1cad5fb70bac03`, the producer of the retained `examples/action_gate/recorded/a5fe090202f7` archive | an **unreleased prerelease** tree carrying a `0.1.0` version string; it is not the released actseal 0.1.0 implementation, and its archive is schema-2 evidence, not legacy schema-1 evidence |
+
+That second entry approves exactly one producer for exactly one retained
+archive (external lock digest
+`cb009be0039afefd995f6eac3a8bd9767d6bf026a73273b47e87a51fc9fbd715`). It does
+not approve other prerelease trees, any hash range, or evidence from any other
+producer, and it does not claim that a release occurred at that source. Any
+later change to the packaged Python sources changes the running fingerprint,
+invalidates the first entry and requires a new fingerprint and review. The
+exact-source path (rule 2) never consults the registry.
 
 Because every source change, including a patch release, changes the
 fingerprint, a reviewed entry approving an exact released fingerprint for an

@@ -146,10 +146,12 @@ would not be the original evidence.
 ## Will a later 1.x release replay my 1.0 evidence?
 
 Only when both the producing and the running source fingerprints are
-registered for the `actseal-choice-v1` engine in the packaged registry. Until
-then the result is `ERROR` with reason `integrity.lock`, which is a
+registered for the `actseal-choice-v1` engine in the packaged registry.
+Otherwise the result is `ERROR` with reason `integrity.lock`, which is a
 verifier-configuration limit, not a statement that the evidence is invalid.
-The [versioning policy](versioning.md) describes registry approval.
+The 1.0.0 registry approves exactly two reviewed fingerprints (its own source
+and the prerelease producer of the retained example archive); the
+[versioning policy](versioning.md) lists them and describes approval.
 
 ## Is PASS a safety or calibration guarantee?
 
