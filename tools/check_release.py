@@ -21,6 +21,7 @@ Subcommands:
 ``release-receipt``      bind artifact identity and verification results
 ``mirror``               create or update only a draft GitHub release
 ``assets``               required static assets regenerate byte-identically
+``agg-version``          fail-closed probe of the approved agg pin on Linux
 ``candidate``            Task 20 release gate (fails until v1 assets exist)
 ``docs``                 Task 08 documentation gate
 ``receipts``             Task 21 final receipt gate
@@ -45,6 +46,7 @@ import sys
 import tarfile
 import time
 import tomllib
+import types
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -130,6 +132,12 @@ RELEASE_ASSETS: dict[str, tuple[str, ...]] = {
     "social": ("social.png",),
 }
 SOCIAL_PREVIEW_FILE = "social.png"
+# Linux recording-renderer probe (amendment V1-040): the already approved agg
+# pin, exercised fail-closed on the actual CI platform before regeneration.
+AGG_TOOL = "agg"
+AGG_APPROVED_VERSION = "1.9.0"
+AGG_PLATFORM = "linux-x86_64"
+AGG_PROBE_TIMEOUT_S = 10.0
 # Exact smoke outcomes the post-publication receipt must record.
 EXPECTED_SMOKE = {
     "demo_exit": 0,
@@ -470,17 +478,63 @@ def _check_workflow_triggers(document: Mapping[Any, Any]) -> None:
     )
 
 
-def _check_assets_job(job: Mapping[str, Any]) -> None:
+ASSETS_INSTALL_COMMAND = "uv sync --frozen --group dev --group assets"
+ASSETS_PROVISION_COMMAND = (
+    "uv run --frozen python docs/assets/src/setup_tools.py --tool jetbrains-mono\n"
+    "uv run --frozen python docs/assets/src/setup_tools.py --tool resvg\n"
+    "uv run --frozen python docs/assets/src/setup_tools.py --tool agg"
+)
+ASSETS_PROBE_COMMAND = "uv run --frozen python tools/check_release.py agg-version"
+ASSETS_REGENERATE_COMMAND = "uv run --frozen python tools/check_release.py assets"
+ASSETS_ESCAPES = ("|| true", "|| :", "set +e", "continue-on-error", "|| exit 0")
+
+
+def _check_assets_job(job: Mapping[str, Any], regenerate: str = ASSETS_REGENERATE_COMMAND) -> None:
+    """The assets job installs, provisions every pin, probes agg and regenerates, in order, once.
+
+    Every one of those steps must be unconditional and fail-closed: no ``if``,
+    ``continue-on-error`` or custom ``shell`` on the job or the steps, and no
+    shell escape that ignores a failure.
+    """
+    _require("if" not in job, "assets job must be unconditional")
+    _require("continue-on-error" not in job, "assets job must not ignore failures")
+    steps = _steps(job)
+    runs = [str(step.get("run", "")).strip() for step in steps]
+    required = {
+        "install": ASSETS_INSTALL_COMMAND,
+        "provision": ASSETS_PROVISION_COMMAND,
+        "probe": ASSETS_PROBE_COMMAND,
+        "regenerate": regenerate,
+    }
+    positions: dict[str, int] = {}
+    for label, command in required.items():
+        matches = [index for index, run in enumerate(runs) if run == command]
+        _require(
+            len(matches) == 1,
+            f"assets job must run the exact {label} command once: {command!r}",
+        )
+        step = steps[matches[0]]
+        for key in ("if", "continue-on-error", "shell"):
+            _require(key not in step, f"assets job {label} step must not set {key}")
+        positions[label] = matches[0]
+    _require(
+        positions["install"]
+        < positions["provision"]
+        < positions["probe"]
+        < positions["regenerate"],
+        "assets job must install, provision, probe agg and regenerate in that order",
+    )
     text = _run_text(job)
     _require(
-        "uv sync --frozen --group dev --group assets" in text,
-        "assets job must install the locked assets dependency group",
+        text.count("setup_tools.py") == ASSETS_PROVISION_COMMAND.count("setup_tools.py"),
+        "assets job must provision pinned tools only in the single provisioning step",
     )
     _require(
-        "docs/assets/src/setup_tools.py" in text,
-        "assets job must fetch the pinned authoring tools with hash verification",
+        text.count("check_release.py agg-version") == 1,
+        "assets job must probe the pinned agg exactly once",
     )
-    _require("check_release.py assets" in text, "assets job must run check_release.py assets")
+    for escape in ASSETS_ESCAPES:
+        _require(escape not in text, f"assets job must not contain the failure escape {escape!r}")
     _require("uv build" not in text, "assets job must not build distributions")
 
 
@@ -2077,6 +2131,84 @@ def check_assets(root: Path, renderer: str = DEFAULT_RENDERER) -> None:
     )
 
 
+def _toolchain(root: Path) -> types.ModuleType:
+    """Import the accepted asset toolchain's ``tools`` module from ``docs/assets/src`` lazily.
+
+    The release helper stays stdlib-only for every other command (the
+    post-publication check runs in a bare container); only the agg probe needs
+    the toolchain's manifest, hash-verification and bounded execution helpers.
+    """
+    source = root / "docs" / "assets" / "src"
+    _require((source / "actseal_assets" / "tools.py").is_file(), f"{source} lacks actseal_assets")
+    if str(source) not in sys.path:
+        sys.path.insert(0, str(source))
+    import importlib  # noqa: PLC0415 - lazy by design
+
+    return importlib.import_module("actseal_assets.tools")
+
+
+def check_agg_version(
+    root: Path,
+    manifest_path: Path | None = None,
+    *,
+    timeout: float = AGG_PROBE_TIMEOUT_S,
+) -> dict[str, str]:
+    """Fail-closed probe of the already approved agg pin on an actual Linux x86-64 runner.
+
+    The binary is hash-verified against the manifest immediately before
+    ``--version`` runs with a hard timeout, and the stripped stdout must be
+    exactly ``agg 1.9.0``. A matching hash and version prove consistency with the
+    approved pin only; they do not establish GIF rendering.
+    """
+    tools = _toolchain(root)
+    observed_platform = str(tools.platform_key())
+    _require(
+        observed_platform == AGG_PLATFORM,
+        f"agg probe requires an actual {AGG_PLATFORM} runner; running on {observed_platform}",
+    )
+    try:
+        manifest = tools.load_manifest(manifest_path or tools.default_manifest_path(root))
+    except tools.ToolError as error:
+        raise ReleaseCheckError(f"agg probe: {error}") from error
+    problems = tools.validate_manifest(manifest)
+    _require(not problems, f"agg probe: tool manifest invalid: {problems}")
+    _require(AGG_TOOL in manifest, f"agg probe: manifest declares no {AGG_TOOL!r} tool")
+    agg = manifest[AGG_TOOL]
+    _require(agg.kind == "binary", f"agg probe: {AGG_TOOL} is declared as {agg.kind!r}")
+    _require(
+        agg.version == AGG_APPROVED_VERSION,
+        f"agg probe: manifest pins agg {agg.version}, approved pin is {AGG_APPROVED_VERSION}",
+    )
+    artifact = agg.artifact_for(AGG_PLATFORM)
+    _require(
+        artifact is not None and artifact.platform == AGG_PLATFORM,
+        f"agg probe: manifest has no {AGG_PLATFORM} artifact for agg {agg.version}",
+    )
+    assert artifact is not None  # noqa: S101 - narrowed above
+    try:
+        binary = tools.verified_binary(root, agg, AGG_PLATFORM)
+        result = tools.run_tool([str(binary), "--version"], timeout=timeout)
+    except tools.ToolError as error:
+        raise ReleaseCheckError(f"agg probe: {error}") from error
+    observed = bytes(result.stdout).decode("utf-8", errors="replace").strip()
+    expected = f"{AGG_TOOL} {AGG_APPROVED_VERSION}"
+    _require(
+        observed == expected,
+        f"agg probe: --version printed {observed!r}, expected exactly {expected!r}",
+    )
+    report = {
+        "agg_version": observed,
+        "platform": observed_platform,
+        "agg_artifact_sha256": str(artifact.sha256),
+        "agg_binary": str(binary),
+    }
+    _err(
+        f"agg probe: {observed} on {observed_platform}; approved manifest artifact "
+        f"{artifact.filename} sha256 {artifact.sha256}; hash verified before execution"
+    )
+    return report
+
+
 def _check_schemas(root: Path) -> None:
     schemas = root / "docs" / "schemas"
     _require(
@@ -2253,6 +2385,12 @@ def _parser() -> argparse.ArgumentParser:
         )
     for name in ("docs", "receipts"):
         commands.add_parser(name)
+    probe = commands.add_parser("agg-version")
+    probe.add_argument(
+        "--manifest",
+        type=Path,
+        help="tool manifest to read (default: docs/assets/src/tools.toml under --root)",
+    )
     return parser
 
 
@@ -2307,6 +2445,9 @@ def _dispatch(args: argparse.Namespace) -> None:
         check_candidate(root, workflow_path, args.renderer)
     elif args.command == "assets":
         check_assets(root, args.renderer)
+    elif args.command == "agg-version":
+        for key, value in check_agg_version(root, args.manifest).items():
+            _out(f"{key}={value}")
     elif args.command == "docs":
         check_docs(root)
     else:
