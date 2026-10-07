@@ -8,6 +8,7 @@
 - `CITATION.cff` software citation metadata for the 1.0.0 release.
 - Added the 8 October 2026 Jev audit archive: 959 recorded single-attempt captures across separate calibration and verification cohorts, with an INCONCLUSIVE verification verdict. Collection used benchmark snapshot d3edbab, not the released Actseal 1.0.0 package; results are finite-benchmark, demo-scope evidence.
 - Corrected GitHub README figure selection to use dark or light desktop variants at every viewport width. This supersedes the v1.0.0 statement that the README selects vertical variants below 1280 px. Mobile SVGs remain committed; phone text legibility remains a known limitation.
+- Redrew the README hero as one stacked composition per colour scheme (1600×700) whose smallest type, the step labels, is 14.3 nominal CSS px at a 254 px image width; `social.png` uses the same composition. The workflow and architecture figures remain below the 14 px floor at phone widths.
 
 ## v1.0.1 — unreleased
 
