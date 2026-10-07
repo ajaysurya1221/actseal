@@ -1,0 +1,13 @@
+{
+  "filename": "asciinema-aarch64-apple-darwin",
+  "installed": "/Users/ajay/.cache/actseal-assets/asciinema-3.2.1/asciinema-aarch64-apple-darwin",
+  "license": "GPL-3.0-or-later",
+  "platform": "darwin-arm64",
+  "retrieved": "2026-10-07",
+  "sha256": "1f0c76da7855601df93e5dccdf69b7c683b81beff1411e38b3802de1f5fc7a1c",
+  "source_commit": "70c4af0505fe1dbc7a2170392559d258bd4af92c",
+  "source_url": "https://github.com/asciinema/asciinema/releases/tag/v3.2.1",
+  "tool": "asciinema",
+  "url": "https://github.com/asciinema/asciinema/releases/download/v3.2.1/asciinema-aarch64-apple-darwin",
+  "version": "3.2.1"
+}
