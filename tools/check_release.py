@@ -121,7 +121,12 @@ RELEASE_ASSETS: dict[str, tuple[str, ...]] = {
         "how-it-works-mobile-light.svg",
         "how-it-works-mobile-dark.svg",
     ),
-    "architecture": ("architecture.svg",),
+    "architecture": (
+        "architecture-light.svg",
+        "architecture-dark.svg",
+        "architecture-mobile-light.svg",
+        "architecture-mobile-dark.svg",
+    ),
     "social": ("social.png",),
 }
 SOCIAL_PREVIEW_FILE = "social.png"

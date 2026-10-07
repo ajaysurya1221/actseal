@@ -55,7 +55,10 @@ ASSET_OUTPUTS = (
     "how-it-works-dark.svg",
     "how-it-works-mobile-light.svg",
     "how-it-works-mobile-dark.svg",
-    "architecture.svg",
+    "architecture-light.svg",
+    "architecture-dark.svg",
+    "architecture-mobile-light.svg",
+    "architecture-mobile-dark.svg",
     "social.png",
 )
 ATTESTATION_NOTE = (
