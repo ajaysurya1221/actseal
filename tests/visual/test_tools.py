@@ -116,6 +116,7 @@ def test_manifest_validation_rejects_bad_entries(kit: ModuleType, tmp_path: Path
     assert errors == [
         "agg: license_url must be https",
         "agg/agg-aarch64-apple-darwin: sha256 is not 64 lowercase hex characters",
+        "agg/agg-x86_64-unknown-linux-gnu: unknown platform 'windows-arm64'",
         "resvg/resvg-linux-x86_64.tar.gz: unknown platform 'windows-arm64'",
     ]
 
@@ -149,8 +150,16 @@ def test_verified_binary_requires_cache_and_matching_hash(
         kit.tools.verified_binary(tmp_path, agg, "darwin-arm64")
     binary.write_bytes(payload)
     assert kit.tools.verified_binary(tmp_path, agg, "darwin-arm64") == binary
-    with pytest.raises(kit.tools.ToolError, match="no pinned artifact for platform linux-x86_64"):
+    # agg is pinned for Linux (V1-031) but nothing is cached there: exact not-cached error.
+    linux = kit.tools.cached_binary_path(agg, agg.artifact_for("linux-x86_64"))
+    assert linux == cache / "agg-1.9.0" / "agg-x86_64-unknown-linux-gnu"
+    with pytest.raises(kit.tools.ToolError) as uncached:
         kit.tools.verified_binary(tmp_path, agg, "linux-x86_64")
+    assert str(uncached.value) == f"agg 1.9.0 is not cached at {linux}; run setup_tools.py"
+    # asciinema still has no Linux artifact: a platform without a pin is refused outright.
+    asciinema = kit.tools.load_manifest(path)["asciinema"]
+    with pytest.raises(kit.tools.ToolError, match="no pinned artifact for platform linux-x86_64"):
+        kit.tools.verified_binary(tmp_path, asciinema, "linux-x86_64")
 
 
 MEMBER = b"#!/bin/sh\necho resvg\n"
