@@ -155,8 +155,11 @@ def readme_text(root_link_target: str = "LICENSE", *, picture: str = "") -> str:
     return (
         "# Actseal\n\n"
         f"{picture}\n"
-        "Actseal verifies model-chosen application actions for developers: freeze a "
-        "policy, check its recorded decisions, and replay the evidence offline.\n\n"
+        "**Frozen policy. Measured risk and coverage. Offline replay.**\n\n"
+        "A model can choose the right label often and still act on the wrong cases. "
+        "Actseal checks a frozen action policy against labelled cases, bounds errors "
+        "among accepted actions and coverage across all scheduled cases, and saves "
+        "evidence for offline replay.\n\n"
         "```bash\n"
         "uvx --python 3.12 actseal demo --out ./actseal-demo\n"
         "uvx --offline --python 3.12 actseal replay ./actseal-demo/fixed/evidence\n"

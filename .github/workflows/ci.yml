@@ -106,3 +106,26 @@ jobs:
         # Required authoring inputs must be provisioned before their renderers
         # land; a missing input or stale output must fail rather than be skipped.
         run: uv run --frozen --group assets python docs/assets/src/render.py --check
+
+  required:
+    # The single check the main ruleset requires. It always runs and passes only
+    # when every needed job succeeded; failure, cancellation or a skip fails it.
+    name: CI / required
+    if: always()
+    needs: [verify, assets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every CI job
+        env:
+          VERIFY: ${{ needs.verify.result }}
+          ASSETS: ${{ needs.assets.result }}
+        run: |
+          status=0
+          for lane in "verify=$VERIFY" "assets=$ASSETS"; do
+            echo "$lane"
+            if [ "${lane#*=}" != "success" ]; then
+              status=1
+            fi
+          done
+          exit "$status"

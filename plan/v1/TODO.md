@@ -15,13 +15,14 @@ V1-052 retains adapter and defers blockedliveaudit/P2figures to1.1.
 - [x] Actual GitHubREADMEfirstscreen blindreviewACCEPT;320/1200/1280responsive
   source selection verified after load. Socialfile delivered,manualupload open.
 - [x] 09 Nonpublishingrehearsal37599844342 build/assets/fourplatformsSUCCESS.
-- [ ] 08F2 Correct pretag factualdocs and pass independent review/currentCI.
-- [ ] 20 Finalclean candidate gate,exactheadCI/rehearsal,annotatedtag; realpypi
-  deployment approval byAjay; trustedpublish and postPyPIverification.
-- [ ] 14 GenuinepublishedPyPIrecording and regenerationACCEPT (2Aexception).
-- [ ] 21–22 Finalreceipts/notes/report/launchdraft and publicverification.
-- [ ] 1.1 deferred:06liveaudit,16–18P2figures. No fabricatedlive result.
+- [x] 08F2 Pretag factual docs corrected; independent review and CI green (reviews/20-pretag.md).
+- [x] 20 Final gate, annotated tag 04c10d3, human deployment approval, trusted publishing and
+  post-PyPI verification (reviews/20-publication.md, RELEASE_NOTES.md).
+- [x] 14 Genuine published-PyPI recording captured and accepted (reports/14-published.md).
+- [x] 21–22 Final receipts, notes, report, launch DRAFT and public verification
+  (FINAL_REPORT.md, reports/21-finalization.md). v1.0.0 released 7 October 2026 16:25 IST.
+- [ ] 1.1 deferred: 16–18 P2 figures. The 06 live audit was collected on 8 October 2026 from the
+  accepted snapshot d3edbab (CHANGE_LOG V1-054); its result is reported only after independent review.
 
-No action required from the human until an actualpypi approval waits. Never
-remove its reviewer, change billing/model, bypassdenials, movea tag or reupload
-existingPyPIbytes. Mandatoryfailures stoppublication. Deadline23:59IST7October.
+This v1.0.0 checklist is closed. Post-release refinement (8 October 2026) is recorded in
+CHANGE_LOG.md V1-054; it changes no tag, distribution or runtime contract.

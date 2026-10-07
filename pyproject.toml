@@ -24,6 +24,12 @@ classifiers = [
   "Typing :: Typed",
 ]
 
+[project.urls]
+Documentation = "https://github.com/ajaysurya1221/actseal/blob/main/docs/quickstart.md"
+Repository = "https://github.com/ajaysurya1221/actseal"
+Issues = "https://github.com/ajaysurya1221/actseal/issues"
+Changelog = "https://github.com/ajaysurya1221/actseal/blob/main/CHANGELOG.md"
+
 [project.scripts]
 actseal = "actseal.cli:main"
 

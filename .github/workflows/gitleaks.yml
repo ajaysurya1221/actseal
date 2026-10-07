@@ -1,0 +1,58 @@
+name: Gitleaks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  GITLEAKS_LINUX_X64_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+  GITLEAKS_VERSION: "8.30.1"
+
+jobs:
+  scan:
+    name: Gitleaks / full history
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install checksum-pinned Gitleaks
+        run: |
+          archive="$RUNNER_TEMP/gitleaks.tar.gz"
+          bin_dir="$RUNNER_TEMP/gitleaks-bin"
+          curl --fail --silent --show-error --location \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            --output "$archive"
+          echo "${GITLEAKS_LINUX_X64_SHA256}  ${archive}" | sha256sum --check --strict -
+          mkdir -p "$bin_dir"
+          tar -xzf "$archive" -C "$bin_dir" gitleaks
+          echo "$bin_dir" >> "$GITHUB_PATH"
+      - name: Scan every reachable commit for secrets
+        # The default rules apply with exactly one allowlist entry. The default
+        # generic-api-key rule reads the prose "JSON keys, signed/nonfinite/
+        # excessively deep input" in plan/tasks/T00.md (added in commit 38900e1)
+        # as a key assignment. The entry applies only to that rule, and only
+        # when both the exact path and the exact matched text agree, so the
+        # same text elsewhere, or any other value in that file, still fails.
+        run: |
+          config="$RUNNER_TEMP/gitleaks.toml"
+          cat > "$config" <<'TOML'
+          [extend]
+          useDefault = true
+
+          [[allowlists]]
+          description = "Prose in plan/tasks/T00.md that the generic-api-key rule reads as a key value"
+          targetRules = ["generic-api-key"]
+          condition = "AND"
+          paths = ['''^plan/tasks/T00\.md$''']
+          regexes = ['''^signed/nonfinite/excessively$''']
+          TOML
+          gitleaks git --redact --config "$config" --log-opts="--all" .
