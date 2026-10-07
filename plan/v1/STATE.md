@@ -1,81 +1,67 @@
 # Actseal v1.0.0 shared execution state
 
-Codex is the sole writer of STATE, TODO and REVIEW records. Claude writes its task REPORTs. Reports remain claims until independent review.
+Codex owns this state, plans and REVIEWs. Claude Code Fable5.1/high authors product code, tests, general docs and visuals. Reports remain claims until independently reviewed. Historical receipts and unsuccessful attempts stay in Git history.
 
-## Approved authority and scope
+## Authority, clock and approvals
 
-- Approved PLAN SHA256: `bb3538db868f929c1f779dcbcd105936f521acba51fbfe7c08988fedcd0fdcaa`; received2026-10-06T16:04:49.582Z. Original baseline332e1633f46975331f25f9af461f1220b6f36e8b. Decisions1A/2A/3A adopted through plan approval; exact receipt in DECISIONS.md.
-- Latest human authorization permits autonomous Claude CLI orchestration while AFK (V1-005). Claude Code `claude-fable-5-1`, effort high, writes product code/tests/docs/visuals; Codex reviews, checks, owns CI/packaging glue and release. No model or billing substitution.
-- No merge without independent ACCEPT and exact-head hosted CI. No release tag, PyPI upload or release1.0 publication has occurred.
-- Core remains zero-dependency. Strict stable formats/default behavior are preserved through1.x; optional Jev is experimental and cannot delay mandatory release gates.
+Approved PLAN SHA256: `bb3538db868f929c1f779dcbcd105936f521acba51fbfe7c08988fedcd0fdcaa`. Decisions1A/2A/3A; original approval2026-10-06T16:04:49.582Z. Human authorized autonomous Claude CLI while AFK (V1-005), then explicitly approved all five scoped requests on7October (V1-029): pinned official fonts/tools; cached native/mutation checks and actual visual previews; example tests/temp files; placeholder-only `.env.example`; read-only public Banking77 cache. Those five approval blockers are resolved. Normal permissions/hooks remain. No actual `.env` or credential access was included.
 
-## Fixed deadlines — Asia/Kolkata, 7 October2026
+All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; static P1/social/recording procedure15:59; optional cut17:59; publication23:59. Mandatory failures stop publication. No model/billing substitution, threshold tuning, resealing or weakened acceptance. Core remains zero third-party runtime dependencies.
 
-| Gate | Time |
-| --- | --- |
-| Jev integrated/green or cut to1.1 | 14:00 |
-| Static P1/social/recording procedure accepted | 15:59 |
-| Remaining optional work integrated/green or cut | 17:59 |
-| Publication target | 23:59 |
+## Current constraint and next action
+
+Claude sessions hit the Fable `seven_day_overage_included` limit. The returned reset is **10:30 IST today**, epoch1791349200; overage is organization-disabled, `isUsingOverage=false`. Do not retry before reset or substitute a model/account/API billing path. Both sessions are terminal; preserve partial work and resume the same sessions after reset. A one-time thread heartbeat `resume-actseal-after-fable-reset` is scheduled for10:30IST; do not create a duplicate.
+
+1. Resume Task15 session315ec8a1-beba-47fb-8913-1d275a0629ae with `/tmp/actseal-v1-orchestration/15-resvg-completion.prompt.md`: independently verified naming-only resvg mac URL repair, then social PNG generation/review. No repair was executed before the quota rejection.
+2. Resume Task06 sessiona344fc86-fb34-49d7-8e28-8b97772d2713, incorporating `reviews/06-draft-preregistration.md` before completing the offline benchmark. No live calls until concrete preregistration review and separate dispatch.
+3. Complete Task19 integration of the unchanged example archive with explicit compatibility registration. PR35's merge preview correctly fails until this is done; never merge it red or reseal its evidence.
+4. Finish remaining P1 assets and README integration, then the blind ten-second test, exact-artifact pipeline rehearsal and release gates.
+
+`JEV_API_KEY` was not exported at the last presence-only check. Parent and independent reviewer confirmed exactly one empty placeholder assignment in `.env.example`. A separate human question about loading only the real key from the ignored `.env` is pending; do not access it without that answer. Live Jev behavior remains unverified; no Jev requests or credit use occurred.
 
 ## Task status
 
-| Task | Owner | Status |
-| --- | --- | --- |
-| 00 | Codex | ACCEPT b2332bff; approved plan immutable |
-| 01/01R | Codex/Claude | ACCEPT: independent2302 tests inclnative; PR10 mergedaaaf6c9 |
-| 02 | Claude A | ACCEPT0595512;2519core+14packaging+hooks,116manifest; PR15 eight green checks, mergedcef6c474 |
-| 03 | Claude B | Scoped ACCEPT212a1d6;177 focused tests, core2780+separate6outline tests; draftPR20 eight green hosted jobs; native permission pending |
-| 04 | Claude C | Scoped ACCEPT732914d;252 focused/31 independent safety tests; parent-deletion and silent-cleanup defects repaired; draftPR21, full harness permission pending |
-| 05–06 | Claude B | Pending03; V1-011 wiring and V1-013 collection clarifications recorded; no Jev calls |
-| 07–08 | Claude D | 07 isolated fixture example running under V1-015;08 pending dependencies |
-| 09 | Codex/Claude | Helper0060f27 scoped ACCEPT and ten CI jobs green; schemas006072f REVISE, bounded09R5 running; actual assets/rehearsal pending |
-| 10 | Claude V | ACCEPT030ef840; PR13 all8checks green and merged6ad1e91 |
-| 11 | Claude V | Source-only hero preparation running under V1-017; authentic font/download/render approval pending |
-| 12 | Claude V | Semantic scoped ACCEPTe27ad2f, mergedheadf712dae;236 tests and four SVG comparisons pass; draftPR22, actual rendered acceptance pending |
-| 13–18 | Claude V | Pending specified dependencies; optionalP2 subject to cut |
-| 19–22 | Claude/Codex | Integration/release gates pending |
+| Task | Authoritative status and next gate |
+| --- | --- |
+| 00–02 | ACCEPT and merged. Baseline2302 tests includes native; core source0595512 froze schema/compatibility interfaces. |
+| 03 | ACCEPT212a1d6 after independent177 conformance/provider +5 cached native tests and hooks. PR20 mergeda47c7f5. |
+| 04 | ACCEPT732914d after252 tests, all8 targeted mutations killed, hooks and strict helper types. PR21 mergedbaecd26; main CI37566825489 passed. |
+| 05 | Offline source5849c68/headc2e27d2 scoped ACCEPT. New independent390 focused +5 native tests pass; placeholder verified. Explicit CLI integration, final inclusion/live gates remain. PR28 still draft. |
+| 06 | Quota-interrupted offline draft has3 untracked benchmark source files; no tests/accepted protocol/live calls. Static P1 binding finding recorded. Prior stopped scratch script preserved and not executed. |
+| 07 | Exact-source branch277d8e2 independently passes57 tests, command, lint/types/hooks. PR35 push CI passes; merge-preview37566923811 fails7 archive compatibility tests after stats source change. Task19 must repair integration. |
+| 08 | General docs/ADRs scoped ACCEPTeb21e87, PR26 green. README/P1/example/release notes remain. |
+| 09 | CI provisioningbdedc1e and architecture-output gated3413a4 independently ACCEPT; PR18 updated. Release branch synced reviewed mainbaecd26;8acbf38 explicitly includes the mutation helper in the sdist, with54 parent tests and1 independent real-packaging test passing. Ten exact-head hosted jobs at8acbf38 passed. Full rehearsal/candidate metadata/artifacts still pending; the current branch lacks final README fixes and all13 required static assets, so its release rehearsal would stop before building. |
+| 10 | Toolchain ACCEPT030ef840, merged6ad1e91. |
+| 11 | Claude authored real fonts/OFL, four hero SVGs and report at7bb32f4. Independent pixels PASS in both themes/layouts. Task11-only branch736d912 preserves those bytes,226 visual tests/hooks and four hosted push jobs pass; PR25 conflicts with merged Task12. V1-030 assigns the two shared-file resolutions to Claude15 on the original social branch, preserving both test sets. |
+| 12 | ACCEPTf712dae after actual offline pixel review and regeneration. PR22 merged227c7da. No browser workaround. |
+| 13 | Source2e2a7b2 scoped ACCEPT,286 parent/50 independent tests. Final provider mapping, registered/generated SVGs and final rendering remain; draft pixels passed independent review in all four variants (reviews/13-draft-pixels.md), without final acceptance. |
+| 14 | Recording preparation11a31fc scoped ACCEPT, PR30 green. Genuine v1 PyPI cast/GIF follows publication under Decision2. |
+| 15 | Social source64b8e03 scoped ACCEPT; actual PNG awaits the verified resvg filename repair and executor reset. |
+| 16–18 | Optional P2, only after mandatory P1 acceptance; not dispatched. |
+| 19–22 | Integration, final registry, blind README test, release/publication/final receipts remain. No v1 tag or PyPI publication. |
 
-## Live handles — revalidate before resuming
+## Branches, processes and receipts
 
-| Task | Claude session | Tool handle | Worktree suffix |
-| --- | --- | --- | --- |
-| 07 running | eeb42150-bc57-422f-8406-8b15797a9027 | 3812 | actseal-v1-core/not-yet-named |
-| 09R5 running | b3ff94c7-3730-4f74-8c97-51ca08412f31 | 78919 | actseal-v1-release/not-yet-named |
-| 11 preparation running | f3f4a433-fd6f-4b98-a084-a5a4996d858b | 87864 | actseal-v1-hero/not-yet-named |
-| 03R2 terminal | da80547c-fab0-4926-8c79-3a6d66f6b7b3 | 4164 | actseal-v1-baseline/not-yet-named |
-| 04R2 terminal | 36334c93-ddb9-413b-a094-2549b02efef3 | 1100 | actseal-v1-stats/not-yet-named |
-| 12R2 terminal | 96db6a5b-dd17-4a10-b820-1aadc37f7873 | 61329 | actseal-v1-visuals/not-yet-named |
+Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). The next planning-only amendment is on `codex/v1-assets-integration-contract`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
 
-Worktree prefix is `/Users/ajay/.codex/worktrees/`. Task02 is complete; its worktree now belongs to07. Current sessions expose no Agent/Task built-ins and prohibit nested executors/personal-memory writes. Prompts/streams/status remain under `/tmp/actseal-v1-orchestration`; raw logs stay uncommitted. Observation timeouts are not completion. Quota reset was successfully observed at20:21UTC6October; no model or billing substitution. Earlier executor deviations remain preserved under V1-007 and their REPORTs.
+- Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, original social branch preserved at7bb32f4. No source/manifest repair after quota rejection.
+- Reused former baseline worktree: Task03 branch preserved. Now Task11-only completion branch736d912, cherry-picking Claude commits461f9ee/db56f36/7bb32f4 onto5f3fee5; files byte-identical. This isolates finished hero assets from unfinished social registration.
+- Jev worktree: sourcec2e27d2, branch`claude/v1-06-audit-preparation`; untracked bench draft and old scratch preserved. No concurrent product writer.
+- Release worktree: Codex-owned CI/packaging branch; no product code authored by Codex. Exact current head/status must be read before continuation.
+- Owned keepawake handle19481 runs `caffeinate -i -t 54000`. Stop only this owned process on completion or an impasse; no permanent power change.
 
-## Recent integration and verification receipts
+## Visual tool and permission details
 
-- PR13 reviewed030ef840 passed all8 jobs in37507765648/37507769585 and merged6ad1e91e27beedde2594e2415366dd67030b805d. Toolchain is implemented; actual figures remain separate tasks. Renderer bootstrap zero checked/eight planned is not release completeness.
-- PR14 reviewed d626cb41ec574b13f6f8a4aec08df5a53530fc7f received independent ACCEPT, all8 CI checks in37508086795/37508160613, and mergedb5a387acb8aabb5747c274f0720ab156cfa69c1e.
-- Core84079e9 independently passed2519 core tests51.54s,14 packaging5.22s and hooks. Runtime fingerprinta5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642 unchanged during02R2.02R3 changes only normative docs/ADR/report; dependent source interfaces remain frozen.
-- PR15 final0595512 passed eight checks in37509866430/37509873427 and mergedcef6c4742f5b8e78e9aff54e49a516722d53b629. Core stability is integrated.
-- PR16 checkpoint e3bff308 independently ACCEPTed, passed eight checks in37512276493/37512436466 and merged594b8be5e5c6cdee85210f15be5e50b15c4b194f.
-- Interrupted03/04 drafts are preserved with SHA256 inventories under `/tmp/actseal-v1-orchestration/{03,04}-quota-interrupted-draft/`; draft reviews retain all failures and permission history. No unfinished work was reverted.
-- Task09 branch incorporated accepted main inca3d6bc6 and adds ordinary push/PR asset checks ina09b69f. Independent284 release tests pass12.01s after integration; asset typing and workflow checks pass. The bootstrap renderer still reports zero actual assets, not release completeness. Final strict receipt schema work is in09R4-request; no product source was written by Codex.
+JetBrainsMono fonts, OFL, asciinema3.2.1 and agg1.9.0 were fetched with pinned hash checks. resvg0.48.1 mac manifest had filename `resvg-macos-arm64.zip`; official correct filename is `resvg-macos-aarch64.zip`, with the **same** approved SHA25606440eb5aa14a28cbfc7e40ae39e1ffa71adc051b89fbaa913b4f1d9b905d09f. Linux filename/hash remain unchanged. Claude must repair only mac URL/filename and test pin key before setup/social generation.
 
-- PR17 checkpoint06452d75 received independent ACCEPT, eight successful hosted checks37514466346/37514786532, and merged9aa1a652cb2d9eeefc8a361f199a4b4c3f601f17.
-- DraftPR18 head a09b69f passed ten source/asset checks37514786111/37515122961. Subsequent CI-only repair0060f27 is pushed; its own hosted checks must finish before any integration.09R4-glue report preserves the seven initial regression failures and final442 passes; independent319 focused tests and exact-hash commit review ACCEPT. No09 merge or publication is approved.
-- Task06 collection supplement independently ACCEPTed as planning only at SHA2560a1c7e0dd3712e75a0b3c98f890d141d5eeea2a3fa3856c6e3d42efbf210452c. A future concrete preregistration/implementation requires fresh review before any call.
+CUA rejects local file URLs and prohibits browser workarounds, while permitting materially safer alternatives not requiring that action. Actual figure reviews used the separately approved pinned resvg offline: no browser, server, browser-script execution, CDP or network. Temporary review PNGs are evidence, not committed product assets. Screenshots/hashes are in reviews11/12 and private temp receipts. The final blind README test has not run.
 
-## Blockers and next action
+Task07 verifier cleanup hit an rm-f-style command rejection; `.task07-review-2i7NtEnV/` remains untracked in the core worktree. No alternative deletion was attempted. Do not include it in commits.
 
-The quota reset succeeded;07,09R5 and11 are progressing.03/04/12 bounded repairs have scoped implementation/semantic ACCEPT; their denied native/harness/render gates remain pending. V1-015 permits only isolated fixture-example preparation before03's full gate; it does not waive dependencies for merge. All historical failures/denials remain recorded.
+## Integration invariants
 
-Claude settings explicitly deny curl; an async task-scoped exception request for official pinned font/asciinema/agg/resvg downloads remains unanswered. No alternative download path or settings change is authorized by elapsed time. Other lanes continue. JEV_API_KEY is not exported in the current Codex process; no secret file was inspected.
+Read INTEGRATION_CHECKLIST.md before Task19. Preserve original example producer `a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642` and lock `cb009be0039afefd995f6eac3a8bd9767d6bf026a73273b47e87a51fc9fbd715`. Current Jev prerelease producer167038cb709ff839f26a21ef55cc63ebd988d797ac56e82d0227ecad1a08eb7c is not yet registered. Freeze final product/version, explicitly approve compatible original/final producer hashes, and prove unchanged archives replay. Collection remains exact-source. No wildcard/range approval.
 
-A second scoped permission request covers the denied cached-only native test, repaired mutation harness and local SVG previews. Claude's noninteractive session had no approval surface. Already-completed independent checks that preceded discovery of those denials are documented in the draft reviews; do not repeat the denied actions while permission remains unresolved. The browser's separate local-file URL denial was not bypassed.
+Preserve overlapping visual tests across workflow/hero/social; reconcile four architecture filenames. Include required mutation/example/conditional benchmark inputs in the sdist without broadening runtime dependencies or publishing private journals. Correct bootstrap docs/tests before the tag. Keep every public claim within the visible evidence boundary.
 
-The pypi environment permits v* tags plus main, requires ajaysurya1221 approval and permits solo-maintainer self-review. Notify the human when an actual deployment waits; do not remove the gate.
-
-## Latest checkpoint evidence
-
-- PR19 checkpointd02be14f independently ACCEPTed, eight hosted jobs37522284155/37522311659 passed, merged77bf39feb542d4cbaa2b9034e1210704a6019b68.
-- PR18 helper0060f27 has ten successful source/assets jobs37522079944/37522088875. Schemas006072f need three bounded corrections; see09R5-request and V1-016. No publication/rehearsal claim.
-- PR20 implementation212a1d6 has eight successful jobs37527352887/37527392467. Native receipt still blocks merge.
-- PR21/PR22 hold the corrected statistics/workflow candidates for hosted checks; exact-head scope and missing gates are in04R2/12R2 reviews.
+The pypi environment still requires Ajay's approval for release tags. Notify when a real deployment waits; never remove it. Launch posts remain drafts. Prior denials, failed CI and incomplete attempts remain historical receipts, not current passes.
