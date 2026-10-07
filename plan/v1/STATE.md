@@ -18,10 +18,11 @@ All TEN exact-head source/assets jobs onf26af8ff passed (runs37607862358 and
 37607886554), including Linux GIF byte regeneration. PR48 merged
 0a0a2288bed813e9fcbf7116ef97294912ca04b1 at10:37:34UTC.
 
-Task21 finalization is running after independent REVISE of factual draft claims.
+Task21 documentation is ACCEPT atd0f40bc after factual corrections.
 SAME Claude Fable5.1/high session83514ea3-48d0-4c6e-8728-e4a607318bc7;
 normal permissions, docs-owned paths only. Media integrated in its worktree.
-Remaining: independent final docs/receipts review, exact-head hosted CI, merge,
+Parent111docs/481visual tests,18refs/15outputs regeneration,hooks and receipt/docs gates pass.
+Remaining: exact-head hosted CI, merge,
 then publish the existing GitHub draft release notes and verify public closure.
 No new distribution build/upload or tag movement. Public launch stays draft.
 Social1280x640 file delivered; optional human upload is not a release blocker.
@@ -101,7 +102,7 @@ Core stayszero third-party runtime dependencies; no model/billing substitution.
 |16–18|UndispatchedoptionalP2deferred1.1 byV1-052. Plaintextevidencelimitsremain.|
 |19|CombinedintegrationACCEPTff0/main277; no runtimechangefrom5e.|
 |20|ACCEPT pretag/publication scopes; immutable v1.0.0/PyPI live, GitHub notes still draft.|
-|21–22|Task21 factual corrections running; final review/CI/merge, notes publication and public closure remain.|
+|21–22|Task21ACCEPTd0f40bc; exact-headCI/merge then notes publication and actual closure remain.|
 
 ## Immutable product and evidence invariants
 
