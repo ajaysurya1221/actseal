@@ -37,7 +37,12 @@ GROUP_KEYS = (
 EXPECTED_MAPPING = {
     "contracts": {"contract", "records", "errors", "serialization", "locking", "compatibility"},
     "cli": {"cli", "runner", "__init__", "__main__", "demo_data"},
-    "providers": {"adapters.base", "adapters.fixture", "adapters.laya"},
+    "providers": {
+        "adapters.base",
+        "adapters.fixture",
+        "adapters.laya",
+        "experimental.providers.jev",
+    },
     "normalization": {"normalization", "policy"},
     "assessment": {"assessment", "stats", "faults"},
     "evidence": {"evidence"},
@@ -62,9 +67,18 @@ EXPECTED_LABELS = {
     ("replay", "assessment"): "recompute",
 }
 LIVE_LABEL = "live inference"
+LIVE_MODULES = ("adapters.laya", "experimental.providers.jev")
+#: Source files that are package markers only; every module they contain is drawn.
+PACKAGE_MARKERS = {"adapters", "experimental", "experimental.providers"}
 # Words that would suggest response authentication, proof of inference,
-# label truth, tamper resistance or application enforcement.
+# label truth, tamper resistance, application enforcement, or that the
+# experimental cloud service was exercised (no live Jev request has been made).
 FORBIDDEN_WORDS = (
+    "verified",
+    "audit",
+    "attest",
+    "live service",
+    "stable jev",
     "authentic",
     "proof",
     "prove",
@@ -83,7 +97,6 @@ FORBIDDEN_WORDS = (
     "shield",
     "truth",
     "safe",
-    "jev",
 )
 MAX_GROUPS = 7
 DESKTOP_MIN_LABEL = 26
@@ -95,9 +108,10 @@ ARROW_TOLERANCE = 6.0
 
 @pytest.fixture(scope="module")
 def arch(kit: ModuleType) -> ModuleType:
-    """The architecture module; not yet exported by the package ``__init__``."""
-    assert kit.__name__ == "actseal_assets"
-    return importlib.import_module("actseal_assets.architecture")
+    """The architecture module, exported by the package ``__init__``."""
+    module: ModuleType = importlib.import_module("actseal_assets.architecture")
+    assert kit.architecture.render is module.render
+    return module
 
 
 @pytest.fixture(scope="module")
@@ -189,52 +203,32 @@ def test_rendering_is_deterministic(
     assert dict(arch.render(context)) == rendered
 
 
-def _outputs(kit: ModuleType, arch: ModuleType) -> list[Any]:
-    """The four Output declarations this figure will register once accepted."""
-    desktop = [
-        kit.inventory.Output(
-            path=name,
-            kind="svg",
-            width=arch.DESKTOP_WIDTH,
-            height=arch.DESKTOP_HEIGHT,
-            display_width=README_DISPLAY_WIDTH,
-        )
-        for name in DESKTOP
-    ]
-    mobile = [
-        kit.inventory.Output(
-            path=name,
-            kind="svg",
-            width=arch.MOBILE_WIDTH,
-            height=arch.mobile_height(),
-            display_width=MOBILE_DISPLAY_WIDTH,
-        )
-        for name in MOBILE
-    ]
-    return [*desktop, *mobile]
-
-
 def test_every_output_passes_the_validators(
     kit: ModuleType, arch: ModuleType, rendered: dict[str, bytes]
 ) -> None:
-    for output in _outputs(kit, arch):
+    asset = kit.inventory.get_asset("architecture")
+    for output in asset.outputs:
         assert kit.checks.check_output(rendered[output.path], output) == [], output.path
     assert arch.DESKTOP_WIDTH == 1600
-    assert arch.DESKTOP_HEIGHT == 900
+    assert arch.DESKTOP_HEIGHT == 980
     assert arch.MOBILE_WIDTH == 720
     assert arch.mobile_height() > arch.MOBILE_WIDTH
 
 
-def test_inventory_registration_is_deferred_until_provider_inclusion(
-    kit: ModuleType, arch: ModuleType
-) -> None:
-    """The asset is declared; attaching this renderer waits for the provider decision."""
+def test_inventory_registers_the_four_frozen_outputs(kit: ModuleType, arch: ModuleType) -> None:
     asset = kit.inventory.get_asset("architecture")
     assert asset.task == "13"
-    if asset.implemented:
-        assert asset.renderer is arch.render
-        assert tuple(output.path for output in asset.outputs) == arch.OUTPUTS
+    assert asset.implemented
+    assert asset.renderer is arch.render
+    assert asset.needs == ()
+    assert tuple(output.path for output in asset.outputs) == arch.OUTPUTS == ALL
+    sizes = {o.path: (o.width, o.height, o.display_width) for o in asset.outputs}
+    for name in DESKTOP:
+        assert sizes[name] == (1600, 980, README_DISPLAY_WIDTH)
+    for name in MOBILE:
+        assert sizes[name] == (720, arch.mobile_height(), MOBILE_DISPLAY_WIDTH)
     assert all(kit.inventory.is_plain_filename(name) for name in arch.OUTPUTS)
+    assert kit.inventory.validate_inventory() == []
 
 
 @pytest.mark.parametrize("name", ALL)
@@ -268,10 +262,9 @@ def test_every_runtime_module_is_drawn_exactly_once(
     assert len(drawn) == len(set(drawn)), "a module is drawn twice"
     modules = _runtime_modules()
     assert set(drawn) <= modules, set(drawn) - modules
-    # The only undrawn source file is the adapters package marker, whose three
-    # members are all drawn.
-    assert modules - set(drawn) == {"adapters"}
-    assert {"adapters.base", "adapters.fixture", "adapters.laya"} <= set(drawn)
+    # The only undrawn source files are package markers whose members are all drawn.
+    assert modules - set(drawn) == PACKAGE_MARKERS
+    assert {"adapters.base", "adapters.fixture", *LIVE_MODULES} <= set(drawn)
 
 
 @pytest.mark.parametrize("name", ALL)
@@ -281,11 +274,11 @@ def test_modules_sit_in_their_approved_groups(
     root = _tree(rendered[name])
     for key, expected in EXPECTED_MAPPING.items():
         assert set(_module_names(_group(root, key), arch)) == expected, key
-    assert set().union(*EXPECTED_MAPPING.values()) == _runtime_modules() - {"adapters"}
+    assert set().union(*EXPECTED_MAPPING.values()) == _runtime_modules() - PACKAGE_MARKERS
 
 
 @pytest.mark.parametrize("name", ALL)
-def test_live_boundary_encloses_only_the_laya_adapter(
+def test_live_boundary_encloses_only_the_laya_and_jev_adapters(
     rendered: dict[str, bytes], name: str
 ) -> None:
     root = _tree(rendered[name])
@@ -298,18 +291,27 @@ def test_live_boundary_encloses_only_the_laya_adapter(
     assert rect is not None
     assert rect.get("stroke-dasharray")
     assert rect.get("fill") == "none"
-    assert [_text(t) for t in boundary.iter(f"{SVG_NS}text")] == ["adapters.laya", LIVE_LABEL]
-    # Everything inside the dashed rectangle geometrically is the Laya node.
+    inside_labels = [_text(t) for t in boundary.iter(f"{SVG_NS}text")]
+    assert inside_labels[-1] == LIVE_LABEL
+    drawn_inside = [part.strip() for label in inside_labels[:-1] for part in label.split("·")]
+    assert drawn_inside == list(LIVE_MODULES)
+    # Everything inside the dashed rectangle geometrically is a live-inference node.
     bx, by, bright, bbottom = _rect(boundary)
     for text in providers.iter(f"{SVG_NS}text"):
         x, y = float(text.get("x", "0")), float(text.get("y", "0"))
         size = float(text.get("font-size", "0"))
         inside = bx <= x <= bright and by <= y - size <= bbottom and y <= bbottom
-        assert inside == (_text(text) in {"adapters.laya", LIVE_LABEL}), _text(text)
+        assert inside == (_text(text) in {*inside_labels}), _text(text)
     # The fixture adapter and the fault generator are outside any boundary.
     outside = [_text(t) for t in root.iter(f"{SVG_NS}text") if t not in list(boundary.iter())]
     assert any("adapters.fixture" in label for label in outside)
+    assert not any(module in label for label in outside for module in LIVE_MODULES)
     assert any("faults" in label for label in outside)
+    # The experimental status of Jev is legible in the same box, outside the dashed area.
+    notes = [_text(t) for t in providers.iter(f"{SVG_NS}text")]
+    assert "jev: PROVISIONAL opt-in" in notes
+    assert "fixture: recorded file" in notes
+    assert "laya: pinned checkpoint" in notes
     assert "live model" not in " ".join(_texts(root)).lower()
 
 
@@ -511,6 +513,16 @@ def test_no_authentication_enforcement_or_jev_language(
     assert "laya" in prose
     assert "no model call" in prose
     assert "offline" in prose
+    # Jev appears only with its experimental status, never as a stable adapter
+    # and never with a claim that it answered.
+    jev_labels = [label for label in _texts(root) if "jev" in label.lower()]
+    # Desktop wraps the two live names onto separate lines; mobile keeps them together.
+    names = [part.strip() for label in jev_labels[:-1] for part in label.split("·")]
+    assert "experimental.providers.jev" in names
+    assert jev_labels[-1] == "jev: PROVISIONAL opt-in"
+    assert len(jev_labels) == 2
+    assert "provisional" in (desc.text or "").lower()
+    assert "explicit opt-in" in (desc.text or "").lower()
 
 
 def test_description_names_every_group_module_and_limit(
@@ -525,14 +537,16 @@ def test_description_names_every_group_module_and_limit(
             assert module in text, module
     for phrase in (
         "Seven groups",
-        "encloses only the Laya adapter",
+        "encloses the Laya and Jev adapters",
         "fixture adapter reads a recorded file",
+        "Fixture and Laya are the stable providers",
+        "Jev is an experimental cloud adapter selected only by explicit opt-in",
+        "no claim here that its service was exercised",
         "six fault scenarios are synthetic",
         "no model call",
         "recomputes the verdict offline",
         "no arrow joins replay and providers",
         "replay imports no provider module",
-        "The shipped providers are fixture and Laya.",
     ):
         assert phrase in text, phrase
     assert text == arch.DESC
@@ -651,6 +665,17 @@ def test_an_edge_with_a_diagonal_final_segment_is_rejected(arch: ModuleType) -> 
     edge = arch.Edge("probe", "cli", "contracts")
     with pytest.raises(ValueError, match="horizontal or vertical"):
         arch._arrow(node, edge, ((0.0, 0.0), (10.0, 10.0)), "#000000")
+
+
+def test_committed_assets_match_regeneration_in_this_checkout(
+    kit: ModuleType, arch: ModuleType
+) -> None:
+    """The Task 13 done-when command, run in-process against the real checkout."""
+    report = kit.pipeline.run(REPO_ROOT, mode="check", only=("architecture",))
+    assert [f.message for f in report.errors] == []
+    assert report.checked == ["architecture"]
+    for output in arch.OUTPUTS:
+        assert (REPO_ROOT / "docs" / "assets" / output).is_file()
 
 
 def test_toolchain_sources_are_reused_not_modified(arch: ModuleType, kit: ModuleType) -> None:
