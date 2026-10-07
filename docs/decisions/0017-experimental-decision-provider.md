@@ -72,11 +72,21 @@ legal guarantee; this ADR does not refresh or re-interpret those terms.
 
 - Adapter and transport tests: source-scoped ACCEPT on PR 28 at
   `c2e27d2235eb98be0f97c9ec6d38b0c8ff235dfa`, eight hosted CI jobs passing.
-  That acceptance covers the reviewed source only.
-- Pending: runner/CLI registration, native receipts for changed paths, the
-  `.env.example` placeholder file, live integration and the final inclusion
-  decision. No live request, key or `.env` access was involved in recording
-  this decision, and no v1 release has occurred.
+  That acceptance covers the reviewed source only. On that source `jev` is
+  admitted in `records.PROVIDERS` and the schemas for serialized identities,
+  `open_model` refuses it explicitly, and the `.env.example` placeholder was
+  verified to contain exactly one empty assignment (V1-029).
+- Native checks at `c2e27d2`: the five cached-native tests passed
+  independently alongside the 390 focused offline tests for that source
+  (plan/v1/STATE.md, Task 05 row). That receipt covers the reviewed Task 05
+  source only; the final Task 19 integration (CLI opt-in, runner registration
+  and any registry entry) changes source and therefore requires its own
+  native revalidation before acceptance.
+- Pending: the explicit CLI opt-in and runner registration (Task 19, in
+  progress), that final native revalidation, the final inclusion decision
+  and any live integration. Live behaviour is unverified: no Jev request has
+  been made and no credit used. No key or `.env` access was involved in
+  recording this decision, and no v1 release has occurred.
 - Related: [ADR 0004](0004-identity-normalization-fallback.md) (identity and
   fallback), [ADR 0015](0015-v1-stability-and-replay-compatibility.md)
   (PROVISIONAL surfaces), [providers](../providers.md).

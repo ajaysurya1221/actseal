@@ -1,5 +1,76 @@
 # Changelog
 
+## v1.0.0 — unreleased candidate
+
+No 1.0.0 tag has been pushed and no 1.0.0 distribution is on PyPI; this
+entry describes the reviewed candidate and is finalized with the release
+receipts. The [migration guide](docs/migration.md) and
+[stability manifest](docs/stability.md) are normative for the changes below.
+
+### Stability and compatibility
+
+- The public surface is enumerated in `docs/stability.md`: STABLE means
+  compatible throughout 1.x; PROVISIONAL surfaces live only under
+  `actseal.experimental` or an explicit experimental flag. Deprecations
+  require documentation, one minor release and 90 days before removal in 2.0.
+- `PlanLock` gains a final required field `replay_engine_version`
+  (`actseal-choice-v1`); lock documents are schema 2 and bundle manifests
+  schema 2. Producer provenance (`implementation_sha256`) is separated from
+  replay semantics; a reviewed compatibility registry approves exact source
+  fingerprints for cross-release replay within 1.x. New collection still
+  requires the exact running implementation.
+- Every CLI JSON receipt, including errors, carries `schema_version: 1`;
+  `lock --json` adds `replay_engine_version` and `replay --json` adds
+  `notes`. Published JSON Schemas cover the lock, manifest, records, verdict,
+  receipts and registry.
+- Abbreviated long options are rejected on the root parser and every
+  subcommand; `--version` is root-only.
+- actseal 0.1.0 locks and bundles are rejected with `integrity.legacy_schema`
+  and operator guidance; they are never converted or resealed and replay under
+  an isolated pinned `actseal==0.1.0`.
+- `clopper_pearson_tail` raises the documented `SchemaError` for out-of-domain
+  numeric input instead of `OverflowError`; valid-input bounds are unchanged.
+
+### Providers, verification and examples
+
+- One shared provider conformance suite covers the fixture adapter and the
+  mocked native Laya adapter; native inference remains explicitly marked.
+- Bounded deterministic property tests and eight targeted semantic mutations
+  guard the gate (tail allocation, scheduled denominator, zero-accepted
+  handling, threshold boundary, risk and coverage bounds, fault blocking and
+  ERROR precedence).
+- Application action-gate example (`examples/action_gate/`): a local
+  ticket-routing application that executes a queue operation only after
+  ACT, with a recorded synthetic bundle. Final registration of its archived
+  producer is pending integration review.
+- Optional experimental Jev transport: prepared as a PROVISIONAL adapter
+  behind an explicit experimental flag; inclusion, CLI opt-in integration and
+  any live audit are pending decision and review. No live results exist.
+
+### Platforms, release and documentation
+
+- Supported platforms are Linux and macOS on Python 3.12 and 3.13; Windows is
+  unsupported. The runtime core has no third-party dependency.
+- Security support covers the latest 1.x minor at its latest patch.
+- Tag-triggered release pipeline: build once, verify the exact bytes on the
+  four-platform matrix, regenerate the static assets, publish through Trusted
+  Publishing after human approval, verify the public copy in a clean container,
+  and mirror identical files with `SHA256SUMS` and a release receipt to a
+  draft GitHub release. Branch runs are rehearsals that never upload.
+- Concepts, CLI reference, Python guide, FAQ, version-neutral quickstart and
+  a rewritten publishing guide, with executable documentation tests.
+- Reproducible README figures (hero, how-it-works, social preview) from a
+  pinned authoring-only toolchain; the architecture figure and the genuine
+  post-publication demo recording are pending.
+
+Pending before this entry is final: Jev inclusion decision, architecture
+figure, example registry approval, the blind README test and the candidate
+gate. This entry, with its "unreleased candidate" heading and every pending
+or conditional statement, must be resolved to the shipped facts **before**
+the release build and the immutable `v1.0.0` tag, because the tagged bytes
+are what ships; the publication receipts are recorded afterwards in
+`plan/v1/RELEASE_NOTES.md`, not here.
+
 ## v0.1.0 — 2026-10-06
 
 ### Core

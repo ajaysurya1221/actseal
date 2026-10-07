@@ -1,8 +1,9 @@
 # ADR 0020: Reproducible, authoring-only visual asset pipeline
 
 - Status: approved (plan/v1/PLAN.md section D and Decision 2A); toolchain
-  accepted (Task 10); fonts, binaries, previews and every actual asset
-  pending.
+  accepted (Task 10); hero, how-it-works and social preview generated from
+  the pinned inputs; architecture outputs, the demo recording, the blind
+  ten-second test and every P2 figure pending.
 - Date: 2026-10-07.
 
 ## Decision
@@ -86,13 +87,21 @@ design.
 - Toolchain accepted: Task 10 at `030ef840`, merged `6ad1e91`, with the
   visual test suite and manifest/lock pin checks; its bootstrap reported zero
   implemented assets, which is not completeness.
-- How-it-works: an earlier REVISE was followed by source/semantic ACCEPT at
-  `f712dae`; actual rendered review is still pending, so that figure is not
-  finally accepted.
-- Pending: pinned font and binary downloads and local previews (approval for
-  the configured download denial unanswered), the hero, architecture, social
-  preview and recording, rendered review of every figure, the ten-second
-  test, and every P2 figure. No generated hero, social image or media is
-  claimed to exist, and no v1 release has occurred.
+- Inputs: the pinned JetBrains Mono files with the upstream `OFL.txt`,
+  asciinema, agg (macOS) and resvg (macOS, after its naming-only manifest
+  repair) were fetched with hash verification under the human's 7 October
+  approval (V1-029); receipts are committed under `docs/assets/src/receipts/`.
+  The Linux agg artifact is pinned by hash only and has not been executed.
+- Hero: four outlined light/dark/desktop/mobile SVGs, accepted after
+  independent pixel review (Task 11). How-it-works: four SVGs, ACCEPT at
+  `f712dae` after offline pixel review and regeneration (Task 12). Social
+  preview: `docs/assets/social.png` at exactly 1280×640, rendered by the
+  pinned resvg from the banner composition; the Task 15 done-when passes at
+  `fcdcfe4` with scoped ACCEPT, while its hosted gate and Codex's independent
+  pixel review remain pending. The user's manual upload has not been done.
+- Pending: the four architecture outputs (source scoped ACCEPT; registration
+  and committed SVGs wait for the final provider decision), the genuine
+  post-publication demo recording, the blind ten-second README test, every P2
+  figure, and the exact-head hosted assets job. No v1 release has occurred.
 - Related: [ADR 0015](0015-v1-stability-and-replay-compatibility.md),
   `docs/assets/src/README.md`, `docs/assets/src/tools.toml`.
