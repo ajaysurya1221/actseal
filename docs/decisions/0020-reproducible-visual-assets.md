@@ -120,3 +120,56 @@ design.
   rehearsal. No v1 release has occurred.
 - Related: [ADR 0015](0015-v1-stability-and-replay-compatibility.md),
   `docs/assets/src/README.md`, `docs/assets/src/tools.toml`.
+
+## Addendum 2026-10-07: measured README widths and the responsive breakpoint
+
+Status of this addendum: README selection corrected (Task 08R); renderer
+validation widths and regenerated pixels are a separate, concurrently owned
+change (Task 13R under V1-051) and are not claimed here.
+
+**Historical assumption.** The hero and how-it-works renderers, their
+inventory and the asset README were written against an assumed README
+column of 880 CSS px for the 1600-unit desktop canvases and 360 CSS px for
+the 720-unit mobile canvases, and the README switched to the vertical
+variants only at a 600 px viewport. Those numbers were design assumptions,
+not measurements, and they are superseded by the table below. Mentions of
+880/360 px in reports, reviews and asset sources before this date are to be
+read as that historical assumption.
+
+**Measurement.** Review 13 (V1-051) took read-only browser measurements of
+the public repository view of candidate `5e7931a` (the repository tree page,
+not the wider file-preview page) and recorded the width GitHub actually gives
+a full-width README image:
+
+| Browser viewport (CSS px) | README image width (CSS px) |
+| --- | --- |
+| 320 | 254 |
+| 360 | 294 |
+| 1000 | 638 |
+| 1100 | 658 |
+| 1200 | 758 |
+| 1280 | 838 |
+| 1366 | 838 |
+
+Consequences for the 14 px rendered-text floor, computed from those widths
+and the committed SVG canvases (`hero-*.svg` and `how-it-works-*.svg` are
+1600 units wide on desktop and 720 units wide on mobile): a 26-unit desktop
+label is 13.6 px at 838 px and a 30-unit mobile label is 12.3 px at 294 px
+and 10.6 px at 254 px, both below the floor; the hero's 28-unit desktop
+labels are 14.7 px at 838 px and fit. Under the old 600 px switch, 800 to
+1200 px windows received desktop canvases scaled to 638 to 758 px, where
+even 28-unit labels are below 14 px.
+
+**Decision.** The README now selects the existing vertical (`-mobile-`)
+variants for every viewport below 1280 px and the desktop variants at
+1280 px and above, with the dark source listed before the light source in
+each `<picture>` so the first matching row wins. The media queries changed;
+no copy, opening order, quickstart command, alt text, link, image path or
+`width="100%"` attribute changed, and no new asset was added. The
+conservative validation widths for renderers are 838 px (desktop) and
+254 px (mobile), covering the measured 320 px-and-larger range; the 14 px
+floor is unchanged and horizontal scrolling is not an accepted alternative.
+Standalone SVG dimensions are not browser evidence: the figures above are
+arithmetic from the measurement table, not a rendered check of this
+unmerged README, and a fresh public first-screen test on the integrated
+head remains a separate acceptance step.
