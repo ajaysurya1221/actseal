@@ -281,6 +281,31 @@ def test_sdist_contains_the_helpers_required_by_its_release_tests(
 
 
 @pytest.mark.packaging
+def test_sdist_contains_active_v1_documentation_inputs(
+    tool: types.ModuleType, real_dist: Path
+) -> None:
+    version = tool.agreed_version(ROOT)
+    required = [
+        "plan/v1/STATE.md",
+        "plan/v1/CHANGE_LOG.md",
+        "plan/v1/PLAN.md",
+        "plan/v1/tasks/08.md",
+    ]
+    for directory in ("plan/v1/reports", "plan/v1/reviews"):
+        documents = sorted((ROOT / directory).rglob("*.md"))
+        assert documents, directory
+        required.extend(path.relative_to(ROOT).as_posix() for path in documents)
+    with tarfile.open(real_dist / names(version)[1], "r:gz") as archive:
+        for relative in required:
+            member = archive.getmember(f"actseal-{version}/{relative}")
+            assert member.isfile(), relative
+            source = archive.extractfile(member)
+            assert source is not None, relative
+            with source:
+                assert source.read() == (ROOT / relative).read_bytes(), relative
+
+
+@pytest.mark.packaging
 def test_real_postpublish_chain_against_a_fake_index(
     tool: types.ModuleType, real_dist: Path, tmp_path: Path
 ) -> None:

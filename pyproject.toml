@@ -109,6 +109,12 @@ only-include = [
   "plan/tasks",
   "plan/reports",
   "plan/reviews",
+  "plan/v1/STATE.md",
+  "plan/v1/CHANGE_LOG.md",
+  "plan/v1/PLAN.md",
+  "plan/v1/tasks/08.md",
+  "plan/v1/reports",
+  "plan/v1/reviews",
 ]
 
 [tool.ruff]
