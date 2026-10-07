@@ -1,18 +1,23 @@
 """README composition and image validation.
 
-The opening order and copy follow the 2026-10-08 editorial review, which
-superseded the PLAN section D opening: compact hero, the bold line and one
-paragraph on why, badges, the three commands, a selected excerpt of real demo
-output and three links come first; the workflow figure, guarantees and limits,
-architecture, recording, documentation table and related projects follow.
+The opening order and copy follow the result-first editorial amendment
+(plan/v1/CHANGE_LOG.md V1-058), which superseded the 2026-10-08 hero-first
+opening: the title, the tagline, the ticket-router problem, the recorded Jev
+audit with its audit link, the execution and authenticity boundary and the
+engineering strip come first, verbatim; then the evidence-card hero, the
+badges, the three commands, a selected excerpt of real demo output, the exit
+sentence and three links. The application example with its real-world-use
+block, the workflow summary, result reading, guarantees and limits, the
+architecture summary, the recording, the documentation table, related
+projects and the development notes follow. The how-it-works and architecture
+figures are linked, not embedded.
 
 Every image in README.md, including each ``<source srcset>`` and ``<img src>``
 inside ``<picture>`` markup, must be an absolute same-repository URL that maps
 to an existing, declared, implemented asset under ``docs/assets``. There is no
-HTTP fetch, no skip and no xfail: a figure whose files are not committed yet
-(the architecture figure until Task 13 landed; the demo recording until the
-Task 14 activation lands) fails here, by design. Badges from the explicit
-allowlist are exempt from the file check only.
+HTTP fetch, no skip and no xfail: a figure whose files are not committed fails
+here, by design. Badges from the explicit allowlist are exempt from the file
+check only.
 """
 
 from __future__ import annotations
@@ -30,22 +35,67 @@ from docs.conftest import ROOT, fences
 
 README = ROOT / "README.md"
 ASSETS = ROOT / "docs" / "assets"
+AUDIT = ROOT / "docs" / "results" / "jev-audit-2026-10-08"
 REPO = "ajaysurya1221/actseal"
 RAW_PREFIX = f"https://raw.githubusercontent.com/{REPO}/main/"
 BLOB_PREFIX = f"https://github.com/{REPO}/blob/main/"
+TREE_PREFIX = f"https://github.com/{REPO}/tree/main/"
 BADGES = (
     re.compile(r"^https://img\.shields\.io/"),
     re.compile(rf"^https://github\.com/{re.escape(REPO)}/actions/workflows/[^/]+/badge\.svg$"),
 )
-TAGLINE = "Frozen policy. Measured risk and coverage. Offline replay."
-WHY = (
+#: The verbatim opening, title through the engineering strip (V1-058).
+OPENING = (
+    "# Actseal\n"
+    "\n"
+    "**Test a model's action policy. Replay the evidence.**\n"
+    "\n"
+    "A ticket router needs rules for when to act, abstain, escalate or deny.\n"
+    "Actseal measures accepted-action errors and coverage under a frozen policy.\n"
+    "\n"
+    "**Recorded Jev audit: INCONCLUSIVE.**\n"
+    "580 of 639 verification cases received ACT; 24 disagreed with benchmark labels.\n"
+    "Fixed benchmark; unreleased producer. "
+    f"[Audit and offline replay]({BLOB_PREFIX}docs/results/jev-audit-2026-10-08/README.md)\n"
+    "\n"
+    "**Boundary:** the application owns execution.\n"
+    "Replay checks consistency; it does not authenticate responses or prove label truth.\n"
+    "\n"
+    f"**Engineering:** [20 ADRs]({TREE_PREFIX}docs/decisions) · "
+    f"[11 JSON Schemas]({BLOB_PREFIX}docs/schemas/README.md)\n"
+    f"[Mutation harness]({BLOB_PREFIX}tools/check_mutations.py) · "
+    f"[1.0.0 release receipt]({BLOB_PREFIX}plan/v1/receipts/postpublish-receipt.json)\n"
+    "\n"
+)
+#: The verbatim start of the Try it section: heading, one line, the commands.
+TRY_IT = (
+    "## Try it\n"
+    "\n"
+    "Synthetic demo. macOS/Linux + uv; use a new `./actseal-demo` directory.\n"
+    "```bash\n"
+    "uvx --python 3.12 actseal demo --out ./actseal-demo\n"
+    "uvx --offline --python 3.12 actseal replay ./actseal-demo/fixed/evidence\n"
+    "uvx --offline --python 3.12 actseal replay ./actseal-demo/bad/evidence\n"
+    "```\n"
+)
+#: The release gate (tools/check_release.py docs) still requires these two;
+#: they now lead the How it works section.
+FORMER_TAGLINE = "Frozen policy. Measured risk and coverage. Offline replay."
+FORMER_WHY = (
     "A model can choose the right label often and still act on the wrong cases. "
     "Actseal checks a frozen action policy against labelled cases, bounds errors "
     "among accepted actions and coverage across all scheduled cases, and saves "
     "evidence for offline replay."
 )
 HERO_ALT = (
-    "Actseal. Test model-chosen actions. Replay the evidence. Three steps: freeze, run, replay."
+    "Actseal evidence card. Does this frozen action policy meet its declared risk and "
+    "coverage limits? Freeze the policy, run it once against labelled cases, bound the "
+    "errors among accepted actions, seal the evidence, replay it with no model call. "
+    "Preregistered live audit, 639 verification cases, threshold 0.80: ACT 580 of 639, "
+    "24 errors; fixed benchmark, unreleased producer; risk [0.0250, 0.0639] against a "
+    "limit of 0.05; coverage [0.879, 0.932]; verdict INCONCLUSIVE (exit 2); replay requires "
+    "archived producer d3edbab. Source: docs/results/jev-audit-2026-10-08. Neither PASS nor "
+    "BLOCK is claimed."
 )
 EXCERPT_INTRO = "Expected result from synthetic fixtures, showing selected output:"
 EXIT_SUMMARY = (
@@ -57,8 +107,37 @@ OPENING_LINKS = (
     f"[Read the limits]({BLOB_PREFIX}docs/threat-model.md) · "
     f"[Quickstart]({BLOB_PREFIX}docs/quickstart.md)"
 )
-#: The opening (hero through the three links) must fit in this many lines.
-OPENING_LINES = 40
+#: The opening (title through the three links) must fit in this many lines.
+#: It grew from 40 when the recorded audit, boundary and engineering lines
+#: moved above the hero (V1-058).
+OPENING_LINES = 48
+#: The real-world-use block, verbatim, as a quotation in "Use it in an application".
+REAL_WORLD = (
+    "> **[Before enabling automatic ticket routing]"
+    f"({BLOB_PREFIX}examples/action_gate/README.md)**\n"
+    ">\n"
+    "> Run the committed action-gate example to see the application boundary. It verifies "
+    "a frozen policy, replays the recorded evidence, and routes authored tickets. Only ACT "
+    "permits the example application\N{RIGHT SINGLE QUOTATION MARK}s local queue write; "
+    "ABSTAIN, ESCALATE and DENY take non-execution paths.\n"
+    ">\n"
+    "> From a development checkout, run "
+    "`uv run --frozen python examples/action_gate/run.py --check`.\n"
+    ">\n"
+    "> This is a synthetic integration example. The application owns execution; the result "
+    "is not evidence of deployment performance.\n"
+)
+#: The maintainer and assistance disclosure, verbatim, under Development.
+DISCLOSURE = (
+    "Maintained by Ajay Surya Senthilrajan, with AI pair-programming recorded in commit "
+    "trailers. See the tests, design records and release evidence linked here."
+)
+#: The ARCI/Actseal distinction the Related projects paragraph keeps.
+COMPARISON = (
+    "gates repeated-trial agent regressions, injects faults and reduces failing fault sets; "
+    "Actseal checks a frozen categorical policy\N{RIGHT SINGLE QUOTATION MARK}s "
+    "accepted-action risk and coverage"
+)
 #: The retained raw recording; the excerpt's lines must be lines of its output.
 CAST = ASSETS / "src" / "demo.cast"
 #: Limit and scope statements carried over from the earlier README; each must
@@ -94,6 +173,15 @@ SURVIVING_STATEMENTS = (
     "it is not a statement that the answer is correct",
     "it never relabels the bad run",
     "it is not authenticated model evidence",
+    (
+        "A preregistered audit of Jev on a fixed 16-intent Banking77 subset returned "
+        "INCONCLUSIVE: 580/639 verification cases received ACT, with 24 accepted errors."
+    ),
+    "published with the unreleased benchmark producer snapshot identified explicitly",
+    (
+        "Its offline replay runs with that archived snapshot and exits 2 (INCONCLUSIVE); the "
+        "published 1.0.0 package returns ERROR `integrity.lock` for this bundle"
+    ),
 )
 RELATED_REPOSITORIES = (
     "https://github.com/ajaysurya1221/agent-reliability-ci",
@@ -120,18 +208,23 @@ LIMITS = [
     ),
 ]
 #: The four architecture files stay committed, declared outputs; the README
-#: references only the two desktop variants (see DARK_MEDIA below).
+#: links the two desktop variants (see LINKED_FIGURES below).
 ARCHITECTURE_FILES = (
     "architecture-light.svg",
     "architecture-dark.svg",
     "architecture-mobile-light.svg",
     "architecture-mobile-dark.svg",
 )
+#: Figures with committed variants. Only the hero is embedded as a picture;
+#: the README links the how-it-works and architecture desktop files instead
+#: (V1-058 cut: their phone legibility remains unresolved, V1-057).
 FIGURES = ("hero", "how-it-works", "architecture")
+PICTURE_FIGURES = ("hero",)
+LINKED_FIGURES = {"how-it-works": "How it works", "architecture": "Architecture"}
 #: Every committed variant of each figure, referenced or not.
 FIGURE_VARIANTS = ("-light", "-dark", "-mobile-light", "-mobile-dark")
 #: The genuine post-publication recording (Task 14, Decision 2A), one GIF per
-#: colour scheme, placed after the architecture figure and before the
+#: colour scheme, placed after the architecture section and before the
 #: documentation table.
 DEMO_FILES = ("demo-light.gif", "demo-dark.gif")
 #: The only ``<source media>`` Actseal's README policy allows. Live QA of the
@@ -140,8 +233,8 @@ DEMO_FILES = ("demo-light.gif", "demo-dark.gif")
 #: the always-true ``(prefers-color-scheme: light),(prefers-color-scheme: dark)``,
 #: so every visitor received the first, mobile-dark source upscaled; bare width
 #: queries survived that check. The README therefore adopts GitHub's documented
-#: colour-scheme pattern: each figure has exactly this one dark ``<source>`` and
-#: the light ``<img>``, and selection does not depend on the viewport width.
+#: colour-scheme pattern: each picture has exactly this one dark ``<source>``
+#: and the light ``<img>``, and selection does not depend on the viewport width.
 DARK_MEDIA = "(prefers-color-scheme: dark)"
 #: Viewports (CSS px) at which selection is checked: phone, tablet and desktop.
 VIEWPORTS = (320, 375, 768, 1200, 1279, 1280, 1366, 1920)
@@ -238,9 +331,9 @@ def _figure_pictures() -> dict[str, _Picture]:
         name = _local_asset(block.fallback).name
         if name == DEMO_FILES[0]:
             continue  # the recording has no responsive variants; tested separately
-        figure = next(f for f in FIGURES if name == f"{f}-light.svg")
+        figure = next(f for f in PICTURE_FIGURES if name == f"{f}-light.svg")
         by_figure[figure] = block
-    assert list(by_figure) == list(FIGURES), list(by_figure)
+    assert list(by_figure) == list(PICTURE_FIGURES), list(by_figure)
     return by_figure
 
 
@@ -366,37 +459,79 @@ def _run_actseal(arguments: list[str], cwd: Path) -> subprocess.CompletedProcess
     )
 
 
-def test_opening_puts_commands_and_a_result_before_any_explanatory_figure() -> None:
-    """Hero, bold line, why, badges, commands, excerpt and links, then everything else."""
+def test_opening_is_verbatim_and_result_first() -> None:
+    """Title, tagline, problem, recorded audit, boundary and engineering strip open the file."""
     text = _text()
+    assert text.startswith(OPENING)
+    assert TRY_IT in text
+    assert text.count(OPENING) == 1
+    # Nothing is drawn before the recorded result; the hero follows the strip.
+    assert "<picture>" not in OPENING
+    assert text.index("<picture>") == len(OPENING)
+
+
+def test_opening_puts_the_result_hero_commands_and_excerpt_before_any_explanation() -> None:
+    """Opening copy, hero, badges, commands, excerpt and links, then everything else."""
+    text = _text()
+    audit = text.index("**Recorded Jev audit: INCONCLUSIVE.**")
+    boundary = text.index("**Boundary:**")
+    engineering = text.index("**Engineering:**")
     hero = text.index("hero-light.svg")
-    tagline = text.index(f"**{TAGLINE}**")
-    why = text.index(WHY)
     badges = [m.start() for m in re.finditer(r"\[!\[", text)]
     try_it = text.index("\n## Try it\n")
     quickstart = text.index(QUICKSTART[0])
     excerpt = text.index("```text")
     links = text.index(OPENING_LINKS)
     application = text.index("\n## Use it in an application\n")
-    workflow = text.index("how-it-works-light.svg")
+    real_world = text.index(REAL_WORLD)
+    workflow = text.index("\n## How it works\n")
     result = text.index("\n## Read a result\n")
     guarantees_and_limits = text.index("\n## Guarantees and limits\n")
     guarantees = text.index("**Guarantees**")
     limits = text.index("**Limits**")
-    architecture = text.index("architecture-light.svg")
+    architecture = text.index("\n## Architecture\n")
     demo = text.index(DEMO_FILES[0])
     table = text.index("docs/stability.md")
     related = text.index("\n## Related projects\n")
+    development = text.index("\n## Development\n")
+    disclosure = text.index(DISCLOSURE)
     contributing = text.index("Contributions: [CONTRIBUTING]")
     assert len(badges) == 4
-    assert hero < tagline < why < badges[0] < badges[3] < try_it < quickstart < excerpt < links
-    assert links < application < workflow < result < guarantees_and_limits < guarantees < limits
-    assert limits < architecture < demo < table < related < contributing
-    # Nothing but the hero is drawn before the commands, the excerpt and the links.
+    assert audit < boundary < engineering < hero < badges[0] < badges[3] < try_it
+    assert try_it < quickstart < excerpt < links
+    assert links < application < real_world < workflow < result < guarantees_and_limits
+    assert guarantees_and_limits < guarantees < limits < architecture < demo < table
+    assert table < related < development < disclosure < contributing
+    # Only the hero is drawn before the commands, the excerpt and the links.
     assert text[:links].count("<picture>") == 1
-    # The whole opening, through the three links, fits in the first 40 lines.
+    # The whole opening, through the three links, fits in the first 48 lines.
     assert OPENING_LINKS in text.splitlines()[:OPENING_LINES]
-    assert text.count(WHY) == 1
+
+
+def test_opening_audit_lines_match_the_committed_verdict() -> None:
+    """The recorded result in the opening is the committed verdict's, word for word."""
+    verdict = json.loads((AUDIT / "evidence" / "verdict.json").read_text(encoding="utf-8"))
+    assert verdict["status"] == "INCONCLUSIVE"
+    opening = OPENING
+    assert f"**Recorded Jev audit: {verdict['status']}.**" in opening
+    assert (
+        f"{verdict['accepted']} of {verdict['total']} verification cases received ACT; "
+        f"{verdict['errors']} disagreed with benchmark labels."
+    ) in opening
+    assert (AUDIT / "README.md").is_file()
+
+
+def test_engineering_strip_counts_match_the_tree() -> None:
+    """The strip's numbers are directory counts, not typed claims."""
+    decisions = sorted((ROOT / "docs" / "decisions").glob("[0-9][0-9][0-9][0-9]-*.md"))
+    schemas = sorted((ROOT / "docs" / "schemas").glob("*.schema.json"))
+    assert len(decisions) == 20
+    assert len(schemas) == 11
+    assert f"[{len(decisions)} ADRs]({TREE_PREFIX}docs/decisions)" in OPENING
+    assert f"[{len(schemas)} JSON Schemas]({BLOB_PREFIX}docs/schemas/README.md)" in OPENING
+    for relative in ("tools/check_mutations.py", "plan/v1/receipts/postpublish-receipt.json"):
+        assert (ROOT / relative).is_file(), relative
+        assert f"({BLOB_PREFIX}{relative})" in OPENING
 
 
 def test_opening_links_promote_the_application_example() -> None:
@@ -404,8 +539,26 @@ def test_opening_links_promote_the_application_example() -> None:
     example = f"{BLOB_PREFIX}examples/action_gate/README.md"
     assert (ROOT / "examples" / "action_gate" / "README.md").is_file()
     assert example in OPENING_LINKS
-    assert f"[action-gate example]({example})" in _section("Use it in an application")
+    section = _section("Use it in an application")
+    assert f"[action-gate example]({example})" in section
     assert "The application owns execution." in text
+
+
+def test_real_world_block_is_verbatim_and_linked_to_the_example() -> None:
+    section = _section("Use it in an application")
+    assert section.lstrip("\n").startswith(REAL_WORLD)
+    assert f"({BLOB_PREFIX}examples/action_gate/README.md)" in REAL_WORLD
+    assert (ROOT / "examples" / "action_gate" / "run.py").is_file()
+    # The block's command is the one the example's own README documents.
+    example = (ROOT / "examples" / "action_gate" / "README.md").read_text(encoding="utf-8")
+    assert "uv run --frozen python examples/action_gate/run.py --check" in example
+
+
+def test_former_opening_lines_lead_the_workflow_section() -> None:
+    """The release gate's pinned bold line and description now open How it works."""
+    section = _section("How it works")
+    assert section.lstrip("\n").startswith(f"**{FORMER_TAGLINE}**\n\n{FORMER_WHY}\n")
+    assert _text().count(FORMER_WHY) == 1
 
 
 def test_excerpt_is_selected_output_of_the_retained_recording() -> None:
@@ -443,22 +596,27 @@ def test_excerpt_and_exit_summary_match_executable_demo_behaviour(task_tmpdir: P
         demo=0, fixed_status="PASS", fixed=0, bad_status="BLOCK", bad=1
     )
     assert summary in _text()
+    assert "The first command downloads the package if needed." in _text()
 
 
-def test_hero_alt_describes_the_artwork_and_the_prose_carries_the_limits() -> None:
-    """The caption left the artwork; its three limits must stay in the README prose."""
+def test_hero_alt_describes_the_evidence_card_and_the_prose_carries_the_limits() -> None:
+    """The alt text states the card's recorded result; the limits stay in the prose."""
     hero_alt = next(alt for target, alt in _html_images().images if "hero-light.svg" in target)
     assert hero_alt == HERO_ALT
     for gone in ("authenticate", "inference", "label truth", "Caption", "loop"):
         assert gone not in hero_alt, gone
-    for variant in ("-light", "-dark", "-mobile-light", "-mobile-dark"):
+    for variant in FIGURE_VARIANTS:
         name = f"hero{variant}.svg"
         svg = (ASSETS / name).read_text(encoding="utf-8")
-        assert "Test model-chosen actions. Replay the evidence." in svg, name
-        assert "Replay cannot authenticate" not in svg, name
+        assert "Does this frozen action policy meet its declared risk and coverage limits?" in svg
+        for number in ("580", "639", "24", "[0.0250, 0.0639]", "[0.879, 0.932]", "INCONCLUSIVE"):
+            assert number in svg, (name, number)
+        # The standalone card carries the scope and the replay restriction.
+        assert "Fixed benchmark; unreleased producer" in svg, name
+        assert "replay requires archived producer d3edbab" in svg, name
+        assert "replays offline from the sealed bundle" not in svg, name
+        assert "Test model-chosen actions" not in svg, name
         assert "Caption" not in svg, name
-        for step in ("freeze", "run", "replay"):
-            assert step in svg, (name, step)
     prose = _prose()
     for limit in (
         "cannot authenticate coherently rewritten responses",
@@ -481,8 +639,23 @@ def test_related_projects_are_three_sentences_naming_four_repositories() -> None
     # dots inside link targets are followed by other characters.
     assert len(re.findall(r"\.(?=\s|$)", section)) == 3, section
     assert section.endswith("against supplied evidence.")
+    assert COMPARISON in section
     for repository in RELATED_REPOSITORIES:
         assert f"({repository})" in section, repository
+
+
+def test_development_section_explains_the_mutation_harness_and_discloses_assistance() -> None:
+    """The disclosure sits after the engineering evidence, never in the opening."""
+    section = _section("Development")
+    assert f"({BLOB_PREFIX}tools/check_mutations.py)" in section
+    assert "eight prescribed changes" in section
+    assert section.strip().endswith(DISCLOSURE)
+    text = _text()
+    assert text.count(DISCLOSURE) == 1
+    assert DISCLOSURE not in "\n".join(text.splitlines()[:OPENING_LINES])
+    assert text.index(DISCLOSURE) > text.index("\n## Related projects\n")
+    for absent in ("every line", "badge"):
+        assert absent not in section, absent
 
 
 def test_quickstart_guarantees_and_limits_are_verbatim() -> None:
@@ -521,6 +694,10 @@ def test_every_link_is_absolute_and_same_repo_links_resolve() -> None:
             relative = target[len(BLOB_PREFIX) :].split("#")[0]
             assert ".." not in relative
             assert (ROOT / relative).is_file(), target
+        if target.startswith(TREE_PREFIX):
+            relative = target[len(TREE_PREFIX) :].split("#")[0]
+            assert ".." not in relative
+            assert (ROOT / relative).is_dir(), target
 
 
 def test_navigation_links_the_release_notes_absolutely_and_labels_their_state() -> None:
@@ -545,7 +722,7 @@ def test_navigation_links_the_release_notes_absolutely_and_labels_their_state() 
 def test_every_image_has_alt_text_and_is_absolute() -> None:
     html = _html_images()
     markdown = _markdown_images()
-    assert html.pictures == 4  # hero, how-it-works, architecture, demo recording
+    assert html.pictures == 2  # the hero and the demo recording
     for target, markdown_alt in markdown:
         assert target.startswith("https://"), target
         assert markdown_alt.strip(), target
@@ -553,7 +730,7 @@ def test_every_image_has_alt_text_and_is_absolute() -> None:
         assert target.startswith("https://"), target
         if html_alt is not None:
             assert html_alt.strip(), target
-    assert sum(1 for _, html_alt in html.images if html_alt is not None) == 4
+    assert sum(1 for _, html_alt in html.images if html_alt is not None) == 2
 
 
 def test_every_image_resolves_to_a_committed_implemented_asset() -> None:
@@ -573,29 +750,64 @@ def test_every_image_resolves_to_a_committed_implemented_asset() -> None:
     assert not missing, f"README references uncommitted figure files: {sorted(set(missing))}"
 
 
+def _linked_assets() -> set[str]:
+    """Names of ``docs/assets`` files the README links (not embeds) through blob URLs."""
+    prefix = f"{BLOB_PREFIX}docs/assets/"
+    return {
+        match["target"][len(prefix) :]
+        for match in MARKDOWN_LINK.finditer(_text())
+        if match["target"].startswith(prefix)
+    }
+
+
 def test_architecture_filenames_are_the_frozen_four() -> None:
-    """All four names stay committed, declared outputs; the README references the desktop two."""
+    """All four names stay committed, declared outputs; the README links the desktop two."""
     outputs = _implemented_outputs()
     for name in ARCHITECTURE_FILES:
         assert (ASSETS / name).is_file(), name
         assert name in outputs, name
-    referenced = {
+    embedded = {
         _local_asset(target).name
         for target, _ in _html_images().images
         if not _is_badge(target) and "architecture" in target
     }
-    assert referenced == {"architecture-light.svg", "architecture-dark.svg"}
+    assert embedded == set()
+    linked = {name for name in _linked_assets() if name.startswith("architecture")}
+    assert linked == {"architecture-light.svg", "architecture-dark.svg"}
+
+
+def test_workflow_and_architecture_figures_are_linked_not_embedded() -> None:
+    """Each section links its figure's desktop files, which are committed implemented outputs."""
+    outputs = _implemented_outputs()
+    assert _linked_assets() == {
+        f"{figure}{variant}.svg" for figure in LINKED_FIGURES for variant in ("-light", "-dark")
+    }
+    for figure, heading in LINKED_FIGURES.items():
+        section = _section(heading)
+        assert "<picture>" not in section, heading
+        for variant in ("-light", "-dark"):
+            name = f"{figure}{variant}.svg"
+            assert f"({BLOB_PREFIX}docs/assets/{name})" in section, name
+            assert (ASSETS / name).is_file(), name
+            assert name in outputs, name
+    # The prose keeps what the embedded figures used to say.
+    workflow = re.sub(r"\s+", " ", _section("How it works"))
+    for stage in ("Freeze", "Run", "Verify", "Seal", "Replay"):
+        assert f"**{stage}**" in workflow, stage
+    assert "recomputes the verdict offline with no model call" in workflow
+    assert "never reaches a provider" in _section("Architecture")
 
 
 def test_picture_references_desktop_variants_and_keeps_mobile_files_declared() -> None:
-    """Each figure references dark then light; its mobile variants stay committed and declared."""
+    """The hero references dark then light; every figure's variants stay committed and declared."""
     names = [_local_asset(t).name for t, _ in _html_images().images if not _is_badge(t)]
     outputs = _implemented_outputs()
-    for figure in FIGURES:
+    for figure in PICTURE_FIGURES:
         assert [n for n in names if n.startswith(figure)] == [
             f"{figure}-dark.svg",
             f"{figure}-light.svg",
         ], figure
+    for figure in FIGURES:
         for variant in FIGURE_VARIANTS:
             name = f"{figure}{variant}.svg"
             assert (ASSETS / name).is_file(), name
@@ -609,7 +821,7 @@ def test_picture_references_desktop_variants_and_keeps_mobile_files_declared() -
 
 
 def test_every_source_uses_only_the_documented_colour_scheme_query() -> None:
-    """One dark ``<source>`` then the light ``<img>`` per figure; no width or combined media.
+    """One dark ``<source>`` then the light ``<img>`` per picture; no width or combined media.
 
     On the live page the ``<source media>`` lists that combined
     ``prefers-color-scheme`` with ``max-width`` were rewritten into an
@@ -653,13 +865,13 @@ def test_combined_and_width_media_queries_are_rejected_by_the_policy_model() -> 
     assert not _media_matches(DARK_MEDIA, dark=False)
 
 
-def test_every_picture_stays_full_width_with_two_files_per_figure() -> None:
-    """Three figures and the recording, each full width, two files each."""
+def test_every_picture_stays_full_width_with_two_files_per_picture() -> None:
+    """The hero and the recording, each full width, two files each."""
     text = _text()
-    assert text.count('width="100%"') == 4  # three figures plus the demo recording
+    assert text.count('width="100%"') == 2  # the hero plus the demo recording
     referenced = {_local_asset(t).name for t, _ in _html_images().images if not _is_badge(t)}
     assert referenced == {
-        f"{figure}{variant}.svg" for figure in FIGURES for variant in ("-light", "-dark")
+        f"{figure}{variant}.svg" for figure in PICTURE_FIGURES for variant in ("-light", "-dark")
     } | set(DEMO_FILES)
 
 
@@ -669,12 +881,12 @@ def test_every_picture_stays_full_width_with_two_files_per_figure() -> None:
 
 
 def test_demo_recording_sits_below_the_opening_with_dark_before_light() -> None:
-    """The recording follows the architecture figure and never touches the first screen.
+    """The recording follows the architecture section and never touches the first screen.
 
     Decision 2A captures the recording from the published PyPI release, so it
     is absent from the tagged tree; the README places it after the guarantees,
-    limits and architecture figure and before the documentation table. One GIF
-    per colour scheme, dark ``<source>`` first, light ``<img>`` fallback, no
+    limits and architecture section and before the documentation table. One
+    GIF per colour scheme, dark ``<source>`` first, light ``<img>`` fallback, no
     responsive width variants, and alt text that states the three exits.
     """
     text = _text()

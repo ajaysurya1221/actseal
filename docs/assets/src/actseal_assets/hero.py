@@ -1,41 +1,69 @@
-"""The hero banner: wordmark, approved tagline and one forward freeze/run/replay sequence.
+"""The hero: the question Actseal answers beside one recorded audit result.
+
+The composition is an evidence card. The left column carries an eyebrow
+(``actseal`` and its category), the thesis question in bold and a one-sentence
+subline; the card on the right states one real recorded run, the
+preregistered live Jev audit, with its scope, its verdict and exit code, and
+the archived producer its replay requires. Nothing on the
+canvas is decorative: no wordmark banner, padlock, shield, checkmark, badge
+or other security symbol.
+
+Every number on the card is copied from committed files under
+``docs/results/jev-audit-2026-10-08/`` and is checked against them by
+``tests/visual/test_hero.py``:
+
+- ``evidence/verdict.json``: ``total`` 639, ``accepted`` 580, ``errors`` 24,
+  ``risk`` [0.02498087158203282, 0.06393316057415596] (shown to four
+  decimals), ``coverage`` [0.8787825228681747, 0.9316794056630708] (shown to
+  three decimals) and ``status`` INCONCLUSIVE;
+- ``audit_receipt.json``: the same verification verdict under
+  ``verification_bundle.verdict`` and the cohort counts under
+  ``cohorts.verification`` (639 captured, 580 ACT, 24 wrong ACT);
+- ``inputs/preregistration.json``: the frozen contract's ``threshold`` 0.8
+  and ``max_risk`` 0.05;
+- the CLI's exit-code table (``actseal.cli.EXIT_CODES``): INCONCLUSIVE is
+  exit 2, which the audit README's offline replay command reports;
+- ``README.md`` of the audit: the producer is the unreleased benchmark
+  snapshot ``d3edbab2dfbd44a0e9e272e1671143517832e3b4``, so replay requires
+  that archived producer (the published 1.0.0 package returns ERROR
+  ``integrity.lock`` for this bundle), and the benchmark is a fixed subset.
 
 Every visible string is converted to path data with the pinned JetBrains Mono
 files through ``outline.outline_text``; the committed files contain no
-``<text>`` and need no font at display time. The renderer refuses to run
-without both pinned font files and never substitutes another face: a missing
-file raises ``OutlineError`` before any glyph is drawn. The pipeline verifies
-the font hashes against ``tools.toml`` before calling ``render``; this module
-only checks presence so that a direct call still fails loudly.
+``<text>`` and need no font at display time. Only the pinned Regular and Bold
+faces are used. The renderer refuses to run without both pinned font files
+and never substitutes another face: a missing file raises ``OutlineError``
+before any glyph is drawn. The pipeline verifies the font hashes against
+``tools.toml`` before calling ``render``; this module only checks presence so
+that a direct call still fails loudly.
 
-Two canvases are rendered, each in a light and a dark palette. GitHub selects
-the README figures by colour scheme only (plan/v1/CHANGE_LOG.md V1-057), so
-every viewer receives the desktop file, at every viewport width. The desktop
-canvas is therefore one stacked composition, 1600x700: the wordmark, the two
-tagline lines and one row of three pills. It is validated at the narrowest
-measured README image width, 254 CSS px at a 320 px viewport, where every
-text run must reach 14 px: the 90-unit step labels render at 14.3 px, the
-96-unit tagline at 15.2 px and the 180-unit wordmark at 28.6 px, and the
-enforced label minimum is 89 units (14.1 px). The same file measures 838 CSS
-px at 1280 px and wider viewports, where the composition is reviewed. Stroke
-weights scale with the canvas so the pill borders and arrows stay visible at
-254 px. The mobile canvas is 720x400 and stacks the same content at mobile
-proportions; the README no longer references it, but it stays declared,
-rendered and validated at 254 CSS px, so its smallest text is 40 units
-(14.1 rendered px). Line breaks are fixed in this file and every line is
-measured with the real glyph advances at render time; a line that would not
-fit raises ``ValueError``. Text is never shrunk to fit.
+Two canvases are rendered, each in a light and a dark palette that differ
+only in colour. The desktop canvas is 1600x520: the column and the card side
+by side. It is validated at the measured 838 CSS px README image width, where
+every run renders at 14 px or more (27-unit body runs at 14.1 px, the 40-unit
+card headline at 21.0 px, the 46-unit thesis at 24.1 px). GitHub serves the
+desktop file at every viewport width (plan/v1/CHANGE_LOG.md V1-057), so on a
+254 CSS px phone column the same file renders its body runs at about 4.3 px
+and its thesis at about 7.3 px; the README prose above the hero carries the
+same recorded result in text. The mobile canvas is 720 wide and stacks the
+column above the card; it stays declared, rendered and validated at 254 CSS
+px, where every run reaches 14 px (40 units or more) except the card footer, the
+repository path and its disclaimer, which is a reference line: its 30-unit
+runs render at 10.6 px, above the 10 px reference floor this module enforces
+for that line only.
 
-The copy is the approved wordmark and two-line tagline; the 2026-10-08
-editorial review removed the caption paragraph from the artwork, and the
-evidence limits it carried are stated in the README prose instead. The motif
-is one forward sequence of three steps (freeze, run, replay) joined by two
-arrows; there is no return arrow, and no padlock, shield, checkmark, badge or
-other security symbol.
+Line breaks are fixed in this file per canvas and must rejoin, with single
+spaces, to the frozen copy; every line is measured with the real glyph
+advances at render time, and a line that would not fit its column or the
+card raises ``ValueError``. Text is never shrunk to fit. Vertical positions
+are derived from the stated sizes, line steps and gaps, and a layout that
+would leave the margins, overlap the card or overflow the card raises before
+anything is drawn.
 """
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -48,18 +76,29 @@ from .outline import OutlineError, outline_text
 if TYPE_CHECKING:
     from .inventory import RenderContext
 
-# Frozen copy. The joined lines must equal the single-string original;
-# ``validate_copy`` enforces that before anything is rendered.
-WORDMARK = "Actseal"
-TAGLINE = "Test model-chosen actions. Replay the evidence."
-TAGLINE_LINES: tuple[str, ...] = ("Test model-chosen actions.", "Replay the evidence.")
-MOTIF_STEPS: tuple[str, ...] = ("freeze", "run", "replay")
+# --------------------------------------------------------------------------- #
+# Frozen copy
+# --------------------------------------------------------------------------- #
 
-TITLE = "Actseal: test model-chosen actions and replay the evidence"
+WORDMARK = "actseal"
+EYEBROW = "actseal · frozen decision policies · risk and coverage · offline replay"
+THESIS = "Does this frozen action policy meet its declared risk and coverage limits?"
+SUBLINE = (
+    "Freeze the policy, run it once against labelled cases, bound the errors among "
+    "accepted actions, seal the evidence, replay it with no model call."
+)
+CARD_LABEL = "PREREGISTERED LIVE AUDIT · 639 VERIFICATION CASES · THRESHOLD 0.80"
+CARD_HEADLINE = "ACT 580/639   errors 24"
+CARD_SCOPE = "Fixed benchmark; unreleased producer"
+CARD_BOUNDS = "risk [0.0250, 0.0639] vs limit 0.05 · coverage [0.879, 0.932]"
+CARD_VERDICT = "VERDICT: INCONCLUSIVE (exit 2) → replay requires archived producer d3edbab"
+CARD_FOOTER = "docs/results/jev-audit-2026-10-08 · neither PASS nor BLOCK is claimed"
+
+TITLE = "Actseal: does this frozen action policy meet its declared risk and coverage limits?"
 DESC = (
-    "Actseal wordmark with the tagline: Test model-chosen actions. Replay the "
-    "evidence. Three steps in one forward sequence, freeze, run and replay, "
-    "with one arrow from freeze to run and one from run to replay."
+    f"{EYEBROW}. {THESIS} {SUBLINE} Evidence card: {CARD_LABEL}. "
+    f"ACT 580 of 639, errors 24. {CARD_SCOPE}. "
+    f"{CARD_BOUNDS}. {CARD_VERDICT}. {CARD_FOOTER}."
 )
 
 # Pinned font files, installed by setup_tools.py and hash-checked by the
@@ -75,38 +114,29 @@ OUTPUTS: tuple[str, ...] = (
 )
 
 DESKTOP_WIDTH = 1600
-DESKTOP_HEIGHT = 700
+DESKTOP_HEIGHT = 520
 MOBILE_WIDTH = 720
-MOBILE_HEIGHT = 400
+MOBILE_HEIGHT = 1576
 # Measured CSS widths of a README image (838 px at 1280/1366 px viewports,
 # 254 px at 320 px); the same values as inventory.py, repeated here because
-# inventory imports this module. GitHub serves the desktop file at every
-# width, so both canvases are validated at the narrowest width; the desktop
-# composition is reviewed at the widest.
+# inventory imports this module.
 DESKTOP_DISPLAY_WIDTH = 838
 MOBILE_DISPLAY_WIDTH = 254
 # Same floor as checks.MIN_LABEL_PX; outlined assets are exempt from that
 # validator, so this module enforces the floor on its own type sizes.
 MIN_LABEL_PX = 14.0
-# Smallest step-label sizes allowed per canvas: the 14 px floor at 254 CSS px
-# needs 14 x 1600 / 254 = 88.2 desktop units and 14 x 720 / 254 = 39.7 mobile
-# units, rounded up.
-MIN_DESKTOP_LABEL = 89
-MIN_MOBILE_LABEL = 40
+# Floor for the one reference line (the card footer: repository path and
+# disclaimer), which only the stacked mobile canvas sets below MIN_LABEL_PX.
+MIN_REFERENCE_PX = 10.0
+# Smallest unit sizes that reach MIN_LABEL_PX: 14 x 1600 / 838 = 26.7 desktop
+# units and 14 x 720 / 254 = 39.7 mobile units, rounded up.
+MIN_DESKTOP_TEXT = 27
+MIN_MOBILE_TEXT = 40
 
-# Default stroke weights (the mobile canvas); larger canvases set their own.
-BORDER = 2
-ARROW_STROKE = 3
-ARROW_HEAD = 12
-ARROW_HALF = 8
-ARROW_CLEARANCE = 3
-# Baseline offset below the pill's vertical centre for lowercase labels, as a
-# fraction of the type size.
-LABEL_BASELINE_SHIFT = 0.32
-# Ascender allowance above the wordmark baseline and descender allowance below
-# the last tagline baseline, as fractions of the type size. The pinned faces
-# reach 0.777 em above and 0.18 em below the baseline for this copy; both
-# allowances are deliberately larger.
+# Ascender allowance above a block's first baseline and descender allowance
+# below its last, as fractions of the type size. The pinned faces reach
+# 0.73 em (capitals) and 0.61 em (the arrow) above the baseline and 0.18 em
+# below it for this copy; both allowances are deliberately larger.
 ASCENT = 0.8
 DESCENDER = 0.3
 
@@ -115,33 +145,399 @@ DESCENDER = 0.3
 class Palette:
     name: str
     canvas: str
-    box: str
-    border: str
     heading: str
     body: str
     muted: str
     accent: str
+    card: str
+    card_text: str
+    card_muted: str
+    blue: str
+    red: str
+    amber: str
 
 
-LIGHT = Palette(
-    name="light",
-    canvas="#ffffff",
-    box="#f6f8fa",
-    border="#d0d7de",
-    heading="#1f2328",
-    body="#24292f",
-    muted="#57606a",
-    accent="#0969da",
-)
+# Dark: a light card on the dark ground. Light: an ink card on cream.
 DARK = Palette(
     name="dark",
-    canvas="#0d1117",
-    box="#161b22",
-    border="#30363d",
-    heading="#e6edf3",
-    body="#c9d1d9",
-    muted="#8b949e",
-    accent="#58a6ff",
+    canvas="#0F1512",
+    heading="#F0ECE2",
+    body="#C9C4B6",
+    muted="#9A978E",
+    accent="#6FA2FF",
+    card="#F4F1EA",
+    card_text="#16211D",
+    card_muted="#6B6A65",
+    blue="#1F5FD1",
+    red="#B8431F",
+    amber="#8A5A00",
+)
+LIGHT = Palette(
+    name="light",
+    canvas="#F4F1EA",
+    heading="#16211D",
+    body="#3E3D38",
+    muted="#6B6A65",
+    accent="#1F5FD1",
+    card="#16211D",
+    card_text="#E9E4D8",
+    card_muted="#A8A396",
+    blue="#6FA2FF",
+    red="#F0A48A",
+    amber="#E8B14A",
+)
+ROLES: tuple[str, ...] = (
+    "heading",
+    "body",
+    "muted",
+    "accent",
+    "card_text",
+    "card_muted",
+    "blue",
+    "red",
+    "amber",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class Highlight:
+    """A phrase of one copy block drawn in another colour role, optionally bold."""
+
+    phrase: str
+    role: str
+    bold: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class Copy:
+    """One frozen block of copy: its text, colour role, weight and highlights."""
+
+    key: str
+    text: str
+    role: str
+    bold: bool = False
+    highlights: tuple[Highlight, ...] = ()
+    in_card: bool = False
+    #: A reference line may render below MIN_LABEL_PX, down to MIN_REFERENCE_PX.
+    reference: bool = False
+
+
+COPY: tuple[Copy, ...] = (
+    Copy("eyebrow", EYEBROW, "muted", highlights=(Highlight(WORDMARK, "accent", bold=True),)),
+    Copy("thesis", THESIS, "heading", bold=True),
+    Copy("subline", SUBLINE, "body"),
+    Copy("card-label", CARD_LABEL, "card_muted", in_card=True),
+    Copy(
+        "card-headline",
+        CARD_HEADLINE,
+        "card_text",
+        bold=True,
+        highlights=(Highlight("580/639", "blue", bold=True), Highlight("24", "red", bold=True)),
+        in_card=True,
+    ),
+    Copy("card-scope", CARD_SCOPE, "card_text", in_card=True),
+    Copy(
+        "card-bounds",
+        CARD_BOUNDS,
+        "card_text",
+        highlights=(Highlight("[0.0250, 0.0639]", "red"),),
+        in_card=True,
+    ),
+    Copy(
+        "card-verdict",
+        CARD_VERDICT,
+        "card_text",
+        highlights=(Highlight("VERDICT: INCONCLUSIVE (exit 2)", "amber", bold=True),),
+        in_card=True,
+    ),
+    Copy("card-footer", CARD_FOOTER, "card_muted", in_card=True, reference=True),
+)
+COLUMN_KEYS: tuple[str, ...] = tuple(c.key for c in COPY if not c.in_card)
+CARD_KEYS: tuple[str, ...] = tuple(c.key for c in COPY if c.in_card)
+
+
+def copy_for(key: str) -> Copy:
+    for block in COPY:
+        if block.key == key:
+            return block
+    msg = f"unknown copy block {key!r}"
+    raise KeyError(msg)
+
+
+@dataclass(frozen=True, slots=True)
+class Setting:
+    """One copy block set on one canvas: fixed line breaks, size, line step and gap above."""
+
+    key: str
+    lines: tuple[str, ...]
+    size: int
+    step: int
+    gap: int = 0
+
+    @property
+    def above(self) -> int:
+        return math.ceil(self.size * ASCENT)
+
+    @property
+    def below(self) -> int:
+        return math.ceil(self.size * DESCENDER)
+
+    @property
+    def box_height(self) -> int:
+        """Ascender allowance, the line steps and the descender allowance, in units."""
+        return self.above + (len(self.lines) - 1) * self.step + self.below
+
+
+@dataclass(frozen=True, slots=True)
+class Canvas:
+    """Geometry and type settings for one variant, in SVG units."""
+
+    name: str
+    width: int
+    height: int
+    display_width: int
+    margin: int
+    column_x: int
+    column_y: int
+    column_width: int
+    card_x: int
+    card_y: int
+    card_width: int
+    card_height: int
+    card_pad: int
+    radius: int
+    column: tuple[Setting, ...]
+    card: tuple[Setting, ...]
+
+    @property
+    def settings(self) -> tuple[Setting, ...]:
+        return (*self.column, *self.card)
+
+    @property
+    def sizes(self) -> tuple[int, ...]:
+        return tuple(setting.size for setting in self.settings)
+
+    def setting(self, key: str) -> Setting:
+        for setting in self.settings:
+            if setting.key == key:
+                return setting
+        msg = f"{self.name}: no setting for {key!r}"
+        raise KeyError(msg)
+
+    @property
+    def card_inner_width(self) -> int:
+        return self.card_width - 2 * self.card_pad
+
+    @property
+    def column_bottom(self) -> int:
+        return self.column_y + _stack_height(self.column)
+
+    @property
+    def card_content_bottom(self) -> int:
+        return self.card_y + self.card_pad + _stack_height(self.card)
+
+    @property
+    def side_by_side(self) -> bool:
+        return self.column_x + self.column_width <= self.card_x
+
+    def rendered_px(self, size: float) -> float:
+        """Size of ``size`` units after scaling the canvas to its display width."""
+        return size * min(1.0, self.display_width / self.width)
+
+
+def _stack_height(settings: tuple[Setting, ...]) -> int:
+    return sum(setting.gap + setting.box_height for setting in settings)
+
+
+@dataclass(frozen=True, slots=True)
+class Placed:
+    """One setting with its absolute left edge, available width and baselines."""
+
+    setting: Setting
+    x: int
+    max_width: int
+    baselines: tuple[int, ...]
+    top: int
+    bottom: int
+
+
+def place(canvas: Canvas) -> tuple[Placed, ...]:
+    """Stack the column and the card blocks from their tops; nothing is measured here."""
+    placed: list[Placed] = []
+    containers = (
+        (canvas.column, canvas.column_x, canvas.column_width, canvas.column_y),
+        (
+            canvas.card,
+            canvas.card_x + canvas.card_pad,
+            canvas.card_inner_width,
+            canvas.card_y + canvas.card_pad,
+        ),
+    )
+    for settings, x, width, top in containers:
+        cursor = top
+        for setting in settings:
+            box_top = cursor + setting.gap
+            first = box_top + setting.above
+            baselines = tuple(first + i * setting.step for i in range(len(setting.lines)))
+            bottom = box_top + setting.box_height
+            placed.append(Placed(setting, x, width, baselines, box_top, bottom))
+            cursor = bottom
+    return tuple(placed)
+
+
+# The desktop composition: column and card side by side, validated at 838 CSS px.
+DESKTOP = Canvas(
+    name="desktop",
+    width=DESKTOP_WIDTH,
+    height=DESKTOP_HEIGHT,
+    display_width=DESKTOP_DISPLAY_WIDTH,
+    margin=40,
+    column_x=64,
+    column_y=50,
+    column_width=692,
+    card_x=804,
+    card_y=40,
+    card_width=732,
+    card_height=440,
+    card_pad=26,
+    radius=16,
+    column=(
+        Setting(
+            "eyebrow",
+            ("actseal · frozen decision policies ·", "risk and coverage · offline replay"),
+            27,
+            36,
+        ),
+        Setting(
+            "thesis",
+            ("Does this frozen action", "policy meet its declared", "risk and coverage limits?"),
+            46,
+            52,
+            gap=30,
+        ),
+        Setting(
+            "subline",
+            (
+                "Freeze the policy, run it once against",
+                "labelled cases, bound the errors among",
+                "accepted actions, seal the evidence,",
+                "replay it with no model call.",
+            ),
+            27,
+            36,
+            gap=30,
+        ),
+    ),
+    card=(
+        Setting(
+            "card-label",
+            ("PREREGISTERED LIVE AUDIT ·", "639 VERIFICATION CASES · THRESHOLD 0.80"),
+            27,
+            34,
+        ),
+        Setting("card-headline", (CARD_HEADLINE,), 40, 48, gap=12),
+        Setting("card-scope", (CARD_SCOPE,), 27, 34, gap=5),
+        Setting(
+            "card-bounds",
+            ("risk [0.0250, 0.0639] vs limit 0.05 ·", "coverage [0.879, 0.932]"),
+            27,
+            34,
+            gap=12,
+        ),
+        Setting(
+            "card-verdict",
+            ("VERDICT: INCONCLUSIVE (exit 2) →", "replay requires archived producer d3edbab"),
+            27,
+            34,
+            gap=12,
+        ),
+        Setting(
+            "card-footer",
+            ("docs/results/jev-audit-2026-10-08 ·", "neither PASS nor BLOCK is claimed"),
+            27,
+            34,
+            gap=12,
+        ),
+    ),
+)
+
+# The stacked mobile composition: the column above the card, validated at
+# 254 CSS px. Every run is at least 40 units except the 30-unit footer.
+MOBILE = Canvas(
+    name="mobile",
+    width=MOBILE_WIDTH,
+    height=MOBILE_HEIGHT,
+    display_width=MOBILE_DISPLAY_WIDTH,
+    margin=16,
+    column_x=28,
+    column_y=32,
+    column_width=664,
+    card_x=16,
+    card_y=742,
+    card_width=688,
+    card_height=803,
+    card_pad=26,
+    radius=16,
+    column=(
+        Setting(
+            "eyebrow",
+            ("actseal · frozen decision", "policies · risk and", "coverage · offline replay"),
+            40,
+            52,
+        ),
+        Setting(
+            "thesis",
+            ("Does this frozen action", "policy meet its declared", "risk and coverage limits?"),
+            44,
+            54,
+            gap=32,
+        ),
+        Setting(
+            "subline",
+            (
+                "Freeze the policy, run it",
+                "once against labelled",
+                "cases, bound the errors",
+                "among accepted actions,",
+                "seal the evidence, replay",
+                "it with no model call.",
+            ),
+            40,
+            52,
+            gap=32,
+        ),
+    ),
+    card=(
+        Setting(
+            "card-label",
+            ("PREREGISTERED LIVE AUDIT ·", "639 VERIFICATION CASES ·", "THRESHOLD 0.80"),
+            40,
+            52,
+        ),
+        Setting("card-headline", (CARD_HEADLINE,), 44, 54, gap=20),
+        Setting("card-scope", ("Fixed benchmark;", "unreleased producer"), 40, 52, gap=8),
+        Setting(
+            "card-bounds",
+            ("risk [0.0250, 0.0639]", "vs limit 0.05 ·", "coverage [0.879, 0.932]"),
+            40,
+            52,
+            gap=20,
+        ),
+        Setting(
+            "card-verdict",
+            ("VERDICT: INCONCLUSIVE", "(exit 2) → replay requires", "archived producer d3edbab"),
+            40,
+            52,
+            gap=20,
+        ),
+        Setting(
+            "card-footer",
+            ("docs/results/jev-audit-2026-10-08 ·", "neither PASS nor BLOCK is claimed"),
+            30,
+            40,
+            gap=20,
+        ),
+    ),
 )
 
 
@@ -151,140 +547,124 @@ class Fonts:
     bold: Path
 
 
-@dataclass(frozen=True, slots=True)
-class Canvas:
-    """Type sizes, baselines and motif geometry for one variant, in SVG units."""
-
-    name: str
-    width: int
-    display_width: int
-    margin: int
-    text_x: int
-    text_width: int
-    wordmark: int
-    wordmark_baseline: int
-    tagline: int
-    tagline_baseline: int
-    tagline_step: int
-    label: int
-    motif_x: int
-    motif_top: int
-    pill_width: int
-    pill_height: int
-    pill_gap: int
-    pill_pad: int
-    # Stroke weights scale with the canvas; the defaults are the mobile
-    # canvas's values.
-    border: int = BORDER
-    arrow_stroke: int = ARROW_STROKE
-    arrow_head: int = ARROW_HEAD
-    arrow_half: int = ARROW_HALF
-    arrow_clearance: int = ARROW_CLEARANCE
-
-    @property
-    def sizes(self) -> tuple[int, ...]:
-        return (self.wordmark, self.tagline, self.label)
-
-    @property
-    def motif_width(self) -> int:
-        count = len(MOTIF_STEPS)
-        return count * self.pill_width + (count - 1) * self.pill_gap
-
-    @property
-    def motif_bottom(self) -> int:
-        """Lowest extent of the motif: the bottom edge of the pills."""
-        return self.motif_top + self.pill_height
-
-    @property
-    def text_top(self) -> int:
-        """Highest extent of the text block: the wordmark's ascender allowance."""
-        return self.wordmark_baseline - math.ceil(self.wordmark * ASCENT)
-
-    @property
-    def text_bottom(self) -> int:
-        """Lowest extent of the text block: the last tagline line's descender allowance."""
-        last = self.tagline_baseline + (len(TAGLINE_LINES) - 1) * self.tagline_step
-        return last + math.ceil(self.tagline * DESCENDER)
-
-    def rendered_px(self, size: float) -> float:
-        """Size of ``size`` units after scaling the canvas to its display width."""
-        return size * min(1.0, self.display_width / self.width)
+# --------------------------------------------------------------------------- #
+# Checks that run before any font is read
+# --------------------------------------------------------------------------- #
 
 
-# One stacked composition, validated at 254 CSS px. The pill row starts at
-# the text column and ends within four units of the first tagline line's ink,
-# so the block has one left and one right edge; the visible margins are about
-# 60 units on every side.
-DESKTOP = Canvas(
-    name="desktop",
-    width=DESKTOP_WIDTH,
-    display_width=MOBILE_DISPLAY_WIDTH,
-    margin=40,
-    text_x=60,
-    text_width=1500,
-    wordmark=180,
-    wordmark_baseline=188,
-    tagline=96,
-    tagline_baseline=312,
-    tagline_step=114,
-    label=90,
-    motif_x=60,
-    motif_top=508,
-    pill_width=420,
-    pill_height=136,
-    pill_gap=110,
-    pill_pad=40,
-    border=4,
-    arrow_stroke=8,
-    arrow_head=30,
-    arrow_half=18,
-    arrow_clearance=14,
-)
-MOBILE = Canvas(
-    name="mobile",
-    width=MOBILE_WIDTH,
-    display_width=MOBILE_DISPLAY_WIDTH,
-    margin=20,
-    text_x=20,
-    text_width=680,
-    wordmark=84,
-    wordmark_baseline=108,
-    tagline=42,
-    tagline_baseline=172,
-    tagline_step=52,
-    label=40,
-    motif_x=20,
-    motif_top=276,
-    pill_width=200,
-    pill_height=76,
-    pill_gap=40,
-    pill_pad=12,
-)
+def _spans_of(copy: Copy) -> list[tuple[int, int, Highlight]]:
+    """Character ranges of each highlight in the copy; each phrase must occur once."""
+    ranges: list[tuple[int, int, Highlight]] = []
+    for highlight in copy.highlights:
+        count = copy.text.count(highlight.phrase)
+        if count != 1:
+            msg = f"{copy.key}: highlight {highlight.phrase!r} occurs {count} times; expected once"
+            raise ValueError(msg)
+        start = copy.text.index(highlight.phrase)
+        ranges.append((start, start + len(highlight.phrase), highlight))
+    ranges.sort(key=lambda item: item[0])
+    for (_, end, first), (start, _, second) in itertools.pairwise(ranges):
+        if start < end:
+            msg = f"{copy.key}: highlights {first.phrase!r} and {second.phrase!r} overlap"
+            raise ValueError(msg)
+    return ranges
 
 
-def validate_copy() -> None:
-    """The fixed line breaks must reproduce the approved tagline exactly."""
-    if " ".join(TAGLINE_LINES) != TAGLINE:
-        msg = f"tagline lines do not rejoin to the approved copy: {TAGLINE_LINES!r}"
-        raise ValueError(msg)
+def validate_copy(canvases: tuple[Canvas, ...] | None = None) -> None:
+    """Every canvas must set every block once, in order, with lines that rejoin to the copy."""
+    for copy in COPY:
+        if copy.role not in ROLES:
+            msg = f"{copy.key}: unknown colour role {copy.role!r}"
+            raise ValueError(msg)
+        for highlight in copy.highlights:
+            if highlight.role not in ROLES:
+                msg = f"{copy.key}: unknown colour role {highlight.role!r}"
+                raise ValueError(msg)
+        _spans_of(copy)
+    for canvas in canvases if canvases is not None else (DESKTOP, MOBILE):
+        column = tuple(s.key for s in canvas.column)
+        card = tuple(s.key for s in canvas.card)
+        if column != COLUMN_KEYS or card != CARD_KEYS:
+            msg = (
+                f"{canvas.name}: blocks {column + card!r} do not match {COLUMN_KEYS + CARD_KEYS!r}"
+            )
+            raise ValueError(msg)
+        for setting in canvas.settings:
+            text = copy_for(setting.key).text
+            stripped = all(line and line == line.strip() for line in setting.lines)
+            if not stripped or " ".join(setting.lines) != text:
+                msg = (
+                    f"{canvas.name}: {setting.key} lines do not rejoin to the frozen copy: "
+                    f"{setting.lines!r}"
+                )
+                raise ValueError(msg)
 
 
 def require_readable(canvas: Canvas) -> None:
-    """Every type size must render at or above the label floor at display width."""
-    for size in canvas.sizes:
-        rendered = canvas.rendered_px(size)
-        if rendered < MIN_LABEL_PX:
+    """Every run must render at or above its floor at the canvas's display width."""
+    for setting in canvas.settings:
+        reference = copy_for(setting.key).reference
+        floor = MIN_REFERENCE_PX if reference else MIN_LABEL_PX
+        rendered = canvas.rendered_px(setting.size)
+        if rendered < floor:
             msg = (
-                f"{canvas.name}: {size} units render at {rendered:.1f}px at "
-                f"{canvas.display_width} CSS px; minimum is {MIN_LABEL_PX:g}px"
+                f"{canvas.name}: {setting.key} at {setting.size} units renders at "
+                f"{rendered:.1f}px at {canvas.display_width} CSS px; minimum is {floor:g}px"
             )
             raise ValueError(msg)
 
 
-def require_label_minimum(canvas: Canvas, minimum: int) -> None:
-    """The step labels must be at least the specified size for their canvas."""
-    if canvas.label < minimum:
-        msg = f"{canvas.name}: step labels are {canvas.label} units; minimum is {minimum} units"
+def require_text_minimum(canvas: Canvas, minimum: int) -> None:
+    """Every run except the reference line must be at least ``minimum`` units."""
+    for setting in canvas.settings:
+        if copy_for(setting.key).reference:
+            continue
+        if setting.size < minimum:
+            msg = (
+                f"{canvas.name}: {setting.key} is {setting.size} units; minimum is {minimum} units"
+            )
+            raise ValueError(msg)
+
+
+def require_layout(canvas: Canvas) -> None:
+    """The fixed geometry must stay inside the margins, the card and its own column."""
+    problems: list[str] = []
+    right = canvas.width - canvas.margin
+    bottom = canvas.height - canvas.margin
+    if canvas.column_x < canvas.margin or canvas.column_x + canvas.column_width > right:
+        problems.append("text column exceeds the canvas width")
+    if canvas.card_x < canvas.margin or canvas.card_x + canvas.card_width > right:
+        problems.append("card exceeds the canvas width")
+    if canvas.card_y < canvas.margin or canvas.card_y + canvas.card_height > bottom:
+        problems.append(
+            f"card spans {canvas.card_y}..{canvas.card_y + canvas.card_height} units; "
+            f"the margins allow {canvas.margin}..{bottom}"
+        )
+    if canvas.column_y < canvas.margin:
+        problems.append(f"text column starts {canvas.column_y} units from the top")
+    column_limit = bottom if canvas.side_by_side else canvas.card_y
+    if canvas.column_bottom > column_limit:
+        problems.append(f"text column needs {canvas.column_bottom} units; limit is {column_limit}")
+    if not canvas.side_by_side and canvas.column_bottom > canvas.card_y:
+        problems.append("text column overlaps the card")
+    card_limit = canvas.card_y + canvas.card_height - canvas.card_pad
+    if canvas.card_content_bottom > card_limit:
+        problems.append(
+            f"card content needs {canvas.card_content_bottom} units; limit is {card_limit}"
+        )
+    if canvas.card_inner_width <= 0:
+        problems.append("card padding leaves no room for text")
+    for setting in canvas.settings:
+        if setting.gap < 0 or setting.step <= 0 or setting.size <= 0:
+            problems.append(f"{setting.key} has a negative gap or a non-positive size or step")
+        elif len(setting.lines) > 1 and setting.step < setting.size:
+            problems.append(
+                f"{setting.key} lines overlap: step {setting.step} < size {setting.size}"
+            )
+    if problems:
+        msg = f"{canvas.name} layout does not fit a {canvas.width}x{canvas.height} canvas: " + (
+            "; ".join(problems)
+        )
         raise ValueError(msg)
 
 
@@ -302,190 +682,113 @@ def require_fonts(context: RenderContext) -> Fonts:
     return Fonts(regular=regular, bold=bold)
 
 
-def _glyphs(
-    group: svg.Node,
-    font: Path,
-    text: str,
-    *,
-    size: float,
-    x: float,
-    y: float,
-    fill: str,
-    max_width: float,
-    centered: bool = False,
-) -> float:
-    """Outline ``text`` into ``group`` and return its advance.
-
-    The string is measured first; one wider than ``max_width`` is an error,
-    never scaled down. ``x`` is the left edge, or the centre when ``centered``.
-    """
-    measured = outline_text(font, text, size=size)
-    if measured.advance > max_width:
-        msg = (
-            f"{text!r} is {measured.advance:.1f} units wide at size {size:g}; "
-            f"only {max_width:g} units are available. Text is not shrunk; "
-            "change the layout or the line breaks"
-        )
-        raise ValueError(msg)
-    left = x - measured.advance / 2 if centered else x
-    placed = outline_text(font, text, size=size, x=left, y=y)
-    group.add("path", d=placed.d, fill=fill)
-    return measured.advance
-
-
-def _lines(
-    group: svg.Node,
-    font: Path,
-    lines: tuple[str, ...],
-    *,
-    size: float,
-    x: float,
-    baseline: float,
-    step: float,
-    fill: str,
-    max_width: float,
-) -> None:
-    for index, line in enumerate(lines):
-        _glyphs(
-            group,
-            font,
-            line,
-            size=size,
-            x=x,
-            y=baseline + index * step,
-            fill=fill,
-            max_width=max_width,
-        )
-
-
-def _polygon(points: tuple[tuple[float, float], ...]) -> str:
-    return " ".join(f"{svg.fmt(px)},{svg.fmt(py)}" for px, py in points)
-
-
-def _arrow_right(
-    group: svg.Node, canvas: Canvas, *, x1: float, x2: float, y: float, color: str
-) -> None:
-    head_x = x2 - canvas.arrow_head
-    group.add(
-        "line",
-        x1=x1,
-        y1=y,
-        x2=head_x,
-        y2=y,
-        stroke=color,
-        stroke_width=canvas.arrow_stroke,
-    )
-    head = ((x2, y), (head_x, y - canvas.arrow_half), (head_x, y + canvas.arrow_half))
-    group.add("polygon", points=_polygon(head), fill=color)
-
-
-def _motif(root: svg.Node, fonts: Fonts, palette: Palette, canvas: Canvas) -> None:
-    """Three pills in a row joined by forward arrows; nothing returns to the start."""
-    group = root.add("g", id="motif")
-    top = canvas.motif_top
-    height = canvas.pill_height
-    middle = top + height / 2
-    for index, step in enumerate(MOTIF_STEPS):
-        left = canvas.motif_x + index * (canvas.pill_width + canvas.pill_gap)
-        pill = group.add("g", id=f"step-{step}")
-        pill.add(
-            "rect",
-            x=left,
-            y=top,
-            width=canvas.pill_width,
-            height=height,
-            rx=height / 2,
-            fill=palette.box,
-            stroke=palette.border,
-            stroke_width=canvas.border,
-        )
-        _glyphs(
-            pill,
-            fonts.regular,
-            step,
-            size=canvas.label,
-            x=left + canvas.pill_width / 2,
-            y=middle + canvas.label * LABEL_BASELINE_SHIFT,
-            fill=palette.heading,
-            max_width=canvas.pill_width - 2 * canvas.pill_pad,
-            centered=True,
-        )
-        if index + 1 < len(MOTIF_STEPS):
-            x1 = left + canvas.pill_width + canvas.arrow_clearance
-            x2 = left + canvas.pill_width + canvas.pill_gap - canvas.arrow_clearance
-            _arrow_right(pill, canvas, x1=x1, x2=x2, y=middle, color=palette.accent)
-
-
-def _require_extents(canvas: Canvas, height: int) -> None:
-    """The fixed geometry must stay inside the canvas margins without overlap."""
-    problems: list[str] = []
-    if canvas.text_x + canvas.text_width > canvas.width - canvas.margin:
-        problems.append("text column exceeds the canvas width")
-    if canvas.motif_x + canvas.motif_width > canvas.width - canvas.margin:
-        problems.append("motif exceeds the canvas width")
-    if canvas.text_top < canvas.margin:
-        problems.append(f"wordmark reaches {canvas.text_top} units from the top")
-    if canvas.text_bottom > height - canvas.margin:
-        problems.append(f"tagline needs {canvas.text_bottom} units of height")
-    if canvas.motif_top < canvas.margin:
-        problems.append(f"motif starts {canvas.motif_top} units from the top")
-    if canvas.motif_bottom > height - canvas.margin:
-        problems.append(f"motif needs {canvas.motif_bottom} units of height")
-    beside = canvas.text_x + canvas.text_width <= canvas.motif_x
-    below = canvas.text_bottom <= canvas.motif_top
-    if not (beside or below):
-        problems.append("text column overlaps the motif")
-    if problems:
-        msg = f"{canvas.name} layout does not fit a {canvas.width}x{height} canvas: " + "; ".join(
-            problems
-        )
-        raise ValueError(msg)
-
-
-def _text_blocks(root: svg.Node, fonts: Fonts, palette: Palette, canvas: Canvas) -> None:
-    wordmark = root.add("g", id="wordmark")
-    _glyphs(
-        wordmark,
-        fonts.bold,
-        WORDMARK,
-        size=canvas.wordmark,
-        x=canvas.text_x,
-        y=canvas.wordmark_baseline,
-        fill=palette.heading,
-        max_width=canvas.text_width,
-    )
-    _lines(
-        root.add("g", id="tagline"),
-        fonts.regular,
-        TAGLINE_LINES,
-        size=canvas.tagline,
-        x=canvas.text_x,
-        baseline=canvas.tagline_baseline,
-        step=canvas.tagline_step,
-        fill=palette.body,
-        max_width=canvas.text_width,
-    )
-
-
-def _variant(canvas: Canvas, height: int, palette: Palette, fonts: Fonts) -> svg.Node:
+def prepare(canvas: Canvas, minimum: int) -> None:
+    """Every font-free check for one canvas, in the order ``render`` applies them."""
+    validate_copy((canvas,))
+    require_text_minimum(canvas, minimum)
     require_readable(canvas)
-    _require_extents(canvas, height)
-    root = svg.document(canvas.width, height, title=TITLE, desc=DESC)
-    root.add("rect", x=0, y=0, width=canvas.width, height=height, fill=palette.canvas)
-    _text_blocks(root, fonts, palette, canvas)
-    _motif(root, fonts, palette, canvas)
+    require_layout(canvas)
+
+
+# --------------------------------------------------------------------------- #
+# Drawing
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True, slots=True)
+class Span:
+    text: str
+    role: str
+    bold: bool
+
+
+def line_spans(copy: Copy, lines: tuple[str, ...]) -> list[list[Span]]:
+    """Split each line into colour spans; a highlight may continue onto the next line."""
+    ranges = _spans_of(copy)
+    result: list[list[Span]] = []
+    offset = 0
+    for line in lines:
+        start, end = offset, offset + len(line)
+        cuts = {start, end}
+        for low, high, _ in ranges:
+            cuts.update(point for point in (low, high) if start < point < end)
+        points = sorted(cuts)
+        spans: list[Span] = []
+        for low, high in itertools.pairwise(points):
+            role, bold = copy.role, copy.bold
+            for h_low, h_high, highlight in ranges:
+                if h_low <= low and high <= h_high:
+                    role, bold = highlight.role, highlight.bold or copy.bold
+            spans.append(Span(copy.text[low:high], role, bold))
+        result.append(spans)
+        offset = end + 1  # the single space each line break replaces
+    return result
+
+
+def _measure(fonts: Fonts, spans: list[Span], size: float) -> float:
+    return sum(
+        outline_text(fonts.bold if span.bold else fonts.regular, span.text, size=size).advance
+        for span in spans
+    )
+
+
+def _block(
+    root: svg.Node, fonts: Fonts, palette: Palette, placed: Placed, *, canvas_name: str
+) -> None:
+    setting = placed.setting
+    copy = copy_for(setting.key)
+    group = root.add("g", id=setting.key)
+    for line, spans, baseline in zip(
+        setting.lines, line_spans(copy, setting.lines), placed.baselines, strict=True
+    ):
+        width = _measure(fonts, spans, setting.size)
+        if width > placed.max_width:
+            msg = (
+                f"{canvas_name}: {line!r} is {width:.1f} units wide at size {setting.size}; "
+                f"only {placed.max_width} units are available. Text is not shrunk; "
+                "change the layout or the line breaks"
+            )
+            raise ValueError(msg)
+        x = float(placed.x)
+        for span in spans:
+            font = fonts.bold if span.bold else fonts.regular
+            outline = outline_text(font, span.text, size=setting.size, x=x, y=baseline)
+            if outline.d:
+                group.add("path", d=outline.d, fill=getattr(palette, span.role))
+            x += outline.advance
+
+
+def compose(canvas: Canvas, palette: Palette, fonts: Fonts) -> svg.Node:
+    """Draw one variant: ground, the text column, then the card and its blocks."""
+    root = svg.document(canvas.width, canvas.height, title=TITLE, desc=DESC)
+    root.add("rect", x=0, y=0, width=canvas.width, height=canvas.height, fill=palette.canvas)
+    placed = place(canvas)
+    column = root.add("g", id="column")
+    for item in placed[: len(canvas.column)]:
+        _block(column, fonts, palette, item, canvas_name=canvas.name)
+    card = root.add("g", id="card")
+    card.add(
+        "rect",
+        x=canvas.card_x,
+        y=canvas.card_y,
+        width=canvas.card_width,
+        height=canvas.card_height,
+        rx=canvas.radius,
+        fill=palette.card,
+    )
+    for item in placed[len(canvas.column) :]:
+        _block(card, fonts, palette, item, canvas_name=canvas.name)
     return root
 
 
 def render(context: RenderContext) -> Mapping[str, bytes]:
     """Render every declared output from the pinned fonts, or fail before drawing."""
-    validate_copy()
-    require_label_minimum(DESKTOP, MIN_DESKTOP_LABEL)
-    require_label_minimum(MOBILE, MIN_MOBILE_LABEL)
+    prepare(DESKTOP, MIN_DESKTOP_TEXT)
+    prepare(MOBILE, MIN_MOBILE_TEXT)
     fonts = require_fonts(context)
     return {
-        "hero-light.svg": svg.serialize_bytes(_variant(DESKTOP, DESKTOP_HEIGHT, LIGHT, fonts)),
-        "hero-dark.svg": svg.serialize_bytes(_variant(DESKTOP, DESKTOP_HEIGHT, DARK, fonts)),
-        "hero-mobile-light.svg": svg.serialize_bytes(_variant(MOBILE, MOBILE_HEIGHT, LIGHT, fonts)),
-        "hero-mobile-dark.svg": svg.serialize_bytes(_variant(MOBILE, MOBILE_HEIGHT, DARK, fonts)),
+        "hero-light.svg": svg.serialize_bytes(compose(DESKTOP, LIGHT, fonts)),
+        "hero-dark.svg": svg.serialize_bytes(compose(DESKTOP, DARK, fonts)),
+        "hero-mobile-light.svg": svg.serialize_bytes(compose(MOBILE, LIGHT, fonts)),
+        "hero-mobile-dark.svg": svg.serialize_bytes(compose(MOBILE, DARK, fonts)),
     }

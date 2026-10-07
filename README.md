@@ -1,11 +1,24 @@
+# Actseal
+
+**Test a model's action policy. Replay the evidence.**
+
+A ticket router needs rules for when to act, abstain, escalate or deny.
+Actseal measures accepted-action errors and coverage under a frozen policy.
+
+**Recorded Jev audit: INCONCLUSIVE.**
+580 of 639 verification cases received ACT; 24 disagreed with benchmark labels.
+Fixed benchmark; unreleased producer. [Audit and offline replay](https://github.com/ajaysurya1221/actseal/blob/main/docs/results/jev-audit-2026-10-08/README.md)
+
+**Boundary:** the application owns execution.
+Replay checks consistency; it does not authenticate responses or prove label truth.
+
+**Engineering:** [20 ADRs](https://github.com/ajaysurya1221/actseal/tree/main/docs/decisions) · [11 JSON Schemas](https://github.com/ajaysurya1221/actseal/blob/main/docs/schemas/README.md)
+[Mutation harness](https://github.com/ajaysurya1221/actseal/blob/main/tools/check_mutations.py) · [1.0.0 release receipt](https://github.com/ajaysurya1221/actseal/blob/main/plan/v1/receipts/postpublish-receipt.json)
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-dark.svg">
-  <img alt="Actseal. Test model-chosen actions. Replay the evidence. Three steps: freeze, run, replay." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-light.svg" width="100%">
+  <img alt="Actseal evidence card. Does this frozen action policy meet its declared risk and coverage limits? Freeze the policy, run it once against labelled cases, bound the errors among accepted actions, seal the evidence, replay it with no model call. Preregistered live audit, 639 verification cases, threshold 0.80: ACT 580 of 639, 24 errors; fixed benchmark, unreleased producer; risk [0.0250, 0.0639] against a limit of 0.05; coverage [0.879, 0.932]; verdict INCONCLUSIVE (exit 2); replay requires archived producer d3edbab. Source: docs/results/jev-audit-2026-10-08. Neither PASS nor BLOCK is claimed." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-light.svg" width="100%">
 </picture>
-
-**Frozen policy. Measured risk and coverage. Offline replay.**
-
-A model can choose the right label often and still act on the wrong cases. Actseal checks a frozen action policy against labelled cases, bounds errors among accepted actions and coverage across all scheduled cases, and saves evidence for offline replay.
 
 [![CI](https://github.com/ajaysurya1221/actseal/actions/workflows/ci.yml/badge.svg)](https://github.com/ajaysurya1221/actseal/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/actseal)](https://pypi.org/project/actseal/)
@@ -14,16 +27,14 @@ A model can choose the right label often and still act on the wrong cases. Actse
 
 ## Try it
 
-On macOS or Linux, with [uv](https://docs.astral.sh/uv/getting-started/installation/) installed. No model or API key is needed.
-`./actseal-demo` must be a new directory. The first command downloads the package if needed.
-
+Synthetic demo. macOS/Linux + uv; use a new `./actseal-demo` directory.
 ```bash
 uvx --python 3.12 actseal demo --out ./actseal-demo
 uvx --offline --python 3.12 actseal replay ./actseal-demo/fixed/evidence
 uvx --offline --python 3.12 actseal replay ./actseal-demo/bad/evidence
 ```
 
-Expected result from synthetic fixtures, showing selected output:
+No model or API key is needed; [install uv](https://docs.astral.sh/uv/getting-started/installation/) first. The first command downloads the package if needed. Expected result from synthetic fixtures, showing selected output:
 
 ```text
 [bad] expected BLOCK, observed BLOCK, replay BLOCK (match)
@@ -38,22 +49,37 @@ The third command intentionally exits 1. These fixtures demonstrate the workflow
 
 ## Use it in an application
 
+> **[Before enabling automatic ticket routing](https://github.com/ajaysurya1221/actseal/blob/main/examples/action_gate/README.md)**
+>
+> Run the committed action-gate example to see the application boundary. It verifies a frozen policy, replays the recorded evidence, and routes authored tickets. Only ACT permits the example application’s local queue write; ABSTAIN, ESCALATE and DENY take non-execution paths.
+>
+> From a development checkout, run `uv run --frozen python examples/action_gate/run.py --check`.
+>
+> This is a synthetic integration example. The application owns execution; the result is not evidence of deployment performance.
+
 The [action-gate example](https://github.com/ajaysurya1221/actseal/blob/main/examples/action_gate/README.md)
-shows where Actseal sits in an application's control flow. A small
-ticket-routing application calls the evaluator for every incoming ticket and
-executes its one action, a local queue write, only when the decision is `ACT`;
-`ABSTAIN`, `ESCALATE` and `DENY` take explicit non-execution paths. Actseal
-verifies the frozen policy offline and replays the evidence; it does not
-execute, intercept or enforce the application's action. The example uses
-authored synthetic data (`evidence_scope=demo`) and runs without a key, model
-download or network.
+shows where Actseal sits in an application's control flow and draws that flow
+from the ticket to the four decisions. A small ticket-routing application calls
+the evaluator for every incoming ticket and executes its one action, a local
+queue write, only when the decision is `ACT`. Actseal verifies the frozen policy
+offline and replays the evidence; it does not execute, intercept or enforce the
+application's action. The example uses authored synthetic data
+(`evidence_scope=demo`) and runs without a key, model download or network.
 
 ## How it works
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-dark.svg">
-  <img alt="How Actseal works in five stages. Freeze turns the frozen policy, labelled inputs and model identity into one lock. Run collects provider answers and six synthetic faults into decisions: ACT, ABSTAIN, ESCALATE or DENY. Verify applies the risk and coverage bounds and fault rules to one verdict with its exit code: PASS 0, BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes one bounded evidence bundle. Replay recomputes the verdict offline with no model call." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-light.svg" width="100%">
-</picture>
+**Frozen policy. Measured risk and coverage. Offline replay.**
+
+A model can choose the right label often and still act on the wrong cases. Actseal checks a frozen action policy against labelled cases, bounds errors among accepted actions and coverage across all scheduled cases, and saves evidence for offline replay.
+
+Five stages: **Freeze** turns the frozen policy, labelled inputs and model
+identity into one lock. **Run** collects provider answers and six synthetic
+faults into decisions: ACT, ABSTAIN, ESCALATE or DENY. **Verify** applies the
+risk and coverage bounds and fault rules to one verdict with its exit code.
+**Seal** writes one bounded evidence bundle. **Replay** recomputes the verdict
+offline with no model call. The stages are drawn in the
+[how-it-works figure](https://github.com/ajaysurya1221/actseal/blob/main/docs/assets/how-it-works-light.svg)
+([dark version](https://github.com/ajaysurya1221/actseal/blob/main/docs/assets/how-it-works-dark.svg)).
 
 ## Read a result
 
@@ -105,6 +131,7 @@ The Jev adapter is PROVISIONAL and requires explicit opt-in:
 The released 1.0.0 adapter's accepted evidence uses mocked transports; the separate audit below used an unreleased benchmark producer.
 
 A preregistered audit of Jev on a fixed 16-intent Banking77 subset returned INCONCLUSIVE: 580/639 verification cases received ACT, with 24 accepted errors. The complete [evidence and offline verification instructions](https://github.com/ajaysurya1221/actseal/blob/main/docs/results/jev-audit-2026-10-08/README.md) are published with the unreleased benchmark producer snapshot identified explicitly.
+Its offline replay runs with that archived snapshot and exits 2 (INCONCLUSIVE); the published 1.0.0 package returns ERROR `integrity.lock` for this bundle because that producer is not in the compatibility registry.
 
 Replay never imports a provider, and the packaged demonstration establishes no
 population or model-quality result. The
@@ -117,10 +144,12 @@ the authenticity boundary.
 
 ## Architecture
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-dark.svg">
-  <img alt="Actseal architecture in seven groups: the CLI and typed API; contracts and locks; providers; normalization and policy; assessment, statistics and faults; evidence; and replay. Replay reads the evidence bundle and never reaches a provider." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-light.svg" width="100%">
-</picture>
+Seven groups: the CLI and typed API; contracts and locks; providers;
+normalization and policy; assessment, statistics and faults; evidence; and
+replay. Replay reads the evidence bundle and never reaches a provider. The
+[architecture figure](https://github.com/ajaysurya1221/actseal/blob/main/docs/assets/architecture-light.svg)
+([dark version](https://github.com/ajaysurya1221/actseal/blob/main/docs/assets/architecture-dark.svg))
+names the `actseal` modules in each group.
 
 ## Watch the recorded demo
 
@@ -150,6 +179,19 @@ authenticated model evidence.
 ## Related projects
 
 Actseal is part of a set of tools for independent testing and evidence for agent controls. [ARCI](https://github.com/ajaysurya1221/agent-reliability-ci) gates repeated-trial agent regressions, injects faults and reduces failing fault sets; Actseal checks a frozen categorical policy’s accepted-action risk and coverage, with application-owned actions and offline replay. [Frontier Scout](https://github.com/ajaysurya1221/frontier-scout) compiles policies and verifies PR scope, [Dorian](https://github.com/ajaysurya1221/dorian) checks claim warrants, and [Evalopt Graph](https://github.com/ajaysurya1221/evalopt-graph) evaluates acceptance policies against supplied evidence.
+
+## Development
+
+The [mutation harness](https://github.com/ajaysurya1221/actseal/blob/main/tools/check_mutations.py)
+applies eight prescribed changes to temporary copies of the gate: a wider
+per-tail error allocation, the accepted count as the coverage denominator, a
+zero-width risk interval when nothing is accepted, a threshold tie that
+abstains, PASS read from the wrong risk bound or the wrong coverage bound,
+faults that never block, and integrity errors outranked by a fault. A mutant
+counts as killed only when every designated test fails with an assertion
+error; import, setup or timeout failures invalidate the mutant instead.
+
+Maintained by Ajay Surya Senthilrajan, with AI pair-programming recorded in commit trailers. See the tests, design records and release evidence linked here.
 
 ## License and contributing
 

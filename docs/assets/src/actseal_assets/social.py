@@ -1,14 +1,16 @@
-"""The GitHub social preview: the approved hero composition as one 1280x640 PNG.
+"""The GitHub social preview: the hero's evidence-card composition as one 1280x640 PNG.
 
-The composition is the hero's, unchanged in copy and symbolism: the "Actseal"
-wordmark, the approved two-line tagline and one forward freeze/run/replay
-sequence, stacked as in the desktop hero at three quarters of its size and
-centred on a 1280x640 canvas in the hero's light palette. Like the
-hero, it carries no caption paragraph and no return arrow. Nothing is added:
-no further claim, no padlock, shield, checkmark, badge or other security
-symbol, no new copy. Every visible string is outlined through the hero's
-helpers from the pinned JetBrains Mono files, so the intermediate SVG carries
-no ``<text>``; its generic title and description are the hero's.
+The composition is the hero's, unchanged in copy and structure: the text
+column (eyebrow, thesis question, subline) beside the card that states the
+recorded preregistered audit, in the hero's light palette (cream ground, ink
+card). Only the line breaks, sizes and positions differ, because the card is
+re-flowed for the 1280x640 canvas rather than scaled: scaling the 1600-unit
+desktop composition down would put its body text below the 14 px floor at the
+assumed half-scale display. Nothing is added: no further claim, no padlock,
+shield, checkmark, badge or other security symbol, no new copy. Every visible
+string is outlined through the hero's helpers from the pinned JetBrains Mono
+files, so the intermediate SVG carries no ``<text>``; its title and
+description are the hero's.
 
 Rasterization uses only the pinned resvg binary, re-verified against
 ``tools.toml`` by ``tools.verified_binary`` and run through
@@ -49,39 +51,99 @@ HEIGHT = 640
 # sizes are checked against the 14 px floor at this width; the rendered review
 # confirms or corrects the assumption. Nothing here measures a renderer.
 DISPLAY_WIDTH = 640
+# 14 px at 640 CSS px on the 1280-unit canvas: 28 units. On this card every
+# run, the reference footer included, is at least this size.
+MIN_TEXT = 28
 RESVG = "resvg"
 PALETTE = hero.LIGHT
 
-# The hero's desktop composition at SCALE, rounded to whole units and centred
-# on the card: the 1480x587-unit block becomes 1110x441 units, which leaves 85
-# units at each side and about 100 above and below. All sizes are in SVG units
-# on the 1280x640 canvas.
-SCALE = 0.75
+# The hero's column and card, re-flowed for 1280x640: a 484-unit column at
+# x 56 and a 644-unit card at x 580, each leaving 56 units at its outer side;
+# the column is centred on the card's height.
 CANVAS = hero.Canvas(
     name="social",
     width=WIDTH,
+    height=HEIGHT,
     display_width=DISPLAY_WIDTH,
     margin=40,
-    text_x=85,
-    text_width=1125,
-    wordmark=135,
-    wordmark_baseline=198,
-    tagline=72,
-    tagline_baseline=291,
-    tagline_step=86,
-    label=68,
-    motif_x=85,
-    motif_top=438,
-    pill_width=316,
-    pill_height=102,
-    pill_gap=81,
-    pill_pad=30,
-    border=3,
-    arrow_stroke=6,
-    arrow_head=22,
-    arrow_half=14,
-    arrow_clearance=10,
+    column_x=56,
+    column_y=50,
+    column_width=484,
+    card_x=580,
+    card_y=40,
+    card_width=644,
+    card_height=560,
+    card_pad=26,
+    radius=16,
+    column=(
+        hero.Setting(
+            "eyebrow",
+            ("actseal · frozen decision", "policies · risk and", "coverage · offline replay"),
+            28,
+            37,
+        ),
+        hero.Setting(
+            "thesis",
+            ("Does this frozen", "action policy meet its", "declared risk and", "coverage limits?"),
+            36,
+            42,
+            gap=26,
+        ),
+        hero.Setting(
+            "subline",
+            (
+                "Freeze the policy, run it",
+                "once against labelled cases,",
+                "bound the errors among",
+                "accepted actions, seal the",
+                "evidence, replay it with no",
+                "model call.",
+            ),
+            28,
+            37,
+            gap=26,
+        ),
+    ),
+    card=(
+        hero.Setting(
+            "card-label",
+            ("PREREGISTERED LIVE AUDIT · 639", "VERIFICATION CASES · THRESHOLD 0.80"),
+            28,
+            37,
+        ),
+        hero.Setting("card-headline", (hero.CARD_HEADLINE,), 36, 42, gap=20),
+        hero.Setting("card-scope", ("Fixed benchmark;", "unreleased producer"), 28, 37, gap=6),
+        hero.Setting(
+            "card-bounds",
+            ("risk [0.0250, 0.0639] vs limit", "0.05 · coverage [0.879, 0.932]"),
+            28,
+            37,
+            gap=20,
+        ),
+        hero.Setting(
+            "card-verdict",
+            ("VERDICT: INCONCLUSIVE (exit 2)", "→ replay requires archived", "producer d3edbab"),
+            28,
+            37,
+            gap=20,
+        ),
+        hero.Setting(
+            "card-footer",
+            ("docs/results/jev-audit-2026-10-08 ·", "neither PASS nor BLOCK is claimed"),
+            28,
+            37,
+            gap=20,
+        ),
+    ),
 )
+
+
+def require_card_minimum(canvas: hero.Canvas) -> None:
+    """Every run on the card, the reference footer included, must reach MIN_TEXT units."""
+    for setting in canvas.settings:
+        if setting.size < MIN_TEXT:
+            msg = f"{canvas.name}: {setting.key} is {setting.size} units; minimum is {MIN_TEXT}"
+            raise ValueError(msg)
 
 
 def require_resvg(context: RenderContext) -> Path:
@@ -97,14 +159,8 @@ def require_resvg(context: RenderContext) -> Path:
 
 
 def compose(fonts: hero.Fonts) -> bytes:
-    """The outlined 1280x640 SVG, serialized canonically.
-
-    Reuses the hero's variant builder so the wordmark, tagline and motif are
-    drawn by the same code as the banner; only the canvas differs.
-    """
-    # hero exposes no public composition entry point; its variant builder is
-    # reused as-is rather than duplicating the layout code here.
-    return svg.serialize_bytes(hero._variant(CANVAS, HEIGHT, PALETTE, fonts))
+    """The outlined 1280x640 SVG, serialized canonically, drawn by the hero's code."""
+    return svg.serialize_bytes(hero.compose(CANVAS, PALETTE, fonts))
 
 
 def require_dimensions(data: bytes) -> bytes:
@@ -141,7 +197,8 @@ def rasterize(resvg: Path, document: bytes, context: RenderContext) -> bytes:
 
 def render(context: RenderContext) -> Mapping[str, bytes]:
     """Render ``social.png`` from the pinned fonts and resvg, or fail before drawing."""
-    hero.validate_copy()
+    hero.prepare(CANVAS, MIN_TEXT)
+    require_card_minimum(CANVAS)
     fonts = hero.require_fonts(context)
     resvg = require_resvg(context)
     return {OUTPUT: rasterize(resvg, compose(fonts), context)}
