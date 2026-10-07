@@ -267,6 +267,7 @@ def test_sdist_contains_the_helpers_required_by_its_release_tests(
     with tarfile.open(real_dist / names(version)[1], "r:gz") as archive:
         for relative in (
             "tools/check_release.py",
+            "tools/check_mutations.py",
             ".github/workflows/publish-pypi.yml",
             ".github/workflows/ci.yml",
             "tests/release/release_support.py",
