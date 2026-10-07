@@ -57,6 +57,8 @@ FORBIDDEN_WORDS = (
     "certified",
 )
 MIN_PX = 14.0
+#: Derived from the mobile baselines: four 40-unit caption lines at step 50 from 476.
+MOBILE_HEIGHT = 658
 UPEM = 1000
 ADVANCE = 600
 
@@ -87,7 +89,7 @@ def test_copy_is_exact_and_fixed_lines_rejoin(kit: ModuleType) -> None:
     assert " ".join(hero.MOBILE_CAPTION_LINES) == CAPTION
     assert len(hero.TAGLINE_LINES) == 2
     assert len(hero.DESKTOP_CAPTION_LINES) == 2
-    assert len(hero.MOBILE_CAPTION_LINES) == 3
+    assert len(hero.MOBILE_CAPTION_LINES) == 4
     hero.validate_copy()
     assert TAGLINE in hero.DESC
     assert CAPTION in hero.DESC
@@ -127,10 +129,11 @@ def test_inventory_registers_four_outlined_outputs_and_the_renderer(kit: ModuleT
         assert sizes[name] == (1600, 400, kit.inventory.README_DISPLAY_WIDTH, True)
     for name in MOBILE:
         assert sizes[name] == (720, hero.mobile_height(), kit.inventory.MOBILE_DISPLAY_WIDTH, True)
-    assert hero.mobile_height() == 561
+    assert hero.mobile_height() == MOBILE_HEIGHT
     assert kit.inventory.validate_inventory() == []
-    assert hero.DESKTOP_DISPLAY_WIDTH == kit.inventory.README_DISPLAY_WIDTH
-    assert hero.MOBILE_DISPLAY_WIDTH == kit.inventory.MOBILE_DISPLAY_WIDTH
+    # Measured README image widths (REVIEW 13), not the earlier 880/360 assumptions.
+    assert hero.DESKTOP_DISPLAY_WIDTH == kit.inventory.README_DISPLAY_WIDTH == 838
+    assert hero.MOBILE_DISPLAY_WIDTH == kit.inventory.MOBILE_DISPLAY_WIDTH == 254
     assert hero.MIN_LABEL_PX == kit.checks.MIN_LABEL_PX == MIN_PX
 
 
@@ -142,11 +145,17 @@ def test_type_sizes_meet_the_floor_at_display_width(kit: ModuleType) -> None:
         assert canvas.rendered_px(smallest) >= MIN_PX, canvas.name
         assert canvas.wordmark > canvas.tagline > canvas.caption, canvas.name
         assert canvas.label >= canvas.caption, canvas.name
-    assert hero.DESKTOP.rendered_px(hero.DESKTOP.caption) == pytest.approx(15.4)
-    assert hero.MOBILE.rendered_px(hero.MOBILE.caption) == pytest.approx(15.0)
+    # 28 units x 838/1600 and 40 units x 254/720: both clear the floor, and the
+    # earlier 30-unit mobile sizes would not (30 x 254/720 = 10.6 px).
+    assert hero.DESKTOP.rendered_px(hero.DESKTOP.caption) == pytest.approx(14.665)
+    assert hero.MOBILE.rendered_px(hero.MOBILE.caption) == pytest.approx(14.111, abs=0.001)
+    assert hero.MOBILE.rendered_px(30) < MIN_PX
     too_small = dataclasses.replace(hero.DESKTOP, caption=20)
-    with pytest.raises(ValueError, match=r"20 units render at 11.0px .* minimum is 14px"):
+    with pytest.raises(ValueError, match=r"20 units render at 10.5px .* minimum is 14px"):
         hero.require_readable(too_small)
+    old_mobile = dataclasses.replace(hero.MOBILE, caption=30, label=30)
+    with pytest.raises(ValueError, match=r"30 units render at 10.6px at 254 CSS px"):
+        hero.require_readable(old_mobile)
 
 
 def test_fixed_geometry_fits_both_canvases(kit: ModuleType) -> None:
@@ -288,7 +297,7 @@ def test_every_output_is_outlined_and_passes_the_validators(
 
 @pytest.mark.parametrize(
     ("name", "glyph_paths"),
-    [(DESKTOP[0], 8), (DESKTOP[1], 8), (MOBILE[0], 9), (MOBILE[1], 9)],
+    [(DESKTOP[0], 8), (DESKTOP[1], 8), (MOBILE[0], 10), (MOBILE[1], 10)],
 )
 def test_structure_has_one_motif_and_every_line_as_a_path(
     rendered: dict[str, bytes], name: str, glyph_paths: int

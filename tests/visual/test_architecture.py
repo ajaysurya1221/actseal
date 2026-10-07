@@ -99,10 +99,15 @@ FORBIDDEN_WORDS = (
     "safe",
 )
 MAX_GROUPS = 7
-DESKTOP_MIN_LABEL = 26
-MOBILE_MIN_LABEL = 30
-README_DISPLAY_WIDTH = 880
-MOBILE_DISPLAY_WIDTH = 360
+DESKTOP_HEIGHT = 980
+DESKTOP_MIN_LABEL = 27
+MOBILE_MIN_LABEL = 40
+#: Measured README image widths (REVIEW 13): 838 px at a 1280/1366 px viewport,
+#: 254 px at a 320 px viewport. The figures are validated at these, not at the
+#: earlier 880/360 assumptions.
+README_DISPLAY_WIDTH = 838
+MOBILE_DISPLAY_WIDTH = 254
+MIN_RENDERED_PX = 14.0
 ARROW_TOLERANCE = 6.0
 
 
@@ -210,9 +215,31 @@ def test_every_output_passes_the_validators(
     for output in asset.outputs:
         assert kit.checks.check_output(rendered[output.path], output) == [], output.path
     assert arch.DESKTOP_WIDTH == 1600
-    assert arch.DESKTOP_HEIGHT == 980
+    assert arch.DESKTOP_HEIGHT == DESKTOP_HEIGHT
     assert arch.MOBILE_WIDTH == 720
     assert arch.mobile_height() > arch.MOBILE_WIDTH
+
+
+def test_every_label_clears_the_floor_at_the_measured_readme_widths(
+    kit: ModuleType, rendered: dict[str, bytes]
+) -> None:
+    """Effective rendered size = font-size x (measured display width / SVG width)."""
+    assert kit.inventory.README_DISPLAY_WIDTH == README_DISPLAY_WIDTH
+    assert kit.inventory.MOBILE_DISPLAY_WIDTH == MOBILE_DISPLAY_WIDTH
+    asset = kit.inventory.get_asset("architecture")
+    for output in asset.outputs:
+        root = _tree(rendered[output.path])
+        assert output.width is not None
+        assert output.display_width is not None
+        assert int(root.get("width", "0")) == output.width
+        scale = output.display_width / output.width
+        sizes = [float(t.get("font-size", "0")) for t in root.iter(f"{SVG_NS}text")]
+        assert sizes, output.path
+        smallest = min(sizes) * scale
+        assert smallest >= MIN_RENDERED_PX, (output.path, smallest)
+        # The floor is met with the measured width, and would not be with the
+        # old assumption's successor widths rounded down any further.
+        assert min(sizes) * (output.display_width - 10) / output.width < MIN_RENDERED_PX + 1
 
 
 def test_inventory_registers_the_four_frozen_outputs(kit: ModuleType, arch: ModuleType) -> None:
@@ -224,7 +251,7 @@ def test_inventory_registers_the_four_frozen_outputs(kit: ModuleType, arch: Modu
     assert tuple(output.path for output in asset.outputs) == arch.OUTPUTS == ALL
     sizes = {o.path: (o.width, o.height, o.display_width) for o in asset.outputs}
     for name in DESKTOP:
-        assert sizes[name] == (1600, 980, README_DISPLAY_WIDTH)
+        assert sizes[name] == (1600, DESKTOP_HEIGHT, README_DISPLAY_WIDTH)
     for name in MOBILE:
         assert sizes[name] == (720, arch.mobile_height(), MOBILE_DISPLAY_WIDTH)
     assert all(kit.inventory.is_plain_filename(name) for name in arch.OUTPUTS)
@@ -242,13 +269,27 @@ def test_exactly_seven_groups_with_edges_nested_inside_them(
     # No other top-level containers: the canvas rectangle, title and desc only.
     others = [child.tag for child in root if child.tag != f"{SVG_NS}g"]
     assert others == [f"{SVG_NS}title", f"{SVG_NS}desc", f"{SVG_NS}rect"]
-    headings = [_text(t) for t in root.iter(f"{SVG_NS}text") if t.get("font-weight") == "bold"]
-    joined = " ".join(headings)
-    for phrase in ("Contracts / locks", "CLI / typed API", "Providers", "Normalization", "policy"):
-        assert phrase in joined, phrase
-    assert "Assessment / statistics / faults" in joined
-    assert "Evidence" in joined
-    assert "Replay" in joined
+    # Headings wrap on " / " where a column is narrow; the title words must all appear.
+    heading_words = {
+        word.strip()
+        for t in root.iter(f"{SVG_NS}text")
+        if t.get("font-weight") == "bold"
+        for word in _text(t).split(" / ")
+    }
+    assert heading_words == {
+        "Contracts",
+        "locks",
+        "CLI",
+        "typed API",
+        "Providers",
+        "Normalization",
+        "policy",
+        "Assessment",
+        "statistics",
+        "faults",
+        "Evidence",
+        "Replay",
+    }
 
 
 @pytest.mark.parametrize("name", ALL)
@@ -309,9 +350,10 @@ def test_live_boundary_encloses_only_the_laya_and_jev_adapters(
     assert any("faults" in label for label in outside)
     # The experimental status of Jev is legible in the same box, outside the dashed area.
     notes = [_text(t) for t in providers.iter(f"{SVG_NS}text")]
-    assert "jev: PROVISIONAL opt-in" in notes
-    assert "fixture: recorded file" in notes
-    assert "laya: pinned checkpoint" in notes
+    joined_notes = " ".join(notes)
+    assert "jev: PROVISIONAL opt-in" in joined_notes
+    assert "fixture: recorded file" in joined_notes
+    assert "laya: pinned checkpoint" in joined_notes
     assert "live model" not in " ".join(_texts(root)).lower()
 
 
@@ -330,9 +372,10 @@ def test_edges_match_the_module_graph_and_never_join_replay_to_providers(
         assert edge in list(parent), edge.get("id")
         assert len(edge.findall(f"{SVG_NS}polyline")) == 1
         assert len(edge.findall(f"{SVG_NS}polygon")) == 1
-        labels = [_text(t) for t in edge.findall(f"{SVG_NS}text")]
+        # A label may wrap onto several <text> lines; rejoined it is the exact label.
+        label = " ".join(_text(t) for t in edge.findall(f"{SVG_NS}text"))
         expected = EXPECTED_LABELS.get((source, edge.get("data-target", "")))
-        assert labels == ([expected] if expected else []), edge.get("id")
+        assert label == (expected or ""), edge.get("id")
     # Replay reads the bundle and recomputes through contracts and assessment.
     assert {t for s, t in pairs if s == "replay"} == {"contracts", "assessment"}
     assert {s for s, t in pairs if t == "replay"} == {"evidence"}
@@ -516,11 +559,11 @@ def test_no_authentication_enforcement_or_jev_language(
     # Jev appears only with its experimental status, never as a stable adapter
     # and never with a claim that it answered.
     jev_labels = [label for label in _texts(root) if "jev" in label.lower()]
-    # Desktop wraps the two live names onto separate lines; mobile keeps them together.
-    names = [part.strip() for label in jev_labels[:-1] for part in label.split("·")]
+    # The live names may share a line or wrap; the note may wrap on mobile.
+    names = [part.strip() for label in jev_labels for part in label.split("·")]
     assert "experimental.providers.jev" in names
-    assert jev_labels[-1] == "jev: PROVISIONAL opt-in"
-    assert len(jev_labels) == 2
+    assert any(label.startswith("jev: PROVISIONAL") for label in jev_labels)
+    assert all("jev" in label.split(":")[0] or "providers.jev" in label for label in jev_labels)
     assert "provisional" in (desc.text or "").lower()
     assert "explicit opt-in" in (desc.text or "").lower()
 
@@ -593,17 +636,19 @@ def test_desktop_and_mobile_carry_the_same_content(
     def content(name: str) -> tuple[set[str], set[str], set[str], set[tuple[str, str]]]:
         root = _tree(rendered[name])
         names = {m for key in GROUP_KEYS for m in _module_names(_group(root, key), arch)}
-        edge_texts = {_text(t) for e in _edges(root) for t in e.iter(f"{SVG_NS}text")}
-        # Headings and module runs wrap differently per canvas, so phrases are
-        # compared after splitting on the two separators.
+        edge_elements = {t for e in _edges(root) for t in e.iter(f"{SVG_NS}text")}
+        edge_labels = {" ".join(_text(t) for t in e.findall(f"{SVG_NS}text")) for e in _edges(root)}
+        # Headings, module runs, notes and labels wrap differently per canvas,
+        # so phrases are compared word by word after splitting on separators.
         phrases = {
-            part.strip()
-            for label in _texts(root)
-            if label not in edge_texts
-            for part in re.split(r"[·/]", label)
+            word
+            for text in root.iter(f"{SVG_NS}text")
+            if text not in edge_elements
+            for part in re.split(r"[·/]", _text(text))
+            for word in part.split()
         }
         pairs = {(e.get("data-source", ""), e.get("data-target", "")) for e in _edges(root)}
-        return names, phrases, edge_texts, pairs
+        return names, phrases, edge_labels, pairs
 
     assert content(DESKTOP[0]) == content(MOBILE[0])
     desktop_order = [g.get("id") for g in _top_groups(_tree(rendered[DESKTOP[0]]))]
@@ -621,18 +666,24 @@ def test_desktop_and_mobile_carry_the_same_content(
 def test_width_model_and_wrapping(arch: ModuleType) -> None:
     assert arch.wrap(("a", "b"), 26, 1000, separator=" · ") == ["a · b"]
     names = ("contract", "records", "errors", "serialization", "locking", "compatibility")
-    desktop = arch.wrap(names, 26, 326, separator=" · ")
+    desktop = arch.wrap(names, 27, 347, separator=" · ")
     assert desktop == ["contract · records · errors", "serialization · locking", "compatibility"]
-    mobile = arch.wrap(names, 30, 608, separator=" · ")
-    assert mobile == ["contract · records · errors · serialization", "locking · compatibility"]
+    mobile = arch.wrap(names, 40, 608, separator=" · ")
+    assert mobile == ["contract · records · errors", "serialization · locking", "compatibility"]
     with pytest.raises(ValueError, match="does not fit"):
         arch.wrap(("this single phrase is far too long for the column",), 26, 200, separator=" · ")
     # The desktop column cannot hold the two-word heading on one line; the
     # mobile column can.
-    bold = arch.wrap(("Normalization", "policy"), 32, 326, separator=" / ", bold=True)
+    bold = arch.wrap(("Normalization", "policy"), 32, 347, separator=" / ", bold=True)
     assert bold == ["Normalization", "policy"]
-    assert arch.wrap(("Normalization", "policy"), 36, 608, separator=" / ", bold=True) == [
+    assert arch.wrap(("Normalization", "policy"), 44, 608, separator=" / ", bold=True) == [
         "Normalization / policy"
+    ]
+    # Word wrapping of a long note at the mobile size.
+    words = ("recomputes", "decisions,", "then", "the", "verdict")
+    assert arch.wrap(words, 40, 608, separator=" ") == [
+        "recomputes decisions, then the",
+        "verdict",
     ]
 
 
@@ -640,8 +691,9 @@ def test_oversized_content_fails_instead_of_shrinking(
     kit: ModuleType, arch: ModuleType, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     groups: Any = list(arch.GROUPS)
+    # Notes wrap on spaces, so only an unbreakable word can overflow a column.
     groups[-1] = arch.Group(
-        "replay", ("Replay",), ("replay",), ("a note that cannot possibly fit in one column",)
+        "replay", ("Replay",), ("replay",), ("one-unbreakable-note-that-cannot-fit-a-column",)
     )
     monkeypatch.setattr(arch, "GROUPS", tuple(groups))
     context = kit.inventory.RenderContext(root=REPO_ROOT, work=Path("/nonexistent"))
