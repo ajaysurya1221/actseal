@@ -83,6 +83,9 @@ def test_guide_requires_pre_tag_documentation_finalization() -> None:
     assert "**Pre-tag documentation finalization.**" in guide
     assert "tagged commit is immutable" in guide
     assert "A later task cannot change bytes already tagged or uploaded." in guide
+    assert "not part of the published distribution" not in guide
+    assert "packages the pre-tag copies of `plan/v1/RELEASE_NOTES.md`" in guide
+    assert "cannot alter the already-tagged commit" in guide
     notes = (ROOT / "plan" / "v1" / "RELEASE_NOTES.md").read_text(encoding="utf-8")
     assert "`source_commit`" in notes
     assert "source.commit" not in notes

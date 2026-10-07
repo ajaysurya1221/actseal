@@ -53,11 +53,16 @@ bytes and are never labelled public PyPI receipts.
    long description. Before tagging, every "unreleased", "candidate",
    "pending implementation" or conditional (Jev, example, benchmark)
    statement in `CHANGELOG.md`, `README.md` and `docs/` must be resolved to
-   the shipped facts, and the ADR status paragraphs must match them. Only
-   the publication receipts themselves (hashes, run ids, post-publication
-   results, the genuine demo recording) are added afterwards, to
-   `plan/v1/RELEASE_NOTES.md`, the final report and a later documentation
-   commit; those files are not part of the published distribution. A later
+   the shipped facts, and the ADR status paragraphs must match them. The
+   source distribution also packages the pre-tag copies of
+   `plan/v1/RELEASE_NOTES.md`, `plan/v1/reports/` and `plan/v1/reviews/` as
+   listed in `pyproject.toml`, so the release-notes draft inside the sdist is
+   whatever that file says at the tag, with its pending markers. Only the
+   publication receipts themselves (hashes, run ids, post-publication
+   results, the genuine demo recording) are added afterwards, in a later
+   documentation commit to the repository's `plan/v1/RELEASE_NOTES.md`, the
+   final report and the GitHub release; those additions cannot alter the
+   already-tagged commit or the already-uploaded wheel and sdist. A later
    task cannot change bytes already tagged or uploaded.
 2. Create and push an annotated tag `vX.Y.Z` on exactly that commit. The
    `build` job rejects a tag whose version does not match the sources.
