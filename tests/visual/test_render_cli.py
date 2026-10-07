@@ -22,12 +22,13 @@ from visual.visual_support import MANIFEST, REPO_ROOT, SRC_DIR
 RENDER = SRC_DIR / "render.py"
 CACHE_ENV = "ACTSEAL_ASSET_TOOLS"
 
-# Four assets are implemented. The how-it-works and architecture figures need
+# Five assets are implemented. The how-it-works and architecture figures need
 # no pinned input and render anywhere. The hero needs the pinned font; the
-# social preview needs the font and the resvg binary; a bootstrap repository
-# has fetched neither. Every other asset is planned.
-IMPLEMENTED = ("hero", "how-it-works", "architecture", "social")
-PLANNED = ("demo", "where", "matrix", "boundary")
+# social preview needs the font and the resvg binary; the demo needs the
+# font, the agg binary and the committed raw recording; a bootstrap
+# repository has none of them. Every other asset is planned.
+IMPLEMENTED = ("hero", "how-it-works", "architecture", "social", "demo")
+PLANNED = ("where", "matrix", "boundary")
 #: A planned asset used where a test needs one that is explicitly not implemented.
 PLANNED_EXAMPLE = ("where", "16")
 FONT_NOT_FETCHED = (
@@ -39,23 +40,26 @@ HERO_FONT_ERROR = f"[error] hero: {FONT_NOT_FETCHED}"
 HERO_SKIPPED = f"[error] hero: {SKIPPED}"
 SOCIAL_FONT_ERROR = f"[error] social: {FONT_NOT_FETCHED}"
 SOCIAL_SKIPPED = f"[error] social: {SKIPPED}"
+DEMO_FONT_ERROR = f"[error] demo: {FONT_NOT_FETCHED}"
+DEMO_CAST_MISSING = "[error] demo: source docs/assets/src/demo.cast is not present"
+DEMO_SKIPPED = f"[error] demo: {SKIPPED}"
 FONTS_INFO = "[info] fonts: jetbrains-mono 2.304 not fetched; run setup_tools.py"
-# Hero font + skipped, social resvg + font + skipped.
-PREREQUISITE_ERRORS = 5
+# Hero font + skipped, social resvg + font + skipped, demo agg + font + cast + skipped.
+PREREQUISITE_ERRORS = 9
 # Four how-it-works outputs and four architecture outputs that a bootstrap
 # repository has not committed yet.
 WORKFLOW_OUTPUTS = 4
 ARCHITECTURE_OUTPUTS = 4
 FONT_FREE_OUTPUTS = WORKFLOW_OUTPUTS + ARCHITECTURE_OUTPUTS
 FRESH_CHECK_SUMMARY = (
-    f"2 asset(s) checked; 4 planned/not implemented; "
+    f"2 asset(s) checked; 3 planned/not implemented; "
     f"{PREREQUISITE_ERRORS + FONT_FREE_OUTPUTS} error(s)"
 )
 WRITE_SUMMARY = (
-    f"2 asset(s) checked; 4 planned/not implemented; {PREREQUISITE_ERRORS} error(s); "
+    f"2 asset(s) checked; 3 planned/not implemented; {PREREQUISITE_ERRORS} error(s); "
     f"{FONT_FREE_OUTPUTS} file(s) written"
 )
-CHECKED_SUMMARY = f"2 asset(s) checked; 4 planned/not implemented; {PREREQUISITE_ERRORS} error(s)"
+CHECKED_SUMMARY = f"2 asset(s) checked; 3 planned/not implemented; {PREREQUISITE_ERRORS} error(s)"
 
 
 @pytest.fixture(autouse=True)
@@ -126,6 +130,31 @@ def _assert_social_blocked(kit: ModuleType, cache: Path, out: str) -> None:
     assert "render failed" not in out
 
 
+def _demo_agg_error(kit: ModuleType, cache: Path) -> str:
+    tool = kit.tools.load_manifest(MANIFEST)["agg"]
+    key = kit.tools.platform_key()
+    artifact = tool.artifact_for(key)
+    if artifact is None:
+        detail = f"agg 1.9.0: no pinned artifact for platform {key}"
+    else:
+        binary = kit.tools.cached_binary_path(tool, artifact)
+        assert binary.is_relative_to(cache)
+        assert not binary.exists()
+        detail = f"agg 1.9.0 is not cached at {binary}; run setup_tools.py"
+    return f"[error] demo: requires agg 1.9.0: {detail}"
+
+
+def _assert_demo_blocked(kit: ModuleType, cache: Path, out: str) -> None:
+    """The demo is implemented but its three inputs are absent; agg never runs."""
+    assert _demo_agg_error(kit, cache) in out
+    assert DEMO_FONT_ERROR in out
+    assert DEMO_CAST_MISSING in out
+    assert DEMO_SKIPPED in out
+    assert "[ok] demo" not in out
+    assert "demo: not implemented" not in out
+    assert "render failed" not in out
+
+
 def _assert_planned_informational(out: str) -> None:
     for name in PLANNED:
         assert f"[info] {name}: not implemented (planned in Task " in out
@@ -160,7 +189,7 @@ def _assert_architecture_matches(kit: ModuleType, out: str) -> None:
 def test_fresh_check_reports_planned_prerequisites_and_uncommitted_workflow(
     kit: ModuleType, repo: Path, tool_cache: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """A bootstrap repository: planned assets informational, hero and social blocked.
+    """A bootstrap repository: planned assets informational, hero, social and demo blocked.
 
     The how-it-works and architecture figures render (two assets checked) but
     their eight outputs are not committed yet; the hero and the social preview
@@ -172,6 +201,7 @@ def test_fresh_check_reports_planned_prerequisites_and_uncommitted_workflow(
     _assert_planned_informational(out)
     _assert_hero_blocked(out)
     _assert_social_blocked(kit, tool_cache, out)
+    _assert_demo_blocked(kit, tool_cache, out)
     _assert_workflow_not_committed(kit, out)
     _assert_architecture_not_committed(kit, out)
     assert FONTS_INFO in out
@@ -183,12 +213,13 @@ def test_fresh_check_reports_planned_prerequisites_and_uncommitted_workflow(
 def test_write_then_check_writes_only_the_workflow_and_keeps_prerequisite_errors(
     kit: ModuleType, repo: Path, tool_cache: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Global --write produces exactly the eight font-free files; hero and social stay blocked."""
+    """Global --write produces exactly the eight font-free files; hero/social/demo stay blocked."""
     assert kit.cli.main(["--write"], root=repo) == 1
     written = capsys.readouterr().out
     _assert_planned_informational(written)
     _assert_hero_blocked(written)
     _assert_social_blocked(kit, tool_cache, written)
+    _assert_demo_blocked(kit, tool_cache, written)
     for output in kit.how_it_works.OUTPUTS:
         assert f"[ok] how-it-works: wrote docs/assets/{output} (" in written
     for output in kit.architecture.OUTPUTS:
@@ -202,6 +233,7 @@ def test_write_then_check_writes_only_the_workflow_and_keeps_prerequisite_errors
     _assert_planned_informational(checked)
     _assert_hero_blocked(checked)
     _assert_social_blocked(kit, tool_cache, checked)
+    _assert_demo_blocked(kit, tool_cache, checked)
     _assert_workflow_matches(kit, checked)
     _assert_architecture_matches(kit, checked)
     assert checked.count("[error]") == PREREQUISITE_ERRORS
@@ -274,6 +306,7 @@ def test_only_implemented_social_without_prerequisites_exits_one(
     assert "hero" not in out
     assert "how-it-works" not in out
     assert "architecture" not in out
+    assert "demo" not in out
     assert out.count("[error]") == 3
     expected = "0 asset(s) checked; 0 planned/not implemented; 3 error(s)"
     if mode == "--write":
@@ -352,6 +385,7 @@ def test_render_script_runs_without_fonttools(
     assert written.rstrip().endswith("exit=1")
     _assert_hero_blocked(written)
     _assert_social_blocked(kit, tool_cache, written)
+    _assert_demo_blocked(kit, tool_cache, written)
     _assert_planned_informational(written)
     assert written.count("[error]") == PREREQUISITE_ERRORS
     assert WRITE_SUMMARY in written
@@ -361,6 +395,7 @@ def test_render_script_runs_without_fonttools(
     assert checked.rstrip().endswith("exit=1")
     _assert_hero_blocked(checked)
     _assert_social_blocked(kit, tool_cache, checked)
+    _assert_demo_blocked(kit, tool_cache, checked)
     _assert_workflow_matches(kit, checked)
     _assert_architecture_matches(kit, checked)
     assert "[ok] references: 0 image reference(s) checked" in checked
