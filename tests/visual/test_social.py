@@ -236,27 +236,58 @@ def test_type_sizes_meet_the_floor_and_geometry_fits_the_card(kit: ModuleType) -
     hero._require_extents(canvas, social.HEIGHT)
     assert min(canvas.sizes) == canvas.label
     assert canvas.rendered_px(min(canvas.sizes)) >= MIN_PX
-    assert canvas.rendered_px(canvas.label) == pytest.approx(20.0)
+    assert canvas.rendered_px(canvas.label) == pytest.approx(34.0)
     assert canvas.wordmark > canvas.tagline > canvas.label
-    # Stacked order with clear gaps: wordmark, tagline, then the motif.
+    # Stacked order: wordmark, tagline, then the motif.
     assert canvas.margin <= canvas.text_top
     assert canvas.wordmark_baseline < canvas.tagline_baseline
-    assert canvas.tagline_baseline + canvas.tagline_step + canvas.tagline < canvas.motif_top
     assert canvas.text_bottom < canvas.motif_top
     assert canvas.motif_bottom <= social.HEIGHT - canvas.margin
-    # The block is centred vertically: the space above the wordmark's ascender
-    # allowance and below the pills differs by less than one tagline line.
-    above, below = canvas.text_top, social.HEIGHT - canvas.motif_bottom
-    assert abs(above - below) < canvas.tagline
-    # The motif spans the text column inside the margins.
-    assert canvas.motif_width == canvas.text_width
-    assert canvas.motif_x == canvas.text_x
+    # The block is centred: the space above the wordmark's cap height and
+    # below the pills differs by less than one unit, and the pill row leaves
+    # the same 85 units at each side.
+    above = canvas.wordmark_baseline - 0.73 * canvas.wordmark
+    below = social.HEIGHT - canvas.motif_bottom
+    assert abs(above - below) < 1
+    assert canvas.motif_x == canvas.text_x == WIDTH - (canvas.motif_x + canvas.motif_width) == 85
     assert canvas.text_x + canvas.text_width <= WIDTH - canvas.margin
     too_small = dataclasses.replace(canvas, label=26)
     with pytest.raises(ValueError, match=r"26 units render at 13.0px .* minimum is 14px"):
         hero.require_readable(too_small)
-    with pytest.raises(ValueError, match="motif needs 534 units of height"):
+    with pytest.raises(ValueError, match="motif needs 540 units of height"):
         hero._require_extents(canvas, 560)
+
+
+def test_card_is_the_desktop_hero_composition_at_three_quarters(kit: ModuleType) -> None:
+    """Every size, stroke and vertical offset is the hero's times SCALE, to whole units."""
+    social, hero = kit.social, kit.hero
+    card, desktop = social.CANVAS, hero.DESKTOP
+    assert social.SCALE == 0.75
+    for name in (
+        "wordmark",
+        "tagline",
+        "label",
+        "tagline_step",
+        "text_width",
+        "pill_width",
+        "pill_height",
+        "pill_gap",
+        "pill_pad",
+        "border",
+        "arrow_stroke",
+        "arrow_head",
+        "arrow_half",
+        "arrow_clearance",
+    ):
+        expected = social.SCALE * getattr(desktop, name)
+        assert abs(getattr(card, name) - expected) <= 1.5, name
+    assert card.motif_width == social.SCALE * desktop.motif_width
+    for top, bottom in (
+        ("wordmark_baseline", "tagline_baseline"),
+        ("tagline_baseline", "motif_top"),
+    ):
+        offset = getattr(card, bottom) - getattr(card, top)
+        assert offset == social.SCALE * (getattr(desktop, bottom) - getattr(desktop, top))
 
 
 def test_exact_png_dimensions_are_required(kit: ModuleType) -> None:
@@ -472,7 +503,7 @@ def test_overflowing_line_fails_instead_of_shrinking(
     doubled = _doubled(kit, repo, monkeypatch)
     narrow = dataclasses.replace(kit.social.CANVAS, text_width=400)
     monkeypatch.setattr(kit.social, "CANVAS", narrow)
-    with pytest.raises(ValueError, match=r"units wide at size 144; only 400 units are available"):
+    with pytest.raises(ValueError, match=r"units wide at size 135; only 400 units are available"):
         kit.social.render(doubled.context)
     assert doubled.commands == []
     assert not (doubled.context.work / OUTPUT).exists()

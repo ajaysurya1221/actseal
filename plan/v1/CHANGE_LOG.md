@@ -618,3 +618,11 @@ the figures (about 7 px and 5 px at 254 px). A follow-up hero composition
 (all text at least 14 nominal CSS px at 254 px image width, one composition
 per colour scheme, reviewed at 838 px) is scheduled; it is not a prerequisite
 for this repair. The workflow and architecture figures remain supplemental.
+
+### V1-057 closing note (8 October 2026)
+
+WP-A1c accepts the 1600×700 hero and matching 1280×640 social card. The hero
+clears the 14 nominal CSS-px floor at 254 px and was visually reviewed in
+both themes at 254 and 838 px. Its approximately 220 px additional desktop
+height is accepted. This supersedes the hero portion of V1-057's exception;
+workflow and architecture phone legibility remain unresolved.
