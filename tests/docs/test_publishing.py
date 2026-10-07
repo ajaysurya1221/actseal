@@ -86,6 +86,14 @@ def test_guide_requires_pre_tag_documentation_finalization() -> None:
     assert "not part of the published distribution" not in guide
     assert "packages the pre-tag copies of `plan/v1/RELEASE_NOTES.md`" in guide
     assert "cannot alter the already-tagged commit" in guide
+    # The release notes are a pre-tag finalization input, not an exception.
+    assert "`docs/` **and `plan/v1/RELEASE_NOTES.md`** must be resolved" in guide
+    assert "with its pending markers" not in guide
+    # Only named publication-receipt placeholders survive the tag.
+    assert "may contain **only** named placeholders for publication receipts" in guide
+    for receipt in ("hashes", "artifact ids", "attestation", "post-publication", "recording"):
+        assert receipt in guide, receipt
+    assert "No other draft, candidate or pending marker may remain." in guide
     notes = (ROOT / "plan" / "v1" / "RELEASE_NOTES.md").read_text(encoding="utf-8")
     assert "`source_commit`" in notes
     assert "source.commit" not in notes
