@@ -33,7 +33,10 @@ APPROVED_PINS = {
     ("agg", "agg-aarch64-apple-darwin"): (
         "742b2b6230529b72f310acb835e9479496000f2eabc97b0993cabe1d7fe70171"
     ),
-    ("resvg", "resvg-macos-arm64.zip"): (
+    ("agg", "agg-x86_64-unknown-linux-gnu"): (
+        "f111e315cd71056b116302342553dd765b7297579ed511f111d0cedb442aeda6"
+    ),
+    ("resvg", "resvg-macos-aarch64.zip"): (
         "06440eb5aa14a28cbfc7e40ae39e1ffa71adc051b89fbaa913b4f1d9b905d09f"
     ),
     ("resvg", "resvg-linux-x86_64.tar.gz"): (
