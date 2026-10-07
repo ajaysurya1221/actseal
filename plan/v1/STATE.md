@@ -10,6 +10,8 @@ All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; s
 
 ## Current constraint and next action
 
+Update 7 October, approximately 12:27 IST: the human explicitly approved Task13 merges and granted standing approval for future actions within the sprint. V1-041 records the scope. The prior architecture denial remains historical; resume the same Claude13 session with the two exact local merges. Narrow Task06 key loading is covered for its already reviewed one-attempt audit after exact-state rechecks and a separate live dispatch. No key has yet been accessed or live request made at this update. Prior pending-approval statements below describe the pre-approval checkpoint and are superseded only within V1-041's scope. All acceptance/publication gates remain.
+
 The one-time10:30IST heartbeat resumed the same Task15 and Task06 Fable5.1/high sessions after the verified reset. Both now report allowance available, no overage use and no model/account/billing substitution. Prior quota rejections remain historical. Do not start duplicate sessions.
 
 1. Task15 accepted and merged7820dba; actual social.png delivered, manual upload remains.
