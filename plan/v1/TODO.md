@@ -19,4 +19,10 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work: preserve03/04 drafts and record independent reviews while Claude quota resets at01:50 IST.02 core and10 toolchain are merged.09 implementation has bounded ACCEPT, with final asset/schema integration and hosted rehearsal pending.12 needs a content revision. Asset-download and exact local-check permission requests remain pending. All handles are terminal; see STATE.md before resuming.
+Current work: Task13 architecture source/unit preparation has scoped ACCEPT at2e2a7b2 with286 parent visual and50 independent focused checks. Final provider inclusion, registration, committed outputs and rendered acceptance remain required. Task15 source/test preparation and Task08 ADR repairs have scoped ACCEPT and eight green hosted jobs each.
+
+Task09 ordinary-CI provisioning has local scoped ACCEPT at bdedc1e (64 parent checks, 41 independent checks). Do not push this branch while tool-download approval is pending. Checkpoint11 is merged at 0348fa0 after independent ACCEPT and eight green jobs.
+
+Task06 remains stopped after retrying denied public-cache access; the deviation and scoped approval request remain open. Native03, mutation04, example07, actual visuals and tracked .env.example access also remain approval-blocked. No v1 tag or publication exists.
+
+Next gate: finish Task13 draft CI and checkpoint12 review. All executor processes are terminal; remaining full-task operations need the pending approvals. Preserve all original acceptance and publication gates.
