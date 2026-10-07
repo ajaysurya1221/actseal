@@ -84,6 +84,9 @@ _GIF_TRAILER = 0x3B
 _GIF_EXTENSION = 0x21
 _GIF_IMAGE = 0x2C
 _GIF_GRAPHIC_CONTROL = 0xF9
+_GIF_COMMENT = 0xFE
+_GIF_APPLICATION = 0xFF
+_GIF_APPLICATION_HEADER_LENGTH = 11
 _GIF_GCE_LENGTH = 4
 _GIF_HEADER_LENGTH = 13
 _GIF_IMAGE_DESCRIPTOR_LENGTH = 9
@@ -331,6 +334,48 @@ def _graphic_control(reader: _Reader) -> int:
     return int.from_bytes(body[1:3], "little")
 
 
+def _application(reader: _Reader) -> None:
+    """An application extension: an 11-byte header block, then bounded sub-blocks.
+
+    agg writes the Netscape looping extension in this shape. The header's
+    identifier and authentication code are not interpreted.
+    """
+    at = reader.position - 2
+    size = reader.byte("an application extension header")
+    if size != _GIF_APPLICATION_HEADER_LENGTH:
+        msg = f"malformed application extension at byte {at}: header block size {size}"
+        raise DemoError(msg)
+    reader.take(_GIF_APPLICATION_HEADER_LENGTH, "an application extension header")
+    reader.skip_sub_blocks("application extension")
+
+
+def _extension(reader: _Reader, pending: int | None) -> int | None:
+    """One extension; returns the pending graphic control delay after it.
+
+    Only the subset agg emits is supported: a graphic control (at most one
+    pending at a time), a bounded comment and a well-formed application
+    extension. Plain-text (0x01) and unknown labels are rejected rather than
+    skipped, so no unsupported block can carry or hide frame timing. A
+    pending graphic control survives comments and application extensions,
+    which are not graphic blocks, and must still be followed by an image.
+    """
+    label = reader.byte("an extension introducer")
+    at = reader.position - 2
+    if label == _GIF_GRAPHIC_CONTROL:
+        if pending is not None:
+            msg = f"duplicate graphic control extension at byte {at}"
+            raise DemoError(msg)
+        return _graphic_control(reader)
+    if label == _GIF_COMMENT:
+        reader.skip_sub_blocks("comment extension")
+        return pending
+    if label == _GIF_APPLICATION:
+        _application(reader)
+        return pending
+    msg = f"unsupported extension label 0x{label:02x} at byte {at}"
+    raise DemoError(msg)
+
+
 def _image(reader: _Reader) -> None:
     """One image descriptor, optional local table, code size and non-empty data."""
     at = reader.position - 1
@@ -354,8 +399,10 @@ def measure_gif(data: bytes) -> GifFacts:
     """Walk every block to the trailer and sum the delays of displayed frames.
 
     Structure only: signature, logical screen descriptor, colour tables,
-    extensions, image descriptors, code sizes, sub-blocks, terminators and
-    the trailer are all bounded and validated; LZW pixels are not decoded.
+    the supported extensions (graphic control, comment, application), image
+    descriptors, code sizes, sub-blocks, terminators and the trailer are all
+    bounded and validated; LZW pixels are not decoded. Plain-text and unknown
+    extension labels are rejected.
     Exactly one graphic control extension may precede an image; its delay
     counts for that image alone. A duplicate or dangling control, an image
     without data, an unknown block, truncation or trailing bytes is rejected
@@ -378,14 +425,7 @@ def measure_gif(data: bytes) -> GifFacts:
         if block == _GIF_TRAILER:
             break
         if block == _GIF_EXTENSION:
-            label = reader.byte("an extension introducer")
-            if label == _GIF_GRAPHIC_CONTROL:
-                if pending is not None:
-                    msg = f"duplicate graphic control extension at byte {reader.position - 2}"
-                    raise DemoError(msg)
-                pending = _graphic_control(reader)
-            else:
-                reader.skip_sub_blocks("extension")
+            pending = _extension(reader, pending)
         elif block == _GIF_IMAGE:
             _image(reader)
             frames += 1

@@ -583,6 +583,86 @@ def test_unshown_control_time_is_never_counted(kit: ModuleType) -> None:
 
 _HEADER_ONLY = synthetic_gif(())[:-1]  # signature, screen descriptor, global table; no trailer
 _FRAME = ONE_FRAME[len(_HEADER_ONLY) : -1]  # one GCE (100 cs) plus one image
+_GCE_2000 = b"\x21\xf9\x04\x00" + (2000).to_bytes(2, "little") + b"\x00\x00"
+_IMAGE = _FRAME[8:]  # the image descriptor, code size and data without its control
+#: Netscape looping application extension exactly as agg-style encoders write it.
+_NETSCAPE = b"\x21\xff\x0bNETSCAPE2.0" + _sub_blocks(b"\x01\x00\x00")
+
+
+@pytest.mark.parametrize(
+    ("extension", "match"),
+    [
+        (b"\x21\xff\x00", r"malformed application extension at byte (27|19): header block size 0"),
+        (b"\x21\x01\x00", r"unsupported extension label 0x01 at byte (27|19)$"),
+        (b"\x21\x00\x00", r"unsupported extension label 0x00 at byte (27|19)$"),
+        (
+            b"\x21\xff\x0aNETSCAPE2." + b"\x00",
+            r"malformed application extension at byte (27|19): header block size 10",
+        ),
+        (b"\x21\xf0\x00", r"unsupported extension label 0xf0 at byte (27|19)$"),
+        (b"\x21\xf1\x03abc\x00", r"unsupported extension label 0xf1 at byte (27|19)$"),
+    ],
+    ids=_short_id,
+)
+def test_unsupported_or_malformed_extensions_are_rejected(
+    kit: ModuleType, extension: bytes, match: str
+) -> None:
+    """Review probes: an extension between a control and its image must be a supported shape.
+
+    The same complete bytes are rejected whether or not a control precedes
+    them; the reported offset is 27 after the 8-byte control and 19 without.
+    """
+    with pytest.raises(kit.demo.DemoError, match=match) as after_control:
+        kit.demo.measure_gif(_HEADER_ONLY + _GCE_2000 + extension + _IMAGE + b"\x3b")
+    assert "at byte 27" in str(after_control.value)
+    with pytest.raises(kit.demo.DemoError, match=match) as alone:
+        kit.demo.measure_gif(_HEADER_ONLY + extension + _IMAGE + b"\x3b")
+    assert "at byte 19" in str(alone.value)
+
+
+@pytest.mark.parametrize(
+    ("tail", "match"),
+    [
+        (b"\x21\xff", "ends inside an application extension header"),
+        (b"\x21\xff\x0bNETSCAPE", "ends inside an application extension header"),
+        (b"\x21\xff\x0bNETSCAPE2.0", "ends inside application extension sub-block length"),
+        (b"\x21\xff\x0bNETSCAPE2.0\x03\x01\x00", "ends inside a application extension sub-block"),
+        (
+            b"\x21\xff\x0bNETSCAPE2.0\x03\x01\x00\x00",
+            "ends inside application extension sub-block length",
+        ),
+        (b"\x21\xfe", "ends inside comment extension sub-block length"),
+        (b"\x21\xfe\x03ab", "ends inside a comment extension sub-block"),
+        (b"\x21\xfe\x03abc", "ends inside comment extension sub-block length"),
+    ],
+    ids=_short_id,
+)
+def test_truncated_supported_extensions_are_demo_errors(
+    kit: ModuleType, tail: bytes, match: str
+) -> None:
+    """A supported extension cut short is a bounded-read error, with or without a control."""
+    with pytest.raises(kit.demo.DemoError, match=match):
+        kit.demo.measure_gif(_HEADER_ONLY + _GCE_2000 + tail)
+    with pytest.raises(kit.demo.DemoError, match=match):
+        kit.demo.measure_gif(_HEADER_ONLY + tail)
+
+
+def test_well_formed_application_extension_keeps_the_pending_control(kit: ModuleType) -> None:
+    before_control = _HEADER_ONLY + _NETSCAPE + _GCE_2000 + _IMAGE + b"\x3b"
+    facts = kit.demo.measure_gif(before_control)
+    assert (facts.frames, facts.delay_centiseconds) == (1, 2000)
+    between = _HEADER_ONLY + _GCE_2000 + _NETSCAPE + _IMAGE + b"\x3b"
+    facts = kit.demo.measure_gif(between)
+    assert (facts.frames, facts.delay_centiseconds) == (1, 2000)
+    # A control is still dangling if only an application extension follows it.
+    with pytest.raises(kit.demo.DemoError, match="dangling graphic control extension"):
+        kit.demo.measure_gif(_HEADER_ONLY + _GCE_2000 + _NETSCAPE + b"\x3b")
+    # And still duplicate if a second control follows across an application extension.
+    with pytest.raises(kit.demo.DemoError, match="duplicate graphic control extension"):
+        kit.demo.measure_gif(_HEADER_ONLY + _GCE_2000 + _NETSCAPE + _GCE_2000 + _IMAGE + b"\x3b")
+    # Synthetic GIFs padded with a correctly shaped application extension still measure.
+    padded = synthetic_gif(GOOD_DELAYS, padding=600)
+    assert kit.demo.measure_gif(padded).delay_centiseconds == 2500
 
 
 @pytest.mark.parametrize(
@@ -605,7 +685,7 @@ _FRAME = ONE_FRAME[len(_HEADER_ONLY) : -1]  # one GCE (100 cs) plus one image
             _HEADER_ONLY + b"\x21\xf9\x03\x00\x64\x00\x00" + _FRAME[8:] + b"\x3b",
             "malformed graphic control extension at byte 19: block size 3",
         ),
-        (_HEADER_ONLY + b"\x21\xfe\x05ab", "ends inside a extension sub-block"),
+        (_HEADER_ONLY + b"\x21\xfe\x05ab", "ends inside a comment extension sub-block"),
         (_HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x01\x00", "ends inside an image descriptor"),
         (
             _HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x80\x00\x00",

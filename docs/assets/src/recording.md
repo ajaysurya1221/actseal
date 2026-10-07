@@ -420,8 +420,10 @@ unknown blocks, truncation and trailing bytes are errors, not estimates.
 The printed `GifFacts` carry `size`, `frames` and `delay_centiseconds`.
 This is structural validation; it does not decode pixels. The rendered
 images are reviewed by eye separately, and the recorded text markers
-checked in step 6 are consistency checks, not proof that the commands ran
-or that the package came from PyPI; that proof is the step 3/5 binding.
+checked in step 6 are consistency checks: they cannot authenticate the
+output or establish that the commands ran or that the package came from
+PyPI. The separately recorded step 3/5 binding and its receipt provide
+supporting evidence for those claims; no structural check proves them.
 
 Required for each GIF: `validate_gif` returns facts (no `DemoError`) with
 `delay_centiseconds` between 2000 and 4000 (20 to 40 s), at least one frame
