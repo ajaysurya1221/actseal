@@ -1,12 +1,15 @@
 """The architecture figure: seven shipped groups traced to actual modules.
 
 Each group box lists the ``actseal`` modules that implement it, so a reader
-can open the package and find every node. The baseline is what ships today:
-the recorded fixture adapter and the optional pinned native Laya adapter; no
-other transport is drawn because none has been accepted into the package. A
-dashed boundary encloses only the Laya node, because that is the only place
-live inference happens: the fixture adapter reads a recorded file and the
-fault campaign is a pure generator, so neither sits inside the boundary.
+can open the package and find every node. The providers drawn are the ones in
+the package: the stable recorded fixture adapter, the stable pinned native
+Laya adapter and the PROVISIONAL ``experimental.providers.jev`` cloud adapter,
+which is selected only by explicit opt-in and carries no stability promise. A
+dashed boundary encloses the Laya and Jev nodes, because those are the only
+places live inference happens: the fixture adapter reads a recorded file and
+the fault campaign is a pure generator, so neither sits inside the boundary.
+Nothing here states that the Jev service was exercised; the figure is a
+component diagram of the source, not evidence that any provider answered.
 
 Arrows are semantic edges. Each lives inside the ``<g>`` of the group it
 leaves and carries ``data-source``/``data-target`` attributes so the exact
@@ -17,7 +20,7 @@ and recomputes through contracts and assessment, which in turn re-normalizes
 and re-evaluates every record. No edge joins replay and providers.
 
 Two canvases are rendered in the light and dark palettes shared with the
-how-it-works figure. The desktop canvas is 1600x900 for an 880 CSS px README
+how-it-works figure. The desktop canvas is 1600x980 for an 880 CSS px README
 column (labels at least 26 units, 14.3 rendered px); the mobile canvas stacks
 the groups at 720 units for a 360 CSS px column (labels at least 30 units).
 Every line is measured against the conservative width model and the renderer
@@ -38,7 +41,7 @@ if TYPE_CHECKING:
     from .inventory import RenderContext
 
 DESKTOP_WIDTH = 1600
-DESKTOP_HEIGHT = 900
+DESKTOP_HEIGHT = 980
 MOBILE_WIDTH = 720
 
 OUTPUTS = (
@@ -97,8 +100,12 @@ GROUPS: tuple[Group, ...] = (
         "providers",
         ("Providers",),
         ("adapters.base", "adapters.fixture"),
-        ("fixture: recorded file", "laya: pinned checkpoint"),
-        live=("adapters.laya",),
+        (
+            "fixture: recorded file",
+            "laya: pinned checkpoint",
+            "jev: PROVISIONAL opt-in",
+        ),
+        live=("adapters.laya", "experimental.providers.jev"),
     ),
     Group(
         "normalization",
@@ -145,9 +152,13 @@ DESC = (
     "compatibility parse, seal and validate the lock with no model call. "
     "CLI and typed API: cli, runner, __init__, __main__ and demo_data drive the "
     "lock, verify, replay and demo commands. Providers: adapters.base, "
-    "adapters.fixture and adapters.laya; the dashed live-inference boundary "
-    "encloses only the Laya adapter, because the fixture adapter reads a "
-    "recorded file. Normalization and policy: normalization and policy are "
+    "adapters.fixture, adapters.laya and the PROVISIONAL "
+    "experimental.providers.jev; the dashed live-inference boundary encloses "
+    "the Laya and Jev adapters, because the fixture adapter reads a recorded "
+    "file. Fixture and Laya are the stable providers; Jev is an experimental "
+    "cloud adapter selected only by explicit opt-in, with no stability promise "
+    "and no claim here that its service was exercised. Normalization and "
+    "policy: normalization and policy are "
     "pure functions that turn one raw capture into one decision. Assessment, "
     "statistics and faults: assessment, stats and faults; the six fault "
     "scenarios are synthetic, generated from the lock with no model call, and "
@@ -155,7 +166,7 @@ DESC = (
     "evidence writes the seven-file bounded data-only bundle atomically. "
     "Replay: replay reads the bundle and recomputes the verdict offline through "
     "contracts and assessment; no arrow joins replay and providers, and replay "
-    "imports no provider module. The shipped providers are fixture and Laya."
+    "imports no provider module."
 )
 
 
@@ -218,8 +229,8 @@ ARROW_HEAD = 12
 ARROW_HALF = 7
 ARROW_CLEARANCE = 4
 
-DESKTOP_MARGIN = 24
-DESKTOP_COLUMN_GAP = 40
+DESKTOP_MARGIN = 20
+DESKTOP_COLUMN_GAP = 36
 DESKTOP_COLUMNS = 4
 DESKTOP_TOP = 24
 DESKTOP_ROW_GAPS = (80, 60)
