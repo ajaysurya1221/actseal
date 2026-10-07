@@ -62,7 +62,7 @@ explains each output, the exit codes and how to pin one exact release.
 | [CLI reference](https://github.com/ajaysurya1221/actseal/blob/main/docs/cli.md) and [Python guide](https://github.com/ajaysurya1221/actseal/blob/main/docs/python-api.md) | Exact commands, exit codes, JSON receipts, public functions and runnable examples |
 | [Stability manifest](https://github.com/ajaysurya1221/actseal/blob/main/docs/stability.md), [versioning](https://github.com/ajaysurya1221/actseal/blob/main/docs/versioning.md) and [migration](https://github.com/ajaysurya1221/actseal/blob/main/docs/migration.md) | The 1.x compatibility promise, what may change when, and the 0.1.0 evidence path |
 | [Statistical contract](https://github.com/ajaysurya1221/actseal/blob/main/docs/statistical-contract.md) and [threat model](https://github.com/ajaysurya1221/actseal/blob/main/docs/threat-model.md) | Bounds, verdict rules, sampling assumptions and the authenticity boundary |
-| [Providers](https://github.com/ajaysurya1221/actseal/blob/main/docs/providers.md) and [FAQ](https://github.com/ajaysurya1221/actseal/blob/main/docs/faq.md) | Fixture and optional native Laya setup; answers to "why not PASS" |
+| [Providers](https://github.com/ajaysurya1221/actseal/blob/main/docs/providers.md) and [FAQ](https://github.com/ajaysurya1221/actseal/blob/main/docs/faq.md) | Fixture and optional native Laya setup; the PROVISIONAL experimental Jev cloud adapter behind `--provider jev --experimental-provider` (bring your own key, mocked-transport tests only, no accepted live receipt); answers to "why not PASS" |
 | [Publishing](https://github.com/ajaysurya1221/actseal/blob/main/docs/publishing.md), [CHANGELOG](https://github.com/ajaysurya1221/actseal/blob/main/CHANGELOG.md), [release notes (draft until published)](https://github.com/ajaysurya1221/actseal/blob/main/plan/v1/RELEASE_NOTES.md) and [SECURITY](https://github.com/ajaysurya1221/actseal/blob/main/SECURITY.md) | Release pipeline and receipts, changes per version, the receipt-backed release notes, private vulnerability reporting and support |
 
 ## Read a result
@@ -87,9 +87,11 @@ accepts `--json` for one versioned receipt.
 
 Actseal 1.x supports one categorical question with 2 to 16 labels, a frozen
 action allowlist and threshold, recorded fixture responses and an optional
-pinned native Laya CPU adapter. The runtime core depends only on the Python
-standard library (3.12 or 3.13) on Linux and macOS; Windows is unsupported.
-Replay never imports a provider. The packaged demonstration is synthetic
+pinned native Laya CPU adapter. An experimental Jev cloud adapter ships as a
+PROVISIONAL, explicit opt-in (`--provider jev --experimental-provider`) with
+no 1.x compatibility promise and no accepted live evidence. The runtime core
+depends only on the Python standard library (3.12 or 3.13) on Linux and
+macOS; Windows is unsupported. Replay never imports a provider. The packaged demonstration is synthetic
 (`evidence_scope=demo`) and establishes no population or model-quality
 result. Real interpretation requires independent cases and one prespecified
 attempt under a fixed policy; do not retry until PASS.

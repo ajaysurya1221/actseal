@@ -4,10 +4,10 @@
 1.0.0 is on PyPI. Every bracketed `PENDING` item below is filled only from an
 actual receipt by Task 21 after Task 20 publishes; no hash, run id, timing or
 live result is claimed here. The final notes must pass
-`uv run --frozen python tools/check_release.py receipts`. The conditional
-sections below are resolved to the shipped facts **before** the tag, together
-with `CHANGELOG.md` and `README.md` (see the pre-tag finalization gate in
-`docs/publishing.md`); only the receipts are filled after publication.
+`uv run --frozen python tools/check_release.py receipts`. The implementation
+and scope facts below are stated from the reviewed candidate; the named
+`PENDING` receipts are filled as the tagged release pipeline completes (see
+the pre-tag finalization gate in `docs/publishing.md`).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-dark.svg">
@@ -67,25 +67,29 @@ new reference documentation.
 | Trusted Publishing with attestations | `PENDING`; attestation presence, publisher identity and statement subjects are inspected, and no independent cryptographic verification is claimed |
 | Clean-container install from the public index; demo exit 0, replays 0 and 1 | `PENDING` (post-publication receipt) |
 | Production/Stable classifier on PyPI | `PENDING` (post-publication receipt `published_metadata.classifiers`) |
-| Static figures regenerate byte-identically | `PENDING` (`assets` job); hero, how-it-works and social preview committed; architecture pending Task 13 |
-| Blind ten-second README test | `PENDING` (Task 08 acceptance; prompt, screenshot hash and answer in `plan/v1/reports/`) |
+| Static figures regenerate byte-identically | `PENDING` (`assets` job on the tagged commit); hero, how-it-works and social preview are committed and accepted; the four architecture variants are not yet committed (Task 13), which is the only failure in the candidate's hosted CI at `b05aed8` |
+| Blind ten-second README test | Preflight done: a fresh reviewer, given only the rendered first screen at `710ae55`, named the purpose, the developer audience and all three evidence limits (`plan/v1/reports/readme-ten-second-preflight.md`, viewport observation in `readme-viewport-observation.md`); `PENDING` final public-state acceptance on the tagged README |
 | Genuine PyPI demo recording | `PENDING` (Task 14, captured after publication under Decision 2A; added by Task 21) |
 
-## Conditional items
+## Decided implementation facts
 
-- **Experimental Jev provider.** Prepared as PROVISIONAL behind an explicit
-  experimental flag; whether 1.0.0 includes it is decided at integration
-  (Task 19). If included, this section states the flag, the identity
-  limits and the absence or presence of audit results; if cut, it states the
-  later 1.x target. No live Jev result exists today. `PENDING`
-- **Finite-benchmark audit.** The preregistered 959-request descriptive
-  Banking77 audit has not been executed. If it runs before release, its
-  separate cohort receipts are linked here with the explicit "no power or
-  population claim" wording from ADR 0018; otherwise it is recorded as not
-  run. `PENDING`
-- **Application example archive.** `examples/action_gate/` ships with its
-  recorded synthetic bundle once its original producer is explicitly approved
-  in the compatibility registry (Task 19). `PENDING`
+- **Experimental Jev provider: included as PROVISIONAL.** The adapter
+  `actseal.experimental.providers.jev` ships behind the explicit opt-in
+  `--provider jev --experimental-provider` (bring your own `JEV_API_KEY`;
+  one attempt per request; no retry, redirect or fallback; vendor-reported
+  model version, not a weight attestation). It carries no 1.x promise. Every
+  test runs over a mocked transport; as of 7 October 2026 no live Jev request
+  has been accepted as evidence, and no live result appears here.
+- **Finite-benchmark audit: not run.** The offline preregistration (959
+  fixed cases, candidate 3) was accepted, but the one live attempt was
+  stopped by a harness permission denial on its `.env` existence preflight
+  before any key was read or any `--execute` call made. No journal, request
+  count or result exists; nothing is claimed. ADR 0018's "no power or
+  population claim" wording applies to any future run.
+- **Application example archive: approved.** `examples/action_gate/` ships
+  with its retained recorded synthetic bundle; its original producer and the
+  1.0.0 source are the two approved registry entries (amendment V1-037), and
+  the unchanged archive replays under this release.
 
 ## Known limits and not-run items
 

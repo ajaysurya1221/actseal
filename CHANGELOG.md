@@ -33,19 +33,27 @@ receipts. The [migration guide](docs/migration.md) and
 
 ### Providers, verification and examples
 
-- One shared provider conformance suite covers the fixture adapter and the
-  mocked native Laya adapter; native inference remains explicitly marked.
+- One shared provider conformance suite covers the fixture adapter, the
+  mocked native Laya adapter and the mocked experimental Jev adapter; native
+  inference remains explicitly marked, and the accepted cached-native checks
+  (Task 03, repeated at the Task 19 integration) cover the changed native
+  paths.
 - Bounded deterministic property tests and eight targeted semantic mutations
   guard the gate (tail allocation, scheduled denominator, zero-accepted
   handling, threshold boundary, risk and coverage bounds, fault blocking and
   ERROR precedence).
 - Application action-gate example (`examples/action_gate/`): a local
   ticket-routing application that executes a queue operation only after
-  ACT, with a recorded synthetic bundle. Final registration of its archived
-  producer is pending integration review.
-- Optional experimental Jev transport: prepared as a PROVISIONAL adapter
-  behind an explicit experimental flag; inclusion, CLI opt-in integration and
-  any live audit are pending decision and review. No live results exist.
+  ACT, with a retained recorded synthetic bundle. Its original producer and
+  the 1.0.0 source are the two approved entries of the packaged compatibility
+  registry (amendment V1-037), so the unchanged archive replays under this
+  release.
+- Experimental Jev cloud transport, `actseal.experimental.providers.jev`:
+  PROVISIONAL, selectable only as `--provider jev --experimental-provider`
+  (or `open_model("jev", ...)`), bring-your-own `JEV_API_KEY`, one attempt
+  per request, no retry, redirect or fallback, no 1.x promise. Its tests use
+  mocked transports only; no live Jev request has been accepted as evidence
+  and the optional preregistered audit has not run.
 
 ### Platforms, release and documentation
 
@@ -63,13 +71,12 @@ receipts. The [migration guide](docs/migration.md) and
   pinned authoring-only toolchain; the architecture figure and the genuine
   post-publication demo recording are pending.
 
-Pending before this entry is final: Jev inclusion decision, architecture
-figure, example registry approval, the blind README test and the candidate
-gate. This entry, with its "unreleased candidate" heading and every pending
-or conditional statement, must be resolved to the shipped facts **before**
-the release build and the immutable `v1.0.0` tag, because the tagged bytes
-are what ships; the publication receipts are recorded afterwards in
-`plan/v1/RELEASE_NOTES.md`, not here.
+Pending before this entry is final: the architecture figure, final visual
+acceptance, the exact-head candidate CI and release rehearsal. This entry,
+with its "unreleased candidate" heading and every pending statement, must be
+resolved to the shipped facts **before** the release build and the immutable
+`v1.0.0` tag, because the tagged bytes are what ships; the publication
+receipts are recorded afterwards in `plan/v1/RELEASE_NOTES.md`, not here.
 
 ## v0.1.0 — 2026-10-06
 
