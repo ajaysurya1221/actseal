@@ -561,3 +561,26 @@ preview, ruleset); and collection of the preregistered live Jev audit from the
 accepted snapshot d3edbab with the human's key, reported only after independent
 review. No tag, published distribution, statistical rule, schema or 1.x
 interface changes. Any 1.0.1 patch release uses the full existing pipeline.
+
+## V1-055 — 1.0.1 patch bundle and compatibility-registry amendment (8 October 2026)
+
+Recorded before implementation, after independent review of the bounded
+hardening (streaming JSONL readers; native IPC sequence type check; corrected
+numerical-kernel exception documentation). Every packaged Python edit changes
+the implementation fingerprint, and the registry approved exactly two
+fingerprints at 1.0.0, so the hardening cannot merge alone without breaking
+retained-archive replay on main. Authorized instead: one reviewed 1.0.1 bundle
+containing the hardening, the version bump (pyproject.toml, src/actseal/
+__init__.py, uv.lock), the exact final reviewed 1.0.1 fingerprint added to the
+actseal-choice-v1 registry beside both existing mappings, the exact-registry
+and version-pinned test updates, and documentation amendments to
+docs/versioning.md, docs/stability.md, docs/migration.md, a dated addendum to
+ADR 0015 (no new ADR; replay semantics unchanged), examples/action_gate/run.py
+and examples/action_gate/README.md. The 1.0.0 fingerprint and the original
+retained-archive producer stay approved; the retained archive stays
+byte-identical and must replay to its stored verdict. The bundle merges only
+after independent acceptance and green hosted CI on its exact commit. The
+v1.0.1 tag and publication are left to the human: the intended release commit
+is recorded in the acceptance record so no later, unreviewed tree is tagged.
+Publication uses the full existing tag-triggered pipeline; plan/v1 receipts
+remain 1.0.0 history and are never relabelled.
