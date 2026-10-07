@@ -10,12 +10,12 @@ All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; s
 
 ## Current constraint and next action
 
-Current checkpoint: 7 October, approximately13:30IST. Main is
-`5c9a3d01eda239f0f6231a79833b1719c3410645` after planning checkpointPR42
-(reviewed265bfb8) passed all eight hosted checks and merged. Initial
-macOS3.13 dependency installation timed out fetching Hatchling from PyPI;
-failed attempt1 is preserved, and the failed-job rerun passed. This is a
-planning checkpoint, not acceptance of the still-red release candidate.
+Current checkpoint: 7 October, approximately13:44IST. Main is
+`a210affb3742735fd41b34a94c2bc223c3e615a4` after planning PR43
+(reviewed2f82eff46ee7ef6a745054e6515def5af110ea0c) passed all eight
+hosted checks in runs37590743493/37590702682 and merged at08:06:15UTC.
+Root now prepares the deadline checkpoint on `codex/v1-deadline-checkpoint`.
+This is a planning checkpoint, not acceptance of the still-red candidate.
 
 1. **Task13 blocked:** the human added both exact merge Bash rules; Codex
    fixed only one missing JSON comma without changing a permission entry.
@@ -39,16 +39,19 @@ planning checkpoint, not acceptance of the still-red release candidate.
    failure, strict typing/hooks pass; independent103 focused checks pass.
    The same Fable session is terminal. No actual cast/GIF or inventory
    activation exists; full Task14 remains post-publication.
-5. **Release candidate:** localTask19 head5e7931a after accepted08/14 and
-   main5c9a3d0 integration; parent530 docs/visual tests pass with2 known
-   missing-architecture failures, hooks pass. PR39 is being updated to this
-   exact head for hosted checks. Prior b05 runs remain failed history.
-   Final green CI, rehearsal, actual artifacts, tag and publication remain.
-   Packaged source fingerprint stays8f316f67…98ed3; no product source,
-   pyproject or lockfile delta in this integration. No v1 publication exists.
+5. **Release candidate:** exact head5e7931a has ten failed hosted jobs in
+   runs37590464434/37590468512; independent full-log review found only the four
+   missing architecture SVGs. Linux jobs:4086pass/2fail; macOS:4087pass/2fail;
+   assets:425pass/1fail. Lint/types passed; downstream build/packaging/evidence,
+   hooks and real authoring checks were skipped, not verified by these runs.
+   No product-source change: fingerprint8f316f67…98ed3 is unchanged. PR39 stays
+   unaccepted; no main merge, tag or publication. V1-047 and conditional19C/19D
+   specs prepare the14:00 Jev cut; they are NOT yet activated or dispatched.
 
 The one-time10:30IST heartbeat already resumed the original15/06 sessions;
-no duplicate automation/session. Earlier checkpoint narratives remain in
+no duplicate reset/session. A distinct one-time14:00 cutoff heartbeat is
+registered as `apply-actseal-jev-cutoff`; it must refresh the gate before
+activating any cut. Earlier checkpoint narratives remain in
 Git history, CHANGE_LOG and immutable reports/reviews. Exact active process
 IDs and private packet paths are in `/tmp/actseal-v1-orchestration/active.json`.
 No model/account/billing substitution; normal hooks and all review gates stay.
@@ -76,7 +79,7 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 
 ## Branches, processes and receipts
 
-Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-docs-completion-contract`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
+Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-deadline-checkpoint`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
 
 - Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, completed atfcdcfe4 and merged7820dba; all accepted asset bytes preserved.
 - Reused former baseline worktree: Task03 branch preserved. Now Task11-only completion branch736d912, cherry-picking Claude commits461f9ee/db56f36/7bb32f4 onto5f3fee5; files byte-identical. This isolates finished hero assets from unfinished social registration.

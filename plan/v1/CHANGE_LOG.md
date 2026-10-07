@@ -323,6 +323,43 @@ capture, tool execution/download, product asset, inventory registration,
 dependency, packaged source or policy change. Temporary synthetic test
 fixtures remain clearly labelled and outside product assets.
 
+## V1-047 — Prepare the existing 14:00 optional-provider cut without activating it early
+
+At approximately13:41IST, complete candidate5e7931a has ten failed hosted jobs
+across runs37590464434/37590468512. Independent full-log review finds only the
+four missing architecture images. This does not satisfy PLAN/V1-036's explicit
+requirement that the optional provider be integrated and exact-head green by
+14:00. Component success cannot waive the approved time gate.
+
+Prepare tasks19-jev-cut.md and19-jev-cut-docs.md now; do not dispatch before
+14:00. Codex must refresh actual time and candidate/CI state at the gate. If
+the complete candidate is still not green, activate the coherent adapter plus
+unstarted live-audit deferral to1.1 and record that observation. If it is green,
+leave these specs undispatched. Do not invent a run receipt for Task06: no key,
+request, journal or credit use occurred.
+
+On activation, Claude A owns only the explicit product/profile/CLI/schema and
+associated test cut enumerated in19C; Claude D owns only current public docs,
+their assertions and dated ADR addenda enumerated in19D. Preserve all accepted
+source branches/history, benchmark candidates, old reports, stable fixture/Laya
+semantics and the original nine-file action-gate archive. No mechanical revert,
+test weakening, new dependency or statistical/policy change is authorized.
+
+Any packaged Python change invalidates current producer8f316f67 approval.
+Freeze the new source, independently recompute its exact fingerprint and repeat
+the original archive's full-verdict/negative-control compatibility probe. Only
+after a separate recorded exact-hash approval may a follow-up task update the
+registry and current-hash assertions/docs. Keep exactly original producera5fe
+and newly approved current producer; no automatic carry-forward of superseded
+or benchmark producers. The cut tasks do not approve that future mapping.
+
+Task13's actual denial remains separate. Neither this amendment nor the cut
+authorizes retrying/rerouting its merge. Eventual architecture must depict only
+the final admitted providers; mandatory images, original checks, ACCEPT and
+exact-head green hosted CI remain required. Prepare a one-time same-thread
+14:00 wakeup so the already approved cut is not missed while waiting for the
+human's pending manual-merge response.
+
 Require one graphic control per following image, complete bounded structural
 validation, early byte caps, strict string output payloads and exact TERM/LANG
 header env keys, and hash verification immediately before each variant tool
