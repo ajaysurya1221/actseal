@@ -1,0 +1,9 @@
+# Reset continuation receipt
+
+Same sprint resumed after10:30IST reset. Six completed continuation streams inspected for executor identity:19-registry-corrections,19-receipt-clarity,08-packaged-release-notes,08-finalization-clarity,08-receipt-timing,09-linux-agg. Every emitted assistant message identifies claude-fable-5-1; requested effort washigh. No nested Agent/Task tool call occurred in09-linux-agg (onlyBash/Edit/Write).
+
+The resumed Task09 result includes cumulative historical modelUsage entries forHaiku/Opus/Sonnet. Their token and estimatedcost counters are identical across09.stream,09R,09R2,09R3,09R4,09R5 and09-linux-agg; no increment occurs in this continuation. They are not evidence of a model substitution in this dispatch. Aggregate CLI cost estimates include prior session history and list-price accounting, not actual incremental API charges. Do not sum cumulative resumed-session counters as new spend. No Jevkey access or live calls occurred.
+
+Accepted source additions are reviewed in19-registry-followup,08-packaged-release-notes,09-example-sdist and09-linux-agg. Local integration throughb05aed85ccba6efee204a79c4662643ce952c6d2 preserves sourcefingerprint8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3 and originalarchivebytes. Parent46 docs/recording-helper checks and6 cachednative tests passed with no skips after08/14 integration. Parent106 release checks plus1 explicitobsolete-manifest observation skip passed after09 integration. Allhooks passed. Main remainsae43065; no v1tag/publication.
+
+Public drafts:PR39 currentintegrationcandidate (architecture stillblocked);PR41 exactREADMErenderedreview surface (expectedknownmissingarchitecture andolderproviderassertion failures);PR18 pipeline/assetprobe at0e32c6c has ten green checks andactualLinuxagg receipt. No draft is represented as fullreleaseACCEPT.

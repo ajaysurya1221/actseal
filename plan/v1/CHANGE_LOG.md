@@ -235,3 +235,73 @@ Task13's denied local merge is a separate blocked outcome, awaiting the user's s
 Independent review of Task06 repaire2ab596 confirms all prior false-COMPLETE and torn-tail defects fixed,86 tests and source-verified candidate2 pass. Two bounded issues remain: float conversion ofmonotonic_s=10**400 and deadline addition at9999-12-31T23:59:59Z raise uncaughtOverflowError instead of structuredJournalError; one expected_identity(3.13.0) assertion missed the alternate-interpreter helper. These fail closed but must be corrected before preregistration approval.
 
 Claude06 owns only the exact validator guards, narrow CLI regressions and missed test assertion, candidate-binding bookkeeping and its newREPORT. Convert only those validation arithmetic failures toJournalError; no broad exception swallowing, schema/policy/model/sample/budget change. Because bound scripts change, preserve data/ and data-revision2/ byte-for-byte, create data-revision3/ with identical six non-preregistration files and only updatedscript hashes/selfseal, update DATA_DIR and document all candidate states. No observation exists; no live/key/.envaccess is authorized. Verify both historicalcandidates remainbyte-identical, current959-case preregistrationbindings and sourcepins, fullbench tests/hooks, and actualCLI structuredfailure. Finalindependentapprovalstillrequired.
+
+## V1-039 — Complete the registry review and record a version-test ownership deviation
+
+Independent review of Task19 at ce38760 requires four bounded corrections: registry documentation must describe producer/engine approval, not a nonexistent per-archive allowlist; the missing-registry negative/control must use a genuinely absent fresh path; the retained-archive inventory must include PRODUCER.json and assert all nine filenames; and the action-gate example must describe the completed compatibility approval instead of a future Task19. Preserve source fingerprint8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3, both approved mappings and every original archive byte. No runtime, statistical, schema or provider change.
+
+Claude19 owns these narrow fixes in docs/versioning.md, tests/unit/test_compatibility.py, examples/action_gate/README.md and comment/docstring/refusal-message wording in examples/action_gate/run.py, plus necessary corresponding wording assertions within tests/examples and its REPORT. The example's control flow and failure semantics must stay identical. Missing-registry tests must assert path absence; archive preservation must include PRODUCER.json SHA25663d49ba57cfbfb2ba7762bb483feebb136e772de5d95c2a695a653eadf6b580d.
+
+Claude19 committed77b8356 before requesting the required ownership amendment for tests/acceptance/test_acceptance_wheel_receipts.py and tests/unit/test_serialization.py. Codex interrupted the session. The changes replace stale0.1.0 literals with exact1.0.0 assertions after the approved metadata bump; they do not weaken isolation/import checks. Preserve the commit and explicitly report this process deviation. Parent28 version/isolation/supplied-wheel and147 compatibility/example/wheel checks passed, but prior scoped authorization is not inferred retroactively. These two existing assertions are now included for review and future corrections only; no other acceptance-test changes are authorized.
+
+Codex Task09 packaging commit dd1bafe adds only examples/action_gate and plan/v1/RELEASE_NOTES.md to the explicit sdist inventory, with real-artifact byte checks. Parent25 tests/hooks and independent2 real-sdist checks pass. Claude08 owns the consequent narrow publishing-guide correction and its existing tests: pre-tag release notes are packaged; later receipt/media additions do not alter published bytes. No other release facts become complete by this change. No denied Task13 action or actual key access is authorized here.
+
+## V1-040 — Exercise the already approved Linux recording renderer in CI
+
+Task09 may provision the existing approved agg1.9.0 linux-x86_64 pin before asset regeneration in both ordinary and publication workflows, then run an unconditional fail-closed version probe. No new pin, dependency, renderer or runtime change. A matching hash proves only consistency; actual hosted execution must be recorded before claiming Linux usability. This probe does not establish GIF rendering or Task14 completion.
+
+Claude09 owns only .github/workflows/ci.yml, publish-pypi.yml, tools/check_release.py, focused tests/release regressions and its REPORT. Add an internal agg-version release-helper command using existing manifest/platform helpers, requiring actual linux-x86_64, verifying the binary hash immediately before run_tool([binary, --version], timeout=10), and requiring exact strippedstdout agg1.9.0 with the CLI's actual space (agg 1.9.0). Print observed version/platform and approved manifest artifact hash; fail explicitly on missing tools, wrong platform/version, nonzero status or timeout. No network in tests.
+
+The workflow checker and tests must require locked install, exact pinned provisioning, real version probe and regeneration in order, once each, with no conditional/ignored-failure escape. Offline tests must show tamper rejection before execution and all error paths. Preserve existing failure diagnostics and mutations. This is CI/packaging glue delegated to the existing approved Claude09 executor, not a product-interface change. No local architecture-branch merge, credentials, release/tag or publication is authorized by this amendment.
+
+## V1-041 — Human approval to resume Task13 and standing approval within the sprint
+
+On 7 October at approximately 12:27 IST the human replied: "`approve Task13 merges` and all future Approvals." This explicitly clears the previously denied Task13 local merges of reviewed main7820dba49f68f347f42fbdc06044de256c06efa2 and reviewed integration1fd9d080996e216b9edc386597487a78067f25b5 into the isolated architecture branch. Resume the same Fable5.1/high session; preserve the prior denial/report and all reviewed histories. The V1-036 file ownership, claims, tests and independent acceptance requirements are unchanged.
+
+The standing approval applies to necessary actions within the already approved Actseal release plan, including narrowly loading JEV_API_KEY for the reviewed, one-attempt Task06 audit. It does not authorize printing credentials, reading unrelated secrets, changing accounts/models/billing, weakening acceptance, disabling hooks or overriding a new tool denial. Codex must first recheck the exact accepted preregistration/source/interpreter and separately dispatch that live phase. Only the named key may enter the audit subprocess; do not shell-source the .env or expose its contents. No new source edits, resealing, retries, sample replacement or threshold changes are authorized. The manual pypi deployment gate and exact-head green-CI/main-merge requirements remain.
+
+## V1-042 — Finalize accepted documentation facts while harness gates remain blocked
+
+Claude13's fresh-approved merge was denied again as Auto-Mode Bypass and remains unperformed. Its report8c089ce is preserved; suggestions in that report to have Codex perform the same denied outcome are not authorized. Claude06's separately dispatched live audit was stopped by a Real-World Transactions denial on its .env existence preflight, before key access or any --execute call. No alternate route or credential source is authorized after that denial. Standing human approval did not change the Claude harness permission rules; those require an actual user-side grant. Do not retry either blocked outcome.
+
+Independent documentation review found stale implementation-status claims in the otherwise accepted candidate. Codex fast-forwarded only the separate Task08 docs branch from710ae55 to reviewed integrationb05aed85; this is not the denied architecture-branch action and creates no architecture output. Claude08 may now update README, CHANGELOG, plan/v1/RELEASE_NOTES.md, docs/architecture.md, dependencies.md, providers.md, versioning.md, status/history paragraphs in ADR0004/0015/0017/0018/0019/0020, corresponding wording assertions in tests/docs, and its own new report. No normative signature/schema/statistical/registry change, product code, generated assets or old reports. Preserve source fingerprint8f316f67 and every archived byte.
+
+Describe the included candidate experimental Jev transport/explicit flag accurately, with no accepted live evidence. Correct the historical core-contract pointer, Laya-only worker semantics, two-entry producer registry, accepted native/conformance checks, actual Linuxagg execution, accepted social pixels, and completed blind README preflight. Preserve dated earlier ADR milestones and final gates separately. Narrowly transfer only the stale prerequisite/status paragraph near the end of docs/assets/src/recording.md to Claude08; no capture procedure, helper, pin or asset edit.
+
+Keep draft/unpublished release status until the mandatory pre-tag gates pass. Final implementation facts can be stated now; named future receipt placeholders remain for exact release artifacts/CI/publication/recording. Architecture, final visual acceptance, final candidate CI and rehearsal remain visibly pending. No wording test may pretend missing architecture exists or turn pending gates into passes. Run full Task08 done commands and report the known missing-image failures honestly; passing focused checks do not constitute full Task08 acceptance.
+
+## V1-043 — Human confirms actual harness permission changes
+
+The human answered the scoped permission-system request with "Claude permissions updated for both tasks", then reiterated "I approve everything." This is first-hand confirmation that the permission mechanism named by the Task13/Task06 denials was changed, not merely a relayed prompt assertion. Resume the exact previously approved operations in the same two sessions using normal permissions, after rechecking no merge/live run started. Preserve both failed resumptions and their reports. A new denial still stops that outcome; no bypass flags, alternate executor/credential route or disabled hooks. Task06 retains the same preregistration, 959 scheduled entries, one attempt per case, fixed policy and deadline. All source/release gates remain.
+
+## V1-044 — Repair final-facts contradictions and prepare the missing demo renderer
+
+Claude08 owns only the three documentation/test repairs in reviews/08-final-facts.md and its additive report. Its previous module-level ssl preload was a bounded ownership deviation; independent technical review accepts it because the offline socket guard remains intact. No other test/runtime ownership expansion follows. Prior denial reports stay immutable, and no denied action is retried.
+
+Read-only Task14 review confirms accepted preparation11a31fc has no final GIF renderer: inventory still declares a planned demo.gif with renderer=None. Prepare the missing rendering code before publication without creating a cast or product GIF. Codex may fast-forward only the separate recording preparation branch to reviewed integrationb05aed85. Claude14 owns new docs/assets/src/actseal_assets/demo.py, tests/visual/test_demo_render.py, and its new report; no inventory, existing renderer/helper, recording procedure, product, dependencies, pins, README, source fixtures or Task13 work.
+
+Freeze demo-light.gif and demo-dark.gif as the eventual two outputs. Reuse existing pinned-tool/font verification, run_tool and agg_command with its reviewed speed1, ceil(duration)+1 idle limit, theme and last-frame arguments. Validate the real input under the existing procedure: v3, approved geometry,20–40seconds, output events plus exactly one final x with payload0, no input/resize/marker events, and required ordered commands/exit markers. Never execute a cast header command. Validate actual GIF frame delays, complete bounded structure, at least one frame,20–40seconds and each file strictly below3,000,000bytes; do not treat header dimensions or configured flags as measured duration.
+
+Offline unit fixtures/doubles must exercise malformed/missing casts, invalid events, tampered/missing prerequisites, renderer failure, stale/missing outputs, malformed/oversized/short/long GIFs and deterministic repeated rendering. Temporary synthetic test data is labelled as such and never committed under docs/assets as a product demonstration. Leave inventory unimplemented and create no actual docs/assets/src/demo.cast or GIF; actual post-PyPI capture, provenance binding, repeated real rendering, pixels and activation remain Task14's later acceptance gate. This preparation creates no new public surface or packaged Python fingerprint change.
+
+## V1-045 — Actual Task13 rule additions and fourth denied resumption
+
+The human added the two exact Bash merge allow rules for main7820dba and
+integration1fd9d08. A single missing comma made the edited user settings invalid;
+Codex repaired only that punctuation byte, validated JSON and confirmed both
+exact entries. No permission entry, deny rule or mode was changed by Codex.
+The same Task13 Fable5.1/high session resumed under normal permissions and
+received a fourth Auto-Mode Bypass denial, preserved in report6ba49ae.
+
+The issued command included an output pipe instead of the bare approved
+command. The report incorrectly describes a cd prefix absent from the raw
+stream; preserve that report and record this correction. That is a possible rule-matching cause, not an independently
+established diagnosis. The new denial stops the outcome; do not retry a bare
+command, split the operation, change executor or infer a further grant. Source,
+outputs and main remain unchanged. Task06 has no new effective grant and no
+key read, execution, journal, request or spend. Keep both blocked outcomes
+separate from continuing documentation and standalone-renderer preparation.
+
+Task08 correction2ccdac6 is scoped ACCEPT after parent and independent review;
+full Task08 remains PARTIAL for its existing mandatory gates. No policy,
+schema, statistical rule, registry or accepted asset changes are authorized.
