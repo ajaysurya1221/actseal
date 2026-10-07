@@ -10,20 +10,27 @@ All deadlines are7October2026, Asia/Kolkata. The14:00 Jev-cut trigger is superse
 
 ## Current constraint and next action
 
-Current checkpoint: 7 October,approximately14:05IST. Main remains
-`336fae685880a3a74ba353fd032d7c85f38bb6e0`. The human relaxed the14:00cut
+Current checkpoint: 7 October,approximately14:35IST. Main is
+`4da1084f28eac70cf251783c02f1c8cd12ad25e4`. The human relaxed the14:00cut
 after its activation; V1-049 retains the reviewed experimental Jev adapter.
 Both removal sessions are stopped. Preserve four staged deletion drafts in
 the isolated cut branch; never treat that dirty checkout as the candidate.
 The immutable candidate5e7931a and its original branch remain intact.
-PR45 records activation plus the superseding human decision; no cut merges.
+PR45 records activation plus the superseding human decision; it merged after
+independent ACCEPT and eight exact-head green checks. No cut merges.
 
 1. **Task13 unblocked by human action:** both manual merges are complete,
    independently verified at head05eca93e6623c181927a53100114b85d17459968.
    First mergebb35cfa integrates7820dba; second05eca93 integrates1fd9d08.
    Checkout is clean and accepted hero/workflow/social bytes match7820dba.
-   Continue only the owned architecture generation/tests; no merge retry.
-   Four earlier denial receipts remain historical. No actual output yet.
+   Architecture candidate c84d515 now has all four real SVGs and correct
+   semantics, but REVIEW13-real-readme-sizing is REVISE: GitHub's actual
+   image widths are smaller than the old validation assumptions. V1-051
+   authorizes bounded typography/layout correction for hero/workflow/
+   architecture at838px desktop and254px mobile, with a separate README
+   breakpoint correction below1280px. Both Fable5.1/high sessions run with
+   normal permissions. No product-source/registry changes or merge retry.
+   Four earlier denial receipts and the original candidate remain historical.
 
 2. **Task06 unstarted/blocked:** V1-041 authorized narrowly loading the key
    for the already reviewed audit; later normal resumptions were denied by
@@ -73,7 +80,7 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 | 10 | Toolchain ACCEPT030ef840, merged6ad1e91. |
 | 11 | Actual hero/font/OFL bytes independently accepted and preserved in combinedPR31, merged7820dba after8 green checks. IsolatedPR25 closed as superseded; source history retained. Final README blind test remains. |
 | 12 | ACCEPTf712dae after actual offline pixel review and regeneration. PR22 merged227c7da. No browser workaround. |
-| 13 | Human manually completed both prerequisite merges; parent verified cleanhead05eca93, ancestry and unchanged accepted assets. Resume owned architecture generation only; prior denials preserved. No final output ACCEPT yet. |
+| 13 | Human merges verified; c84d515 delivers semantically correct architecture. REVISE actual README sizing. Claude13 runs V1-051 bounded typography/regeneration correction; separate new Claude08 session corrects responsive selection. No final output ACCEPT yet. |
 | 14 | Procedure/helper11a31fc scoped ACCEPT/greenPR30; standalone renderer a47a320 scoped ACCEPT after all bounded repairs, parent425visual+103independentfocused checks. Fulltask pending genuine PyPI cast/GIF, provenance, rendering and activation. |
 | 15 | ACCEPTfcdcfe4;283 parent+independent visual tests,2,958 parent core tests,types/hooks,actualpixels/regeneration and8 hosted checks pass. PR31 merged7820dba. Social1280x640 exists; user upload not done. |
 | 16–18 | Optional P2, only after mandatory P1 acceptance; not dispatched. |
@@ -81,7 +88,7 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 
 ## Branches, processes and receipts
 
-Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-jev-cut-activation`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
+Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-architecture-review`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12 and planning PR45; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
 
 - Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, completed atfcdcfe4 and merged7820dba; all accepted asset bytes preserved.
 - Reused former baseline worktree: Task03 branch preserved. Now Task11-only completion branch736d912, cherry-picking Claude commits461f9ee/db56f36/7bb32f4 onto5f3fee5; files byte-identical. This isolates finished hero assets from unfinished social registration.
