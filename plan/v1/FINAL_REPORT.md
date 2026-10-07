@@ -31,7 +31,7 @@ claim; it predicts no CI or publication result.
 | Attestations | One PEP 740 attestation per file from GitHub `ajaysurya1221/actseal`, workflow `publish-pypi.yml`, environment `pypi`, subjects equal to the file digests. Presence, identity and subjects inspected; no independent cryptographic verification is claimed |
 | Independent download comparison | Codex downloaded the official PyPI files and the GitHub draft assets separately; both pairs byte-identical and equal to the build checksums; independent receipt reviewer ACCEPT ([REVIEW 20](reviews/20-publication.md)) |
 | GitHub release | 405628842, **draft**, four assets uploaded; publishing it is Task 22 |
-| Hosted CI | Pre-tag head `4d7966f`: ten source/assets jobs SUCCESS (runs 37602503653, 37602539917) and final rehearsal 37602547044 SUCCESS; `git diff 4d7966f..04c10d3` empty; `main` CI 37603576993 at the tagged source SUCCESS; post-publication media head `0a0a228`: ten jobs SUCCESS (37607862358, 37607886554) |
+| Hosted CI | Pre-tag head `4d7966f`: ten source/assets jobs SUCCESS (runs 37602503653, 37602539917) and final rehearsal 37602547044 SUCCESS; `git diff 4d7966f..04c10d3` empty; `main` CI 37603576993 at the tagged source SUCCESS; reviewed PR 48 head `f26af8ff43302020be5dbc8eeb6c497d089fdbc2`: ten source/assets jobs SUCCESS (runs 37607862358, 37607886554), then merged as `0a0a2288bed813e9fcbf7116ef97294912ca04b1` |
 | Receipts | `plan/v1/receipts/release-receipt.json`, `postpublish-receipt.json`, `SHA256SUMS` (committed at `712fb78`), `claude-usage.json` (observed usage, `04e8c8d`); [RELEASE_NOTES](RELEASE_NOTES.md) maps each claim to them |
 | Paid inference | Zero Jev requests observed in the sprint; no paid model API. Subscription usage is recorded below as an API-equivalent observation, not a charge |
 
@@ -76,7 +76,7 @@ live Jev audit and the three P2 figures.
 | Final blind README first screen | Fresh context-free reviewer named purpose, audience, offline recomputation and all three evidence limits from one 1366×900 screenshot at `277d729` | [receipt](reports/readme-ten-second-final.md) |
 | Raw demo capture | 21.517 s cast, exit 0, demo 0 / fixed replay 0 / bad replay 1 from the official wheel; GIFs 24.51 s, 8 frames, 979×918 px, 571,102 and 569,379 bytes, two identical renders each; parent replayed both recorded bundles through the bound installed executable with the same verdicts | [REVIEW 14 capture](reviews/14-capture.md), [REPORT 14 capture](reports/14-capture.md) |
 | Recording activation `31c9916` | Parent: 481 visual tests; 15 generated outputs byte-identical with 16 references; strict typing over 33 files; hooks. Independent reviewer: 123 focused checks, no frozen-path drift. Additive correction `a3397fe` fixed the output count (15, not 17), the agg call count and the controlled-environment scope | [REVIEW 14 activation](reviews/14-activation.md), [correction](reports/14-activation-correction.md) |
-| Media head `0a0a228` (PR 48) | Ten hosted source and assets jobs SUCCESS (37607862358, 37607886554) | this report's dispatch; hosted runs |
+| Reviewed PR 48 head `f26af8ff43302020be5dbc8eeb6c497d089fdbc2` | Ten hosted source and assets jobs SUCCESS (runs 37607862358, 37607886554; both report that head SHA), then merged as `0a0a2288bed813e9fcbf7116ef97294912ca04b1` | this report's dispatch; hosted runs |
 
 Counts are per check and not additive. The demo's own output reported
 `duration_s: 0.129` inside the recording; no other timing is claimed.
