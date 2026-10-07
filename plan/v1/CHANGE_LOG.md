@@ -538,3 +538,26 @@ main merges. The tag and PyPI metadata/distributions remain unchanged; later med
 and documentation are explicitly identified as postpublication repository content.
 Social preview upload stays manual. Denied Task06 operations and cancelled tasks
 remain untouched; optional scope stays frozen under V1-052.
+
+## V1-054 — Post-release refinement session (8 October 2026)
+
+8 October 2026, 01:00–13:00 IST. The human authorized an autonomous refinement
+of the published 1.0.0 repository and delegated it to a different team shape
+from the v1 lanes: one architect/reviewer (plans and reviews every diff, edits
+nothing), one orchestrator (verification, settings, commits, merges, releases)
+and up to two coders in isolated worktrees under `.worktrees/`. The v1 executor
+assignment in AGENTS.md is superseded for this session only; AGENTS.md's
+engineering rules (stdlib core, no network in ordinary tests, fail explicitly,
+never weaken a check, frozen statistical rules) remain binding.
+
+Scope authorized: README first screen and hero simplification with the
+presentation tests updated deliberately (an editorial amendment to PLAN
+section D's opening order; PLAN.md itself stays immutable); two narrow
+hardening fixes (streaming JSONL readers, native IPC sequence type check) and
+corrected exception documentation; maintenance automation (Dependabot, CodeQL,
+dependency review, secret scanning, a CI aggregate check, project URLs,
+CITATION.cff); repository settings (description, homepage, topics, social
+preview, ruleset); and collection of the preregistered live Jev audit from the
+accepted snapshot d3edbab with the human's key, reported only after independent
+review. No tag, published distribution, statistical rule, schema or 1.x
+interface changes. Any 1.0.1 patch release uses the full existing pipeline.
