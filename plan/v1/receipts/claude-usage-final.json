@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "observed_at_utc": "2026-10-07T10:57:21.322475+00:00",
+  "observed_at_utc": "2026-10-07T11:01:57.577561+00:00",
   "method": "Maximum terminal cumulative total_cost_usd per session; never sum resumed-session totals.",
-  "streams": 95,
-  "terminal_results": 99,
+  "streams": 96,
+  "terminal_results": 100,
   "sessions": 17,
-  "api_equivalent_usd": "564.3217587499999632",
+  "api_equivalent_usd": "566.8101927499999612",
   "models_api_equivalent_usd": {
-    "claude-fable-5-1": "554.8808769999999622",
+    "claude-fable-5-1": "557.3693109999999602",
     "claude-sonnet-5": "3.2063510000000004",
     "claude-haiku-4-5-20251001": "0.022664",
     "claude-opus-5[1m]": "6.211866750000003"
@@ -96,11 +96,11 @@
     },
     {
       "session_id": "83514ea3-48d0-4c6e-8728-e4a607318bc7",
-      "source_stream": "21-ci-provenance.stream.jsonl",
-      "line": 57,
-      "api_equivalent_usd": "23.385402250000006",
+      "source_stream": "21-closure.stream.jsonl",
+      "line": 119,
+      "api_equivalent_usd": "25.873836250000004",
       "models": {
-        "claude-fable-5-1": "23.385402250000006"
+        "claude-fable-5-1": "25.873836250000004"
       }
     },
     {
