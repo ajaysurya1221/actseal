@@ -4,37 +4,37 @@ Codex owns state/plans/REVIEWs. ClaudeCode claude-fable-5-1,efforthigh writes
 product code/tests/general docs/visuals. Reports are claims until independently
 reviewed. Normal permissions/account/billing remain; denials stay binding.
 
-## Latest release checkpoint — 7 October, approximately15:31IST
+## Latest release checkpoint — 7 October, 15:45 IST
 
-v1.0.0 annotated tag is pushed onmain04c10d3fec60727310cf65acf6528f13264a26d4.
-PR47 merged afterconsolidatedACCEPT on4d7966f and10greenhostedchecks
-37602503653/37602539917 plusfullrehearsal37602547044SUCCESS. Main04tree equals
-reviewed4dtree byteforbyte; bareclean candidatecheckerexit0. MainCI37603576993
-alsoSUCCESS. Pre-tag decision is reviews/20-pretag.md; source/evidence unchanged.
+Human PyPI approval completed. Tagged release workflow 37603727302 is SUCCESS:
+build, assets, all four platform checks, trusted publication, official-PyPI
+clean-container verification and draft GitHub mirroring all passed.
+v1.0.0 remains immutable at 04c10d3fec60727310cf65acf6528f13264a26d4.
+PyPI reports Production/Stable and Publish attestations for both distributions.
 
-Taggedrelease37603727302: build,assets andallfour exactartifactplatformjobs
-SUCCESS. **publish jobWAITING onhumanpypiapproval**. Ajay notifiedinchat and
-askedtoopen https://github.com/ajaysurya1221/actseal/actions/runs/37603727302
-→Reviewdeployments→pypi→Approveanddeploy. Neverapprove/remove thisgateourselves.
-NoPyPI1.0upload yet atthischeckpoint; donotclaimreleasecomplete.
+Codex independently downloaded the official PyPI distributions and GitHub draft
+assets: both pairs are byte-identical and match the tagged build checksums.
+Wheel: 101900 bytes, SHA256
+4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf.
+Sdist: 2054855 bytes, SHA256
+aa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6.
+Actual workflow receipts are now under plan/v1/receipts/. Container receipt
+records demo0, fixed replay0 and bad replay1 outside the checkout. Attestation
+presence/identity/subjects inspected; no independent cryptographic verification.
 
-Taggedwheel SHA4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf
-(101900bytes); sdistSHAaa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6
-(2054855bytes). Distributionartifact11474201373; metadataartifact11474031865.
-These are built/taggedchecksums, notyet publicPyPIreceipts. Metadata savedprivate
-under/tmp/actseal-v1-orchestration/release-37603727302/metadata.
+Task14 capture-only phase is running in the prepared recording worktree,
+SAME Claude session241e6a45-571b-4ca9-ad83-243d7c53b003, Fable5.1/high,
+normal permissions. Actual verified public-wheel path and release receipts
+were supplied. Raw capture review precedes activation/README integration.
+Task21 has not started. GitHub release remains a draft. Final release acceptance
+still requires genuine media, independent review, final docs/receipts and green
+hosted CI before the postpublication changes merge. Public launch stays draft.
 
-Afterhumanapproval: verifyofficialPyPIcontainer/results/attestations/hashes,
-downloadactualpublicverifiedwheel, thenresume SAMEClaude14session forrealcapture
-frompreparedbranchclaude/v1-14-published-recording at04. Rawcaptureparentreview
-precedesinventory/mediaactivation. ThenClaude21 SAMEdocumentation session on
-claude/v1-21-release-receipts produces finalreport/notes/READMEdemo/launchdraft.
-Bothworktreesclean/prepared, no postpublicationClaude taskstarted. Private
-active.json hasexactpaths/sessions;14packettemplate is NOT dispatched andneeds
-actualpostpublicationinputs. Rootnowcodex/v1-postpublication-review; tagimmutable.
-
-The following checkpoint is preserved aspre-tag context; thissection supersedes
-its current/nextaction descriptions. No re-run ofsupersededcuts/blockedJev.
+Root branch codex/v1-postpublication-review holds planning/receipt changes;
+source, registry, original archive, package and immutable tag remain unchanged.
+Private orchestration details: /tmp/actseal-v1-orchestration/active.json.
+The earlier checkpoints below are preserved as history; this section supersedes
+all stale current/next-action and publication descriptions in those sections.
 
 ## Earlier checkpoint and next action
 
