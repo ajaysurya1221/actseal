@@ -6,8 +6,34 @@
 - `CI / required` aggregate check that passes only when every CI job succeeds; a failed, cancelled or skipped job fails it.
 - Package metadata project URLs for the quickstart documentation, repository, issue tracker and changelog.
 - `CITATION.cff` software citation metadata for the 1.0.0 release.
+- Added the 8 October 2026 Jev audit archive: 959 recorded single-attempt captures across separate calibration and verification cohorts, with an INCONCLUSIVE verification verdict. Collection used benchmark snapshot d3edbab, not the released Actseal 1.0.0 package; results are finite-benchmark, demo-scope evidence.
 - Corrected GitHub README figure selection to use dark or light desktop variants at every viewport width. This supersedes the v1.0.0 statement that the README selects vertical variants below 1280 px. Mobile SVGs remain committed; phone text legibility remains a known limitation.
 - Redrew the README hero as one stacked composition per colour scheme (1600×700) whose smallest type, the step labels, is 14.3 nominal CSS px at a 254 px image width; `social.png` uses the same composition. The workflow and architecture figures remain below the 14 px floor at phone widths.
+
+## v1.0.1 — unreleased
+
+### Fixes
+
+- Iterate LF-delimited JSONL rows without first building a list of every
+  row. Preserve row boundaries, validation order, diagnostics and existing
+  limits; the fixture adapter still has no row-count limit.
+- Require native Laya worker reply sequences to be JSON integers matching
+  the pending request. Boolean, floating-point and missing sequences
+  invalidate the worker and return `unavailable` with `laya.unavailable:ipc`.
+
+### Replay compatibility
+
+- Add the reviewed 1.0.1 implementation fingerprint to the
+  `actseal-choice-v1` registry, retaining both existing mappings.
+  The retained action-gate archive remains unchanged and replays to its
+  stored verdict. New collection continues to require an exact-source lock.
+
+### Documentation
+
+- Correct the numerical-kernel exception guide: `clopper_pearson_tail`
+  raises built-in `TypeError` or `ValueError`, not `ActsealError`.
+  This documentation correction changes neither numerical behaviour nor
+  results.
 
 ## v1.0.0 — 2026-10-07
 

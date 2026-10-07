@@ -1,0 +1,1 @@
+{"accepted":580,"coverage":{"lower":0.8787825228681747,"upper":0.9316794056630708},"errors":24,"evidence_scope":"demo","lock_sha256":"e901ad5ebdfdb2b81b97517a72b320eb29cda1588c2b7496e4cc43091034a87a","reasons":["evidence.insufficient"],"risk":{"lower":0.02498087158203282,"upper":0.06393316057415596},"status":"INCONCLUSIVE","total":639}

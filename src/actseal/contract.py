@@ -21,6 +21,7 @@ within one split; cross-split checks live in :mod:`actseal.locking`.
 from __future__ import annotations
 
 import tomllib
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Final
 
@@ -155,12 +156,21 @@ def parse_contract(path: Path) -> Contract:
 # --------------------------------------------------------------------------- #
 
 
-def _split_rows(text: str) -> list[str]:
-    """Split on LF only; one terminating LF is a terminator, not an empty row."""
-    rows = text.split("\n")
-    if rows and rows[-1] == "":
-        rows.pop()
-    return rows
+def _iter_rows(text: str) -> Iterator[str]:
+    """Yield rows split on LF only; one terminating LF is a terminator, not an empty row.
+
+    Rows are produced one at a time, so a newline-heavy document never
+    materialises a list of every row before the first row is checked.
+    """
+    start = 0
+    end = len(text)
+    while start < end:
+        stop = text.find("\n", start)
+        if stop < 0:
+            yield text[start:]
+            return
+        yield text[start:stop]
+        start = stop + 1
 
 
 def _parse_row(index: int, row: str) -> Case:
@@ -186,7 +196,7 @@ def parse_cases(text: str, question: ChoiceQuestion) -> tuple[Case, ...]:
     cases: list[Case] = []
     ids: set[str] = set()
     states: set[str] = set()
-    for index, row in enumerate(_split_rows(text)):
+    for index, row in enumerate(_iter_rows(text)):
         if len(cases) >= MAX_CASES_PER_SPLIT:
             raise SchemaError(f"cases: must contain at most {MAX_CASES_PER_SPLIT} records")
         case = _parse_row(index, row)

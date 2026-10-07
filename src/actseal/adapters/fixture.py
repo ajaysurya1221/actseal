@@ -16,6 +16,7 @@ never a skip. Captures are deterministic and carry ``fallback_used=False``.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Final
 
@@ -98,22 +99,36 @@ def _parse_row(index: int, text: str) -> tuple[str, _Row]:
     return case_id, _Row(body, failure, tuple(warnings))
 
 
+def _iter_lines(text: str) -> Iterator[str]:
+    """Yield lines split on LF only; one terminating LF is a terminator, not an empty row.
+
+    Lines are produced one at a time so a newline-heavy file never materialises
+    a list of every line before the first one is checked.
+    """
+    start = 0
+    end = len(text)
+    while start < end:
+        stop = text.find("\n", start)
+        if stop < 0:
+            yield text[start:]
+            return
+        yield text[start:stop]
+        start = stop + 1
+
+
 def _parse_rows(data: bytes) -> dict[str, _Row]:
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError:
         raise SchemaError("responses: must be valid UTF-8") from None
-    lines = text.split("\n")
-    if lines and lines[-1] == "":
-        lines.pop()
-    if not lines:
-        raise SchemaError("responses: must contain at least one row")
     rows: dict[str, _Row] = {}
-    for index, line in enumerate(lines):
+    for index, line in enumerate(_iter_lines(text)):
         case_id, row = _parse_row(index, line)
         if case_id in rows:
             raise SchemaError(f"responses[{index}].case_id: duplicate case id")
         rows[case_id] = row
+    if not rows:
+        raise SchemaError("responses: must contain at least one row")
     return rows
 
 

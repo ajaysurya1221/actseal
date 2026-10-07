@@ -280,11 +280,15 @@ unknown fields, duplicate keys, malformed hashes, unsupported engines and any
 wildcard or range form. The file is packaged beside the module and is outside
 the implementation fingerprint (which hashes only `*.py`). Entries are added
 only by review with archived-evidence regression tests; the 1.0.0 registry
-ships exactly two reviewed entries for `actseal-choice-v1` (the 1.0.0 source
+shipped exactly two reviewed entries for `actseal-choice-v1` (the 1.0.0 source
 itself and the unreleased prerelease producer of the retained
-`examples/action_gate` archive), listed with their provenance in the
-[versioning policy](versioning.md#registry-approval-process). The registry is
-trusted verifier configuration, not proof that evidence is authentic.
+`examples/action_gate` archive). The 1.0.1 registry retains both approvals and
+adds the reviewed 1.0.1 source fingerprint, three entries in all; every entry
+is listed with its provenance in the
+[versioning policy](versioning.md#registry-approval-process). Dual
+registration, exact-source collection and the schema and engine rules above
+are unchanged. The registry is trusted verifier configuration, not proof that
+evidence is authentic.
 
 ### Runner and CLI (`actseal.runner`, `actseal.cli`)
 

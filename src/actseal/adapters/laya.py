@@ -677,8 +677,13 @@ class LayaModel:
             return self._failure(digest, "unavailable", (f"laya.unavailable:{exc.reason}",))
 
     def _capture(self, digest: str, sequence: int, reply: Mapping[str, object]) -> CapturedOutcome:
-        """Validate the reply for exactly the pending request; anything else is unusable IPC."""
-        if reply.get("kind") != "reply" or reply.get("seq") != sequence:
+        """Validate the reply for exactly the pending request; anything else is unusable IPC.
+
+        The sequence must be a JSON integer: ``true`` or ``1.0`` compare equal
+        to ``1`` in Python but are not the sequence that was sent.
+        """
+        seq = reply.get("seq")
+        if reply.get("kind") != "reply" or type(seq) is not int or seq != sequence:
             raise _ChannelError("ipc")
         warnings = _warning_list(reply.get("warnings"))
         if "failure" in reply:
