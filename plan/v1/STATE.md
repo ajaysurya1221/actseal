@@ -12,9 +12,9 @@ All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; s
 
 The one-time10:30IST heartbeat resumed the same Task15 and Task06 Fable5.1/high sessions after the verified reset. Both now report allowance available, no overage use and no model/account/billing substitution. Prior quota rejections remain historical. Do not start duplicate sessions.
 
-1. Task15 is integrating accepted hero/workflow/social work under V1-030/031, repairing the verified resvg filename and generating the actual social PNG. Independent pixel/CI gates remain.
-2. Task06 is completing offline benchmark code and strict preregistration binding. No live calls or actual key access; concrete protocol review and separate dispatch remain required.
-3. Task19 may prepare an isolated PARTIAL integration candidate under V1-032 from main20b9969, preserving active lanes. Final source/version and registry approval remain later gates.
+1. Task15 completed atfcdcfe4; source/pixels/regeneration,283 visual and2,958 core tests passed, then all8 hosted checks passed. PR31 merged7820dba; isolated heroPR25 closed as superseded. Actual social.png is delivered; user upload remains manual.
+2. Task06 offline preparation5184aab passes74 bench tests, source-verified preregistration and hooks. Independent review is checking durable-journal timing and capture binding; live acceptance remains withheld. No live calls/key access; separate credential answer and dispatch remain required.
+3. Task19 is running under V1-032 on an isolated branch, merging accepted05/08/09 and adding explicit CLI opt-in. Claude08 is concurrently preparing README/publishing docs under V1-034 on a committed snapshot only. Final source/version, registry and all full-task gates remain later.
 4. Finish P1 assets/README, blind ten-second review, exact-artifact rehearsal and publication gates before23:59IST.
 
 `JEV_API_KEY` was not exported at the last presence-only check. Parent and independent reviewer confirmed exactly one empty placeholder assignment in `.env.example`. A separate human question about loading only the real key from the ignored `.env` is pending; do not access it without that answer. Live Jev behavior remains unverified; no Jev requests or credit use occurred.
@@ -27,26 +27,26 @@ The one-time10:30IST heartbeat resumed the same Task15 and Task06 Fable5.1/high 
 | 03 | ACCEPT212a1d6 after independent177 conformance/provider +5 cached native tests and hooks. PR20 mergeda47c7f5. |
 | 04 | ACCEPT732914d after252 tests, all8 targeted mutations killed, hooks and strict helper types. PR21 mergedbaecd26; main CI37566825489 passed. |
 | 05 | Offline source5849c68/headc2e27d2 scoped ACCEPT. New independent390 focused +5 native tests pass; placeholder verified. Explicit CLI integration, final inclusion/live gates remain. PR28 still draft. |
-| 06 | Same session resumed after reset; offline code/tests and strict preregistration binding are in progress. No accepted concrete protocol or live calls. Prior stopped scratch script preserved and not executed. |
+| 06 | Offline preparation5184aab,74 parent bench tests plus checker/hooks green. Full independent review in progress; no live approval or requests. Scratch preserved untracked and not rerun. |
 | 07 | Exact-source branch277d8e2 independently passes57 tests, command, lint/types/hooks. PR35 push CI passes; merge-preview37566923811 fails7 archive compatibility tests after stats source change. Task19 must repair integration. A temporary-registry probe independently reproduced the entire original verdict against current main and all negative controls, without changing the real registry; see reviews/07-cross-release-probe.md. This is not final compatibility approval. |
-| 08 | General docs/ADRs scoped ACCEPTeb21e87, PR26 green. README/P1/example/release notes remain. |
-| 09 | CI provisioningbdedc1e and architecture-output gated3413a4 independently ACCEPT; PR18 updated. Release branch synced reviewed mainbaecd26;8acbf38 explicitly includes the mutation helper in the sdist, with54 parent tests and1 independent real-packaging test passing. Ten exact-head hosted jobs at8acbf38 passed. Full rehearsal/candidate metadata/artifacts still pending; the current branch lacks final README fixes and all13 required static assets, so its release rehearsal would stop before building. |
+| 08 | General docs/ADRs scoped ACCEPTeb21e87. Bounded README/publishing preparation running under V1-034 on exact merged snapshots. Final architecture/example/inclusion facts, rendered review and full checks remain. |
+| 09 | CI provisioningbdedc1e and architecture-output gated3413a4 independently ACCEPT; PR18 updated. Release branch synced reviewed mainbaecd26;8acbf38 explicitly includes the mutation helper in the sdist, with54 parent tests and1 independent real-packaging test passing. New c0a183c adds explicit v1 documentation inputs to the sdist with byte checks;24 parent tests and independent actual-sdist check passed, plus10 exact-head hosted checks37575131189/37575134639. Full rehearsal/candidate metadata/artifacts still pending; the current branch lacks final README fixes and all13 required static assets, so its release rehearsal would stop before building. |
 | 10 | Toolchain ACCEPT030ef840, merged6ad1e91. |
-| 11 | Claude authored real fonts/OFL, four hero SVGs and report at7bb32f4. Independent pixels PASS in both themes/layouts. Task11-only branch736d912 preserves those bytes,226 visual tests/hooks and four hosted push jobs pass; PR25 conflicts with merged Task12. V1-030 assigns the two shared-file resolutions to Claude15 on the original social branch, preserving both test sets. |
+| 11 | Actual hero/font/OFL bytes independently accepted and preserved in combinedPR31, merged7820dba after8 green checks. IsolatedPR25 closed as superseded; source history retained. Final README blind test remains. |
 | 12 | ACCEPTf712dae after actual offline pixel review and regeneration. PR22 merged227c7da. No browser workaround. |
 | 13 | Source2e2a7b2 scoped ACCEPT,286 parent/50 independent tests. Final provider mapping, registered/generated SVGs and final rendering remain; draft pixels passed independent review in all four variants (reviews/13-draft-pixels.md), without final acceptance. |
 | 14 | Recording preparation11a31fc scoped ACCEPT, PR30 green. Genuine v1 PyPI cast/GIF follows publication under Decision2. |
-| 15 | Same session resumed; combined visual integration and real social PNG generation in progress. Final diff/pixel/regeneration/hosted acceptance pending. |
+| 15 | ACCEPTfcdcfe4;283 parent+independent visual tests,2,958 parent core tests,types/hooks,actualpixels/regeneration and8 hosted checks pass. PR31 merged7820dba. Social1280x640 exists; user upload not done. |
 | 16–18 | Optional P2, only after mandatory P1 acceptance; not dispatched. |
 | 19–22 | V1-032 permits an isolated early integration candidate. Final registry, full integration, blind README test, release/publication/final receipts remain. No v1 tag or PyPI publication. |
 
 ## Branches, processes and receipts
 
-Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. The current planning continuation is `codex/v1-continuation-receipts`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
+Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-docs-completion-contract`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
 
-- Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, original social branch resumed from7bb32f4; live integration preserves those assets.
+- Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, completed atfcdcfe4 and merged7820dba; all accepted asset bytes preserved.
 - Reused former baseline worktree: Task03 branch preserved. Now Task11-only completion branch736d912, cherry-picking Claude commits461f9ee/db56f36/7bb32f4 onto5f3fee5; files byte-identical. This isolates finished hero assets from unfinished social registration.
-- Jev worktree: sourcec2e27d2, branch`claude/v1-06-audit-preparation`; offline benchmark authoring resumed; old scratch preserved. No concurrent product writer.
+- Jev worktree: sourcec2e27d2, branch`claude/v1-06-audit-preparation`; offline preparation5184aab is terminal and under independent review; old scratch preserved. No live writer.
 - Release worktree: Codex-owned CI/packaging branch; no product code authored by Codex. Exact current head/status must be read before continuation.
 - Owned keepawake handle19481 runs `caffeinate -i -t 54000`. Stop only this owned process on completion or an impasse; no permanent power change.
 
