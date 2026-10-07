@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import how_it_works
+from . import hero, how_it_works, social
 
 ASSET_DIR = "docs/assets"
 SOURCE_DIR = "docs/assets/src"
@@ -141,8 +141,26 @@ ASSETS: tuple[Asset, ...] = (
         outputs=(
             _svg("hero-light.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
             _svg("hero-dark.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
+            # Stacked variants for a 360 CSS px column; outlined like the desktop files.
+            Output(
+                path="hero-mobile-light.svg",
+                kind="svg",
+                width=hero.MOBILE_WIDTH,
+                height=hero.mobile_height(),
+                display_width=MOBILE_DISPLAY_WIDTH,
+                outlined=True,
+            ),
+            Output(
+                path="hero-mobile-dark.svg",
+                kind="svg",
+                width=hero.MOBILE_WIDTH,
+                height=hero.mobile_height(),
+                display_width=MOBILE_DISPLAY_WIDTH,
+                outlined=True,
+            ),
         ),
         needs=("jetbrains-mono", "fonttools"),
+        renderer=hero.render,
     ),
     Asset(
         name="how-it-works",
@@ -211,6 +229,7 @@ ASSETS: tuple[Asset, ...] = (
         summary="GitHub social preview from the banner composition.",
         outputs=(Output(path="social.png", kind="png", width=SOCIAL_WIDTH, height=SOCIAL_HEIGHT),),
         needs=("resvg", "jetbrains-mono", "fonttools"),
+        renderer=social.render,
     ),
     Asset(
         name="where",
