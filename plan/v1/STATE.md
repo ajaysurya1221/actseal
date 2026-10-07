@@ -4,40 +4,38 @@ Codex owns state/plans/REVIEWs. ClaudeCode claude-fable-5-1,efforthigh writes
 product code/tests/general docs/visuals. Reports are claims until independently
 reviewed. Normal permissions/account/billing remain; denials stay binding.
 
-## Latest release checkpoint — 7 October, 15:45 IST
+## Latest release checkpoint — 7 October, 16:10 IST
 
-Human PyPI approval completed. Tagged release workflow 37603727302 is SUCCESS:
-build, assets, all four platform checks, trusted publication, official-PyPI
-clean-container verification and draft GitHub mirroring all passed.
-v1.0.0 remains immutable at 04c10d3fec60727310cf65acf6528f13264a26d4.
-PyPI reports Production/Stable and Publish attestations for both distributions.
+PyPI1.0.0 is LIVE with Production/Stable and both Publish attestations. The human
+approved the pypi deployment. All nine tagged workflow37603727302 jobs passed,
+including official-PyPI clean-container verification and identical GitHub draft
+assets. Immutable tag/source04c10d3fec60727310cf65acf6528f13264a26d4 unchanged.
 
-Codex independently downloaded the official PyPI distributions and GitHub draft
-assets: both pairs are byte-identical and match the tagged build checksums.
-Wheel: 101900 bytes, SHA256
-4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf.
-Sdist: 2054855 bytes, SHA256
-aa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6.
-Actual workflow receipts are now under plan/v1/receipts/. Container receipt
-records demo0, fixed replay0 and bad replay1 outside the checkout. Attestation
-presence/identity/subjects inspected; no independent cryptographic verification.
+Task14 is ACCEPT: genuine public-PyPI capture21.517s, unedited outputs0/0/1,
+light/dark GIFs24.51s below0.6MB each. Raw/capture/activation/additive corrections
+independently reviewed; parent481visual tests, regeneration and hooks pass.
+All TEN exact-head source/assets jobs onf26af8ff passed (runs37607862358 and
+37607886554), including Linux GIF byte regeneration. PR48 merged
+0a0a2288bed813e9fcbf7116ef97294912ca04b1 at10:37:34UTC.
 
-Task14 raw capture is ACCEPT (review14-capture.md, reportf55fd5b); activation
-is running in the prepared recording worktree,
-SAME Claude session241e6a45-571b-4ca9-ad83-243d7c53b003, Fable5.1/high,
-normal permissions. Actual verified public-wheel path and release receipts
-were supplied. Raw cast is21.517s, GIFs24.51s, genuine exits0/0/1. Parent replayed both
-recorded bundles via the bound installed PyPI executable (PASS0/BLOCK1).
-Task21 is preparing final documentation in its independent owned worktree;
-its final tests/acceptance await the media integration. GitHub release remains a draft. Final release acceptance
-still requires genuine media, independent review, final docs/receipts and green
-hosted CI before the postpublication changes merge. Public launch stays draft.
+Task21 documentation is ACCEPT atd0f40bc after factual corrections.
+SAME Claude Fable5.1/high session83514ea3-48d0-4c6e-8728-e4a607318bc7;
+normal permissions, docs-owned paths only. Media integrated in its worktree.
+Parent111docs/481visual tests,18refs/15outputs regeneration,hooks and receipt/docs gates pass.
+Remaining: exact-head hosted CI, merge,
+then publish the existing GitHub draft release notes and verify public closure.
+No new distribution build/upload or tag movement. Public launch stays draft.
+Social1280x640 file delivered; optional human upload is not a release blocker.
 
-Root branch codex/v1-postpublication-review holds planning/receipt changes;
-source, registry, original archive, package and immutable tag remain unchanged.
-Private orchestration details: /tmp/actseal-v1-orchestration/active.json.
-The earlier checkpoints below are preserved as history; this section supersedes
-all stale current/next-action and publication descriptions in those sections.
+Codex observed terminal usage through10:38:02UTC: approximatelyUSD557.91478250
+API-equivalent/list-price metadata, not actual charges.17sessions/92streams;
+future work/Codex/manual usage excluded. Zero observed sprint Jev requests;
+account-credit balance/change unmeasured. Ledger belongs to the docs candidate.
+
+Root branchcodex/v1-final-publication startsmain0a0a228. Source,registry,original
+archive,package and immutable tag unchanged. Private process state lives at
+/tmp/actseal-v1-orchestration/active.json. Earlier checkpoint descriptions below
+are preserved history and superseded by this section and current task table.
 
 ## Earlier checkpoint and next action
 
@@ -97,14 +95,14 @@ Core stayszero third-party runtime dependencies; no model/billing substitution.
 |06|Unstarted,harness-blocked; deferred1.1 byV1-052. Preserve offlineACCEPTd3edbab/candidate3/allpreviousdrafts.|
 |07|Originalsyntheticarchive unchanged; exactsource277d8e2 scopedACCEPT andnowintegrated; twoentryregistry andinstalledreplaypass.|
 |08|Responsive95e17b4ACCEPT/merged; finalblindtestACCEPT. Pretag75626ae scopedACCEPT after08F2/08F3corrections,parent110docstests/docs gate/hooks andindependentreview.|
-|09|AcceptedCI/packagingglue integrated; rehearsal37599844342SUCCESS. Finalcandidate/release/postpublish remain.|
+|09|ACCEPT; tagged37603727302 and exact-artifact/post-PyPI checks SUCCESS.|
 |10–13|Toolchain/hero/workflow/architecture andresponsivecorrectionACCEPT/merged.|
-|14|Procedure11a31fc/renderera47a320scopedACCEPT; no actualcast/GIF. MandatorycaptureafterrealPyPIpublicationunder2A.|
+|14|ACCEPT rawf55fd5b/activation31c9916/correctiona3397fe; actual PyPI recording merged PR48 after ten green jobs.|
 |15|ACCEPTfcdcfe4/merged;1280x640socialPNG delivered; humanuploadnotdone.|
 |16–18|UndispatchedoptionalP2deferred1.1 byV1-052. Plaintextevidencelimitsremain.|
 |19|CombinedintegrationACCEPTff0/main277; no runtimechangefrom5e.|
-|20|Finalpretagdoc/candidategates inprogress; no tag/publication.|
-|21–22|Awaitactualrelease/recording; finalnotes/report,launchdraft andpublicclosure required.|
+|20|ACCEPT pretag/publication scopes; immutable v1.0.0/PyPI live, GitHub notes still draft.|
+|21–22|Task21ACCEPTd0f40bc; exact-headCI/merge then notes publication and actual closure remain.|
 
 ## Immutable product and evidence invariants
 

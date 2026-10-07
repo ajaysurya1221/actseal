@@ -13,6 +13,13 @@ manually dispatched workflow that promoted pre-built GitHub release bytes; its
 receipts are under `plan/reports/`. That workflow and its inputs no longer
 exist. Do not re-upload any already-published version.
 
+Status note: v1.0.0 was published on 7 October 2026 by this workflow from
+the annotated tag `v1.0.0` (`04c10d3`) in run 37603727302, after the
+owner's `pypi` approval. Its build, post-publication and release receipts
+are under `plan/v1/receipts/`, and `plan/v1/RELEASE_NOTES.md` maps each
+claim to them. The GitHub release the run created stays a draft until the
+post-publication documentation is accepted.
+
 ## Two ways to run the workflow
 
 | Trigger | What happens | Uploads? |
