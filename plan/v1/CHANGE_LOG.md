@@ -397,3 +397,36 @@ The preceding planning checkpointPR44 was independently ACCEPTed at
 checks in37592834007/37592827050. It merged as336fae685880a3a74ba353fd032d7c85f38bb6e0
 at08:23:18UTC. Earlier superseded CI remains historical, not acceptance of
 the new head. This activation does not claim full release acceptance.
+
+## V1-049 — Human relaxes the14:00 cut; retain the reviewed adapter
+
+At approximately14:04IST the human stated: "14:00 cut rule is not a hard one
+if you have amazing ideas to go forward! you can keep working." This supersedes
+the mandatory14:00 removal trigger in PLAN/V1-036/047/048. Codex retains the
+already reviewed experimental Jev adapter in the candidate: the failed complete
+CI is attributable to missing architecture, while removing the adapter would
+introduce an unnecessary source/registry change. No new feature scope is added.
+The live audit remains optional and unstarted; its effective harness denial is
+not cleared by changing the deadline. All mandatory release gates remain.
+
+Codex interrupted both19C and19D terminal sessions; both exited and no matching
+process remained at08:34:32UTC. Preserve their failed permission checks and
+partial work. In the isolated integration worktree, branchclaude/v1-19-jev-cut
+contains four staged deletions only: the three experimental package files and
+tests/unit/test_jev.py. No cut commit or main merge exists. The docs cut branch
+is clean at5e7931a. Original candidate branchclaude/v1-19-integration-preparation
+and its exact committed source5e7931a remain intact. Do not run candidate checks
+against the dirty cut worktree or silently discard its drafts.
+
+Tasks19C/19D are CANCELLED before acceptance. Their prepared specifications and
+activation receipt stay historical. No new producer approval is required for
+the unchanged retained candidate; existing exact8f316f67/a5fe mappings retain
+their scoped approval, not full release acceptance. The architecture continues
+to target fixture, Laya and explicit experimental Jev under V1-036. A renewed
+manual Terminal request is pending for its two exact denied merges. No automatic
+retry, alternate executor or permission-setting change is authorized.
+
+The14:00 heartbeat must observe this human override and cancelled task state;
+it must not dispatch a duplicate removal or live audit. Static P1, optional
+17:59cut and23:59publication timing remain as previously approved unless the
+human changes them. Continue accepted-scope completion, not speculative ideas.

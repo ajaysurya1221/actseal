@@ -10,13 +10,13 @@ All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; s
 
 ## Current constraint and next action
 
-Current checkpoint: 7 October,14:00IST. Main is
-`336fae685880a3a74ba353fd032d7c85f38bb6e0` after planning PR44
-(reviewed2e44b25) passed all eight hosted checks and merged. The exact PR39
-candidate5e7931a still has ten failed jobs, so V1-048 activates the approved
-Jev adapter plus unstarted audit deferral to1.1. Claude19/08 cut dispatches
-are being prepared on separate branches; no cut product change exists yet.
-Root records this at `codex/v1-jev-cut-activation`.
+Current checkpoint: 7 October,approximately14:05IST. Main remains
+`336fae685880a3a74ba353fd032d7c85f38bb6e0`. The human relaxed the14:00cut
+after its activation; V1-049 retains the reviewed experimental Jev adapter.
+Both removal sessions are stopped. Preserve four staged deletion drafts in
+the isolated cut branch; never treat that dirty checkout as the candidate.
+The immutable candidate5e7931a and its original branch remain intact.
+PR45 records activation plus the superseding human decision; no cut merges.
 
 1. **Task13 blocked:** the human added both exact merge Bash rules; Codex
    fixed only one missing JSON comma without changing a permission entry.
@@ -46,13 +46,15 @@ Root records this at `codex/v1-jev-cut-activation`.
    assets:425pass/1fail. Lint/types passed; downstream build/packaging/evidence,
    hooks and real authoring checks were skipped, not verified by these runs.
    No product-source change: fingerprint8f316f67…98ed3 is unchanged. PR39 stays
-   unaccepted; no main merge, tag or publication. V1-048 now activates19C/19D; product changes and new exact-producer
-   compatibility approval are pending. No old registry approval carries forward.
+   unaccepted; no main merge, tag or publication. V1-049 cancels19C/19D after the human relaxed thecut. The retained
+   candidate source and its scoped registry approval are unchanged. Mandatory
+   images, final fullgreen checks and release acceptance remain outstanding.
 
 The one-time10:30IST heartbeat already resumed the original15/06 sessions;
 no duplicate reset/session. A distinct one-time14:00 cutoff heartbeat is
 registered as `apply-actseal-jev-cutoff`; the gate has now been refreshed
-and applied in this active turn. A later heartbeat must not duplicate dispatch. Earlier checkpoint narratives remain in
+and applied, then superseded by the human inV1-049. A later heartbeat
+must not repeat the cancelled cut or start a live audit. Earlier checkpoint narratives remain in
 Git history, CHANGE_LOG and immutable reports/reviews. Exact active process
 IDs and private packet paths are in `/tmp/actseal-v1-orchestration/active.json`.
 No model/account/billing substitution; normal hooks and all review gates stay.
@@ -64,8 +66,8 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 | 00–02 | ACCEPT and merged. Baseline2302 tests includes native; core source0595512 froze schema/compatibility interfaces. |
 | 03 | ACCEPT212a1d6 after independent177 conformance/provider +5 cached native tests and hooks. PR20 mergeda47c7f5. |
 | 04 | ACCEPT732914d after252 tests, all8 targeted mutations killed, hooks and strict helper types. PR21 mergedbaecd26; main CI37566825489 passed. |
-| 05 | DEFERRED to1.1 by V1-048. Offline source5849c68/headc2e27d2 and its scoped ACCEPT remain preserved on the existing branch. Claude19 will remove only the unreleased Jev slice; no live capability claim. |
-| 06 | Live audit DEFERRED to1.1, unstarted. Preserve offline ACCEPTd3edbab/candidate3,87 parent checks and independent probes, all candidates/scratch and denial history. No key/request/journal/spend. |
+| 05 | RETAIN experimental adapter per human overrideV1-049; original offline scoped ACCEPT and candidate5e7931a preserved. Removal drafts isolated/cancelled; final integration gates remain. |
+| 06 | Optional live audit unstarted and harness-blocked. Preserve offline ACCEPTd3edbab/candidate3, all candidates/scratch and denial history. Human timing change does not clear the actual preflight denial. No key/request/journal/spend. |
 | 07 | Exactsource277d8e2 scoped ACCEPT and locally integrated. Final two-entry registry and corrected tests now replay the original nine-file archive unchanged; parent focused/installed tests pass. Earlier failed merge-preview remains history; final candidate hostedCI/main merge still pending. |
 | 08 | Final-facts correction2ccdac6 scoped ACCEPT; parent105 docs tests pass with1 missing-architecture failure, hooks pass, independent re-review passes. Locally integrated into19; fullvisual/hosted/release gates pending. DraftPR41 still710ae55 supports prior blind preflight only. |
 | 09 | Scoped CI/packaging source accepted, including Linuxagg probebb3b8f8 and actual-sdist checks. PR18 head0e32c6c has ten green hosted jobs37581140052/37581142565; Linuxagg1.9.0 hash-verified execution confirmed in job112660836035. Parent882 tests pass plus1 explicit obsolete-manifest observation skip. Accepted glue integrated locally into19. Final release rehearsal, exact artifacts and publication remain pending; green PR18 does not establish the combined candidate's acceptance. |
