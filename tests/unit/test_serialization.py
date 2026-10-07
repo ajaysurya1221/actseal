@@ -1018,7 +1018,8 @@ def test_package_import_and_serialization_do_not_import_optional_stack() -> None
         "actseal.implementation_fingerprint()\n"
         f"loaded = sorted(m for m in sys.modules if m.split('.')[0] in {OPTIONAL_MODULES!r})\n"
         "assert loaded == [], loaded\n"
-        "assert actseal.__version__ == '0.1.0'\n"
+        # The 1.0.0 release candidate (Codex metadata commit 0b57933).
+        "assert actseal.__version__ == '1.0.0', actseal.__version__\n"
         "print('ok')\n"
     )
     result = subprocess.run(  # noqa: S603 - fixed interpreter and literal script, no user input

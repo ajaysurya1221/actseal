@@ -276,7 +276,9 @@ def test_installed_package_is_isolated_from_the_checkout(
 ) -> None:
     report = guarded(installed, REPLAY_BLOCKED, ["--version"], cwd=outside)
     assert report["code"] == 0
-    assert str(report["stdout"]).startswith("actseal 0.1.0")
+    # The 1.0.0 release candidate (Codex metadata commit 0b57933): the installed
+    # wheel reports exactly its own version string.
+    assert str(report["stdout"]) == "actseal 1.0.0\n"
     package = Path(str(report["package_file"]))
     assert package.is_relative_to(installed.venv.resolve())
     assert not package.is_relative_to(ROOT.resolve())
