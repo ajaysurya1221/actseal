@@ -1,11 +1,16 @@
 # Recording the public PyPI demo (Task 14 procedure)
 
-Status: **procedure only**. No cast, GIF, version or hash receipt exists yet.
-The `demo` asset stays `not implemented` in `actseal_assets/inventory.py`
-until a genuine capture of the public PyPI `actseal` 1.0.0 release exists and
-Codex has reviewed it. Nothing below may be run against a local wheel, a
-prerelease or 0.1.0 and labelled v1.0.0. No snippet in this file has been
-run against a package during preparation.
+Status: **captured and activated** (7 October 2026). Attempt 1 of session
+`/tmp/actseal-recording.zCynsQ` was accepted by Codex
+(`plan/v1/reviews/14-capture.md`, CHANGE_LOG V1-053); the untouched cast is
+committed as `docs/assets/src/demo.cast` (SHA-256 `cdce70c6…`), the two
+renderings as `docs/assets/demo-light.gif` and `docs/assets/demo-dark.gif`,
+the public receipt as `receipts/demo-capture.json`, and `demo.render` is
+registered in `actseal_assets/inventory.py`. REPORT 14 (capture) records the
+run. The procedure below is kept as the exact method; any future capture is
+a new attempt under a new session and never an edit of an accepted one.
+Nothing here may be run against a local wheel, a prerelease or 0.1.0 and
+labelled v1.0.0.
 
 What the capture must show, unedited: the three approved quickstart commands,
 their real output and their real exit codes 0, 0, 1, in a raw cast of 20 to
@@ -216,11 +221,25 @@ cat "$ENV_DIR/pyvenv.cfg"
 find "$SESSION/uv-cache" -type f -path '*/bin/actseal'
 ```
 
-The shebang must name a Python inside `$ENV_DIR`; both version lines must
-read `actseal 1.0.0`; the second `find` must list the same single path with
-the same inode as the `ls -li` line. A second environment appearing after
-the offline run means the offline invocation did not reuse the identified
-one: fail the capture. This same `find`/`ls -li` pair is repeated after the
+The launcher must resolve into `$ENV_DIR`, in one of two accepted forms,
+each bound equally strictly to the identified environment:
+
+- a Python shebang naming `$ENV_DIR/bin/python` (or a Python inside
+  `$ENV_DIR`); or
+- uv's relocatable launcher, as written by uv 0.12.5: `#!/bin/sh` followed by
+  `'''exec' "$(dirname -- "$(realpath -- "$0")")"/'python' "$0" "$@"`, which
+  executes the sibling `$ENV_DIR/bin/python`. For this form also record
+  `ls -li "$ENV_DIR/bin"` and `realpath "$ENV_DIR/bin/python"`: the
+  `python` link must resolve to the interpreter named by `pyvenv.cfg`
+  (`home` plus `version_info`), and `pyvenv.cfg` must carry `uv = 0.12.5`.
+
+Any other launcher content, an exec target outside `$ENV_DIR/bin`, or a
+`python` link that does not match `pyvenv.cfg` fails the capture; the payload
+diffs below are required in both forms. Both version lines must read
+`actseal 1.0.0`; the second `find` must list the same single path with the
+same inode as the `ls -li` line. A second environment appearing after the
+offline run means the offline invocation did not reuse the identified one:
+fail the capture. This same `find`/`ls -li` pair is repeated after the
 capture (step 5); the identity holds only if the single path and inode are
 unchanged throughout.
 
@@ -291,7 +310,7 @@ appears, and the output path is inside a directory this attempt created.
 command on one line and 40 rows keep the first command visible while the
 demo output scrolls; decide geometry before the attempt and record it, never
 adjust it afterwards in rendering. Run in a real terminal; `--headless` is
-only for a noninteractive driver.
+only for a noninteractive driver (no TTY), as in the accepted capture.
 
 Record the printed `asciinema exit`. With `--return` it equals the helper's
 exit: 0 means all three commands exited 0, 0, 1; 1 means a mismatch or a
@@ -463,7 +482,7 @@ with the same `agg_command` calls, and
 `uv run --frozen --group assets python docs/assets/src/render.py --check --only demo`
 passing. None of that is part of this preparation.
 
-## Status (7 October 2026) and pending
+## Status (7 October 2026)
 
 - Done: the pinned JetBrains Mono files, `OFL.txt`, asciinema 3.2.1 and agg
   1.9.0 (macOS) were fetched by `setup_tools.py` with hash verification under
@@ -471,11 +490,16 @@ passing. None of that is part of this preparation.
   Linux x86_64 agg binary was executed in hosted CI at PR 18 head `0e32c6c`
   with its hash verified before execution (binary execution only, not GIF
   rendering).
-- Pending: Task 20 publication and its receipt (version, wheel/sdist
-  digests, verified wheel file, source fingerprint); Decision 2 governs the
-  post-publication capture.
-- Pending: actual warm-up, environment identity, payload comparison,
-  version/hash receipts, cast, GIFs, measured durations, sizes, two-render
-  identity: none exist. The parent verifies the actual binding after
-  publication.
-- Pending: Codex review of the raw capture and full Task 14 acceptance.
+- Done: Task 20 published `actseal` 1.0.0 (workflow 37603727302); wheel
+  `4497fef4…`, sdist `aa31ccf9…`, fingerprint `8f316f67…`.
+- Done: genuine capture, attempt 1 of `/tmp/actseal-recording.zCynsQ`
+  (REPORT 14 capture): warm-up `actseal 1.0.0`, one environment (inode
+  137174376) bound to the verified wheel before and after capture, both lock
+  fingerprints equal, cast 21.517 s with exits 0/0/1, light and dark GIFs
+  24.51 s measured and byte-identical across two renders. Codex ACCEPT in
+  `plan/v1/reviews/14-capture.md`; integration under V1-053. Accepted
+  deviations: `--headless` (no TTY), `TERM=dumb` recorded literally, uv's
+  `/bin/sh` relocatable launcher.
+- Pending: exact-head hosted Linux regeneration of the committed GIFs and
+  Task 21 README/final-receipt integration. The recording is an illustrative
+  receipt of the public package, not authenticated model evidence.

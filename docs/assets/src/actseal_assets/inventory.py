@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import architecture, hero, how_it_works, social
+from . import architecture, demo, hero, how_it_works, social
 
 ASSET_DIR = "docs/assets"
 SOURCE_DIR = "docs/assets/src"
@@ -228,24 +228,28 @@ ASSETS: tuple[Asset, ...] = (
         priority="P1",
         task="14",
         summary="Genuine PyPI demo, fixed replay and bad replay rendered from the raw cast.",
-        outputs=(
+        outputs=tuple(
+            # Light and dark renderings of the same untouched capture; the GIF's
+            # pixel size follows the recorded 100x40 terminal and is not declared.
             Output(
-                path="demo.gif",
+                path=name,
                 kind="gif",
                 width=None,
                 height=None,
                 max_bytes=DEMO_GIF_MAX_BYTES,
-            ),
+            )
+            for name in demo.THEMES
         ),
         sources=(
             Source(
-                path="demo.cast",
+                path=demo.CAST_SOURCE,
                 kind="cast",
                 min_seconds=DEMO_MIN_SECONDS,
                 max_seconds=DEMO_MAX_SECONDS,
             ),
         ),
         needs=("agg", "jetbrains-mono"),
+        renderer=demo.render,
     ),
     Asset(
         name="social",

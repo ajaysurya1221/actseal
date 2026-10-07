@@ -1,7 +1,7 @@
 # REVIEW 14 — Genuine raw capture
 
 Verdict: ACCEPT (raw capture and equivalent environment binding; activation and hosted regeneration still required)
-Reviewed report commit: `f55fd5b` on `claude/v1-14-published-recording`.
+Reviewed report commit: `f55fd5bab8b150948a405bb00a8726f76794187f` on `claude/v1-14-published-recording`.
 Capture source: immutable release `04c10d3fec60727310cf65acf6528f13264a26d4`.
 
 ## Findings ordered by severity
@@ -51,3 +51,12 @@ threshold, original archive, tool pin or other figure change is authorized.
 
 Task14 activation and exact-head hosted Linux rendering remain; Task21 integrates
 README/final receipts afterward. This is not final release ACCEPT.
+
+## Additive precision note
+
+The independent reviewer confirms raw-capture ACCEPT at the full report commit.
+REPORT14-capture's broad statement about every command after warm-up using env-i
+is imprecise: package probes and capture used that controlled environment; file
+diffs, validation and rendering used their separate authoring environment. This
+qualification preserves the original report and does not change capture binding.
+The final docs must not repeat the broader claim. No secret read was observed.
