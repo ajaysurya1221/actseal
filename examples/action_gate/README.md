@@ -152,14 +152,21 @@ is simply not supported by the running implementation, and it fails `--check`
 and `--route` even beside a valid run. Nothing is skipped as benign, and
 nothing is rewritten, resealed, moved or auto-approved.
 
-An unsupported active archive, such as `recorded/a5fe090202f7` once the
-product source changes, passes again only through the planned Task 19
-explicit compatibility review, which approves both its producer fingerprint
-(`a5fe0902...`) and the final running fingerprint in the packaged registry.
-Excluding an archive from the active set requires a separately recorded
-amendment; none exists. Adding a new run cannot make an older unsupported
-archive pass, and a new run is never a repair, replacement or reseal of an
-older one; the older archive's bytes stay as recorded in every case.
+An active archive whose producer is not the running source passes only
+through an explicit compatibility review that registers both its producer
+fingerprint and the running fingerprint for the engine in the packaged
+registry. For `recorded/a5fe090202f7` that review is complete: amendment
+V1-037 approved its producer (`a5fe0902...`, unreleased prerelease source
+`76758d70...`) and the 1.0.0 source (`8f316f67...`) for `actseal-choice-v1`,
+so the archive replays as `(registry-approved implementation)` under 1.0.0;
+the [versioning policy](../../docs/versioning.md#registry-approval-process)
+records both entries. The registry approves producers for an engine, not
+archives: it holds no lock digests. Any later packaged Python change needs
+its own fingerprint and review before this archive passes again. Excluding an
+archive from the active set requires a separately recorded amendment; none
+exists. Adding a new run cannot make an older unsupported archive pass, and a
+new run is never a repair, replacement or reseal of an older one; the older
+archive's bytes stay as recorded in every case.
 
 `--record` exists to produce a separately identified run for a new
 implementation, alongside, not instead of, the existing archives:

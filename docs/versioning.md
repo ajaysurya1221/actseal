@@ -95,12 +95,18 @@ approved by amendment V1-037 after an independent compatibility probe:
 | `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3` | the 1.0.0 candidate source itself (final version metadata commit `0b57933`) | the running implementation of this release |
 | `a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642` | reviewed source `76758d7084e396c8960718d28c1cad5fb70bac03`, the producer of the retained `examples/action_gate/recorded/a5fe090202f7` archive | an **unreleased prerelease** tree carrying a `0.1.0` version string; it is not the released actseal 0.1.0 implementation, and its archive is schema-2 evidence, not legacy schema-1 evidence |
 
-That second entry approves exactly one producer for exactly one retained
-archive (external lock digest
-`cb009be0039afefd995f6eac3a8bd9767d6bf026a73273b47e87a51fc9fbd715`). It does
-not approve other prerelease trees, any hash range, or evidence from any other
-producer, and it does not claim that a release occurred at that source. Any
-later change to the packaged Python sources changes the running fingerprint,
+Each entry maps one exact producer fingerprint to one replay engine; that is
+the whole content of the registry. It is producer/engine configuration, not
+an allowlist of archives, bundles or lock digests: evidence produced by an
+approved producer under that engine replays here whichever bundle it is in,
+and the retained `examples/action_gate/recorded/a5fe090202f7` archive
+(external lock digest
+`cb009be0039afefd995f6eac3a8bd9767d6bf026a73273b47e87a51fc9fbd715`) is the
+archived-evidence regression test that justified the second entry, not a
+special case consulted at replay time. The second entry does not approve
+other prerelease trees, any hash range, or evidence from any other producer,
+and it does not claim that a release occurred at that source. Any later
+change to the packaged Python sources changes the running fingerprint,
 invalidates the first entry and requires a new fingerprint and review. The
 exact-source path (rule 2) never consults the registry.
 

@@ -100,10 +100,12 @@ ARCHIVE = ROOT / "examples" / "action_gate" / "recorded" / "a5fe090202f7"
 ARCHIVE_EVIDENCE = ARCHIVE / "evidence"
 #: External trusted lock digest recorded in PRODUCER.json and the review.
 EXTERNAL_LOCK_SHA256 = "cb009be0039afefd995f6eac3a8bd9767d6bf026a73273b47e87a51fc9fbd715"
-#: Exact file inventory of the retained archive; replay must never alter it.
+#: Exact file inventory of the retained archive (all nine files, including the
+#: producer record); replay must never alter or add to it.
 ARCHIVE_INVENTORY = dict(
     zip(
         (
+            "PRODUCER.json",
             "lock.json",
             "evidence/calibration.jsonl",
             "evidence/faults.jsonl",
@@ -114,6 +116,7 @@ ARCHIVE_INVENTORY = dict(
             "evidence/verification.jsonl",
         ),
         (
+            "63d49ba57cfbfb2ba7762bb483feebb136e772de5d95c2a695a653eadf6b580d",
             "e80c7a29927f3b13ce9d664f01b5254ead6b1c2a441ea4a2165e808f02686abf",
             "8e5c86656e7bd4e4ec9ab4f238c5c23fe0dfbc7f3fb0e183dac75a04b824d999",
             "7d1d6d3f5fcf9a538931c14b84fe05c762f4947669c6f6fb3aa257a122b8fd09",
@@ -151,9 +154,18 @@ def registry(entries: dict[str, str]) -> CompatibilityRegistry:
 
 
 def point_registry_at(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, text: str | None) -> Path:
-    """Make ``load_registry`` read ``text`` from a temporary file (``None``: a missing file)."""
-    path = tmp_path / "registry.json"
-    if text is not None:
+    """Make ``load_registry`` read ``text`` from a temporary file.
+
+    ``None`` points the loader at a genuinely absent path under a fresh,
+    never-created subdirectory, so a missing registry is tested as missing even
+    after an earlier call in the same test wrote one.
+    """
+    if text is None:
+        path = tmp_path / "absent-registry" / "registry.json"
+        assert not path.exists()
+        assert not path.parent.exists()
+    else:
+        path = tmp_path / "registry.json"
         path.write_text(text, encoding="utf-8")
     monkeypatch.setattr(compatibility_module, "_REGISTRY_PATH", path)
     return path
@@ -311,9 +323,16 @@ def test_exact_current_source_validates_without_consulting_any_registry(
     check_replay_compatibility(lock, registry=CompatibilityRegistry(1, ()))
     point_registry_at(monkeypatch, tmp_path, registry_text({}))
     check_replay_compatibility(lock)
-    point_registry_at(monkeypatch, tmp_path, None)
+    absent = point_registry_at(monkeypatch, tmp_path, None)
+    assert not absent.exists()
+    assert not absent.parent.exists()
     validate_lock(lock)
+    check_replay_compatibility(lock)
     require_exact_implementation(lock)
+    assert not absent.exists()
+    # The same absent file is a SchemaError the moment a foreign producer consults it.
+    with pytest.raises(SchemaError, match="compatibility_registry: unavailable"):
+        validate_lock(foreign_lock())
 
 
 # --------------------------------------------------------------------------- #
@@ -832,7 +851,12 @@ def test_created_lock_round_trips_through_parse_and_validate() -> None:
 
 
 def archive_inventory() -> dict[str, str]:
-    return {name: sha256_hex((ARCHIVE / name).read_bytes()) for name in ARCHIVE_INVENTORY}
+    """Every file under the archive, by relative POSIX path; exactly the nine expected names."""
+    files = sorted(path for path in ARCHIVE.rglob("*") if path.is_file())
+    names = [path.relative_to(ARCHIVE).as_posix() for path in files]
+    assert sorted(names) == sorted(ARCHIVE_INVENTORY), names
+    assert len(names) == 9
+    return {name: sha256_hex((ARCHIVE / name).read_bytes()) for name in names}
 
 
 def archive_lock() -> PlanLock:
