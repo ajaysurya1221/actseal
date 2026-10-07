@@ -323,6 +323,14 @@ capture, tool execution/download, product asset, inventory registration,
 dependency, packaged source or policy change. Temporary synthetic test
 fixtures remain clearly labelled and outside product assets.
 
+Require one graphic control per following image, complete bounded structural
+validation, early byte caps, strict string output payloads and exact TERM/LANG
+header env keys, and hash verification immediately before each variant tool
+execution. Keep provenance/real-pixel validation separate from structural
+consistency. Preserve all earlier reports and correct stale statements only
+in the additive report. Run original preparation commands with known
+architecture failures reported honestly; final media remains post-publication.
+
 ## V1-047 — Prepare the existing 14:00 optional-provider cut without activating it early
 
 At approximately13:41IST, complete candidate5e7931a has ten failed hosted jobs
@@ -359,11 +367,3 @@ the final admitted providers; mandatory images, original checks, ACCEPT and
 exact-head green hosted CI remain required. Prepare a one-time same-thread
 14:00 wakeup so the already approved cut is not missed while waiting for the
 human's pending manual-merge response.
-
-Require one graphic control per following image, complete bounded structural
-validation, early byte caps, strict string output payloads and exact TERM/LANG
-header env keys, and hash verification immediately before each variant tool
-execution. Keep provenance/real-pixel validation separate from structural
-consistency. Preserve all earlier reports and correct stale statements only
-in the additive report. Run original preparation commands with known
-architecture failures reported honestly; final media remains post-publication.

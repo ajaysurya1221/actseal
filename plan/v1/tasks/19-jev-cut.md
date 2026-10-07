@@ -96,8 +96,10 @@ never-fall-through cases, shared fixture/mocked-Laya checks and all six faults.
 You are not alone in this repository. Edit only owned paths; do not revert
 another lane's work. Use a new branch `claude/v1-19-jev-cut` from the stated base,
 preserving the preparation branch. Normal permissions and hooks stay enabled.
-No network/model/key access, billing/model substitution, broad revert, test
-exclusion or scope expansion. An actual harness denial stops that outcome.
+No network, cloud/live-provider requests, key access, billing/model
+substitution, broad revert, test exclusion or scope expansion. The already
+approved cached offline Laya integration tests below are explicitly permitted;
+missing cached prerequisites are a blocker, not permission to download. An actual harness denial stops that outcome.
 
 The source fingerprint will change. Full example/compatibility checks may then
 fail until Codex independently approves the new exact producer. Record PARTIAL
