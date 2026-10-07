@@ -4,7 +4,10 @@
 1.0.0 is on PyPI. Every bracketed `PENDING` item below is filled only from an
 actual receipt by Task 21 after Task 20 publishes; no hash, run id, timing or
 live result is claimed here. The final notes must pass
-`uv run --frozen python tools/check_release.py receipts`.
+`uv run --frozen python tools/check_release.py receipts`. The conditional
+sections below are resolved to the shipped facts **before** the tag, together
+with `CHANGELOG.md` and `README.md` (see the pre-tag finalization gate in
+`docs/publishing.md`); only the receipts are filled after publication.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-dark.svg">
@@ -57,7 +60,7 @@ new reference documentation.
 
 | Claim | Receipt |
 |---|---|
-| Source commit and tag | `PENDING` (release receipt `source.commit`, tag `v1.0.0`) |
+| Source commit and tag | `PENDING` (release receipt `source_commit`, tag `v1.0.0`) |
 | Wheel and sdist filenames, sizes and SHA-256 | `PENDING` (`SHA256SUMS` and release receipt `distributions`) |
 | Build-once workflow run and immutable artifact id | `PENDING` (release receipt `workflow_run`, `artifact`) |
 | Four-platform verification of the exact bytes | `PENDING` (`verify` job results) |

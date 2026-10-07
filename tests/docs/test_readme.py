@@ -175,6 +175,28 @@ def test_every_link_is_absolute_and_same_repo_links_resolve() -> None:
             assert (ROOT / relative).is_file(), target
 
 
+def test_navigation_links_the_draft_release_notes_absolutely() -> None:
+    text = _text()
+    link = f"[release notes (draft until published)]({BLOB_PREFIX}plan/v1/RELEASE_NOTES.md)"
+    assert link in text
+    assert (ROOT / "plan" / "v1" / "RELEASE_NOTES.md").is_file()
+    assert "DRAFT" in (ROOT / "plan" / "v1" / "RELEASE_NOTES.md").read_text(encoding="utf-8")
+
+
+def test_hero_alt_text_states_the_three_evidence_limits() -> None:
+    """The hero already draws its caption; the alt text must carry it too."""
+    hero_alt = next(alt for target, alt in _html_images().images if "hero-light.svg" in target)
+    assert hero_alt is not None
+    for limit in ("authenticate responses", "prove inference occurred", "label truth"):
+        assert limit in hero_alt, limit
+    svg = (ASSETS / "hero-light.svg").read_text(encoding="utf-8")
+    caption = (
+        "Replay cannot authenticate responses, prove inference occurred, or establish label truth."
+    )
+    assert caption in svg
+    assert caption in hero_alt
+
+
 def test_every_image_has_alt_text_and_is_absolute() -> None:
     html = _html_images()
     markdown = _markdown_images()

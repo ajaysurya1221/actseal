@@ -64,8 +64,12 @@ receipts. The [migration guide](docs/migration.md) and
   post-publication demo recording are pending.
 
 Pending before this entry is final: Jev inclusion decision, architecture
-figure, example registry approval, the blind README test, the candidate gate
-and the publication receipts.
+figure, example registry approval, the blind README test and the candidate
+gate. This entry, with its "unreleased candidate" heading and every pending
+or conditional statement, must be resolved to the shipped facts **before**
+the release build and the immutable `v1.0.0` tag, because the tagged bytes
+are what ships; the publication receipts are recorded afterwards in
+`plan/v1/RELEASE_NOTES.md`, not here.
 
 ## v0.1.0 — 2026-10-06
 

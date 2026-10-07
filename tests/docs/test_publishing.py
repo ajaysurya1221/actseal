@@ -61,6 +61,28 @@ def test_guide_states_rehearsal_never_uploads_and_recovery_rules() -> None:
     assert "draft" in guide
 
 
+def test_guide_describes_oidc_exchange_not_token_absence() -> None:
+    guide = _guide()
+    assert "No token or secret is involved" not in guide
+    assert "No PyPI API token is stored" in guide
+    assert "short-lived GitHub OIDC token" in guide
+    assert "temporary upload" in guide
+    assert "expires with the" in guide
+
+
+def test_guide_requires_pre_tag_documentation_finalization() -> None:
+    guide = re.sub(r"\s+", " ", _guide())
+    assert "**Pre-tag documentation finalization.**" in guide
+    assert "tagged commit is immutable" in guide
+    assert "A later task cannot change bytes already tagged or uploaded." in guide
+    changelog = re.sub(r"\s+", " ", (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"))
+    assert "resolved to the shipped facts **before** the release build" in changelog
+    assert "immutable `v1.0.0` tag" in changelog
+    notes = (ROOT / "plan" / "v1" / "RELEASE_NOTES.md").read_text(encoding="utf-8")
+    assert "`source_commit`" in notes
+    assert "source.commit" not in notes
+
+
 def test_guide_does_not_claim_a_v1_publication() -> None:
     guide = _guide()
     assert "1.0.0 is published" not in guide

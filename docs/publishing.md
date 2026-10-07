@@ -48,12 +48,26 @@ bytes and are never labelled public PyPI receipts.
    exists, every required static asset is committed, and the candidate gate
    `uv run --frozen python tools/check_release.py candidate` passes on a clean
    tree.
+   **Pre-tag documentation finalization.** The tagged commit is immutable
+   and its README, CHANGELOG and docs become the published sdist and PyPI
+   long description. Before tagging, every "unreleased", "candidate",
+   "pending implementation" or conditional (Jev, example, benchmark)
+   statement in `CHANGELOG.md`, `README.md` and `docs/` must be resolved to
+   the shipped facts, and the ADR status paragraphs must match them. Only
+   the publication receipts themselves (hashes, run ids, post-publication
+   results, the genuine demo recording) are added afterwards, to
+   `plan/v1/RELEASE_NOTES.md`, the final report and a later documentation
+   commit; those files are not part of the published distribution. A later
+   task cannot change bytes already tagged or uploaded.
 2. Create and push an annotated tag `vX.Y.Z` on exactly that commit. The
    `build` job rejects a tag whose version does not match the sources.
 3. Watch the run. When `build`, all four `verify` jobs and `assets` succeed,
    the `publish` job pauses on the `pypi` environment until the repository
-   owner approves it. No token or secret is involved: the job uses the
-   repository's OIDC identity with PyPI Trusted Publishing and generates
+   owner approves it. No PyPI API token is stored in the repository or its
+   secrets: the job requests a short-lived GitHub OIDC token for its own run,
+   PyPI's Trusted Publishing exchanges that identity for a temporary upload
+   credential scoped to this project, and the credential expires with the
+   job. The pinned PyPA action performs the exchange and generates
    attestations. Only this job has `id-token: write`; it checks out no source
    and builds nothing. It downloads the verified artifact by ID, re-checks the
    bytes against the build checksums with `sha256sum --check --strict`, and

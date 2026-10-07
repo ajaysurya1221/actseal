@@ -76,8 +76,14 @@ legal guarantee; this ADR does not refresh or re-interpret those terms.
   admitted in `records.PROVIDERS` and the schemas for serialized identities,
   `open_model` refuses it explicitly, and the `.env.example` placeholder was
   verified to contain exactly one empty assignment (V1-029).
+- Native checks at `c2e27d2`: the five cached-native tests passed
+  independently alongside the 390 focused offline tests for that source
+  (plan/v1/STATE.md, Task 05 row). That receipt covers the reviewed Task 05
+  source only; the final Task 19 integration (CLI opt-in, runner registration
+  and any registry entry) changes source and therefore requires its own
+  native revalidation before acceptance.
 - Pending: the explicit CLI opt-in and runner registration (Task 19, in
-  progress), native receipts for changed paths, the final inclusion decision
+  progress), that final native revalidation, the final inclusion decision
   and any live integration. Live behaviour is unverified: no Jev request has
   been made and no credit used. No key or `.env` access was involved in
   recording this decision, and no v1 release has occurred.
