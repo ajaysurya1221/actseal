@@ -200,7 +200,13 @@ def test_implemented_asset_requiring_missing_tool_fails(
                 "run setup_tools.py"
             ),
         ),
-        ("linux-x86_64", "agg 1.9.0: no pinned artifact for platform linux-x86_64"),
+        (
+            "linux-x86_64",
+            (
+                "agg 1.9.0 is not cached at {cache}/agg-1.9.0/agg-x86_64-unknown-linux-gnu; "
+                "run setup_tools.py"
+            ),
+        ),
     ],
 )
 def test_planned_asset_requirements_are_informational(
@@ -212,9 +218,9 @@ def test_planned_asset_requirements_are_informational(
 ) -> None:
     """An unavailable prerequisite of a planned asset is informational on every platform.
 
-    The platform is pinned with a deterministic double so the macOS profile
-    (pinned but not cached) and the Linux profile (no pinned artifact in the
-    audit) are both exercised regardless of where the suite runs.
+    The platform is pinned with a deterministic double so the macOS and Linux
+    profiles (both pinned since V1-031, neither cached) are exercised
+    regardless of where the suite runs.
     """
     cache = repo / "cache"
     monkeypatch.setenv(kit.tools.CACHE_ENV, str(cache))

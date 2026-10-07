@@ -1,0 +1,29 @@
+{
+  "files": [
+    {
+      "filename": "JetBrainsMono-Regular.ttf",
+      "installed": "docs/assets/src/fonts/JetBrainsMono-Regular.ttf",
+      "sha256": "a0bf60ef0f83c5ed4d7a75d45838548b1f6873372dfac88f71804491898d138f",
+      "url": "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9/fonts/ttf/JetBrainsMono-Regular.ttf"
+    },
+    {
+      "filename": "JetBrainsMono-Bold.ttf",
+      "installed": "docs/assets/src/fonts/JetBrainsMono-Bold.ttf",
+      "sha256": "5590990c82e097397517f275f430af4546e1c45cff408bde4255dad142479dcb",
+      "url": "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9/fonts/ttf/JetBrainsMono-Bold.ttf"
+    },
+    {
+      "filename": "OFL.txt",
+      "installed": "docs/assets/src/fonts/OFL.txt",
+      "sha256": "30f0c136e3c88e422d0791acd97238870f9054a9729bc34cf2ff0d4ed8cac4ad",
+      "url": "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9/OFL.txt"
+    }
+  ],
+  "license": "OFL-1.1",
+  "platform": "any",
+  "retrieved": "2026-10-07",
+  "source_commit": "cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9",
+  "source_url": "https://github.com/JetBrains/JetBrainsMono",
+  "tool": "jetbrains-mono",
+  "version": "2.304"
+}
