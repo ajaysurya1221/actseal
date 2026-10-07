@@ -289,6 +289,7 @@ def test_sdist_contains_active_v1_documentation_inputs(
         "plan/v1/STATE.md",
         "plan/v1/CHANGE_LOG.md",
         "plan/v1/PLAN.md",
+        "plan/v1/RELEASE_NOTES.md",
         "plan/v1/tasks/08.md",
     ]
     for directory in ("plan/v1/reports", "plan/v1/reviews"):
@@ -303,6 +304,48 @@ def test_sdist_contains_active_v1_documentation_inputs(
             assert source is not None, relative
             with source:
                 assert source.read() == (ROOT / relative).read_bytes(), relative
+
+
+@pytest.mark.packaging
+def test_sdist_preserves_the_action_gate_example_and_original_evidence(
+    tool: types.ModuleType, real_dist: Path
+) -> None:
+    """The runnable source example and its original retained bundle ship byte-for-byte."""
+    version = tool.agreed_version(ROOT)
+    example = ROOT / "examples" / "action_gate"
+    source_files = (
+        "gate.py",
+        "run.py",
+        "generate_data.py",
+        "README.md",
+        "contract.toml",
+        "calibration.jsonl",
+        "verification.jsonl",
+        "responses.jsonl",
+        "tickets.jsonl",
+    )
+    archive_files = (
+        "PRODUCER.json",
+        "lock.json",
+        "evidence/manifest.json",
+        "evidence/lock.json",
+        "evidence/calibration.jsonl",
+        "evidence/verification.jsonl",
+        "evidence/records.jsonl",
+        "evidence/faults.jsonl",
+        "evidence/verdict.json",
+    )
+    expected = [example / name for name in source_files]
+    expected.extend(example / "recorded" / "a5fe090202f7" / name for name in archive_files)
+    with tarfile.open(real_dist / names(version)[1], "r:gz") as archive:
+        for path in expected:
+            relative = path.relative_to(ROOT).as_posix()
+            member = archive.getmember(f"actseal-{version}/{relative}")
+            assert member.isfile(), relative
+            source = archive.extractfile(member)
+            assert source is not None, relative
+            with source:
+                assert source.read() == path.read_bytes(), relative
 
 
 @pytest.mark.packaging
