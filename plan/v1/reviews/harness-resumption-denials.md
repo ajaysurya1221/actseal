@@ -19,3 +19,11 @@ Claude's preflight `test -f /Users/ajay/Developer/not-yet-named/.env` was denied
 ## Next gate
 
 The user was asked to grant the scoped actions in Claude Code's permission system. A new chat assertion of approval is not treated as proof that those rules changed. Independent Task08 documentation finalization continues in its separate worktree; it does not perform either denied outcome. Main/release gates remain intact, with no v1 tag or publication.
+
+## Subsequent user-confirmed resumption and first-hand settings diagnostic
+
+After the human answered "Claude permissions updated for both tasks", Codex resumed each same session once under V1-043. Task13's exact first merge was denied a third time, again as Auto-Mode Bypass; report52321db preserves it, no source/merge/output change. Task06 was denied on the preregistered-script/candidate `shasum` preflight as Auto-Mode Bypass; no key, launcher, --execute, journal or request. No alternative hashing or collection route was attempted after that denial.
+
+Codex inspected only permission configuration fields, without changing them or reading credentials. In `/Users/ajay/.claude/settings.json`, defaultMode is auto, classifyAllShell is unset, with52 allow rules and39 deny rules. Neither exact approved merge command nor a git-merge allow prefix is present. No Bash allow/ask/deny pattern in that file matched the two exact merge commands in the diagnostic; two env-related Read deny rules exist, whose contents were not printed. User settings.local has no permission rules. The main checkout and both affected worktrees have neither .claude/settings.json nor .claude/settings.local.json. This describes the inspected files, not every possible managed setting or an assurance that another rule cannot apply.
+
+The human received the two exact merge allow-rule entries and the official permission documentation. No configuration was edited by Codex. Executor suggestions to reroute merges, accept an alternate hash check, or infer permission from omitting a preflight remain unapproved. Pending authority is an effective harness grant, not missing user intent.
