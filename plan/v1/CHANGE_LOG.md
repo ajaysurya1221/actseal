@@ -538,3 +538,83 @@ main merges. The tag and PyPI metadata/distributions remain unchanged; later med
 and documentation are explicitly identified as postpublication repository content.
 Social preview upload stays manual. Denied Task06 operations and cancelled tasks
 remain untouched; optional scope stays frozen under V1-052.
+
+## V1-054 — Post-release refinement session (8 October 2026)
+
+8 October 2026, 01:00–13:00 IST. The human authorized an autonomous refinement
+of the published 1.0.0 repository and delegated it to a different team shape
+from the v1 lanes: one architect/reviewer (plans and reviews every diff, edits
+nothing), one orchestrator (verification, settings, commits, merges, releases)
+and up to two coders in isolated worktrees under `.worktrees/`. The v1 executor
+assignment in AGENTS.md is superseded for this session only; AGENTS.md's
+engineering rules (stdlib core, no network in ordinary tests, fail explicitly,
+never weaken a check, frozen statistical rules) remain binding.
+
+Scope authorized: README first screen and hero simplification with the
+presentation tests updated deliberately (an editorial amendment to PLAN
+section D's opening order; PLAN.md itself stays immutable); two narrow
+hardening fixes (streaming JSONL readers, native IPC sequence type check) and
+corrected exception documentation; maintenance automation (Dependabot, CodeQL,
+dependency review, secret scanning, a CI aggregate check, project URLs,
+CITATION.cff); repository settings (description, homepage, topics, social
+preview, ruleset); and collection of the preregistered live Jev audit from the
+accepted snapshot d3edbab with the human's key, reported only after independent
+review. No tag, published distribution, statistical rule, schema or 1.x
+interface changes. Any 1.0.1 patch release uses the full existing pipeline.
+
+## V1-055 — 1.0.1 patch bundle and compatibility-registry amendment (8 October 2026)
+
+Recorded before implementation, after independent review of the bounded
+hardening (streaming JSONL readers; native IPC sequence type check; corrected
+numerical-kernel exception documentation). Every packaged Python edit changes
+the implementation fingerprint, and the registry approved exactly two
+fingerprints at 1.0.0, so the hardening cannot merge alone without breaking
+retained-archive replay on main. Authorized instead: one reviewed 1.0.1 bundle
+containing the hardening, the version bump (pyproject.toml, src/actseal/
+__init__.py, uv.lock), the exact final reviewed 1.0.1 fingerprint added to the
+actseal-choice-v1 registry beside both existing mappings, the exact-registry
+and version-pinned test updates, and documentation amendments to
+docs/versioning.md, docs/stability.md, docs/migration.md, a dated addendum to
+ADR 0015 (no new ADR; replay semantics unchanged), examples/action_gate/run.py
+and examples/action_gate/README.md. The 1.0.0 fingerprint and the original
+retained-archive producer stay approved; the retained archive stays
+byte-identical and must replay to its stored verdict. The bundle merges only
+after independent acceptance and green hosted CI on its exact commit. The
+v1.0.1 tag and publication are left to the human: the intended release commit
+is recorded in the acceptance record so no later, unreviewed tree is tagged.
+Publication uses the full existing tag-triggered pipeline; plan/v1 receipts
+remain 1.0.0 history and are never relabelled.
+
+## V1-056 — Editorial release-page summary and repository settings (8 October 2026)
+
+The hosted v1.0.0 GitHub release body was replaced with a concise editorial
+summary that links the unchanged receipt-backed RELEASE_NOTES.md at the tagged
+commit 4abcd9a and states that the replacement happened. The original published
+body (16,330 bytes, SHA-256 9cc940395fa69cff628a07d1b4bc51b7267387a4e06f858c3605736386eef0a1 as
+recorded in STATE.md) is preserved in the repository history and in the
+operator's hand-off folder; no tag, asset or distribution changed. Repository
+settings set the same day: description, homepage (PyPI), seventeen topics and
+the social preview (the reviewed docs/assets/social.png). Forty-nine merged
+remote branches whose merged pull-request head equalled the branch tip were
+deleted; branches without a merged pull request at their tip were kept.
+
+## V1-057 — README figure selection on GitHub and a temporary legibility exception (8 October 2026)
+
+A live check of the published README on github.com (viewport 1920 px, dark
+theme) found that GitHub rewrites `<source media>` queries server-side to the
+viewer's own theme: a query combining `prefers-color-scheme: dark` with a
+width query became an always-true media list for dark-theme viewers, so the
+first mobile-dark source matched for them at every viewport width; light-theme
+viewers were selected correctly, and bare width queries survived. The v1.0.0 "responsive selection"
+statement therefore did not describe what GitHub served. Authorized repair:
+the three figure pictures use GitHub's documented colour-scheme selection
+(one dark source, light fallback) with the desktop variants; the mobile SVGs
+stay committed, declared and validated for other renderers; the presentation
+guards encode this as the README policy.
+
+Temporary exception, recorded here and reviewed: at phone widths the desktop
+hero's tagline and step labels fall below the 14 CSS-px floor measured for
+the figures (about 7 px and 5 px at 254 px). A follow-up hero composition
+(all text at least 14 nominal CSS px at 254 px image width, one composition
+per colour scheme, reviewed at 838 px) is scheduled; it is not a prerequisite
+for this repair. The workflow and architecture figures remain supplemental.
