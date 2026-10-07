@@ -1,0 +1,639 @@
+{"case_id": "test:1", "state": "How do I locate my card?", "expected_label": "card_arrival"}
+{"case_id": "test:2", "state": "I still have not received my new card, I ordered over a week ago.", "expected_label": "card_arrival"}
+{"case_id": "test:3", "state": "I ordered a card but it has not arrived. Help please!", "expected_label": "card_arrival"}
+{"case_id": "test:4", "state": "Is there a way to know when my card will arrive?", "expected_label": "card_arrival"}
+{"case_id": "test:5", "state": "My card has not arrived yet.", "expected_label": "card_arrival"}
+{"case_id": "test:6", "state": "When will I get my card?", "expected_label": "card_arrival"}
+{"case_id": "test:7", "state": "Do you know if there is a tracking number for the new card you sent me?", "expected_label": "card_arrival"}
+{"case_id": "test:8", "state": "i have not received my card", "expected_label": "card_arrival"}
+{"case_id": "test:9", "state": "still waiting on that card", "expected_label": "card_arrival"}
+{"case_id": "test:10", "state": "Is it normal to have to wait over a week for my new card?", "expected_label": "card_arrival"}
+{"case_id": "test:11", "state": "How do I track my card?", "expected_label": "card_arrival"}
+{"case_id": "test:12", "state": "How long does a card delivery take?", "expected_label": "card_arrival"}
+{"case_id": "test:13", "state": "I still don't have my card after 2 weeks.  What should I do?", "expected_label": "card_arrival"}
+{"case_id": "test:14", "state": "still waiting on my new card", "expected_label": "card_arrival"}
+{"case_id": "test:15", "state": "I am still waiting for my card after 1 week.  Is this ok?", "expected_label": "card_arrival"}
+{"case_id": "test:16", "state": "I have been waiting longer than expected for my bank card, could you provide information on when it will arrive?", "expected_label": "card_arrival"}
+{"case_id": "test:17", "state": "I've been waiting longer than expected for my card.", "expected_label": "card_arrival"}
+{"case_id": "test:18", "state": "Why hasn't my card been delivered?", "expected_label": "card_arrival"}
+{"case_id": "test:19", "state": "Where is my new card? I have been waiting a week!", "expected_label": "card_arrival"}
+{"case_id": "test:20", "state": "My card still hasn't arrived after 2 weeks. Is it lost?", "expected_label": "card_arrival"}
+{"case_id": "test:21", "state": "I did not get my card yet, is it lost?", "expected_label": "card_arrival"}
+{"case_id": "test:22", "state": "Status of the card I ordered.", "expected_label": "card_arrival"}
+{"case_id": "test:23", "state": "How long should my new card take to arrive?", "expected_label": "card_arrival"}
+{"case_id": "test:24", "state": "I ordered my card 2 weeks ago and it still isn't here? What do I do?", "expected_label": "card_arrival"}
+{"case_id": "test:25", "state": "My card has not arrived yet, where is it?", "expected_label": "card_arrival"}
+{"case_id": "test:26", "state": "What is the tracking number for my card that was mailed?", "expected_label": "card_arrival"}
+{"case_id": "test:27", "state": "I think something went wrong with my card delivery as I haven't received it yet.", "expected_label": "card_arrival"}
+{"case_id": "test:28", "state": "I'm still waiting for delivery of my new card, why is it taking so long?", "expected_label": "card_arrival"}
+{"case_id": "test:29", "state": "I ordered a card a week ago, and it's still not here. What do I do?", "expected_label": "card_arrival"}
+{"case_id": "test:30", "state": "i want to track the card you sent", "expected_label": "card_arrival"}
+{"case_id": "test:31", "state": "My card hasn't arrived yet.", "expected_label": "card_arrival"}
+{"case_id": "test:32", "state": "I was expecting my new card and am wondering why I haven't received it yet?", "expected_label": "card_arrival"}
+{"case_id": "test:33", "state": "How do I know when my card will arrive?", "expected_label": "card_arrival"}
+{"case_id": "test:34", "state": "I'm still waiting on my card to be delivered.", "expected_label": "card_arrival"}
+{"case_id": "test:35", "state": "Does the card you sent have a way to track to it?", "expected_label": "card_arrival"}
+{"case_id": "test:36", "state": "I ordered a card and I still haven't received it. It's been two weeks. What can I do?", "expected_label": "card_arrival"}
+{"case_id": "test:37", "state": "I'm starting to think my card is lost because it still hasn't arrived, can you help?", "expected_label": "card_arrival"}
+{"case_id": "test:38", "state": "Is there tracking info available?", "expected_label": "card_arrival"}
+{"case_id": "test:39", "state": "What is the tracking number for the card you sent?", "expected_label": "card_arrival"}
+{"case_id": "test:40", "state": "Where is the tracking number for the card you sent me?", "expected_label": "card_arrival"}
+{"case_id": "test:41", "state": "Why won't my card show up on the app?", "expected_label": "card_linking"}
+{"case_id": "test:42", "state": "I would like to reactivate my card.", "expected_label": "card_linking"}
+{"case_id": "test:43", "state": "Where do I link the new card?", "expected_label": "card_linking"}
+{"case_id": "test:44", "state": "I have received my card, can you help me put it in the app?", "expected_label": "card_linking"}
+{"case_id": "test:45", "state": "How do I link a card that I already have?", "expected_label": "card_linking"}
+{"case_id": "test:46", "state": "I received my new card, but I don't see it in the app anywhere.  What do I do?", "expected_label": "card_linking"}
+{"case_id": "test:47", "state": "How do I re-add a card to the app?", "expected_label": "card_linking"}
+{"case_id": "test:48", "state": "How do I add the card to my account?", "expected_label": "card_linking"}
+{"case_id": "test:49", "state": "Can I put my old card back into the system? I just found it/", "expected_label": "card_linking"}
+{"case_id": "test:50", "state": "I have one of your cards already, how do I link it?", "expected_label": "card_linking"}
+{"case_id": "test:51", "state": "How do I link a new card?", "expected_label": "card_linking"}
+{"case_id": "test:52", "state": "Can I link an existing card?", "expected_label": "card_linking"}
+{"case_id": "test:53", "state": "How do I link one your card if I have one already?", "expected_label": "card_linking"}
+{"case_id": "test:54", "state": "How do I add a card to the app?", "expected_label": "card_linking"}
+{"case_id": "test:55", "state": "Can I link my new card?", "expected_label": "card_linking"}
+{"case_id": "test:56", "state": "Hello, I found the card I misplaced and I need to reactive it, how do I do that?", "expected_label": "card_linking"}
+{"case_id": "test:57", "state": "Can you tell me how to link one of your cards that I already have?", "expected_label": "card_linking"}
+{"case_id": "test:58", "state": "How do I view the card I received in the app?", "expected_label": "card_linking"}
+{"case_id": "test:59", "state": "Where on the website do I go to link my card?", "expected_label": "card_linking"}
+{"case_id": "test:60", "state": "I found my card, can I add it to the app?", "expected_label": "card_linking"}
+{"case_id": "test:61", "state": "How do I link to my credit card with you?", "expected_label": "card_linking"}
+{"case_id": "test:62", "state": "I've received my card so now I need to know how to sync it to the app.", "expected_label": "card_linking"}
+{"case_id": "test:63", "state": "I found my card, I would like to reactivate it.", "expected_label": "card_linking"}
+{"case_id": "test:64", "state": "How do I link this new card?", "expected_label": "card_linking"}
+{"case_id": "test:65", "state": "Can I reactivate my lost card that I found this morning in my jacket pocket?", "expected_label": "card_linking"}
+{"case_id": "test:66", "state": "how do I link an already existing card?", "expected_label": "card_linking"}
+{"case_id": "test:67", "state": "The app doesn't show the card I received.", "expected_label": "card_linking"}
+{"case_id": "test:68", "state": "how do I link a card I already have?", "expected_label": "card_linking"}
+{"case_id": "test:69", "state": "I would like to link my card. How do I do it?", "expected_label": "card_linking"}
+{"case_id": "test:70", "state": "Can you please show me where I can find the location to link my card?", "expected_label": "card_linking"}
+{"case_id": "test:71", "state": "Where do I go if I want to link my new card?", "expected_label": "card_linking"}
+{"case_id": "test:72", "state": "Is there a way to make my old card usable with the app?", "expected_label": "card_linking"}
+{"case_id": "test:73", "state": "Can I reactivate a card I thought I lost?", "expected_label": "card_linking"}
+{"case_id": "test:74", "state": "How do I link my card", "expected_label": "card_linking"}
+{"case_id": "test:75", "state": "Where do I need to go in the app to enter my card info?", "expected_label": "card_linking"}
+{"case_id": "test:76", "state": "I have found my lost or stolen card. Is there a way I can link the card with my account through my app again?", "expected_label": "card_linking"}
+{"case_id": "test:77", "state": "Could you help me reactivate my card? It was previously lost, but I found it this morning in my jacket.", "expected_label": "card_linking"}
+{"case_id": "test:78", "state": "I already have one of your cards, how do I link them?", "expected_label": "card_linking"}
+{"case_id": "test:79", "state": "How do I link my replacement card?", "expected_label": "card_linking"}
+{"case_id": "test:80", "state": "Can I link another card to my account?", "expected_label": "card_linking"}
+{"case_id": "test:281", "state": "I need my card now!", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:282", "state": "my card was not in the mail again can you advise?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:283", "state": "i need my card quick", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:284", "state": "How long will it take to get to me?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:285", "state": "I'm just wondering when my card will get here.", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:286", "state": "Can you get me my card fast?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:287", "state": "How long will it take to deliver something to US?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:288", "state": "I live in the US, how long will it take for delivery?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:289", "state": "When can I expect my card to be delivered to the US?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:290", "state": "I need my card quickly", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:291", "state": "Does delivery to the US take long?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:292", "state": "How long will it take to arrive?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:293", "state": "Can I have my card delivered on a specific day?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:294", "state": "What is the difference between standard and express delivery?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:295", "state": "Can it be delivered by a specific date?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:296", "state": "May I choose when it's delivered?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:297", "state": "I need it delivered on a certain date.", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:298", "state": "When should I expect my card?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:299", "state": "How long does it take to get my card? Can I choose when to receive it?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:300", "state": "How long will it take for the card to arrive?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:301", "state": "How fast can you deliver?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:302", "state": "Ordered awhile back, what is the ETA in the US?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:303", "state": "How long should I expect for the card to arrive?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:304", "state": "Whats the delivery time to the United States?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:305", "state": "When will the card arrive?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:306", "state": "Send my card as soon as you are able to.", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:307", "state": "When are cards delivered?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:308", "state": "How long does shipping take to get to a US destination?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:309", "state": "Can I get my card expedited?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:310", "state": "How long until my card is delivered?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:311", "state": "I need my card to come as soon as possible.", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:312", "state": "When can I expect to receive my new card?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:313", "state": "I am waiting for my card to arrive.", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:314", "state": "I need my card as soon as possible.", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:315", "state": "I need it delivered by Saturday.", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:316", "state": "What's the U.S. Delivery time?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:317", "state": "When will my card arrive?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:318", "state": "can I choose a date for delivery?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:319", "state": "Can I make sure my card is delivered on a specific day?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:320", "state": "Can I have it be delivered at a certain time?", "expected_label": "card_delivery_estimate"}
+{"case_id": "test:321", "state": "When traveling, can I auto top-up my card at certain times?", "expected_label": "automatic_top_up"}
+{"case_id": "test:322", "state": "Is there a limit when using auto top-up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:323", "state": "Will it automatically top-up or do I need to do that manually if there isn't much cash left?", "expected_label": "automatic_top_up"}
+{"case_id": "test:324", "state": "I'm running out of money, can I  auto top up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:325", "state": "How do I use auto top up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:326", "state": "Can it automatically top-up money if there isn't much left?", "expected_label": "automatic_top_up"}
+{"case_id": "test:327", "state": "If there isn't much money left can it automatically top-up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:328", "state": "I read about the auto-top up function, but can't find it in the app.", "expected_label": "automatic_top_up"}
+{"case_id": "test:329", "state": "Can I have it add money at certain time intervals when I travel?", "expected_label": "automatic_top_up"}
+{"case_id": "test:330", "state": "I'm going to be away for awhile, can I have it add money automatically in certain intervals?", "expected_label": "automatic_top_up"}
+{"case_id": "test:331", "state": "Where can I find the \"auto-top\" feature?", "expected_label": "automatic_top_up"}
+{"case_id": "test:332", "state": "I just activated auto top-up, but it is not letting me enable it. Why not?", "expected_label": "automatic_top_up"}
+{"case_id": "test:333", "state": "Is there an auto top-up option?", "expected_label": "automatic_top_up"}
+{"case_id": "test:334", "state": "where is theft-top option?", "expected_label": "automatic_top_up"}
+{"case_id": "test:335", "state": "Are there limits on auto top-up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:336", "state": "can you assist me with the auto top up ?", "expected_label": "automatic_top_up"}
+{"case_id": "test:337", "state": "Do you have any limit on the auto top-up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:338", "state": "Why are there limits on auto top-up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:339", "state": "How can I top up automatically?", "expected_label": "automatic_top_up"}
+{"case_id": "test:340", "state": "How do I make sure I don't run out of money on my card while traveling?", "expected_label": "automatic_top_up"}
+{"case_id": "test:341", "state": "What's the limit on automatic top-up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:342", "state": "If I will be traveling, is there a way to auto top-up my card on certain days?", "expected_label": "automatic_top_up"}
+{"case_id": "test:343", "state": "Where is the auto top-up option?", "expected_label": "automatic_top_up"}
+{"case_id": "test:344", "state": "Can I have a auto top-up when my account is short?", "expected_label": "automatic_top_up"}
+{"case_id": "test:345", "state": "Do you have an auto top-up option?", "expected_label": "automatic_top_up"}
+{"case_id": "test:346", "state": "Can I space out how often money is transferred along my travels?", "expected_label": "automatic_top_up"}
+{"case_id": "test:347", "state": "Will it automatically top-up money if there isn't a lot left?", "expected_label": "automatic_top_up"}
+{"case_id": "test:348", "state": "Can I have it add money automatically in certain intervals?", "expected_label": "automatic_top_up"}
+{"case_id": "test:349", "state": "Can I set up an automatic top-up for travel.", "expected_label": "automatic_top_up"}
+{"case_id": "test:350", "state": "I've tried looking for the auto-top up option on your website and I can't seem to find it. Can you help me?", "expected_label": "automatic_top_up"}
+{"case_id": "test:351", "state": "how do I top up my money automatically", "expected_label": "automatic_top_up"}
+{"case_id": "test:352", "state": "Can I be topped up once I hit a certain balance?", "expected_label": "automatic_top_up"}
+{"case_id": "test:353", "state": "Will it automatically top-up if there isn't much money left?", "expected_label": "automatic_top_up"}
+{"case_id": "test:354", "state": "Is there any way to Auto top-up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:355", "state": "Can you explain where I can find the auto-top option?", "expected_label": "automatic_top_up"}
+{"case_id": "test:356", "state": "What is the auto top up function and where can I find that at?", "expected_label": "automatic_top_up"}
+{"case_id": "test:357", "state": "Is there a way to top-up automatically?", "expected_label": "automatic_top_up"}
+{"case_id": "test:358", "state": "Is there a top-up feature, if there isn't a lot of money left?", "expected_label": "automatic_top_up"}
+{"case_id": "test:359", "state": "What is the highest limit for Auto Top?", "expected_label": "automatic_top_up"}
+{"case_id": "test:360", "state": "How do I enable auto-top up?", "expected_label": "automatic_top_up"}
+{"case_id": "test:361", "state": "I've tried my card a bunch of times and it never worked.", "expected_label": "card_not_working"}
+{"case_id": "test:362", "state": "I can't get my card to work.", "expected_label": "card_not_working"}
+{"case_id": "test:363", "state": "My card appears to be broken how can I fix it?", "expected_label": "card_not_working"}
+{"case_id": "test:364", "state": "How do I know why my card isn't working?", "expected_label": "card_not_working"}
+{"case_id": "test:365", "state": "My card broke.", "expected_label": "card_not_working"}
+{"case_id": "test:366", "state": "My card won't work.", "expected_label": "card_not_working"}
+{"case_id": "test:367", "state": "Why is my card not working?", "expected_label": "card_not_working"}
+{"case_id": "test:368", "state": "Can you please identify the problem with my bank card?", "expected_label": "card_not_working"}
+{"case_id": "test:369", "state": "How do I unblock my card using the app?", "expected_label": "card_not_working"}
+{"case_id": "test:370", "state": "My card does not work", "expected_label": "card_not_working"}
+{"case_id": "test:371", "state": "How can I get my physical card to work?", "expected_label": "card_not_working"}
+{"case_id": "test:372", "state": "Can someone assist me by explaining why my card is not working?", "expected_label": "card_not_working"}
+{"case_id": "test:373", "state": "Help me.  My card doesn't work.", "expected_label": "card_not_working"}
+{"case_id": "test:374", "state": "Can a card stop working?", "expected_label": "card_not_working"}
+{"case_id": "test:375", "state": "I think my card is broken", "expected_label": "card_not_working"}
+{"case_id": "test:376", "state": "Why isn't my card working?", "expected_label": "card_not_working"}
+{"case_id": "test:377", "state": "My card isn't working anymore.", "expected_label": "card_not_working"}
+{"case_id": "test:378", "state": "My card was declined today when eating and I need to know what's wrong.", "expected_label": "card_not_working"}
+{"case_id": "test:379", "state": "My card doesn't work.", "expected_label": "card_not_working"}
+{"case_id": "test:380", "state": "How can I resolve a problem where my card won't go through at all?", "expected_label": "card_not_working"}
+{"case_id": "test:381", "state": "My actual card isn't working.", "expected_label": "card_not_working"}
+{"case_id": "test:382", "state": "Is my card broken?", "expected_label": "card_not_working"}
+{"case_id": "test:383", "state": "I broke my card", "expected_label": "card_not_working"}
+{"case_id": "test:384", "state": "My card stopped working", "expected_label": "card_not_working"}
+{"case_id": "test:385", "state": "My card is broke, what do I do?", "expected_label": "card_not_working"}
+{"case_id": "test:386", "state": "I tried using my card today and it's not working, can you help me?", "expected_label": "card_not_working"}
+{"case_id": "test:387", "state": "My card stopped working when I use it", "expected_label": "card_not_working"}
+{"case_id": "test:388", "state": "I can't use my card.", "expected_label": "card_not_working"}
+{"case_id": "test:389", "state": "Need help with my card. It's not working.", "expected_label": "card_not_working"}
+{"case_id": "test:390", "state": "I cannot use my card.", "expected_label": "card_not_working"}
+{"case_id": "test:391", "state": "The card I've got seems to be broken.", "expected_label": "card_not_working"}
+{"case_id": "test:392", "state": "My card isn't working", "expected_label": "card_not_working"}
+{"case_id": "test:393", "state": "My card suddenly quit working.", "expected_label": "card_not_working"}
+{"case_id": "test:394", "state": "I have tried to use my card several times and it does not work.", "expected_label": "card_not_working"}
+{"case_id": "test:395", "state": "The card I have doesn't work.", "expected_label": "card_not_working"}
+{"case_id": "test:396", "state": "My card doesn't accept any transaction at all. What's wrong??", "expected_label": "card_not_working"}
+{"case_id": "test:397", "state": "How can i check if my card is working?", "expected_label": "card_not_working"}
+{"case_id": "test:398", "state": "Nothing goes through on my card.", "expected_label": "card_not_working"}
+{"case_id": "test:399", "state": "How do I find out why my card won't work?", "expected_label": "card_not_working"}
+{"case_id": "test:400", "state": "Could it be that I deactivated my card, its not working?", "expected_label": "card_not_working"}
+{"case_id": "test:481", "state": "how old do i need to be to get an account for myself", "expected_label": "age_limit"}
+{"case_id": "test:482", "state": "How young can I be to open my own account?", "expected_label": "age_limit"}
+{"case_id": "test:483", "state": "How old do I have to be?", "expected_label": "age_limit"}
+{"case_id": "test:484", "state": "Can I open an account for a child?", "expected_label": "age_limit"}
+{"case_id": "test:485", "state": "How old do we have to be?", "expected_label": "age_limit"}
+{"case_id": "test:486", "state": "How do I go about setting up an account for my daughter?", "expected_label": "age_limit"}
+{"case_id": "test:487", "state": "Is there an age minimum?", "expected_label": "age_limit"}
+{"case_id": "test:488", "state": "What is the youngest age in order to have an account?", "expected_label": "age_limit"}
+{"case_id": "test:489", "state": "What age do I have to be?", "expected_label": "age_limit"}
+{"case_id": "test:490", "state": "Can my daughter open an account?", "expected_label": "age_limit"}
+{"case_id": "test:491", "state": "What is the minimum age to open an account?", "expected_label": "age_limit"}
+{"case_id": "test:492", "state": "What is the minimum age?", "expected_label": "age_limit"}
+{"case_id": "test:493", "state": "I am only 17. Can I make an account?", "expected_label": "age_limit"}
+{"case_id": "test:494", "state": "Could I open an account for my children?", "expected_label": "age_limit"}
+{"case_id": "test:495", "state": "What is the age to open an account?", "expected_label": "age_limit"}
+{"case_id": "test:496", "state": "How do I open up an account for my child?", "expected_label": "age_limit"}
+{"case_id": "test:497", "state": "Can I open a bank account for my newborn baby?", "expected_label": "age_limit"}
+{"case_id": "test:498", "state": "How old do I have to be to open an account?", "expected_label": "age_limit"}
+{"case_id": "test:499", "state": "Do you offer services for children to have money saving experience?", "expected_label": "age_limit"}
+{"case_id": "test:500", "state": "If my kids wanted to use your service how old would they have to be?", "expected_label": "age_limit"}
+{"case_id": "test:501", "state": "Can my 19 year old daughter open a savings account at the bank?", "expected_label": "age_limit"}
+{"case_id": "test:502", "state": "How old do you have to be to get an account?", "expected_label": "age_limit"}
+{"case_id": "test:503", "state": "What's the minimum age for opening an account?", "expected_label": "age_limit"}
+{"case_id": "test:504", "state": "I would like an account for my children, how do I go about doing this?", "expected_label": "age_limit"}
+{"case_id": "test:505", "state": "Can my children have their own account?", "expected_label": "age_limit"}
+{"case_id": "test:506", "state": "Is it possible to open an account for my children?", "expected_label": "age_limit"}
+{"case_id": "test:507", "state": "Do my kids have to be a certain age to use this service?", "expected_label": "age_limit"}
+{"case_id": "test:508", "state": "How old do you have to be to be able to open an account?", "expected_label": "age_limit"}
+{"case_id": "test:509", "state": "Is there an age limit?", "expected_label": "age_limit"}
+{"case_id": "test:510", "state": "What are the age requirements for opening an account?", "expected_label": "age_limit"}
+{"case_id": "test:511", "state": "will i be able to open an account for my daughter", "expected_label": "age_limit"}
+{"case_id": "test:512", "state": "How old do I need to be to open an account?", "expected_label": "age_limit"}
+{"case_id": "test:513", "state": "What age can sign up for services?", "expected_label": "age_limit"}
+{"case_id": "test:514", "state": "How old do my kids have to be to use your service?", "expected_label": "age_limit"}
+{"case_id": "test:515", "state": "What age do my kids need to be to use your service?", "expected_label": "age_limit"}
+{"case_id": "test:516", "state": "How old do my children need to be to open an account?", "expected_label": "age_limit"}
+{"case_id": "test:517", "state": "How old does my kids need to be to open an account?", "expected_label": "age_limit"}
+{"case_id": "test:518", "state": "How young can someone be in order to open an account?", "expected_label": "age_limit"}
+{"case_id": "test:519", "state": "What is the youngest someone can be to open an account?", "expected_label": "age_limit"}
+{"case_id": "test:520", "state": "How old does one have to be to have an account with the bank?", "expected_label": "age_limit"}
+{"case_id": "test:681", "state": "I made a transaction this morning and would like to revert it.", "expected_label": "cancel_transfer"}
+{"case_id": "test:682", "state": "Can i cancel a charge?", "expected_label": "cancel_transfer"}
+{"case_id": "test:683", "state": "Can I cancel my transaction?", "expected_label": "cancel_transfer"}
+{"case_id": "test:684", "state": "I made a transaction but did it to the wrong account.", "expected_label": "cancel_transfer"}
+{"case_id": "test:685", "state": "Tell me how to cancel a transfer.", "expected_label": "cancel_transfer"}
+{"case_id": "test:686", "state": "I need you to cancel a transfer that I made.  It is the wrong account number and the app won't let me stop the transaction.  Please stop it!", "expected_label": "cancel_transfer"}
+{"case_id": "test:687", "state": "I need to cancel my recent transfer immediately, I made a mistake there, please help quickly before it goes through", "expected_label": "cancel_transfer"}
+{"case_id": "test:688", "state": "I would like to revert a transaction I did this morning", "expected_label": "cancel_transfer"}
+{"case_id": "test:689", "state": "If I make a transaction can I cancel it?", "expected_label": "cancel_transfer"}
+{"case_id": "test:690", "state": "How can I cancel a transfer?", "expected_label": "cancel_transfer"}
+{"case_id": "test:691", "state": "Is there any way to cancel a transfer?", "expected_label": "cancel_transfer"}
+{"case_id": "test:692", "state": "I accidentally made a transaction to the wrong account.", "expected_label": "cancel_transfer"}
+{"case_id": "test:693", "state": "I want to cancel a transfer right away! Can you help?", "expected_label": "cancel_transfer"}
+{"case_id": "test:694", "state": "Help me cancel my transaction", "expected_label": "cancel_transfer"}
+{"case_id": "test:695", "state": "This is URGENT, I typed the wrong payment information for a payment I needed to make and have clicked send, I need to reverse the transaction immediately.", "expected_label": "cancel_transfer"}
+{"case_id": "test:696", "state": "Can I cancel a transfer", "expected_label": "cancel_transfer"}
+{"case_id": "test:697", "state": "I want to reverse my transaction from earlier", "expected_label": "cancel_transfer"}
+{"case_id": "test:698", "state": "Is there a way to revert my transaction from this morning?", "expected_label": "cancel_transfer"}
+{"case_id": "test:699", "state": "I'd like to cancel a transfer", "expected_label": "cancel_transfer"}
+{"case_id": "test:700", "state": "Can I cancel a transfer if is already processed?", "expected_label": "cancel_transfer"}
+{"case_id": "test:701", "state": "I transferred the wrong amount and would like to cancel the transaction.", "expected_label": "cancel_transfer"}
+{"case_id": "test:702", "state": "I made a mistake when I did a transfer so now what can I do to fix that?", "expected_label": "cancel_transfer"}
+{"case_id": "test:703", "state": "I need to cancel an incorrect transaction.", "expected_label": "cancel_transfer"}
+{"case_id": "test:704", "state": "How do I cancel my transfer?", "expected_label": "cancel_transfer"}
+{"case_id": "test:705", "state": "I made a mistake with a transaction!", "expected_label": "cancel_transfer"}
+{"case_id": "test:706", "state": "I submitted a transaction to the incorrect account.", "expected_label": "cancel_transfer"}
+{"case_id": "test:707", "state": "The transfer I just made needs to be cancelled right now. It was my mistake. Please help me cancel it before it goes through!", "expected_label": "cancel_transfer"}
+{"case_id": "test:708", "state": "I want to go back on what I did this morning", "expected_label": "cancel_transfer"}
+{"case_id": "test:709", "state": "Can a transaction be cancelled?", "expected_label": "cancel_transfer"}
+{"case_id": "test:710", "state": "How do i cancel my transaction?", "expected_label": "cancel_transfer"}
+{"case_id": "test:711", "state": "My transaction needs to be canceled.", "expected_label": "cancel_transfer"}
+{"case_id": "test:712", "state": "I need to make an immediate cancellation related to a transfer. This was a mistake. Please assist quickly so this does not actually go through.", "expected_label": "cancel_transfer"}
+{"case_id": "test:713", "state": "I made a mistake and need to cancel a transaction", "expected_label": "cancel_transfer"}
+{"case_id": "test:714", "state": "I made an error in payment yesterday and I need it fixed asap because it's for my rent tomorrow.", "expected_label": "cancel_transfer"}
+{"case_id": "test:715", "state": "Cancel my last transfer", "expected_label": "cancel_transfer"}
+{"case_id": "test:716", "state": "My recent transfer needs to be cancelled immediately; it was a mistake, please can you cancel it before it goes through?", "expected_label": "cancel_transfer"}
+{"case_id": "test:717", "state": "I need help cancelling a transaction.", "expected_label": "cancel_transfer"}
+{"case_id": "test:718", "state": "I don't want the transaction to go through now", "expected_label": "cancel_transfer"}
+{"case_id": "test:719", "state": "Can I change the amount I made on a payment that I made to the payment is correct.", "expected_label": "cancel_transfer"}
+{"case_id": "test:720", "state": "Please help me!  I need to cancel a transaction.", "expected_label": "cancel_transfer"}
+{"case_id": "test:961", "state": "Will my card be accepted all over the world?", "expected_label": "card_acceptance"}
+{"case_id": "test:962", "state": "Who accepts this card?", "expected_label": "card_acceptance"}
+{"case_id": "test:963", "state": "Can I use my card for payment all over the world?", "expected_label": "card_acceptance"}
+{"case_id": "test:964", "state": "It will be fine to use at any establishment that accepts Mastercard.", "expected_label": "card_acceptance"}
+{"case_id": "test:965", "state": "Where can the card be used?", "expected_label": "card_acceptance"}
+{"case_id": "test:966", "state": "Can my card be used everywhere?", "expected_label": "card_acceptance"}
+{"case_id": "test:967", "state": "Are there any limits on where I can use my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:968", "state": "What stores can I sue my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:969", "state": "Can I use my card anywhere I want?", "expected_label": "card_acceptance"}
+{"case_id": "test:970", "state": "Is there anywhere my card will not be accepted?", "expected_label": "card_acceptance"}
+{"case_id": "test:971", "state": "What are the rules to where I can use my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:972", "state": "Do you know where my card will be accepted?", "expected_label": "card_acceptance"}
+{"case_id": "test:973", "state": "What places can I use my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:974", "state": "Is my card accepted everywhere?", "expected_label": "card_acceptance"}
+{"case_id": "test:975", "state": "What places will accept my card for payment?", "expected_label": "card_acceptance"}
+{"case_id": "test:976", "state": "Does this card work everywhere?", "expected_label": "card_acceptance"}
+{"case_id": "test:977", "state": "\n\nWhat businesses accept this card?", "expected_label": "card_acceptance"}
+{"case_id": "test:978", "state": "Where can I use my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:979", "state": "Which outlets accept my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:980", "state": "I am traveling to Germany, Will I be able to use my card there?", "expected_label": "card_acceptance"}
+{"case_id": "test:981", "state": "What stores will take my credit card as payment?", "expected_label": "card_acceptance"}
+{"case_id": "test:982", "state": "Is there any place I cannot use my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:983", "state": "Will I be able to use my card anywhere?", "expected_label": "card_acceptance"}
+{"case_id": "test:984", "state": "Is my card usable anywhere?", "expected_label": "card_acceptance"}
+{"case_id": "test:985", "state": "Is it acceptable to use my card anywhere?", "expected_label": "card_acceptance"}
+{"case_id": "test:986", "state": "Can I use my card everywhere?", "expected_label": "card_acceptance"}
+{"case_id": "test:987", "state": "Where is my card accepted?", "expected_label": "card_acceptance"}
+{"case_id": "test:988", "state": "Where can I pay with my debit or credit card?", "expected_label": "card_acceptance"}
+{"case_id": "test:989", "state": "Where should my card work?", "expected_label": "card_acceptance"}
+{"case_id": "test:990", "state": "areas card is accpeted", "expected_label": "card_acceptance"}
+{"case_id": "test:991", "state": "places i can use the card", "expected_label": "card_acceptance"}
+{"case_id": "test:992", "state": "Can I make online purchases with my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:993", "state": "Does every place of business accept this card?", "expected_label": "card_acceptance"}
+{"case_id": "test:994", "state": "What places will accept my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:995", "state": "Can I use my card anywere?", "expected_label": "card_acceptance"}
+{"case_id": "test:996", "state": "Will any business take this card?", "expected_label": "card_acceptance"}
+{"case_id": "test:997", "state": "Will filling stations accept my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:998", "state": "Where am I able to use the card?", "expected_label": "card_acceptance"}
+{"case_id": "test:999", "state": "What can I use my card to pay for?", "expected_label": "card_acceptance"}
+{"case_id": "test:1000", "state": "Who accepts my card?", "expected_label": "card_acceptance"}
+{"case_id": "test:1041", "state": "I tried making an update to my balance using cheque just yesterday but it doesn't appear to have worked. Should this not be a faster process? I need you to please check over my account because something has went wrong.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1042", "state": "How come I don't see my deposit in my account yet?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1043", "state": "Is there a reason why my account isn't updating because I used a check to  balance my account?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1044", "state": "I don't know why the deposit I made a week ago still hasn't showed up, I really need the money now.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1045", "state": "I made a cash deposit almost a week ago but it's still not there!! please sort this out asap I need the money", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1046", "state": "Where is my cash deposit?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1047", "state": "How can I get the cash deposit to show up on my account?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1048", "state": "When will I see the cash I deposited this morning as available?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1049", "state": "cash from this morning has not deposited", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1050", "state": "Where is the cash from my cheque I recently deposited?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1051", "state": "Cash deposit to my account but it has not appeared.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1052", "state": "When I deposit cheques and cash, my balance does not update.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1053", "state": "I made a deposit this morning but it is still pending?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1054", "state": "cash deposit to my account has shown a red flag.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1055", "state": "I have paid money into my account but it doesn't show.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1056", "state": "The balance on my account wasn't updated after I made a depost.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1057", "state": "Are cheques accepted to my account? Mine didn't seem to work.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1058", "state": "I deposited a check but my balance is still the same.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1059", "state": "IM still waiting for my account to update from a cash deposit?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1060", "state": "I Submitted a cheque couple days ago, nothing happened to my account yet.Would you please check What could be the possible issue?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1061", "state": "Where is my deposit?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1062", "state": "My bank statement doesn't show the cash deposit I made recently.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1063", "state": "My cash deposit from a week ago hasn't shown up. I need the money - how quickly can you sort this out?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1064", "state": "Why didn't my balance update after my cash or checque deposit?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1065", "state": "Why is the cash deposit not showing up in my account?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1066", "state": "I made a deposit of cash and check that has not been added to my balance.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1067", "state": "Why hasn't my balance increased after depositing a check?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1068", "state": "Why does my account not accept cash deposits?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1069", "state": "What happened to the cash that I tried to deposit into my account? It's gone!", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1070", "state": "I had a cheque deposited, but I still haven't seen the cash.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1071", "state": "A cheque deposit hasn't posted to my account, when will my balance update?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1072", "state": "I submitted a cash deposit to my account but it hasn't posted yet.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1073", "state": "I sent a cheque  a few days ago and nothing has happened to my account yet. Can you please check on this for me?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1074", "state": "Has the check I deposited cleared to I can get the cash?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1075", "state": "How long does it take to process cheque deposits?", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1076", "state": "How come my cash deposit is not showing up. This can't be right. There must be some mistake. Where did my cash go. You better not have lost it as I need this money asap.", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1077", "state": "I deposited cash this morning and I am still waiting", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1078", "state": "Balance hasn't been updated following a cheque or cash deposit", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1079", "state": "I tired to deposit some cash into my account but it's not there", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1080", "state": "I sent you a cheque couple days ago, nothing happened to my account yet! This is unacceptable, where is my money??", "expected_label": "balance_not_updated_after_cheque_or_cash_deposit"}
+{"case_id": "test:1441", "state": "Do all ATMs take this card?", "expected_label": "atm_support"}
+{"case_id": "test:1442", "state": "Which ATMs accept this card?", "expected_label": "atm_support"}
+{"case_id": "test:1443", "state": "Where is the closest Mastercard ATM?", "expected_label": "atm_support"}
+{"case_id": "test:1444", "state": "Is there a list of ATM machines?", "expected_label": "atm_support"}
+{"case_id": "test:1445", "state": "Are there any specific ATMs that this card can be used at?", "expected_label": "atm_support"}
+{"case_id": "test:1446", "state": "How do I know which ATMs will accept this card?", "expected_label": "atm_support"}
+{"case_id": "test:1447", "state": "Which ATM's accept my card?", "expected_label": "atm_support"}
+{"case_id": "test:1448", "state": "Is there any nearby ATM's?", "expected_label": "atm_support"}
+{"case_id": "test:1449", "state": "Where are the locations of ATMs that accept this card?", "expected_label": "atm_support"}
+{"case_id": "test:1450", "state": "Which ATMs accept this placard ?", "expected_label": "atm_support"}
+{"case_id": "test:1451", "state": "Help me locate the nearest ATM.", "expected_label": "atm_support"}
+{"case_id": "test:1452", "state": "What ATMs is the card okay to use at?", "expected_label": "atm_support"}
+{"case_id": "test:1453", "state": "How can I find the nearest ATM?", "expected_label": "atm_support"}
+{"case_id": "test:1454", "state": "What kind of ATM's can I use?", "expected_label": "atm_support"}
+{"case_id": "test:1455", "state": "How can I withdraw money?", "expected_label": "atm_support"}
+{"case_id": "test:1456", "state": "How many miles away is the ATM?", "expected_label": "atm_support"}
+{"case_id": "test:1457", "state": "From where can I withdraw?", "expected_label": "atm_support"}
+{"case_id": "test:1458", "state": "Which ATM's will accept my card?", "expected_label": "atm_support"}
+{"case_id": "test:1459", "state": "At what ATMS am I able to use the card?", "expected_label": "atm_support"}
+{"case_id": "test:1460", "state": "Can I use my card at any ATMs?", "expected_label": "atm_support"}
+{"case_id": "test:1461", "state": "Can I get cash with this card anywhere?", "expected_label": "atm_support"}
+{"case_id": "test:1463", "state": "Can someone please assist me with finding my nearest ATM?", "expected_label": "atm_support"}
+{"case_id": "test:1464", "state": "Are there any ATM machines near me?", "expected_label": "atm_support"}
+{"case_id": "test:1465", "state": "Where is the nearest bank machine?", "expected_label": "atm_support"}
+{"case_id": "test:1466", "state": "What type of ATMs accept this card?", "expected_label": "atm_support"}
+{"case_id": "test:1467", "state": "Where can I use this card at an ATM?", "expected_label": "atm_support"}
+{"case_id": "test:1468", "state": "If I have this card, which ATMs can I go to?", "expected_label": "atm_support"}
+{"case_id": "test:1469", "state": "What ATMs can I withdraw money from?", "expected_label": "atm_support"}
+{"case_id": "test:1470", "state": "I want to withdraw money, where can I go?", "expected_label": "atm_support"}
+{"case_id": "test:1471", "state": "Where can I withdrawal my money?", "expected_label": "atm_support"}
+{"case_id": "test:1472", "state": "What are the ATMs that will accept this card?", "expected_label": "atm_support"}
+{"case_id": "test:1473", "state": "What ATMs will accept this type of card?", "expected_label": "atm_support"}
+{"case_id": "test:1474", "state": "Where can I find an ATM to use this card?", "expected_label": "atm_support"}
+{"case_id": "test:1475", "state": "At which ATMs can I use this card?", "expected_label": "atm_support"}
+{"case_id": "test:1476", "state": "Are there certain ATMs that I can use this card at?", "expected_label": "atm_support"}
+{"case_id": "test:1477", "state": "Do you know the closest ATM?", "expected_label": "atm_support"}
+{"case_id": "test:1478", "state": "Can I use this card at an ATM?", "expected_label": "atm_support"}
+{"case_id": "test:1479", "state": "Is there places where I can't withdraw money?", "expected_label": "atm_support"}
+{"case_id": "test:1480", "state": "locations to withdraw money", "expected_label": "atm_support"}
+{"case_id": "test:1761", "state": "The refund isn't showing up on my account.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1762", "state": "My refund is missing from my statement.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1763", "state": "I requested a refund, and never received it. What can I do?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1764", "state": "I was supposed to get a purchase refunded but I don't see the money in my account", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1765", "state": "There's a refund missing from my statement", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1766", "state": "I need help. I asked for a refund from a merchant a while ago, but I have not gotten my money back. I keep checking my account, but nothing is showing up. What should I do now?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1767", "state": "I am awaiting my refund", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1768", "state": "How long does it take for a refund?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1769", "state": "Help! I keep checking my account, but my refund is not showing. I requested that a seller refund my money a while back, but there is no money showing in my account. What can you do for me?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1770", "state": "Can you tell me why my refund is not showing in my statement?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1771", "state": "I asked for a refund last week but nothing has happened yet, can you help me please?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1772", "state": "Why is my refund missing from my  statement?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1773", "state": "Still waiting on a refund.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1774", "state": "I requested a refund and it is missing.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1775", "state": "Hi, As suggested by you, i have asked the seller to initiate the refund, it has been a week and i haven't received my money. Please advise.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1776", "state": "I bought something and returned it and the money from the return isn't in my account.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1777", "state": "Do you have any idea on when I will receive my refund? I got my statement and it was not there.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1778", "state": "Why isn't a recent refund on my statement?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1779", "state": "Where can I see the refund in my account", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1780", "state": "i was supposed to get a refund but my balance hasn't changed, why not?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1781", "state": "I requested a refund from a merchant days ago but I do not see it in my account.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1782", "state": "The refund has not appeared in my account", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1783", "state": "Did my refund go through? It's not on my statement.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1784", "state": "My statement doesn't show that a refund has processed", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1785", "state": "I requested a refund from a store but it hasn't arrived.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1786", "state": "I still haven't seen a refund on my account", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1787", "state": "I am missing a refund.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1788", "state": "My refund doesn't seem to be showing on my statement.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1789", "state": "I am not seeing a refund in my statement.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1790", "state": "Why can't I see a recent refund in my statement?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1791", "state": "I did what you told me earlier and contacted the seller for a refund directly, but nothing is happening! It's been a week and I still haven't got anything. Please just give me back my money", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1792", "state": "Where is my refund? I have been checking my account all day.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1793", "state": "It's been a week and I have done everything that I was asked to do and still nothing. I have contacted the seller and have not gotten a response. Please understand my frustration and put the money back in my account.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1794", "state": "My refund is missing", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1795", "state": "Why doesn't a return show up im my account from a purchase I made?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1796", "state": "I keep checking my bank statements but I don't see a refund that I've requested from a seller. Can you ensure that I receive the refund from the seller?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1797", "state": "I am waiting patiently for a week now for the seller to get back to me and there has been no response, could you please help me further with getting my money back.  Thank you.", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1798", "state": "I would like some help getting a refund back from a seller. It still isn't showing up on my statement and I requested this a long time ago. I'm not sure why it's not returned yet. Can you assist me in getting this money back?", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1799", "state": "How long will it take to get my refund", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:1800", "state": "I should have received a refund however it is not showing on my statement", "expected_label": "Refund_not_showing_up"}
+{"case_id": "test:2161", "state": "I've tried numerous times to submit a transfer of funds. Why isn't it going through?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2162", "state": "I've transferred money before without issue but now I am encountering an error stating that it isn't possible. Why is that?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2163", "state": "I am not able to do a transfer to an account", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2164", "state": "I was unable to make a transfer to another account.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2165", "state": "I had a transfer blocked", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2166", "state": "Can you please help me with this exchange?  I am trying to get crypto and the app won't let me.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2167", "state": "How do I do a successful transfer to an account?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2168", "state": "Why did I get a message saying that my transfer is not possible?  I have done this before no problem.  Please fix.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2169", "state": "Hey I want to buy some crypto but the app doesn't allow me to! What's the issue, I really want to exchange this", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2170", "state": "I tried to transfer money but it said it wasn't possible? I've done this before and it worked why isn't it working now?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2171", "state": "Why can't I transfer to a beneficiary?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2172", "state": "I am having problems transferring to a beneficiary.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2173", "state": "What's the deal with no cryptocurrency on your app?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2174", "state": "Why isn't my transfer not going through? I keep getting an error message.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2175", "state": "What are the rules for transferring to a beneficiary?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2176", "state": "Can I transfer money to a beneficiery?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2177", "state": "I have tried transferring money numerous times.  All I keep getting is an error message.  Can you tell me what is going on and how this van be fixed?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2178", "state": "I have a cryptocurrency exchange that won't go through. Please help me process it.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2179", "state": "Why wasn't I able to transfer to another account?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2180", "state": "The money would not transfer to a beneficiary.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2181", "state": "How come I'm not allowed to transfer funds right now? I just keep getting an error message.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2182", "state": "I couldn't do a transfer to an account", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2183", "state": "A transfer to an account was not allowed", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2184", "state": "Why did I receive an error message saying that my transfer was not possible?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2185", "state": "Explain why I can't do a transfer to a beneficiary.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2186", "state": "My transfer to beneficiary didn't go through", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2187", "state": "Why isn't my transfer going through? I get a message saying it's not possible. I've had no issues in the past.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2188", "state": "I couldn't make a transfer to a beneficiary!", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2189", "state": "My beneficiary has been denied, is this normal?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2190", "state": "I am trying to exchange crypto and it's not working. Tell me how to fix this.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2191", "state": "The account transfer I was trying to do failed.", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2192", "state": "My beneficiary is not allowed, please may I have answer as to why this is?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2193", "state": "Why couldn't I do a transfer to a beneficiary?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2194", "state": "Why would i not be able to do a transfer to a beneficiary?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2195", "state": "I want to transfer money to a beneficiery. Why can't I?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2196", "state": "Can you help with a transfer to an account", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2197", "state": "why isnt my account allowing transfers", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2198", "state": "I want to buy cryptocurrency, but your app doesn't let me. Why?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2199", "state": "i tried to make a transfer to a beneficiary and it didn't go through", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2200", "state": "Why was a transfer to an account not allowed?", "expected_label": "beneficiary_not_allowed"}
+{"case_id": "test:2681", "state": "I made a transfer a few hours ago from a UK banking account.  I do not yet see the transfer.  Please check on this for me.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2682", "state": "the balance on my account didnt change when i transferred money", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2683", "state": "How long will it take for my transferred money to show up?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2684", "state": "Why didn't my balance change after I transferred some money?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2685", "state": "When will my balance update after a transfer?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2686", "state": "How long does it take for an international transfer into my account?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2687", "state": "The amount of time that transfers usually take from a UK account is what?I just completed a transfer and it is not showing up at all. I'm wondering at this point if everything is actually okay.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2688", "state": "When will my transfer be available in my account.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2689", "state": "I didn't get the money I transferred", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2690", "state": "I just completed a bank transfer and the balance didn't update", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2691", "state": "I transferred some money but I think it has gotten lost somewhere.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2692", "state": "How long does a UK transfer take?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2693", "state": "Hello I made a bank transfer couple hours ago from my UK account but it doesn't show up yet. Can you please check if everything is alright with it?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2694", "state": "I made a transfer and am still waiting.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2695", "state": "I made an out of country transfer and it hasn't went through yet.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2696", "state": "After the transfer, the balance did not update.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2697", "state": "Could you please check one of my transfer which i made few hours ago from my UK bank account, as its not showing yet.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2698", "state": "I had cash transferred but the balance did not change.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2699", "state": "I can't see my latest bank transfer", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2700", "state": "My bank transfer is still not showing up in my account.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2701", "state": "I made a transfer and it doesnt' show up in my account.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2702", "state": "I transferred some money but it is yet to arrive.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2703", "state": "Why is my balance the same?  I processed a transfer.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2704", "state": "Why don't I have my transfer?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2705", "state": "Why isn't the transfer on my account showing up?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2706", "state": "The  money I transferred does not show in the balance.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2707", "state": "I have completed a transfer but it is not showing up.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2708", "state": "I did a transfer to my account but it doesn't show up", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2709", "state": "How long until my transfer will be available to me", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2710", "state": "Why doesn't it show that I did a balance transfer?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2711", "state": "I made a bank transfer a couple of hours ago from my UK account.  It hasn't appeared, can you check to make sure it went through?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2712", "state": "My transfer is pending.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2713", "state": "Hey, I try to make a bank transfer from my UK account a few hours ago, but it haven't show up yet. Please check my account to make sure everything alright with it?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2714", "state": "Where is my transfer from [country]?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2715", "state": "I made a bank transfer and my account balance did not show it.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2716", "state": "Where is my money? I transfered it and it isn't in my account.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2717", "state": "I need to know the time frame that is typical for a transfer from a UK account. I just made a transfer and it doesn't appear. I want to make sure everything is okay.", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2718", "state": "Why doesn't my balance reflect my transfer", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2719", "state": "My account balance has not gone up even though I just transferred money into it", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2720", "state": "When will I see my new balance after making my bank transfer?", "expected_label": "balance_not_updated_after_bank_transfer"}
+{"case_id": "test:2841", "state": "Could you please activate my card", "expected_label": "activate_my_card"}
+{"case_id": "test:2842", "state": "I need to activate my card can you do that now?", "expected_label": "activate_my_card"}
+{"case_id": "test:2843", "state": "What do I need to do to activate my new card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2844", "state": "Tell me how to go about activating my new card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2845", "state": "How can I activate my card so I can start using it?", "expected_label": "activate_my_card"}
+{"case_id": "test:2846", "state": "How long will it take to activate my new card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2847", "state": "What's the right way to activate my card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2848", "state": "I received my new card, how is it activated?", "expected_label": "activate_my_card"}
+{"case_id": "test:2849", "state": "Is there a way my new card can be renewed?", "expected_label": "activate_my_card"}
+{"case_id": "test:2850", "state": "How do I activate a card I received?", "expected_label": "activate_my_card"}
+{"case_id": "test:2851", "state": "Why can't I activate my card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2852", "state": "What is the process of card activation?", "expected_label": "activate_my_card"}
+{"case_id": "test:2853", "state": "WHAT CAN I DO AFTER THE CARD MISSING", "expected_label": "activate_my_card"}
+{"case_id": "test:2854", "state": "I got my new card where do I go to activate it?", "expected_label": "activate_my_card"}
+{"case_id": "test:2855", "state": "Would like to use my card and need to activate it first.  Can you help me do this?", "expected_label": "activate_my_card"}
+{"case_id": "test:2856", "state": "I need help activating my new card.", "expected_label": "activate_my_card"}
+{"case_id": "test:2857", "state": "how to activate card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2858", "state": "Please, activate my card", "expected_label": "activate_my_card"}
+{"case_id": "test:2859", "state": "I tried activating my bill of fare and it didn't workplace", "expected_label": "activate_my_card"}
+{"case_id": "test:2860", "state": "I just got my card and want to use it, how do I activate my card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2861", "state": "I have a new card and I want to activate it", "expected_label": "activate_my_card"}
+{"case_id": "test:2862", "state": "Assist me please with card activation.", "expected_label": "activate_my_card"}
+{"case_id": "test:2863", "state": "I need help with activating my card", "expected_label": "activate_my_card"}
+{"case_id": "test:2864", "state": "How can I start using my card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2865", "state": "Activating my card", "expected_label": "activate_my_card"}
+{"case_id": "test:2866", "state": "When will my card be activated?", "expected_label": "activate_my_card"}
+{"case_id": "test:2867", "state": "How can I activate my card>", "expected_label": "activate_my_card"}
+{"case_id": "test:2868", "state": "What are the steps in order to activate my new card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2869", "state": "How do I go about activating my new card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2870", "state": "What is the activation process on my new card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2871", "state": "I would like to get help from someone with activating my card.", "expected_label": "activate_my_card"}
+{"case_id": "test:2872", "state": "What is the process for activating my card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2873", "state": "How do I use my new card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2874", "state": "I got my new card but I am not sure if it need s activated and how?", "expected_label": "activate_my_card"}
+{"case_id": "test:2875", "state": "What are the steps to activating a new card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2876", "state": "I would like to activate my card to use now, can you help me?", "expected_label": "activate_my_card"}
+{"case_id": "test:2877", "state": "How do I activate a new card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2878", "state": "I just got this card & I don't know how to activate it.", "expected_label": "activate_my_card"}
+{"case_id": "test:2879", "state": "I got my new card. How do I activate it?", "expected_label": "activate_my_card"}
+{"case_id": "test:2880", "state": "What do I need to do to activate my card?", "expected_label": "activate_my_card"}
+{"case_id": "test:2921", "state": "Am I able to order a new card and have it sent to me in China?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2922", "state": "Will you be able to send the new card to China?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2923", "state": "When my card expires what happens to my account?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2924", "state": "What do I do when my card expires?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2925", "state": "The expiration date on my card is coming up", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2926", "state": "My card's expiring, what happens now?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2927", "state": "My card is about to expire. What do I need to do?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2928", "state": "how long and how much does it cost for new card", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2929", "state": "What do I do if my card is expiring soon?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2930", "state": "How much does it cost to get a new card?  Mine is almost expired.  How fast does it come?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2931", "state": "Since my card is about to expire, what do I do to get a new one?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2932", "state": "My card is about to expire and I need to know how much it costs and how long it takes to get a new one.", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2933", "state": "When my card expires do you send a new card?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2934", "state": "What is the next step if my card is about to expire.", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2935", "state": "Once my card expires, what should I do?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2936", "state": "I need a new card, my current card is nearly expired.", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2937", "state": "It appears my card expires next month, can I order a new one?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2938", "state": "My card is about to expire. How much does it cost to order a new one and how fast will I get it?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2939", "state": "What do I do when my card is about to expire?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2940", "state": "I will need to get a new card soon, how do I order?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2941", "state": "going to need a new card what are the fees and time it takes", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2942", "state": "Will I need to order a new card since mine expires next month?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2943", "state": "When my card expires, will I get a new one mailed to me?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2944", "state": "Do you have to order a new card before your current card expires?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2945", "state": "Since my card is about to expire, I need a new one.", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2946", "state": "My card is very close to expiring. When can I order a new one and how do I do so?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2947", "state": "I need to order a  new card, mine is about to expire and I need to know how much it will cost and how long until I receive it.", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2948", "state": "How do I order a new card before It expires?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2949", "state": "Can I receive a new card while I am in China?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2950", "state": "Next month my card will expire, do I need to order a new one?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2951", "state": "The expiration date of my card is approaching .", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2952", "state": "How can I get a new card ASAP to replace an old, soon to expire one?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2953", "state": "I need a new card since my old one is about to expire.", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2954", "state": "My card is about to expire.", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2955", "state": "My card is expiring shortly.  How much will it cost for a replacement, and how soon can I get it?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2956", "state": "What would the price be for an expired card replacement and how long will it take me to get it?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2957", "state": "in china, need new card", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2958", "state": "If my card is about to expire, do I need to order a new one?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2959", "state": "My card is about to expire. How do I get a new one?", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2960", "state": "I need to know the cost and when I will receive a new card to replace an old one.", "expected_label": "card_about_to_expire"}
+{"case_id": "test:2961", "state": "Is the top up feature available on the Apple Watch?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2962", "state": "Can I use the system Google Pay for top-ups?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2963", "state": "My top-up for Google Pay isn't working", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2964", "state": "Can I add money with Apple Pay?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2965", "state": "Can I use my Apple Watch to to top up?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2966", "state": "Does Apple Pay give the option to top up?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2967", "state": "Top up on my Google Pay isn't working.", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2968", "state": "Is it possible to top up with Apple Pay?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2969", "state": "do i have to setup apple pay to use it", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2970", "state": "Can I use Apple Pay to top up?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2971", "state": "How can I top up my Google Pay?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2972", "state": "Does Google Play have an app to Top up?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2973", "state": "I received my American Express card, but I am having problems making it work with Apple pay.  Can you help me with this problem?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2974", "state": "is apple pay eligible for top up", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2975", "state": "Why can't I use my American Express with Apple Pay to top up my account?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2976", "state": "how do i add money with my apple watch", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2977", "state": "If I want to top up, can I use Apple Pay?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2978", "state": "can i top up with apple pay", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2979", "state": "My American express is experiencing a problem with apple play with top up, can you fix it?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2980", "state": "My top up is not working in Apple Pay.", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2981", "state": "Is Apple Pay a possible top up option?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2982", "state": "I don't know how to top up my Google pay.", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2983", "state": "Can I top up from my Apple Watch?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2984", "state": "Can I use my American Express stored in Apple Pay to top up?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2985", "state": "is apple pay costly?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2986", "state": "How can I top up with Google Pay?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2987", "state": "I can't top up my account using my American Express with Apple Pay.", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2988", "state": "I got my American Express in Apple Pay, why is top up not working?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2989", "state": "I got my American Express in Apple Bay but top up is not working", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2990", "state": "How do I top up? Can I use my apple watch?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2991", "state": "Is it possible to use Apple Pay to put money in my account?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2992", "state": "My American Express is in my Apple Pay and the top up is failing, why?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2993", "state": "How can I top-ff my account using my Apple Watch?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2994", "state": "can google pay be used to make a top-up", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2995", "state": "How do I get the Top Up feature on my apple watch working?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2996", "state": "How do I troubleshoot Google pay top up?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2997", "state": "How do I top up with Apple Pay?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2998", "state": "Why isn't my top up working using my saved American Express in ApplePay?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:2999", "state": "How do I use the top up app with my apple watch?", "expected_label": "apple_pay_or_google_pay"}
+{"case_id": "test:3000", "state": "Google pay and top up, I want it, can I get it?", "expected_label": "apple_pay_or_google_pay"}

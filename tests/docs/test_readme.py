@@ -70,7 +70,10 @@ SURVIVING_STATEMENTS = (
         "The Jev adapter is PROVISIONAL and requires explicit opt-in: "
         "`--provider jev --experimental-provider`. It has no 1.x compatibility promise."
     ),
-    "no live audit result is accepted",
+    (
+        "The released 1.0.0 adapter's accepted evidence uses mocked transports; the "
+        "separate audit below used an unreleased benchmark producer."
+    ),
     "Replay never imports a provider",
     "the packaged demonstration establishes no population or model-quality result",
     "The packaged demo and action-gate example are synthetic (`evidence_scope=demo`).",
