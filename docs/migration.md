@@ -95,3 +95,16 @@ evidence is schema 2 and is unaffected by the legacy rule above. Evidence from
 any other source tree is ERROR with reason `integrity.lock`, reporting the
 decoded lock digest; the ERROR is a verifier-configuration limit, not a
 statement that the evidence is invalid.
+
+### Replay under 1.0.1
+
+The 1.0.1 registry keeps both 1.0.0 approvals and adds the reviewed 1.0.1
+source fingerprint for `actseal-choice-v1`. Evidence produced by 1.0.0, and the
+retained `examples/action_gate/recorded/a5fe090202f7` archive, therefore
+replay under 1.0.1 to their stored verdicts. Their bytes are unchanged: no
+lock, manifest or bundle is rewritten or resealed. Replay compatibility is not
+collection permission: `collect` and `verify` against a 1.0.0 lock under 1.0.1
+are refused with an `IntegrityError` on `implementation_sha256` before any
+provider is constructed, because new collection requires the exact running
+source. Run `actseal lock` again with 1.0.1 to create a new exact-source lock
+for any new run. The schema-1 (0.1.0) rules above are unchanged.

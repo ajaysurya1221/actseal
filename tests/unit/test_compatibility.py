@@ -81,19 +81,25 @@ OTHER = "3" * 64
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGE = ROOT / "src" / "actseal"
 
-# Amendment V1-037 (REVIEW 19, final-candidate compatibility probe): exactly two
-# reviewed producer fingerprints are approved for ``actseal-choice-v1``.
-#: Final 1.0.0 candidate source (Codex metadata commit 0b57933). Any packaged
-#: Python edit changes this value and invalidates the approval.
-FINAL_CANDIDATE = "8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3"
+# Amendment V1-037 (REVIEW 19, final-candidate compatibility probe) approved exactly two
+# reviewed producer fingerprints for ``actseal-choice-v1`` in 1.0.0; amendment V1-055
+# (1.0.1 patch bundle) adds the reviewed 1.0.1 final candidate and keeps both. These are
+# independently reviewed literals, never read back from the registry or the running source.
+#: Released 1.0.0 source (final version metadata commit 0b57933). Still approved for replay; it
+#: no longer identifies the running source.
+RELEASE_1_0_0 = "8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3"
+#: Final reviewed 1.0.1 candidate source (V1-055). Any packaged Python edit changes this
+#: value and needs a new fingerprint and review.
+FINAL_CANDIDATE = "dced01d79e64799a19a75c0957f3684a48249c58ebb27d346336e7420195bcb4"
 #: Original producer of the retained action-gate archive: reviewed source
 #: 76758d7084e396c8960718d28c1cad5fb70bac03, an UNRELEASED prerelease tree with a
 #: 0.1.0 version string (not the released 0.1.0 implementation; its evidence is
 #: schema 2, not legacy schema 1).
 ORIGINAL_EXAMPLE_PRODUCER = "a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642"
 APPROVED = {
-    FINAL_CANDIDATE: CURRENT_ENGINE,
+    RELEASE_1_0_0: CURRENT_ENGINE,
     ORIGINAL_EXAMPLE_PRODUCER: CURRENT_ENGINE,
+    FINAL_CANDIDATE: CURRENT_ENGINE,
 }
 #: The retained archive (Task 07 source 277d8e2), bytes preserved as produced.
 ARCHIVE = ROOT / "examples" / "action_gate" / "recorded" / "a5fe090202f7"
@@ -275,8 +281,9 @@ def test_new_locks_record_schema_2_and_the_current_engine() -> None:
         validate_lock(replace(lock, replay_engine_version="actseal-choice-v2"))
 
 
-def test_packaged_registry_holds_exactly_the_two_approved_entries() -> None:
-    """V1-037: the final candidate and the original example producer, nothing else."""
+def test_packaged_registry_holds_exactly_the_three_approved_entries() -> None:
+    """V1-037 and V1-055: the 1.0.0 source, the original example producer and the
+    1.0.1 final candidate, nothing else (in particular no pre-bump candidate)."""
     path = PACKAGE / REGISTRY_FILE
     text = path.read_text(encoding="utf-8")
     document = json.loads(text)
@@ -285,13 +292,18 @@ def test_packaged_registry_holds_exactly_the_two_approved_entries() -> None:
     assert loaded == CompatibilityRegistry(
         1,
         (
-            (FINAL_CANDIDATE, CURRENT_ENGINE),
+            (RELEASE_1_0_0, CURRENT_ENGINE),
             (ORIGINAL_EXAMPLE_PRODUCER, CURRENT_ENGINE),
+            (FINAL_CANDIDATE, CURRENT_ENGINE),
         ),
     )
-    assert loaded.engine_for(FINAL_CANDIDATE) == CURRENT_ENGINE
+    assert loaded.engine_for(RELEASE_1_0_0) == CURRENT_ENGINE
     assert loaded.engine_for(ORIGINAL_EXAMPLE_PRODUCER) == CURRENT_ENGINE
+    assert loaded.engine_for(FINAL_CANDIDATE) == CURRENT_ENGINE
     assert loaded.engine_for(FOREIGN) is None
+    # The pre-bump hardening tree was never a release candidate and is not approved.
+    pre_bump = "7599c87c3e7c71c27d6d00046c1a7e770457ae2c5e368f2f1cc68cdce7e64f9a"
+    assert loaded.engine_for(pre_bump) is None
     assert parse_registry(text) == loaded
     assert text.endswith("}\n")
 

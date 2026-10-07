@@ -35,14 +35,16 @@ HEX_F = "f" * 64
 COMMIT = "0123456789abcdef0123456789abcdef01234567"
 ENGINE = "actseal-choice-v1"
 PACKAGED_REGISTRY = REPO_ROOT / "src" / "actseal" / "compatibility_registry.json"
-#: The reviewed packaged registry (amendment V1-037): the 1.0.0 candidate source and the
-#: committed archive's original (unreleased prerelease) producer. The committed run is
-#: therefore a registry-approved, not exact, implementation for the running source.
+#: The reviewed packaged registry: the 1.0.0 source and the committed archive's original
+#: (unreleased prerelease) producer (amendment V1-037), plus the reviewed 1.0.1 final
+#: candidate source (amendment V1-055). The committed run is therefore a
+#: registry-approved, not exact, implementation for the running source.
 APPROVED_REGISTRY = {
     "schema_version": 1,
     "implementations": {
         "8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3": ENGINE,
         "a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642": ENGINE,
+        "dced01d79e64799a19a75c0957f3684a48249c58ebb27d346336e7420195bcb4": ENGINE,
     },
 }
 

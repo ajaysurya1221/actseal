@@ -525,18 +525,25 @@ def decode_document(name: str, data: bytes, record_type: type[_D]) -> _D:
 
 
 def decode_rows(name: str, data: bytes, record_type: type[_D]) -> tuple[_D, ...]:
-    """Decode a JSONL file of canonical rows, each at most 1 MiB excluding its LF."""
+    """Decode a JSONL file of canonical rows, each at most 1 MiB excluding its LF.
+
+    The row count is the LF count, checked before any row is decoded; rows are
+    then sliced one at a time, so a newline-heavy file never materialises a list
+    of every row and an overlong row is rejected before it is copied.
+    """
     if not data.endswith(_LF):
         raise SchemaError(f"{name}: must end with one LF")
-    rows = data.split(_LF)
-    rows.pop()
-    if not rows:
+    count = data.count(_LF)
+    if not count:
         raise SchemaError(f"{name}: must contain at least one row")
-    if len(rows) > MAX_CASES_PER_SPLIT:
+    if count > MAX_CASES_PER_SPLIT:
         raise SchemaError(f"{name}: must contain at most {MAX_CASES_PER_SPLIT} rows")
     decoded: list[_D] = []
-    for index, row in enumerate(rows):
-        if len(row) > MAX_ROW_BYTES:
+    start = 0
+    for index in range(count):
+        stop = data.index(_LF, start)
+        if stop - start > MAX_ROW_BYTES:
             raise SchemaError(f"{name}[{index}]: row exceeds {MAX_ROW_BYTES} bytes")
-        decoded.append(_decode_canonical(f"{name}[{index}]", row, record_type))
+        decoded.append(_decode_canonical(f"{name}[{index}]", data[start:stop], record_type))
+        start = stop + 1
     return tuple(decoded)
