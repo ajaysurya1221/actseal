@@ -1,9 +1,10 @@
 # Actseal 1.0.0 release notes
 
 The implementation, scope and inclusion facts below are final for the tagged
-1.0.0 source (fingerprint
-`8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3`). Every
-bracketed `PENDING` item is a named release-pipeline receipt (build-time or
+1.0.0 source (implementation fingerprint `8f316f67…98ed3`; the exact value
+is in the registry table of the
+[versioning policy](https://github.com/ajaysurya1221/actseal/blob/main/docs/versioning.md)).
+Every bracketed `PENDING` item is a named release-pipeline receipt (build-time or
 post-publication) that is filled only from the actual receipt by Task 21 once
 the tagged pipeline produces it; no hash, run id, timing or live result is
 claimed before its receipt exists. The final notes must pass
@@ -64,10 +65,12 @@ These were produced before the tag and do not change with it.
 
 | Claim | Receipt |
 |---|---|
-| Implementation source | Fingerprint `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3`, unchanged from the retained candidate `5e7931a` through every later documentation and asset commit; the packaged compatibility registry holds exactly this fingerprint and the example's original producer (amendment V1-037) |
+| Implementation source | Fingerprint `8f316f67…98ed3` (exact value in the [versioning policy](https://github.com/ajaysurya1221/actseal/blob/main/docs/versioning.md)), unchanged from the retained candidate `5e7931a` through every later documentation and asset commit; the packaged compatibility registry holds exactly this fingerprint and the example's original producer (amendment V1-037) |
+| Integrated head and hosted CI | Combined implementation and static figures independently accepted for integration at `ff0f66c` (`plan/v1/reviews/19-combined-static.md`) and merged to `main` as `277d729` (PR 46); all ten hosted source and assets jobs at that exact head succeeded (push run 37599734305, PR run 37599764080). Parent combined checks at that head: 4,163 ordinary tests passed with one explicit obsolete-manifest observation skip and 31 deselected, 25 packaging tests passed, 6 cached-native tests passed with no skips (all 4,195 collected cases accounted for), 590 docs/visual checks, hooks, full static regeneration and all 16 README image references passed |
+| Non-publishing release rehearsal | `publish-pypi.yml` rehearsal run [37599844342](https://github.com/ajaysurya1221/actseal/actions/runs/37599844342) completed SUCCESS at `ff0f66c`: build once, assets regeneration, and all four exact-artifact platform verify jobs passed; the publish, post-publish and mirror jobs were intentionally skipped. This is pre-tag evidence that the pipeline works on these bytes, not a tag, artifact or PyPI receipt; the tagged run's receipts are the `PENDING` rows below |
 | Static figures: twelve SVG variants and the social preview | Hero and how-it-works accepted at `fcdcfe4`/`7820dba` (Tasks 11, 12, 15); architecture and the measured-width correction accepted at `77a13bd` (`plan/v1/reviews/13-readability.md`): byte-identical regeneration of all twelve SVGs and `social.png`, 337 visual tests, 3,898 ordinary tests, strict typing and hooks, and every variant viewed as actual pixels at 838 px desktop and 254 px mobile with no label below 14 px |
 | README responsive selection | Vertical variants below a 1280 px viewport, accepted at `95e17b4` (`plan/v1/reviews/08-responsive.md`); the combined README and assets regenerate with all 16 image references resolved and 590 parent docs/visual checks, the docs gate and hooks passing at `c1b5481` |
-| Blind ten-second README preflight | A fresh reviewer, given only the rendered first screen at `710ae55`, named the purpose, the developer audience and all three evidence limits (`plan/v1/reports/readme-ten-second-preflight.md`, viewport observation in `readme-viewport-observation.md`) |
+| Blind ten-second README test (final, on the integrated README) | Screenshot of the public GitHub README first screen at `main` `277d729`, 1366×900 CSS viewport, device pixel ratio 1, README image rendered at 838 px, captured 7 October 2026 09:33 UTC (`plan/v1/reports/readme-first-screen-277d729-final.jpg`). A fresh, context-free reviewer who saw only that screenshot wrote: "Actseal helps developers test model-chosen application actions by freezing a policy, checking recorded decisions against risk and coverage bounds and fault rules, and sealing evidence for offline replay. It can recompute the verdict without a model call, but replay cannot authenticate responses, prove inference occurred, or establish label truth." Codex accepted the semantic ten-second gate on that answer; the receipt is `plan/v1/reports/readme-ten-second-final.md`. This is one reviewer's reading of one screenshot, not a timed human study. The screenshot shows the PyPI badge for the then-current 0.1.0 release, which is accurate. The earlier preflight at `710ae55` (`readme-ten-second-preflight.md`, `readme-viewport-observation.md`) is retained as history |
 | Native paths | Cached-native checks repeated at the Task 19 integration (six tests, no skips) on this source; the historical T30 Linux/macOS native receipts are in `docs/dependencies.md` |
 
 ## Release-pipeline receipts (`PENDING` until Task 20/21)

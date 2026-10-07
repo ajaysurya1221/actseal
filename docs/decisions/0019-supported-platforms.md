@@ -78,9 +78,18 @@ exceed the receipts.
   that establishes Linux binary execution for the asset pipeline, not GIF
   rendering.
 - Historical: exact-head hosted CI at the earlier candidate heads `b05aed8`
-  and `5e7931a` was red solely for the four then-absent architecture
-  figures (Linux and macOS matrices otherwise passing); those figures were
-  accepted at `77a13bd` and the README that references them at `95e17b4`.
-  The hosted matrix result for the tagged commit itself is a release
-  pipeline receipt recorded in `plan/v1/RELEASE_NOTES.md`, not a claim of
-  this ADR.
+  and `5e7931a` failed. The only test failures were the four then-absent
+  architecture figures, and lint and type steps passed, but the downstream
+  build, packaging, reproduction and hook steps were skipped after the
+  failure and were not run; those runs establish nothing about them. The
+  figures were accepted at `77a13bd` and the README that references them at
+  `95e17b4`.
+- Integrated head: all ten hosted source and assets jobs (Linux and macOS,
+  Python 3.12 and 3.13, both assets jobs) succeeded at the exact combined
+  head `ff0f66c` (push run 37599734305, PR run 37599764080;
+  `plan/v1/reviews/19-combined-static.md`), which merged to `main` as
+  `277d729`. The non-publishing `publish-pypi.yml` rehearsal 37599844342 at
+  the same head passed its four exact-artifact platform verify jobs with
+  publish, post-publish and mirror intentionally skipped. The hosted matrix
+  result for the tagged commit itself is a release pipeline receipt
+  recorded in `plan/v1/RELEASE_NOTES.md`, not a claim of this ADR.

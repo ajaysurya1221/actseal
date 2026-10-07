@@ -2,11 +2,14 @@
 
 - Status: approved (plan/v1/PLAN.md section D and Decision 2A); toolchain
   accepted (Task 10); all four P1 static groups (hero, how-it-works,
-  architecture, social preview) accepted from the pinned inputs, the last
-  two at the measured README widths (`77a13bd`), and the blind first-screen
-  preflight passed. The P2 figures were not implemented for 1.0.0 and are
-  outside its delivered scope; the demo recording follows the post-PyPI
-  exception (Decision 2A).
+  architecture, social preview) accepted from the pinned inputs. The three
+  SVG groups were re-validated at the measured README widths at `77a13bd`
+  (ten variants regenerated; the desktop hero SVGs and `social.png` are
+  byte-unchanged). The blind first-screen preflight and the final
+  first-screen review on the integrated README both passed. The P2 figures
+  were not implemented for 1.0.0 and are outside its delivered scope; the
+  demo recording and the tagged publication remain future gates (the
+  recording follows the post-PyPI exception, Decision 2A).
 - Date: 2026-10-07.
 
 ## Decision
@@ -119,23 +122,40 @@ design.
   standing approval did not change, so hosted CI at the candidate heads
   `b05aed8` and `5e7931a` was red only for those four files. The human then
   completed both prerequisite merges manually (V1-050). Task 13 generated
-  the four outputs and Task 13R corrected every figure to the measured
-  widths; both were accepted at `77a13bd`
+  the four outputs and Task 13R corrected the three SVG groups to the
+  measured widths, regenerating ten variants (hero mobile, how-it-works and
+  architecture) while the desktop hero SVGs and `social.png` stayed
+  byte-identical; both were accepted at `77a13bd`
   (`plan/v1/reviews/13-readability.md`): byte-identical regeneration of all
   twelve SVGs and the social PNG, 337 visual tests, strict typing and hooks,
   and all twelve variants viewed as actual resvg pixels at 838 px desktop
   and 254 px mobile with no label below 14 px. Combined with the responsive
   README (`95e17b4`), the 16 README image references resolve and 590 parent
-  docs/visual checks, the docs gate and hooks pass at `c1b5481`.
+  docs/visual checks, the docs gate and hooks pass at `c1b5481`; the
+  combined head `ff0f66c` was accepted for integration
+  (`plan/v1/reviews/19-combined-static.md`), passed all ten hosted source
+  and assets jobs (runs 37599734305 and 37599764080) and merged to `main`
+  as `277d729`.
 - P2 figures (where-it-sits, decision/verdict matrix, evidence boundary):
   not implemented for 1.0.0, as the deadline rule above provides; the three
   evidence-boundary limitations remain in plain text in the README.
-- Demo recording: captured from the published PyPI release after publication
-  under Decision 2A; not in the tagged tree.
-- Final acceptance on the integrated head: a fresh repository first-screen
-  review of the integrated README and the tagged pipeline's `assets` job are
-  recorded by the release review and `plan/v1/RELEASE_NOTES.md`, not by this
-  ADR.
+- Final first-screen review on the integrated README (7 October 2026): a
+  screenshot of the public GitHub README first screen at `main` `277d729`
+  (1366×900 CSS viewport, device pixel ratio 1, README image rendered at
+  838 px, captured 09:33 UTC;
+  `plan/v1/reports/readme-first-screen-277d729-final.jpg`) was shown to a
+  fresh, context-free reviewer, who named the developer audience, the
+  freeze/check/seal/replay purpose, the offline recomputation and all three
+  evidence limits in two sentences. Codex accepted the semantic ten-second
+  gate on that answer (receipt `plan/v1/reports/readme-ten-second-final.md`).
+  This is one reviewer's reading of one screenshot, not a timed human
+  study; the screenshot's PyPI badge shows the then-current 0.1.0 release.
+  The `710ae55` preflight above is retained as history.
+- Future gates, not claimed here: the genuine demo recording, captured from
+  the published PyPI release after publication under Decision 2A and absent
+  from the tagged tree; the tagged pipeline's own `assets` job; and the
+  tagged publication itself. Their receipts belong to the release review
+  and `plan/v1/RELEASE_NOTES.md`.
 - Related: [ADR 0015](0015-v1-stability-and-replay-compatibility.md),
   `docs/assets/src/README.md`, `docs/assets/src/tools.toml`.
 
