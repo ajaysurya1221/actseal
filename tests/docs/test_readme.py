@@ -175,12 +175,23 @@ def test_every_link_is_absolute_and_same_repo_links_resolve() -> None:
             assert (ROOT / relative).is_file(), target
 
 
-def test_navigation_links_the_draft_release_notes_absolutely() -> None:
+def test_navigation_links_the_release_notes_absolutely_and_labels_their_state() -> None:
+    """The link is permanent; its draft wording must track the notes' actual state.
+
+    While ``plan/v1/RELEASE_NOTES.md`` carries its DRAFT status marker the label
+    must say so; once the notes are finalized the label must drop the draft
+    wording. Neither state is forced on the notes themselves.
+    """
     text = _text()
-    link = f"[release notes (draft until published)]({BLOB_PREFIX}plan/v1/RELEASE_NOTES.md)"
-    assert link in text
-    assert (ROOT / "plan" / "v1" / "RELEASE_NOTES.md").is_file()
-    assert "DRAFT" in (ROOT / "plan" / "v1" / "RELEASE_NOTES.md").read_text(encoding="utf-8")
+    target = f"{BLOB_PREFIX}plan/v1/RELEASE_NOTES.md"
+    match = re.search(rf"\[(?P<label>[^\]]*)\]\({re.escape(target)}\)", text)
+    assert match is not None, "README navigation must link the release notes absolutely"
+    notes_path = ROOT / "plan" / "v1" / "RELEASE_NOTES.md"
+    assert notes_path.is_file()
+    label = match["label"]
+    assert label.startswith("release notes"), label
+    notes_are_draft = "DRAFT" in notes_path.read_text(encoding="utf-8")
+    assert ("draft" in label) == notes_are_draft, (label, notes_are_draft)
 
 
 def test_hero_alt_text_states_the_three_evidence_limits() -> None:
