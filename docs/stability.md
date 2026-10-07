@@ -58,17 +58,21 @@ output.
 
 | Command | Required | Optional |
 |---|---|---|
-| `lock` | `--contract PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out PATH` | `--responses PATH`, `--offline`, `--json` |
-| `verify` | `--lock PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out DIRECTORY` | `--responses PATH`, `--offline`, `--json` |
+| `lock` | `--contract PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out PATH` | `--responses PATH`, `--offline`, `--json`; PROVISIONAL: `--provider jev` with `--experimental-provider` |
+| `verify` | `--lock PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out DIRECTORY` | `--responses PATH`, `--offline`, `--json`; PROVISIONAL: `--provider jev` with `--experimental-provider` |
 | `replay` | `DIRECTORY` (positional bundle directory) | `--expected-lock-sha256 HEX`, `--json` |
 | `demo` | `--out NEW_DIRECTORY` | `--json` |
 | root | | `--version` (root only), `-h`/`--help` |
 
 Provider rules: `fixture` requires `--responses`; `laya` forbids it; `--offline`
-is accepted by both. The stable provider choices are `fixture` and `laya`. A
-Jev transport, if it ships, is PROVISIONAL: it requires
-`--provider jev --experimental-provider`, is never selected implicitly and is
-not part of this task's deliverable.
+is accepted by both. The STABLE provider choices are `fixture` and `laya`; they
+reject `--experimental-provider`. The experimental Jev adapter is PROVISIONAL
+(ADR 0017): `lock` and `verify` accept it only as
+`--provider jev --experimental-provider`, it is never selected implicitly,
+it rejects `--responses`, its adapter rejects `--offline` as a setup error
+before reading `JEV_API_KEY`, and `replay`/`demo` do not accept the flag. The
+`jev` choice, the flag and the adapter carry no 1.x promise and may change or
+be removed in any release; the receipt shapes below are unchanged by it.
 
 Exit codes are STABLE: `PASS` 0, `BLOCK` 1, `INCONCLUSIVE` 2, `ERROR` 3. Usage
 errors, setup errors, invalid inputs, existing destinations and operating-system

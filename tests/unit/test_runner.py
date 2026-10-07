@@ -27,7 +27,9 @@ from test_evidence import CALIBRATION, GOLD, answer_json, contract_with, verific
 from test_providers import FAKE_WORKER, pinned_identity
 
 import actseal.adapters.laya as laya_module
+import actseal.experimental.providers.jev as jev_module
 import actseal.runner as runner_module
+from actseal.adapters.base import DecisionModel
 from actseal.adapters.fixture import FixtureModel
 from actseal.adapters.laya import STARTUP_TIMEOUT_S, LayaModel
 from actseal.assessment import REASON_WORKER_INVALIDATED, assess
@@ -38,6 +40,7 @@ from actseal.faults import run_fault_campaign
 from actseal.locking import create_lock, lock_digest, parse_lock, validate_lock
 from actseal.normalization import request_sha256
 from actseal.records import (
+    PROVIDERS,
     CapturedOutcome,
     ChoiceAnswer,
     Contract,
@@ -64,6 +67,7 @@ from actseal.runner import (
 )
 from actseal.serialization import canonical_json, implementation_fingerprint, to_data
 from conftest import make_identity
+from provider_support import JevProfile
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGED = ROOT / "src" / "actseal" / "demo_data"
@@ -896,58 +900,136 @@ def test_open_model_fixture_rules(tmp_path: Path) -> None:
     offline.close()
     with pytest.raises(SchemaError, match="provider"):
         open_model("unsupported", responses=None, offline=False)
-    with pytest.raises(SchemaError, match="provider"):
-        open_model("jev", responses=None, offline=False)
+    # ``jev`` is registered (PROVISIONAL); like laya it rejects --responses first.
+    with pytest.raises(SchemaError, match="responses"):
+        open_model("jev", responses=responses, offline=False)
 
 
-def test_open_model_rejects_admitted_but_unregistered_jev_without_constructing_laya(
+def test_open_model_routes_jev_to_the_experimental_adapter_never_to_laya(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """V1-011 guard: ``jev`` is admitted by ``records.PROVIDERS`` but not registered here.
+    """Explicit ``"jev"`` is the Python opt-in (ADR 0017): lazy experimental branch only.
 
-    Before the guard the non-fixture branch would have constructed Laya for any
-    admitted provider. Every argument combination must fail loudly with a
-    ``SchemaError`` naming ``provider`` and construct nothing.
+    Every combination constructs the experimental adapter with the requested
+    ``offline`` flag and never Laya; ``responses`` is rejected before either.
+    The registration inventory is exact: stable fixture/laya plus the single
+    PROVISIONAL provider, all admitted by ``records.PROVIDERS``.
     """
-    constructed: list[dict[str, object]] = []
+    laya_constructed: list[dict[str, object]] = []
+    jev_constructed: list[dict[str, object]] = []
 
     class FakeLaya:
         def __init__(self, *, offline: bool = False) -> None:
-            constructed.append({"offline": offline})
+            laya_constructed.append({"offline": offline})
+
+    class FakeJev:
+        def __init__(self, *, offline: bool = False) -> None:
+            jev_constructed.append({"offline": offline})
 
     monkeypatch.setattr(laya_module, "LayaModel", FakeLaya)
+    monkeypatch.setattr(jev_module, "JevModel", FakeJev)
+    monkeypatch.delenv(jev_module.API_KEY_ENV, raising=False)
+    for offline in (True, False):
+        with pytest.raises(SchemaError, match="responses"):
+            open_model("jev", responses=tmp_path / "r.jsonl", offline=offline)
+    assert jev_constructed == []
+    assert laya_constructed == []
+    assert isinstance(open_model("jev", responses=None, offline=False), FakeJev)
+    assert isinstance(open_model("jev", responses=None, offline=True), FakeJev)
+    assert jev_constructed == [{"offline": False}, {"offline": True}]
+    assert laya_constructed == []
+    assert sorted(runner_module._EXPERIMENTAL_PROVIDERS) == ["jev"]
+    assert sorted(runner_module._REGISTERED_PROVIDERS) == ["fixture", "jev", "laya"]
+    assert runner_module._REGISTERED_PROVIDERS <= PROVIDERS
+
+
+def test_open_model_rejects_an_admitted_but_unregistered_provider_before_any_adapter(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Negative controls for the registration guard (V1-011): admission constructs nothing.
+
+    A provider admitted by ``records.PROVIDERS`` but absent from the runner's
+    registration, and a registered provider later removed from registration
+    (a cut), both fail with a ``SchemaError`` naming ``provider`` before any
+    adapter is imported or built; nothing ever falls through to Laya.
+    """
+    constructed: list[tuple[str, bool]] = []
+
+    class FakeLaya:
+        def __init__(self, *, offline: bool = False) -> None:
+            constructed.append(("laya", offline))
+
+    class FakeJev:
+        def __init__(self, *, offline: bool = False) -> None:
+            constructed.append(("jev", offline))
+
+    monkeypatch.setattr(laya_module, "LayaModel", FakeLaya)
+    monkeypatch.setattr(jev_module, "JevModel", FakeJev)
+    monkeypatch.setattr(runner_module, "PROVIDERS", PROVIDERS | {"other"})
+    for responses in (None, tmp_path / "r.jsonl"):
+        for offline in (True, False):
+            with pytest.raises(SchemaError, match="provider") as excinfo:
+                open_model("other", responses=responses, offline=offline)
+            assert "not registered" in str(excinfo.value)
+    monkeypatch.setattr(runner_module, "_REGISTERED_PROVIDERS", frozenset({"fixture", "laya"}))
     for responses in (None, tmp_path / "r.jsonl"):
         for offline in (True, False):
             with pytest.raises(SchemaError, match="provider") as excinfo:
                 open_model("jev", responses=responses, offline=offline)
             assert "not registered" in str(excinfo.value)
+    with pytest.raises(SchemaError, match="provider"):
+        open_model("unsupported", responses=None, offline=False)
     assert constructed == []
-    # The registered providers are exactly the stable CLI choices until Task 19.
-    assert sorted(runner_module._REGISTERED_PROVIDERS) == ["fixture", "laya"]
 
 
-def test_open_model_jev_rejection_imports_no_adapter_in_a_fresh_interpreter() -> None:
-    """The guard fires before any adapter import: a blocked import never happens."""
+def test_open_model_jev_imports_lazily_and_fails_before_any_key_read_or_socket() -> None:
+    """Fresh interpreter: the experimental module loads only when ``jev`` is selected.
+
+    ``responses`` with ``jev`` is rejected before the import; ``offline=True``
+    raises ``ProviderSetupError`` from the adapter before the key is read; the
+    online path reads ``JEV_API_KEY`` before any socket exists (the blocked read
+    is the first observable event). Laya and the native stack never load.
+    """
     script = (
-        "import importlib.abc, sys\n"
-        "class Deny(importlib.abc.MetaPathFinder):\n"
-        "    def find_spec(self, name, path=None, target=None):\n"
-        "        if name.startswith(('actseal.adapters.', 'actseal.experimental')):\n"
-        "            raise ImportError('adapter import attempted: ' + name)\n"
-        "        return None\n"
-        "sys.meta_path.insert(0, Deny())\n"
-        "from actseal.errors import SchemaError\n"
+        "import json, os, socket, sys\n"
+        "class Blocked(RuntimeError):\n"
+        "    pass\n"
+        "def block(*args, **kwargs):\n"
+        "    raise Blocked('socket')\n"
+        "class BlockedSocket(socket.socket):\n"
+        "    def __init__(self, *args, **kwargs):\n"
+        "        raise Blocked('socket')\n"
+        "socket.socket = BlockedSocket\n"
+        "for name in ('create_connection', 'getaddrinfo', 'socketpair'):\n"
+        "    setattr(socket, name, block)\n"
+        "class Env(dict):\n"
+        "    def get(self, key, default=None):\n"
+        "        if key == 'JEV_API_KEY':\n"
+        "            raise Blocked('key read')\n"
+        "        return super().get(key, default)\n"
+        "os.environ = Env(os.environ)\n"
+        "from pathlib import Path\n"
+        "from actseal.errors import ProviderSetupError, SchemaError\n"
         "from actseal.runner import open_model\n"
-        "for offline in (True, False):\n"
-        "    try:\n"
-        "        open_model('jev', responses=None, offline=offline)\n"
-        "    except SchemaError as exc:\n"
-        "        assert 'provider' in str(exc), str(exc)\n"
-        "    else:\n"
-        "        raise SystemExit('jev was constructed')\n"
-        "loaded = sorted(m for m in sys.modules if m.startswith("
-        "('actseal.adapters.', 'actseal.experimental', 'laya', 'torch')))\n"
-        "print(loaded)\n"
+        "JEV = 'actseal.experimental.providers.jev'\n"
+        "def state():\n"
+        "    names = sorted(m for m in sys.modules if m.startswith("
+        "('actseal.adapters.laya', 'actseal.experimental', 'laya', 'torch')))\n"
+        "    return names\n"
+        "steps = []\n"
+        "try:\n"
+        "    open_model('jev', responses=Path('r.jsonl'), offline=False)\n"
+        "except SchemaError as exc:\n"
+        "    steps.append(['responses', str(exc).split(':')[0], state()])\n"
+        "try:\n"
+        "    open_model('jev', responses=None, offline=True)\n"
+        "except ProviderSetupError as exc:\n"
+        "    steps.append(['offline', str(exc).split(':')[0], state()])\n"
+        "try:\n"
+        "    open_model('jev', responses=None, offline=False)\n"
+        "except Blocked as exc:\n"
+        "    steps.append(['online', str(exc), state()])\n"
+        "print(json.dumps(steps))\n"
     )
     result = subprocess.run(  # noqa: S603 - fixed interpreter and literal script, no user input
         [sys.executable, "-I", "-c", script],
@@ -957,7 +1039,86 @@ def test_open_model_jev_rejection_imports_no_adapter_in_a_fresh_interpreter() ->
         timeout=60,
     )
     assert result.returncode == 0, result.stderr[-2000:]
-    assert result.stdout.strip() == "[]"
+    steps = json.loads(result.stdout)
+    experimental = [
+        "actseal.experimental",
+        "actseal.experimental.providers",
+        "actseal.experimental.providers.jev",
+    ]
+    assert steps == [
+        ["responses", "responses", []],
+        ["offline", "offline", experimental],
+        ["online", "key read", experimental],
+    ]
+
+
+def test_jev_lock_verify_replay_round_trip_over_a_fake_transport(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The PROVISIONAL adapter runs the unchanged protocol through ``open_model``.
+
+    Mocked behaviour only: the real ``JevModel`` is built over the conformance
+    fake connection, so no key is read and no socket is opened. The lock seals
+    the vendor-claimed identity, verify collects every case through the lazy
+    experimental branch, and replay reproduces the verdict without the adapter.
+    """
+    monkeypatch.delenv(jev_module.API_KEY_ENV, raising=False)
+    inputs = write_inputs(tmp_path / "in")
+    question = parse_contract(inputs["contract"]).question
+    profile = JevProfile()
+    body = profile.valid_raw_body(question)
+    opened: list[DecisionModel] = []
+
+    def fake_jev(*, offline: bool = False) -> DecisionModel:
+        assert offline is False
+        model = profile.open(body=body)
+        opened.append(model)
+        return model
+
+    def factory() -> DecisionModel:
+        return open_model("jev", responses=None, offline=False)
+
+    monkeypatch.setattr(jev_module, "JevModel", fake_jev)
+    lock_path = tmp_path / "lock.json"
+    lock = lock_run(
+        inputs["contract"],
+        inputs["calibration"],
+        inputs["verification"],
+        lock_path,
+        model_factory=factory,
+    )
+    assert lock.model_identity.provider == "jev"
+    assert lock.model_identity.model == lock.model_identity.revision == jev_module.MODEL
+    assert lock.model_identity.artifact_hashes == ()
+    assert lock == read_lock(lock_path)
+    bundle, path = verify_run(
+        lock_path,
+        inputs["calibration"],
+        inputs["verification"],
+        tmp_path / "evidence",
+        provider="jev",
+        model_factory=factory,
+    )
+    assert len(opened) == 2  # one model for lock, one for verify; none replaced mid-run
+    assert all(profile.worker_alive(model) is False for model in opened)
+    assert [record.case_id for record in bundle.records] == [cid for cid, _, _ in GOLD]
+    assert all(record.capture.identity == lock.model_identity for record in bundle.records)
+    assert all(record.capture.body_json == body for record in bundle.records)
+    assert profile.requests_sent(opened[1]) == len(GOLD)
+    assert bundle.verdict == assess(bundle.records, lock, bundle.faults)
+    assert replay(path, expected_lock_sha256=lock.sha256) == bundle.verdict
+    assert bundle.verdict.status != "ERROR"
+    # A stable provider against the Jev lock is refused before any factory call.
+    with pytest.raises(IntegrityError, match="provider"):
+        verify_run(
+            lock_path,
+            inputs["calibration"],
+            inputs["verification"],
+            tmp_path / "again",
+            provider="laya",
+            model_factory=never_called,
+        )
+    assert not (tmp_path / "again").exists()
 
 
 def test_open_model_laya_rules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

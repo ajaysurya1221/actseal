@@ -200,3 +200,81 @@ def test_bad_demo_replay_exits_one_as_documented(
     assert code == 1
     assert document["status"] == "BLOCK"
     assert "integrity" not in " ".join(document["reasons"])
+
+
+def _usage_error(argv: list[str], capsys: pytest.CaptureFixture[str]) -> str:
+    code = main([*argv, "--json"])
+    out, err = capsys.readouterr()
+    assert code == 3
+    assert err == ""
+    document = json.loads(out)
+    assert document["status"] == "ERROR"
+    error = document["error"]
+    assert isinstance(error, str)
+    assert error.startswith("usage:")
+    return error
+
+
+def test_documented_experimental_flag_restrictions_match_the_cli(
+    task_tmpdir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The PROVISIONAL opt-in is documented exactly as enforced, command by command."""
+    text = CLI_DOC.read_text(encoding="utf-8")
+    rows = {row[0].strip("`"): row for row in table_rows(text, "Command")}
+    for command in ("lock", "verify"):
+        assert "{fixture,laya,jev}" in rows[command][1], command
+        assert "--experimental-provider" in rows[command][2], command
+        assert "PROVISIONAL" in rows[command][2], command
+    for command in ("replay", "demo", "root"):
+        assert "--experimental-provider" not in " ".join(rows[command]), command
+    prose = re.sub(r"\s+", " ", text)
+    for phrase in (
+        "`--provider jev --experimental-provider`",
+        "stable** provider choices are `fixture` and `laya`",
+        "Without the flag the command is a usage error",
+        "`replay` and `demo` do not accept `--experimental-provider`",
+        "`jev` with `--offline` is a setup error",
+        "may change or be removed in any release",
+    ):
+        assert phrase in prose, phrase
+
+    inputs = [
+        "--calibration",
+        str(PACKAGED_INPUTS / "fixed_calibration.jsonl"),
+        "--verification",
+        str(PACKAGED_INPUTS / "fixed_verification.jsonl"),
+    ]
+    lock = ["lock", "--contract", str(PACKAGED_INPUTS / "fixed.toml"), *inputs]
+    verify = ["verify", "--lock", str(task_tmpdir / "absent.json"), *inputs]
+    out = ["--out", str(task_tmpdir / "out")]
+    responses = ["--responses", str(PACKAGED_INPUTS / "fixed_responses.jsonl")]
+    for head in (lock, verify):
+        assert _usage_error([*head, "--provider", "jev", *out], capsys) == (
+            "usage: --experimental-provider is required with --provider jev"
+        )
+        assert (
+            _usage_error(
+                [*head, "--provider", "jev", "--experimental-provider", *responses, *out], capsys
+            )
+            == "usage: --responses is not accepted with --provider jev"
+        )
+        assert (
+            _usage_error(
+                [*head, "--provider", "fixture", "--experimental-provider", *responses, *out],
+                capsys,
+            )
+            == "usage: --experimental-provider is not accepted with --provider fixture"
+        )
+        assert (
+            _usage_error([*head, "--provider", "laya", "--experimental-provider", *out], capsys)
+            == "usage: --experimental-provider is not accepted with --provider laya"
+        )
+    for argv in (
+        ["replay", str(task_tmpdir / "absent"), "--experimental-provider"],
+        ["demo", "--out", str(task_tmpdir / "demo"), "--experimental-provider"],
+    ):
+        assert _usage_error(argv, capsys) == (
+            "usage: unrecognized arguments: 1 token(s) not accepted; see --help"
+        )
+    assert not (task_tmpdir / "out").exists()
+    assert not (task_tmpdir / "demo").exists()

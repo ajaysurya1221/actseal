@@ -11,19 +11,19 @@ the manifest is normative where the two differ. The receipts are described by
 ```text
 actseal [-h] [--version] COMMAND ...
 actseal lock [-h] --contract PATH --calibration PATH --verification PATH
-             --provider {fixture,laya} [--responses PATH] [--offline]
-             --out PATH [--json]
+             --provider {fixture,laya,jev} [--responses PATH] [--offline]
+             [--experimental-provider] --out PATH [--json]
 actseal verify [-h] --lock PATH --calibration PATH --verification PATH
-               --provider {fixture,laya} [--responses PATH] [--offline]
-               --out DIRECTORY [--json]
+               --provider {fixture,laya,jev} [--responses PATH] [--offline]
+               [--experimental-provider] --out DIRECTORY [--json]
 actseal replay [-h] [--expected-lock-sha256 HEX] [--json] DIRECTORY
 actseal demo [-h] --out NEW_DIRECTORY [--json]
 ```
 
 | Command | Required | Optional |
 |---|---|---|
-| `lock` | `--contract PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out PATH` | `--responses PATH`, `--offline`, `--json` |
-| `verify` | `--lock PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out DIRECTORY` | `--responses PATH`, `--offline`, `--json` |
+| `lock` | `--contract PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya,jev}`, `--out PATH` | `--responses PATH`, `--offline`, `--experimental-provider` (PROVISIONAL, required with `jev` only), `--json` |
+| `verify` | `--lock PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya,jev}`, `--out DIRECTORY` | `--responses PATH`, `--offline`, `--experimental-provider` (PROVISIONAL, required with `jev` only), `--json` |
 | `replay` | `DIRECTORY` (positional bundle directory) | `--expected-lock-sha256 HEX`, `--json` |
 | `demo` | `--out NEW_DIRECTORY` | `--json` |
 | root | `COMMAND` | `--version` (root only), `-h`/`--help` |
@@ -36,14 +36,24 @@ Rules that apply to every command:
 - `-h`/`--help` is accepted at the root and at every command and prints text.
   `--version` is accepted only at the root (`actseal --version`); after a
   command it is a usage error.
-- `--provider fixture` requires `--responses PATH`; `--provider laya` rejects
-  `--responses`. `--offline` is accepted by both providers: for `laya` it
-  selects the prepared offline cache, for `fixture` it states the adapter's
-  existing network-free behaviour and changes nothing.
-- The stable provider choices are `fixture` and `laya`. No other provider is
-  selected implicitly. A provisional Jev transport, if a later release ships
-  it, would require an explicit experimental flag and is not part of this
-  reference; see [providers](providers.md).
+- `--provider fixture` requires `--responses PATH`; `--provider laya` and
+  `--provider jev` reject `--responses`. `--offline` is accepted by both
+  stable providers: for `laya` it selects the prepared offline cache, for
+  `fixture` it states the adapter's existing network-free behaviour and
+  changes nothing.
+- The **stable** provider choices are `fixture` and `laya`; they need no
+  opt-in and reject `--experimental-provider` as a usage error. `jev` is the
+  PROVISIONAL experimental cloud adapter: `lock` and `verify` accept it only
+  as `--provider jev --experimental-provider`. Without the flag the command is
+  a usage error (`ERROR` 3) raised before any provider is built, any
+  environment variable is read or any request is made. `jev` with `--offline`
+  is a setup error (`ProviderSetupError`, `ERROR` 3) raised by the adapter
+  before it reads `JEV_API_KEY`; the adapter has no offline mode. `replay`
+  and `demo` do not accept `--experimental-provider` at all and never load the
+  adapter. The flag adds no receipt field: the recorded `model_identity`
+  already names the provider. The adapter, its flag and its behaviour may
+  change or be removed in any release; see [providers](providers.md) and the
+  [stability manifest](stability.md).
 - Output paths must be **new**. `lock --out`, `verify --out` and `demo --out`
   refuse an existing file, directory or symlink and never overwrite; the parent
   directory must already exist.
@@ -102,8 +112,8 @@ receipt shape is frozen for 1.x; no field is added to an existing shape within
 
 ```text
 actseal lock [-h] --contract PATH --calibration PATH --verification PATH
-             --provider {fixture,laya} [--responses PATH] [--offline]
-             --out PATH [--json]
+             --provider {fixture,laya,jev} [--responses PATH] [--offline]
+             [--experimental-provider] --out PATH [--json]
 ```
 
 Reads and validates the contract TOML and both labelled JSONL splits, builds
@@ -117,8 +127,8 @@ the observed model identity and both case counts.
 
 ```text
 actseal verify [-h] --lock PATH --calibration PATH --verification PATH
-               --provider {fixture,laya} [--responses PATH] [--offline]
-               --out DIRECTORY [--json]
+               --provider {fixture,laya,jev} [--responses PATH] [--offline]
+               [--experimental-provider] --out DIRECTORY [--json]
 ```
 
 Decodes the lock, validates its seal and replay-engine compatibility, checks

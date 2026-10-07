@@ -30,15 +30,23 @@ Protocol:
   genuine results. No metric is authored here.
 
 Module import loads no adapter: the fixture adapter is imported only inside
-the fixture branch of :func:`open_model` and the Laya adapter only inside the
-Laya branch, so ``replay`` works with optional libraries absent.
+the fixture branch of :func:`open_model`, the Laya adapter only inside the
+Laya branch and the experimental Jev adapter only inside the Jev branch, so
+``replay`` works with optional libraries absent and never loads a transport.
 
-``records.PROVIDERS`` admits every provider a serialized identity may name,
-including the experimental ``jev`` adapter (plan/v1/CHANGE_LOG.md V1-011).
+``records.PROVIDERS`` admits every provider a serialized identity may name.
 :func:`open_model` constructs only the providers registered in
-``_REGISTERED_PROVIDERS``; an admitted but unregistered provider fails loudly
-before any adapter import, so it can never be routed to Laya by omission.
-Experimental registration is a separate, explicit integration step (Task 19).
+``_REGISTERED_PROVIDERS``, each through its own explicit branch; an admitted
+but unregistered provider fails loudly before any adapter import, so it can
+never be routed to Laya by omission. The PROVISIONAL ``jev`` adapter
+(plan/v1/CHANGE_LOG.md V1-011, ADR 0017) is registered here: passing the
+explicit string ``"jev"`` to :func:`open_model` is the Python opt-in, the
+command line additionally requires ``--experimental-provider``, and the
+adapter is imported lazily from ``actseal.experimental.providers.jev`` only
+when selected. Its constructor rejects ``offline=True`` with
+:class:`~actseal.errors.ProviderSetupError` before reading any environment
+variable, and reads only ``JEV_API_KEY`` otherwise; this module adds no
+fallback, retry or key handling of its own.
 """
 
 from __future__ import annotations
@@ -105,10 +113,16 @@ DEMO_EXPECTED: Final[dict[str, str]] = {"bad": "BLOCK", "fixed": "PASS"}
 
 _FILE_MODE: Final = 0o644
 _LF: Final = b"\n"
-#: Providers this runner can construct. Deliberately narrower than
-#: ``records.PROVIDERS``: an admitted provider without an explicit branch here
-#: is rejected by :func:`open_model` instead of falling through to Laya.
-_REGISTERED_PROVIDERS: Final[frozenset[str]] = frozenset({"fixture", "laya"})
+#: PROVISIONAL providers (docs/stability.md): constructed only on explicit
+#: selection, imported lazily from ``actseal.experimental`` and outside the
+#: 1.x stability promise.
+_EXPERIMENTAL_PROVIDERS: Final[frozenset[str]] = frozenset({"jev"})
+#: Providers this runner can construct, each through its own explicit branch of
+#: :func:`open_model`. Must stay a subset of ``records.PROVIDERS``: an admitted
+#: provider without a branch here is rejected instead of falling through to Laya.
+_REGISTERED_PROVIDERS: Final[frozenset[str]] = frozenset({"fixture", "laya"}) | (
+    _EXPERIMENTAL_PROVIDERS
+)
 
 ModelFactory = Callable[[], "DecisionModel"]
 
@@ -119,13 +133,20 @@ ModelFactory = Callable[[], "DecisionModel"]
 
 
 def open_model(provider: str, *, responses: Path | None, offline: bool) -> DecisionModel:
-    """Build the requested provider; adapters are imported only inside their branch."""
+    """Build the requested provider; adapters are imported only inside their branch.
+
+    ``fixture`` requires ``responses``; ``laya`` and the PROVISIONAL ``jev``
+    reject it. Selecting ``"jev"`` explicitly is the Python opt-in for the
+    experimental adapter; it is imported only in that branch, and
+    ``offline=True`` is rejected by its constructor before any environment
+    read or request. Every argument check precedes every adapter import.
+    """
     if provider not in PROVIDERS:
         raise SchemaError("provider: unsupported value")
     if provider not in _REGISTERED_PROVIDERS:
-        # Admitted for serialized identities (for example the experimental Jev
-        # adapter) but not registered with this runner: fail before importing or
-        # constructing any adapter. Never route an unknown provider to Laya.
+        # Admitted for serialized identities but not registered with this runner:
+        # fail before importing or constructing any adapter. Never route an
+        # unregistered provider to Laya.
         raise SchemaError("provider: admitted for records but not registered with the runner")
     if provider == "fixture":
         if responses is None:
@@ -136,10 +157,22 @@ def open_model(provider: str, *, responses: Path | None, offline: bool) -> Decis
 
         return FixtureModel(responses)
     if responses is not None:
-        raise SchemaError("responses: not accepted by the laya provider")
-    from actseal.adapters.laya import LayaModel  # noqa: PLC0415 - adapter branch only
+        raise SchemaError(f"responses: not accepted by the {provider} provider")
+    if provider == "laya":
+        from actseal.adapters.laya import LayaModel  # noqa: PLC0415 - adapter branch only
 
-    return LayaModel(offline=offline)
+        return LayaModel(offline=offline)
+    if provider == "jev":
+        # PROVISIONAL (ADR 0017): imported only here, never by replay or at
+        # module import. The constructor rejects offline before reading the key.
+        from actseal.experimental.providers.jev import (  # noqa: PLC0415 - adapter branch only
+            JevModel,
+        )
+
+        return JevModel(offline=offline)
+    # Unreachable while _REGISTERED_PROVIDERS matches the branches above; kept so
+    # a future registration without a branch fails instead of building Laya.
+    raise SchemaError("provider: registered without a construction branch")
 
 
 # --------------------------------------------------------------------------- #
