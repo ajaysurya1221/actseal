@@ -10,6 +10,16 @@ All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; s
 
 ## Current constraint and next action
 
+Latest approximately13:10IST: Task14 preparation c788dad is REVISE after
+parent56 passing tests and independent probes exposed GIF duration/structure
+validation defects. V1-046 freezes bounded repairs; genuine capture remains
+post-publication. Task08 scoped ACCEPT2ccdac6 was fast-forwarded only into
+the isolated Task19 integration branch, no main merge. Planning checkpoint
+PR42 is at reviewed265bfb8; one initial macOS3.13 install hit a PyPI timeout,
+preserved as failed attempt1, and only failed jobs were rerun. Full exact-head
+green remains pending. The user has a concrete manual Terminal merge request
+for Task13; no further automated retry of the denied outcome occurred.
+
 Latest 7 October, approximately 13:00 IST: the human added both exact Task13 Bash merge allow rules. The settings file had one missing comma; Codex repaired only that punctuation byte and verified valid JSON plus both unchanged rules. The normal same-session retry still received Auto-Mode Bypass. The raw stream shows a merge command with an output pipe rather than the bare approved command; rule mismatch is suspected, not proven. Report6ba49ae records the fourth denial. No merge or architecture output exists; do not reissue the denied outcome in a different command shape or executor. Task06 remains separately unstarted and blocked, without any key access or request.
 
 Task08 correction2ccdac6 is independently scoped ACCEPT: all three factual/test findings fixed, parent105 docs checks pass with the same one missing-architecture failure, hooks pass. Task14 standalone renderer preparation continues in its original Fable5.1/high session. Full Task08/19 remain PARTIAL; main is ae43065 and no v1 tag/publication exists. Earlier status paragraphs below are dated history, superseded where this update differs.

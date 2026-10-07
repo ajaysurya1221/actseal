@@ -305,3 +305,28 @@ separate from continuing documentation and standalone-renderer preparation.
 Task08 correction2ccdac6 is scoped ACCEPT after parent and independent review;
 full Task08 remains PARTIAL for its existing mandatory gates. No policy,
 schema, statistical rule, registry or accepted asset changes are authorized.
+
+## V1-046 — Correct demonstrated demo-validator defects before acceptance
+
+Task14 preparation c788dad is REVISE despite56 passing focused tests. Parent
+and independent probes demonstrate counted delays with no corresponding
+image, an uncaught truncated-header IndexError and accepted empty image data.
+The bounded fixes are specified in reviews/14-renderer-preparation.md.
+
+Claude14 retains ownership of demo.py, test_demo_render.py and a new additive
+report only. Additionally authorize the step7 inline GIF walker in
+docs/assets/src/recording.md to be replaced by the corrected shared demo
+validator, plus the stale step1 sentence claiming official downloads are
+permission-blocked. Do not edit its final Pending section, which belongs to
+accepted Task08 corrections, or any other recording procedure. No actual
+capture, tool execution/download, product asset, inventory registration,
+dependency, packaged source or policy change. Temporary synthetic test
+fixtures remain clearly labelled and outside product assets.
+
+Require one graphic control per following image, complete bounded structural
+validation, early byte caps, strict string output payloads and exact TERM/LANG
+header env keys, and hash verification immediately before each variant tool
+execution. Keep provenance/real-pixel validation separate from structural
+consistency. Preserve all earlier reports and correct stale statements only
+in the additive report. Run original preparation commands with known
+architecture failures reported honestly; final media remains post-publication.
