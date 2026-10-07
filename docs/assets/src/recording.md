@@ -487,14 +487,19 @@ with the same `agg_command` calls, and
 `uv run --frozen --group assets python docs/assets/src/render.py --check --only demo`
 passing. None of that is part of this preparation.
 
-## Pending (explicitly not done)
+## Status (7 October 2026) and pending
 
-- Official asciinema/agg/font downloads: permission-blocked; `setup_tools.py`
-  has not been run.
-- Task 20 publication and its receipt (version, wheel/sdist digests, verified
-  wheel file, source fingerprint): pending; Decision 2 governs the
+- Done: the pinned JetBrains Mono files, `OFL.txt`, asciinema 3.2.1 and agg
+  1.9.0 (macOS) were fetched by `setup_tools.py` with hash verification under
+  the human's approval (V1-029); receipts are under `receipts/`. The pinned
+  Linux x86_64 agg binary was executed in hosted CI at PR 18 head `0e32c6c`
+  with its hash verified before execution (binary execution only, not GIF
+  rendering).
+- Pending: Task 20 publication and its receipt (version, wheel/sdist
+  digests, verified wheel file, source fingerprint); Decision 2 governs the
   post-publication capture.
-- Actual warm-up, environment identity, payload comparison, version/hash
-  receipts, cast, GIFs, measured durations, sizes, two-render identity: none
-  exist. The parent verifies the actual binding after publication.
-- Codex review of the raw capture and full Task 14 acceptance.
+- Pending: actual warm-up, environment identity, payload comparison,
+  version/hash receipts, cast, GIFs, measured durations, sizes, two-render
+  identity: none exist. The parent verifies the actual binding after
+  publication.
+- Pending: Codex review of the raw capture and full Task 14 acceptance.

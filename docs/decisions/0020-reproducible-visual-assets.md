@@ -1,9 +1,10 @@
 # ADR 0020: Reproducible, authoring-only visual asset pipeline
 
 - Status: approved (plan/v1/PLAN.md section D and Decision 2A); toolchain
-  accepted (Task 10); hero, how-it-works and social preview generated from
-  the pinned inputs; architecture outputs, the demo recording, the blind
-  ten-second test and every P2 figure pending.
+  accepted (Task 10); hero, how-it-works and social preview accepted from
+  the pinned inputs and the blind first-screen preflight passed;
+  architecture outputs, final visual acceptance, the demo recording and
+  every P2 figure pending.
 - Date: 2026-10-07.
 
 ## Decision
@@ -91,17 +92,30 @@ design.
   asciinema, agg (macOS) and resvg (macOS, after its naming-only manifest
   repair) were fetched with hash verification under the human's 7 October
   approval (V1-029); receipts are committed under `docs/assets/src/receipts/`.
-  The Linux agg artifact is pinned by hash only and has not been executed.
+  The pinned Linux x86_64 agg binary was later executed in hosted CI at
+  PR 18 head `0e32c6c` (runs 37581140052 and 37581142565) with its hash
+  verified before execution; that run also regenerated the three implemented
+  asset groups with zero errors. It establishes Linux binary execution, not
+  GIF rendering.
 - Hero: four outlined light/dark/desktop/mobile SVGs, accepted after
   independent pixel review (Task 11). How-it-works: four SVGs, ACCEPT at
   `f712dae` after offline pixel review and regeneration (Task 12). Social
   preview: `docs/assets/social.png` at exactly 1280×640, rendered by the
-  pinned resvg from the banner composition; the Task 15 done-when passes at
-  `fcdcfe4` with scoped ACCEPT, while its hosted gate and Codex's independent
-  pixel review remain pending. The user's manual upload has not been done.
-- Pending: the four architecture outputs (source scoped ACCEPT; registration
-  and committed SVGs wait for the final provider decision), the genuine
-  post-publication demo recording, the blind ten-second README test, every P2
-  figure, and the exact-head hosted assets job. No v1 release has occurred.
+  pinned resvg from the banner composition; Task 15 ACCEPT at `fcdcfe4`
+  after independent pixel review, regeneration and eight hosted checks,
+  merged `7820dba`. The user's manual upload has not been done.
+- Blind first-screen preflight (7 October): a fresh reviewer given only the
+  rendered public README first screen at `710ae55` named the purpose, the
+  developer audience and all three evidence limits; the 1366×900 CSS
+  viewport was observed, with the saved raster at 1351×890
+  (`plan/v1/reports/readme-ten-second-preflight.md`,
+  `readme-viewport-observation.md`). Final public-state visual acceptance on
+  the tagged README remains separate.
+- Pending: the four architecture outputs (source scoped ACCEPT at `2e2a7b2`;
+  the merge that would generate and register them was denied by harness
+  review and awaits the human's scoped answer, so the candidate's hosted CI
+  at `b05aed8` is red only for those four files), final visual acceptance,
+  the genuine post-publication demo recording, every P2 figure, and the
+  release rehearsal. No v1 release has occurred.
 - Related: [ADR 0015](0015-v1-stability-and-replay-compatibility.md),
   `docs/assets/src/README.md`, `docs/assets/src/tools.toml`.

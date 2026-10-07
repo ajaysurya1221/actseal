@@ -59,10 +59,21 @@ exceed the receipts.
 - Metadata: `pyproject.toml` declares `requires-python = ">=3.12"`, empty
   `dependencies`, and only MacOS and POSIX Linux classifiers;
   `tests/docs/test_policy_and_metadata.py` checks the installed metadata.
-- Native receipts to date are the historical v0.1 milestones recorded in
-  [providers](../providers.md): the T30 provider/normalizer milestone (macOS
-  cached-native tests and the Linux native workflow run) and the native CLI
-  lock/verify/replay receipt. The v1 Task 01 baseline also passed
-  independently before the later cached-native denial. The v1 Task 03 native
-  rerun for the conformance changes is still pending, so the native gate for
-  changed paths remains open; no v1 release has occurred.
+- Native receipts: the historical v0.1 milestones recorded in
+  [providers](../providers.md) (the T30 provider/normalizer milestone with
+  macOS cached-native tests and the Linux native workflow run, and the
+  native CLI lock/verify/replay receipt); the v1 Task 01 baseline, which
+  passed independently; the v1 Task 03 conformance acceptance at `212a1d6`
+  (177 conformance/provider tests plus five cached-native tests); and the
+  Task 19 integration, where the cached-native tests were repeated (six
+  tests, no skips) on the candidate source. These complete the native checks
+  for the changed paths in the candidate.
+- Authoring platform: the pinned Linux x86_64 agg binary was actually
+  executed in hosted CI at PR 18 head `0e32c6c` (runs 37581140052 and
+  37581142565, all ten jobs green) with its hash verified before execution;
+  that establishes Linux binary execution for the asset pipeline, not GIF
+  rendering.
+- Separate final gate: the candidate's own exact-head hosted CI at `b05aed8`
+  is red solely for the four absent architecture figures, so the final
+  candidate gate, the release rehearsal and publication remain open; no v1
+  release has occurred.

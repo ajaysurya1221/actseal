@@ -20,6 +20,18 @@ Jev and actual fallback execution are deferred to v2. An eventual adapter reads 
 
 Future Jev-to-Laya fallback may supply a diagnostic recommendation. It must preserve `fallback_used`, the triggering failure, and both attempted identities, and return ESCALATE unless a separately certified chain exists. Fallback success cannot inherit the primary system's certification or enter the ACT numerator. v1 has no fallback execution.
 
+## Status — 7 October 2026
+
+The paragraphs above record the 6 October decision as made. Since then the
+Jev adapter exists in the 1.0.0 candidate as `actseal.experimental.providers.jev`,
+PROVISIONAL and selectable only with `--provider jev --experimental-provider`
+([ADR 0017](0017-experimental-decision-provider.md)); it reads `JEV_API_KEY`
+only at construction, keeps the key out of identity, captures, locks and
+diagnostics, and surfaces missing-key, timeout, malformed-response and
+unavailable outcomes as specified here. No live Jev request has been accepted
+as evidence. Actual fallback execution remains outside v1 exactly as decided;
+the `fallback_used` precedence is unchanged.
+
 ## Consequences
 
 Failure behavior is observable and testable. The integrating application remains responsible for honoring Actseal's returned disposition and for protecting its trusted policy. Provider confidence is a model score used by the frozen selector, not proof that an action is safe. The verification gate assesses empirical outcomes and declared contract behavior.

@@ -1,7 +1,8 @@
 # ADR 0017: Optional experimental Jev decision provider behind an explicit flag
 
 - Status: approved boundary (plan/v1/PLAN.md sections C and E; amendment
-  V1-011); implementation source-scoped ACCEPT only, inclusion pending.
+  V1-011); included in the 1.0.0 candidate as PROVISIONAL (V1-036) with the
+  explicit CLI opt-in integrated; no accepted live evidence.
 - Date: 2026-10-07.
 
 ## Decision
@@ -82,11 +83,20 @@ legal guarantee; this ADR does not refresh or re-interpret those terms.
   source only; the final Task 19 integration (CLI opt-in, runner registration
   and any registry entry) changes source and therefore requires its own
   native revalidation before acceptance.
-- Pending: the explicit CLI opt-in and runner registration (Task 19, in
-  progress), that final native revalidation, the final inclusion decision
-  and any live integration. Live behaviour is unverified: no Jev request has
-  been made and no credit used. No key or `.env` access was involved in
-  recording this decision, and no v1 release has occurred.
+- Status on 7 October 2026 (1.0.0 candidate, source fingerprint
+  `8f316f67…98ed3`): the inclusion decision is **retain as PROVISIONAL**
+  (V1-036). The explicit CLI opt-in `--provider jev --experimental-provider`
+  and the `open_model("jev", ...)` branch are integrated and scoped-accepted
+  (Task 19 `b0031f5`); the shared conformance suite, canonical fault campaign
+  and CLI/runner routing are exercised over mocked transports with every
+  socket blocked; the cached-native checks were repeated at that integration
+  (six tests) with no skips. Hosted CI on the candidate fails only for the
+  absent architecture figure, not for any provider test.
+- Not accepted as evidence: any live Jev behaviour. The one live audit
+  attempt was stopped by a harness permission denial on its `.env` existence
+  preflight before any key was read or request made (ADR 0018); no request,
+  result or credit use exists. The Jev prerelease producer fingerprint is not
+  in the compatibility registry. No v1 release has occurred.
 - Related: [ADR 0004](0004-identity-normalization-fallback.md) (identity and
   fallback), [ADR 0015](0015-v1-stability-and-replay-compatibility.md)
   (PROVISIONAL surfaces), [providers](../providers.md).
