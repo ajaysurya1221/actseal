@@ -446,3 +446,35 @@ merge command. The actual prerequisite state changed through human action;
 this is not permission bypass or an alternate automated integration route.
 Jev remains explicit and experimental per V1-049. All original quality, pixel,
 regeneration, hosted CI and independent acceptance gates remain.
+
+## V1-051 — Correct measured README typography before P1 acceptance
+
+Parent review of Task13 candidatec84d515 found correct semantics and all four
+actual images, but real GitHub measurements invalidate the shared880/360px
+width assumptions. At the required1366x900 repository viewport, images are
+838CSSpx wide; at360px viewport they are294px and at320px they are254px.
+Architecture/workflow26-unit desktop and30-unit mobile text fall below the
+required14px rendered floor. The current600px responsive switch also leaves
+intermediate windows on undersized desktop layouts. Full evidence is in
+reviews/13-real-readme-sizing.md; no page content was changed by inspection.
+
+Authorize bounded Task13R ownership across the hero/workflow/architecture
+renderers and their matching tests, inventory widths, generated SVG variants
+and asset documentation. Correct validation to838/254px and preserve the14px
+floor. Increase/wrap/reflow text as needed; never shrink or remove required
+content. Preserve already-fitting desktop hero and social bytes, pins, fonts,
+palette, semantics and every negative resource/geometry check. Necessary
+height changes are allowed and must be recorded. No product/registry change.
+
+Separately authorize Task08R to change only README responsive selection, its
+existing test, an ADR0020 addendum and its report: mobile variants below1280px
+viewport, desktop at1280px and above. Actual repository measurements showed
+838px content at1280/1366; smaller widths select vertical variants. Retain
+exact copy, opening order, three-command quickstart, alt text and dark/light
+source ordering. No invented extra assets or new dependency. Independent
+pixels at measured widths, final repository/blind review and hosted CI remain.
+
+The retained candidate remains5e7931a with unchanged source fingerprint8f316f67.
+Cancelled cut drafts stay isolated. Any new permission denial stops the action;
+executors must not recover denied sub-operations with narrower commands or
+Read/git-show alternatives. Neither cancelled cut task is resumed.
