@@ -597,3 +597,23 @@ settings set the same day: description, homepage (PyPI), seventeen topics and
 the social preview (the reviewed docs/assets/social.png). Forty-nine merged
 remote branches whose merged pull-request head equalled the branch tip were
 deleted; branches without a merged pull request at their tip were kept.
+
+## V1-057 — README figure selection on GitHub and a temporary legibility exception (8 October 2026)
+
+A live check of the published README on github.com (viewport 1920 px, dark
+theme) found that GitHub rewrites any `<source media>` combining
+`prefers-color-scheme` with a width query into an always-true media list, so
+the first mobile-dark source matched for every visitor at every width and in
+both themes; bare width queries survived. The v1.0.0 "responsive selection"
+statement therefore did not describe what GitHub served. Authorized repair:
+the three figure pictures use GitHub's documented colour-scheme selection
+(one dark source, light fallback) with the desktop variants; the mobile SVGs
+stay committed, declared and validated for other renderers; the presentation
+guards encode this as the README policy.
+
+Temporary exception, recorded here and reviewed: at phone widths the desktop
+hero's tagline and step labels fall below the 14 CSS-px floor measured for
+the figures (about 7 px and 5 px at 254 px). A follow-up hero composition
+(all text at least 14 nominal CSS px at 254 px image width, one composition
+per colour scheme, reviewed at 838 px) is scheduled; it is not a prerequisite
+for this repair. The workflow and architecture figures remain supplemental.
