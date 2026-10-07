@@ -1,0 +1,79 @@
+{
+  "checks": {
+    "bad_replay_exit": 1,
+    "demo_bad_status": "BLOCK",
+    "demo_exit": 0,
+    "demo_fixed_status": "PASS",
+    "fixed_replay_exit": 0,
+    "installed_outside_checkout": true,
+    "version_output": "actseal 1.0.0"
+  },
+  "files": [
+    {
+      "declared_sha256": "4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf",
+      "filename": "actseal-1.0.0-py3-none-any.whl",
+      "matches_build": true,
+      "provenance": {
+        "attestations": 1,
+        "present": true,
+        "publishers": [
+          {
+            "environment": "pypi",
+            "kind": "GitHub",
+            "repository": "ajaysurya1221/actseal",
+            "workflow": "publish-pypi.yml"
+          }
+        ],
+        "subject_sha256": "4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf"
+      },
+      "sha256": "4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf",
+      "size": 101900,
+      "url": "https://files.pythonhosted.org/packages/f7/e4/602fe2c84324dcbd4a55dc4a451e319ba8833d59ebaa7128eccf68e22e96/actseal-1.0.0-py3-none-any.whl"
+    },
+    {
+      "declared_sha256": "aa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6",
+      "filename": "actseal-1.0.0.tar.gz",
+      "matches_build": true,
+      "provenance": {
+        "attestations": 1,
+        "present": true,
+        "publishers": [
+          {
+            "environment": "pypi",
+            "kind": "GitHub",
+            "repository": "ajaysurya1221/actseal",
+            "workflow": "publish-pypi.yml"
+          }
+        ],
+        "subject_sha256": "aa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6"
+      },
+      "sha256": "aa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6",
+      "size": 2054855,
+      "url": "https://files.pythonhosted.org/packages/42/af/a6bc4bbc02ce7d20eecd4139c3d17040beeeb32bb9ad18a6c5536a4b5274/actseal-1.0.0.tar.gz"
+    }
+  ],
+  "index": "https://pypi.org",
+  "kind": "actseal-postpublish-receipt",
+  "note": "Attestation presence, publisher identity and statement subjects were inspected; no independent cryptographic verification is claimed.",
+  "ok": true,
+  "published_metadata": {
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "Operating System :: MacOS",
+      "Operating System :: POSIX :: Linux",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Topic :: Software Development :: Quality Assurance",
+      "Typing :: Typed"
+    ],
+    "name": "actseal",
+    "summary": "Verify frozen categorical decision policies with risk/coverage bounds, provider-fault tests and offline replay.",
+    "version": "1.0.0",
+    "yanked": false
+  },
+  "schema_version": 1,
+  "version": "1.0.0"
+}

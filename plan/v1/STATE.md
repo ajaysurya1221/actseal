@@ -4,7 +4,42 @@ Codex owns state/plans/REVIEWs. ClaudeCode claude-fable-5-1,efforthigh writes
 product code/tests/general docs/visuals. Reports are claims until independently
 reviewed. Normal permissions/account/billing remain; denials stay binding.
 
-## Current checkpoint and next action
+## Latest release checkpoint — 7 October, 15:45 IST
+
+Human PyPI approval completed. Tagged release workflow 37603727302 is SUCCESS:
+build, assets, all four platform checks, trusted publication, official-PyPI
+clean-container verification and draft GitHub mirroring all passed.
+v1.0.0 remains immutable at 04c10d3fec60727310cf65acf6528f13264a26d4.
+PyPI reports Production/Stable and Publish attestations for both distributions.
+
+Codex independently downloaded the official PyPI distributions and GitHub draft
+assets: both pairs are byte-identical and match the tagged build checksums.
+Wheel: 101900 bytes, SHA256
+4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf.
+Sdist: 2054855 bytes, SHA256
+aa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6.
+Actual workflow receipts are now under plan/v1/receipts/. Container receipt
+records demo0, fixed replay0 and bad replay1 outside the checkout. Attestation
+presence/identity/subjects inspected; no independent cryptographic verification.
+
+Task14 raw capture is ACCEPT (review14-capture.md, reportf55fd5b); activation
+is running in the prepared recording worktree,
+SAME Claude session241e6a45-571b-4ca9-ad83-243d7c53b003, Fable5.1/high,
+normal permissions. Actual verified public-wheel path and release receipts
+were supplied. Raw cast is21.517s, GIFs24.51s, genuine exits0/0/1. Parent replayed both
+recorded bundles via the bound installed PyPI executable (PASS0/BLOCK1).
+Task21 is preparing final documentation in its independent owned worktree;
+its final tests/acceptance await the media integration. GitHub release remains a draft. Final release acceptance
+still requires genuine media, independent review, final docs/receipts and green
+hosted CI before the postpublication changes merge. Public launch stays draft.
+
+Root branch codex/v1-postpublication-review holds planning/receipt changes;
+source, registry, original archive, package and immutable tag remain unchanged.
+Private orchestration details: /tmp/actseal-v1-orchestration/active.json.
+The earlier checkpoints below are preserved as history; this section supersedes
+all stale current/next-action and publication descriptions in those sections.
+
+## Earlier checkpoint and next action
 
 7October2026 approximately15:06IST. Main277d729c192a7e41ffc4432e5943e74cd4a87c35
 merged PR46 after independentintegrationACCEPT and all10exact-head checks on

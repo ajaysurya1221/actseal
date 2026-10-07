@@ -14,9 +14,11 @@ labelled where it is built:
   stand-ins that satisfy presence only.
 
 The tool cache is pointed at an empty temporary directory so no external
-cache is consulted. The real inventory still declares the demo as planned;
-pipeline runs below use a temporary asset declaration inside ``tmp_path``.
-No test invokes agg, asciinema, uvx or a package.
+cache is consulted. The real inventory registers ``demo.render`` since the
+genuine capture was accepted; pipeline runs below still use a temporary asset
+declaration inside ``tmp_path`` so they never touch the committed files. No
+test invokes agg, asciinema, uvx or a package; the committed recording is
+checked here only by hash and structure.
 """
 
 from __future__ import annotations
@@ -309,17 +311,47 @@ def test_markers_match_the_helper_exactly(kit: ModuleType) -> None:
     )
 
 
-def test_inventory_still_declares_the_demo_as_planned(kit: ModuleType) -> None:
-    """Registration waits for a genuine capture; this preparation changes nothing there."""
+COMMITTED_CAST_SHA256 = "cdce70c61100d9b38c247db272517ca3f28b7c01c84d38c5518b59feb54963e6"
+COMMITTED_GIF_SHA256 = {
+    LIGHT: "653f6bb6f83724d34afab53fa4f707dcc6dda8e6e427f5f0a04943d211cfc4af",
+    DARK: "5af6a3cec2f3dea292664c86e7d56d9dd9b9788af5dd61eb0984cd3bfa42968b",
+}
+
+
+def test_inventory_registers_the_demo_renderer_with_both_variants(kit: ModuleType) -> None:
+    """Activated after the accepted raw capture (REVIEW 14 capture, V1-053)."""
     asset = kit.inventory.get_asset("demo")
-    assert not asset.implemented
-    assert asset.renderer is None
-    assert [output.path for output in asset.outputs] == ["demo.gif"]
+    assert asset.implemented
+    assert asset.renderer is kit.demo.render
+    assert [output.path for output in asset.outputs] == list(OUTPUTS)
+    for output in asset.outputs:
+        assert (output.kind, output.width, output.height) == ("gif", None, None)
+        assert output.max_bytes == 3_000_000
     assert asset.sources[0].path == kit.demo.CAST_SOURCE
+    assert (asset.sources[0].min_seconds, asset.sources[0].max_seconds) == (20.0, 40.0)
     assert asset.needs == ("agg", "jetbrains-mono")
-    assets_dir = SRC_DIR.parent
-    assert not (SRC_DIR / "demo.cast").exists()
-    assert not any(assets_dir.glob("demo*.gif"))
+    assert asset.task == "14"
+    assert kit.inventory.validate_inventory() == []
+
+
+def test_committed_recording_is_the_accepted_capture_unchanged(kit: ModuleType) -> None:
+    """Hash and structure of the committed bytes; no tool runs and no re-render here."""
+    import hashlib  # noqa: PLC0415 - test-local
+
+    cast = (SRC_DIR / "demo.cast").read_bytes()
+    assert hashlib.sha256(cast).hexdigest() == COMMITTED_CAST_SHA256
+    facts = kit.demo.validate_cast(cast)
+    assert 20.0 <= facts.duration <= 40.0
+    assert facts.outputs == 21
+    assert kit.checks.check_cast(cast, min_seconds=20, max_seconds=40) == []
+    for name, digest in COMMITTED_GIF_SHA256.items():
+        data = kit.demo.read_bounded(SRC_DIR.parent / name)
+        assert hashlib.sha256(data).hexdigest() == digest
+        gif = kit.demo.validate_gif(data, name)
+        assert gif.frames == 8
+        assert gif.delay_centiseconds == 2451
+        assert gif.size < 3_000_000
+        assert kit.checks.gif_dimensions(data) == (979, 918)
 
 
 def test_module_imports_lazily_and_without_an_inventory_cycle() -> None:

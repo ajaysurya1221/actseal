@@ -1,0 +1,259 @@
+{
+  "kind": "actseal-demo-capture-receipt-public",
+  "schema_version": 1,
+  "provenance": {
+    "original_receipt_path": "/tmp/actseal-recording.zCynsQ/attempt-1/capture-receipt.json",
+    "original_receipt_sha256": "b78f44c3943df4001471afce6df1f181dc527e8748436d3d115d9f72b73c476d",
+    "original_receipt_status_at_capture": "raw capture pending Codex review; not integrated",
+    "note": "The 'original' object below is the private capture receipt verbatim; captured facts are never rewritten here."
+  },
+  "integration": {
+    "status": "activated after Codex raw-capture ACCEPT (plan/v1/reviews/14-capture.md, CHANGE_LOG V1-053)",
+    "activated_on": "2026-10-07",
+    "committed_files": {
+      "docs/assets/src/demo.cast": "cdce70c61100d9b38c247db272517ca3f28b7c01c84d38c5518b59feb54963e6",
+      "docs/assets/demo-light.gif": "653f6bb6f83724d34afab53fa4f707dcc6dda8e6e427f5f0a04943d211cfc4af",
+      "docs/assets/demo-dark.gif": "5af6a3cec2f3dea292664c86e7d56d9dd9b9788af5dd61eb0984cd3bfa42968b"
+    },
+    "accepted_deviations": [
+      "--headless capture by a noninteractive driver (no TTY)",
+      "TERM=dumb recorded literally from the driver prefix",
+      "uv 0.12.5 /bin/sh relocatable launcher whose exec target is the sibling environment bin/python; binding established by wrapper content, resolved target and pyvenv.cfg rather than a literal Python shebang"
+    ],
+    "limits": "Recording and renderings are illustrative receipts of the public 1.0.0 package, not authenticated model evidence; no independent cryptographic attestation verification is claimed."
+  },
+  "original": {
+    "kind": "actseal-demo-capture-receipt",
+    "schema_version": 1,
+    "status": "raw capture pending Codex review; not integrated",
+    "session": "/tmp/actseal-recording.zCynsQ",
+    "attempt": "attempt-1",
+    "failed_attempts": [],
+    "captured_utc": "2026-10-07T10:16:09Z to 2026-10-07T10:16:30Z",
+    "task20": {
+      "version": "1.0.0",
+      "wheel_sha256": "4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf",
+      "sdist_sha256": "aa31ccf9f5cce30c40269dd5d9904ef61f147f9c4aaf21e3db288981b3278da6",
+      "implementation_sha256": "8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3",
+      "verified_wheel": "/tmp/actseal-v1-orchestration/release-37603727302/pypi/actseal-1.0.0-py3-none-any.whl",
+      "verified_wheel_sha256_rehash": "4497fef4878cb67f03845e13f91c8b8c4e7686361198d0ebc52a1764157ae3bf",
+      "verified_wheel_size": 101900,
+      "pypi_url": "https://pypi.org/project/actseal/1.0.0/",
+      "workflow_run": "37603727302"
+    },
+    "checkout": {
+      "path": "/Users/ajay/.codex/worktrees/actseal-v1-recording/not-yet-named",
+      "head": "04c10d3fec60727310cf65acf6528f13264a26d4",
+      "demo_session_blob": "814879150dcd67b049b608022d926b60134a82e6",
+      "demo_py_blob": "ce563ff1e232f04694c23bdeacd635cf5ad34f69",
+      "recording_md_blob": "8da37e2dce04b4a4cb8344d866d6bd3290467ae2"
+    },
+    "tools": {
+      "uv": "uv 0.12.5 (Homebrew 2026-08-14 aarch64-apple-darwin)",
+      "platform": "darwin-arm64",
+      "host": "macOS-26.6.2-arm64-arm-64bit",
+      "asciinema": {
+        "path": "/Users/ajay/.cache/actseal-assets/asciinema-3.2.1/asciinema-aarch64-apple-darwin",
+        "version": "asciinema 3.2.1",
+        "pinned_sha256": "1f0c76da7855601df93e5dccdf69b7c683b81beff1411e38b3802de1f5fc7a1c",
+        "actual_sha256": "1f0c76da7855601df93e5dccdf69b7c683b81beff1411e38b3802de1f5fc7a1c"
+      },
+      "agg": {
+        "path": "/Users/ajay/.cache/actseal-assets/agg-1.9.0/agg-aarch64-apple-darwin",
+        "version": "agg 1.9.0",
+        "pinned_sha256": "742b2b6230529b72f310acb835e9479496000f2eabc97b0993cabe1d7fe70171",
+        "actual_sha256": "742b2b6230529b72f310acb835e9479496000f2eabc97b0993cabe1d7fe70171"
+      },
+      "fonts": {
+        "check_fonts": [
+          [],
+          true
+        ],
+        "files": {
+          "JetBrainsMono-Bold.ttf": "5590990c82e097397517f275f430af4546e1c45cff408bde4255dad142479dcb",
+          "JetBrainsMono-Regular.ttf": "a0bf60ef0f83c5ed4d7a75d45838548b1f6873372dfac88f71804491898d138f",
+          "OFL.txt": "30f0c136e3c88e422d0791acd97238870f9054a9729bc34cf2ff0d4ed8cac4ad"
+        }
+      },
+      "python": {
+        "path": "/Users/ajay/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12",
+        "version": "Python 3.12.13"
+      }
+    },
+    "controlled_environment": {
+      "prefix": "PREFIX=( env -i PATH=/Users/ajay/.local/bin:/Users/ajay/.local/share/mise/shims:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/ajay/.codex/tmp/arg0/codex-arg0L4HLMg:/Users/ajay/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/ajay/.local/share/mise/installs/node/24.18.0/bin:/Users/ajay/.local/share/mise/installs/python/3.14.6/bin:/Users/ajay/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS:/Users/ajay/.claude/plugins/cache/openai-codex/codex/1.0.6/bin:/Users/ajay/.claude/plugins/cache/claude-plugins-official/frontend-design/d4226d062928/bin:/Users/ajay/.claude/plugins/cache/claude-plugins-official/superpowers/6.4.1/bin:/Users/ajay/.claude/plugins/cache/claude-plugins-official/context7/d4226d062928/bin:/Users/ajay/.claude/plugins/cache/i-have-adhd/i-have-adhd/0.3.0/bin:/Users/ajay/.claude/skills/superset/bin HOME=/Users/ajay TERM=dumb LANG=en_US.UTF-8 SHELL=/bin/sh UV_CACHE_DIR=/tmp/actseal-recording.zCynsQ/uv-cache UV_TOOL_DIR=/tmp/actseal-recording.zCynsQ/uv-tools UV_NO_CONFIG=1 UV_NO_ENV_FILE=1 UV_DEFAULT_INDEX=https://pypi.org/simple UV_KEYRING_PROVIDER=disabled NETRC=/tmp/actseal-recording.zCynsQ/netrc UV_CREDENTIALS_DIR=/tmp/actseal-recording.zCynsQ/uv-credentials ASCIINEMA_CONFIG_HOME=/tmp/actseal-recording.zCynsQ/asciinema-config ASCIINEMA_STATE_HOME=/tmp/actseal-recording.zCynsQ/asciinema-state )",
+      "uv_cache_dir_output": "/tmp/actseal-recording.zCynsQ/uv-cache",
+      "netrc_empty_file": "/tmp/actseal-recording.zCynsQ/netrc",
+      "netrc_size": 0,
+      "uv_credentials_dir_entries": [],
+      "asciinema_config_toml": "[session]\ncapture_input = false\ncapture_env = \"TERM,LANG\"\nidle_time_limit = 60.0\nprefix_key = \"\"\npause_key = \"\"\nadd_marker_key = \"\"\n\n[notifications]\nenabled = false\n",
+      "term_value_note": "TERM=dumb inherited from the noninteractive driver; recorded literally per the prefix"
+    },
+    "environment_identity": {
+      "warmup_version_output": "actseal 1.0.0",
+      "env_bin": "/tmp/actseal-recording.zCynsQ/uv-cache/archive-v0/-6ljBQcdSsFak4-u/bin/actseal",
+      "env_dir": "/tmp/actseal-recording.zCynsQ/uv-cache/archive-v0/-6ljBQcdSsFak4-u",
+      "env_bin_inode_pre_and_post": 137174376,
+      "env_bin_find_count_pre_and_post": 1,
+      "wrapper_first_two_lines": [
+        "#!/bin/sh",
+        "'''exec' \"$(dirname -- \"$(realpath -- \"$0\")\")\"/'python' \"$0\" \"$@\""
+      ],
+      "env_dir_python_realpath": "/Users/ajay/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/bin/python3.12",
+      "pyvenv_cfg": "home = /Users/ajay/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin\nimplementation = CPython\nuv = 0.12.5\nversion_info = 3.12.13\ninclude-system-site-packages = false\nrelocatable = true\n",
+      "direct_env_bin_version": "actseal 1.0.0",
+      "offline_uvx_version_pre": "actseal 1.0.0",
+      "offline_uvx_version_post": "actseal 1.0.0",
+      "site_packages": "/tmp/actseal-recording.zCynsQ/uv-cache/archive-v0/-6ljBQcdSsFak4-u/lib/python3.12/site-packages",
+      "dist_info_dirs": [
+        "actseal-1.0.0.dist-info"
+      ],
+      "wheel_top_level": [
+        "actseal",
+        "actseal-1.0.0.dist-info"
+      ],
+      "diff_package_exit_pre_post": [
+        0,
+        0
+      ],
+      "diff_dist_info_exit_pre_post": [
+        0,
+        0
+      ],
+      "dist_info_exclusions": [
+        "RECORD",
+        "INSTALLER",
+        "REQUESTED",
+        "uv_*"
+      ]
+    },
+    "demo_locks": {
+      "bad": {
+        "implementation_sha256": "8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3",
+        "lock_file_sha256": "0db9130dab6897cc3129c2f58853dc40790d48e9e31fb0ea43084b00c89c2479"
+      },
+      "fixed": {
+        "implementation_sha256": "8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3",
+        "lock_file_sha256": "5d67a27d93d671ee2062530e5e30110fb52a7232809ed164f8488b92d6050ebf"
+      }
+    },
+    "capture": {
+      "command": [
+        "asciinema",
+        "rec",
+        "--output-format",
+        "asciicast-v3",
+        "--window-size",
+        "100x40",
+        "--capture-env",
+        "TERM,LANG",
+        "--headless",
+        "--return",
+        "--command",
+        "/Users/ajay/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12 /Users/ajay/.codex/worktrees/actseal-v1-recording/not-yet-named/docs/assets/src/demo_session.py",
+        "/tmp/actseal-recording.zCynsQ/attempt-1/demo.cast"
+      ],
+      "headless_reason": "the driver shell has no TTY (tty exit 1); the procedure reserves --headless for a noninteractive driver",
+      "asciinema_exit": 0,
+      "helper_pauses": {
+        "pause": 4.0,
+        "hold": 3.0
+      }
+    },
+    "cast": {
+      "path": "/tmp/actseal-recording.zCynsQ/attempt-1/demo.cast",
+      "sha256": "cdce70c61100d9b38c247db272517ca3f28b7c01c84d38c5518b59feb54963e6",
+      "size": 3626,
+      "version": 3,
+      "cols": 100,
+      "rows": 40,
+      "duration_seconds": 21.517000000000003,
+      "events": 22,
+      "event_codes": {
+        "o": 21,
+        "x": 1
+      },
+      "final_event": [
+        "x",
+        "0"
+      ],
+      "header_env_keys": [
+        "LANG",
+        "TERM"
+      ],
+      "check_cast_errors": [],
+      "validate_cast": "CastFacts(duration=21.517000000000003, outputs=21)"
+    },
+    "gifs": {
+      "demo-light.gif": {
+        "a": {
+          "path": "/tmp/actseal-recording.zCynsQ/attempt-1/render-light-a/demo-light.gif",
+          "sha256": "653f6bb6f83724d34afab53fa4f707dcc6dda8e6e427f5f0a04943d211cfc4af",
+          "size": 571102,
+          "frames": 8,
+          "delay_centiseconds": 2451,
+          "dimensions": [
+            979,
+            918
+          ]
+        },
+        "b": {
+          "path": "/tmp/actseal-recording.zCynsQ/attempt-1/render-light-b/demo-light.gif",
+          "sha256": "653f6bb6f83724d34afab53fa4f707dcc6dda8e6e427f5f0a04943d211cfc4af",
+          "size": 571102,
+          "frames": 8,
+          "delay_centiseconds": 2451,
+          "dimensions": [
+            979,
+            918
+          ]
+        },
+        "two_render_identical": true
+      },
+      "demo-dark.gif": {
+        "a": {
+          "path": "/tmp/actseal-recording.zCynsQ/attempt-1/render-dark-a/demo-dark.gif",
+          "sha256": "5af6a3cec2f3dea292664c86e7d56d9dd9b9788af5dd61eb0984cd3bfa42968b",
+          "size": 569379,
+          "frames": 8,
+          "delay_centiseconds": 2451,
+          "dimensions": [
+            979,
+            918
+          ]
+        },
+        "b": {
+          "path": "/tmp/actseal-recording.zCynsQ/attempt-1/render-dark-b/demo-dark.gif",
+          "sha256": "5af6a3cec2f3dea292664c86e7d56d9dd9b9788af5dd61eb0984cd3bfa42968b",
+          "size": 569379,
+          "frames": 8,
+          "delay_centiseconds": 2451,
+          "dimensions": [
+            979,
+            918
+          ]
+        },
+        "two_render_identical": true
+      }
+    },
+    "agg_arguments": [
+      "--speed",
+      "1",
+      "--idle-time-limit",
+      "23",
+      "--font-dir",
+      "/Users/ajay/.codex/worktrees/actseal-v1-recording/not-yet-named/docs/assets/src/fonts",
+      "--font-family",
+      "JetBrains Mono",
+      "--last-frame-duration",
+      "3",
+      "--theme",
+      "<github-light|github-dark>"
+    ],
+    "notes": [
+      "Structural and text checks are consistency evidence, not proof of execution or provenance on their own.",
+      "No independent cryptographic attestation verification is claimed.",
+      "No product file, inventory entry or committed asset was changed."
+    ]
+  }
+}
