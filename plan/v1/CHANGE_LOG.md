@@ -626,3 +626,30 @@ clears the 14 nominal CSS-px floor at 254 px and was visually reviewed in
 both themes at 254 and 838 px. Its approximately 220 px additional desktop
 height is accepted. This supersedes the hero portion of V1-057's exception;
 workflow and architecture phone legibility remain unresolved.
+
+## V1-058 — Editorial amendment: result-first README opening and an evidence-card hero (8 October 2026)
+
+Recorded before implementation. The operator asked that every repository README convince a
+visitor at first glance that the project is engineered and in real use. The architect's
+review (hand-off folder, packet E) prescribes a result-first opening for this README: the
+question the tool answers, the recorded preregistered Jev audit (INCONCLUSIVE; 580 of 639
+verification cases received ACT; 24 disagreed with benchmark labels; fixed benchmark;
+unreleased producer) with its offline-replay link, the authenticity and execution boundary,
+an engineering strip (ADRs, JSON Schemas, mutation harness, publication receipt), then the
+synthetic quickstart with its demo excerpt. The hero may be redesigned through the pinned
+renderer as an evidence card that states the same recorded result; no new `where` figure is
+added in this package; the recorded demo, source recording, audit files, schemas, statistical
+contract and compatibility registry are unchanged. Presentation guards in
+`tests/docs/test_readme.py` are updated to the new opening; executable demo, output,
+exit-code, link, image and limitation checks stay.
+
+### V1-058 readability exceptions (recorded at review, 8 October 2026)
+
+The evidence-card hero is validated at the 838 CSS-px desktop column (previously 254 px for
+the desktop files); on a 254 px phone column the desktop hero's thesis renders at about 7.3 px,
+its card headline at 6.4 px and its body at 4.3 px. The stacked mobile variants keep every run
+at or above 14 px except the card footer (the audit path), held to an explicit 10 px floor.
+These exceptions are accepted because the README prose directly above the hero states the
+question, counts, INCONCLUSIVE verdict, boundaries and audit link; the threshold and the risk
+and coverage intervals remain in the image, its accessible description and the linked audit.
+This supersedes the V1-057 closing note's hero acceptance.
