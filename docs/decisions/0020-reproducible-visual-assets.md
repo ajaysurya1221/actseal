@@ -142,7 +142,7 @@ design.
 - Final first-screen review on the integrated README (7 October 2026): a
   screenshot of the public GitHub README first screen at `main` `277d729`
   (1366×900 CSS viewport, device pixel ratio 1, README image rendered at
-  838 px, captured 09:33 UTC;
+  838 px, captured 09:32:34 UTC;
   `plan/v1/reports/readme-first-screen-277d729-final.jpg`) was shown to a
   fresh, context-free reviewer, who named the developer audience, the
   freeze/check/seal/replay purpose, the offline recomputation and all three
