@@ -78,14 +78,15 @@ new reference documentation.
   `--provider jev --experimental-provider` (bring your own `JEV_API_KEY`;
   one attempt per request; no retry, redirect or fallback; vendor-reported
   model version, not a weight attestation). It carries no 1.x promise. Every
-  test runs over a mocked transport; as of 7 October 2026 no live Jev request
-  has been accepted as evidence, and no live result appears here.
+  test runs over a mocked transport. Live verification status as of
+  7 October 2026: no live Jev result is accepted as evidence, and none
+  appears here.
 - **Finite-benchmark audit: not run.** The offline preregistration (959
-  fixed cases, candidate 3) was accepted, but the one live attempt was
-  stopped by a harness permission denial on its `.env` existence preflight
-  before any key was read or any `--execute` call made. No journal, request
-  count or result exists; nothing is claimed. ADR 0018's "no power or
-  population claim" wording applies to any future run.
+  fixed cases, candidate 3) was accepted; live collection has not begun (no
+  key read, no `--execute` call) and no journal, request count or result
+  exists, so nothing is claimed. The chronology is in the Task 06 receipts.
+  ADR 0018's "no power or population claim" wording applies to any future
+  run.
 - **Application example archive: approved.** `examples/action_gate/` ships
   with its retained recorded synthetic bundle; its original producer and the
   1.0.0 source are the two approved registry entries (amendment V1-037), and

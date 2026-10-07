@@ -382,10 +382,11 @@ normalized selected-option probability from the returned distribution. Jev's
 preserved as `provider_confidence` evidence only, and provider confidence
 fields cannot be interchanged under a common threshold.
 
-Verification status: **as of 7 October 2026 no live Jev request has been
-accepted as evidence**; the one live audit attempt was stopped by a harness
-permission denial before any key was read or request made, and no result,
-journal or spend exists. Every Jev test runs over a mocked transport (a stdlib fake
+Verification status (as of 7 October 2026): **live collection has not begun
+and no live Jev result is accepted as evidence**; no key has been read and no
+request, journal or spend exists. The chronology of dispatch attempts is in
+the Task 06 receipts under `plan/v1/`, not here. Every Jev test runs over a
+mocked transport (a stdlib fake
 connection or an injected exchange) with the key read and every socket
 blocked; the shared provider conformance suite, the canonical fault campaign
 and CLI/runner routing are exercised that way. Mocked behaviour is evidence

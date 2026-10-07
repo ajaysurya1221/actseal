@@ -112,10 +112,11 @@ design.
   `readme-viewport-observation.md`). Final public-state visual acceptance on
   the tagged README remains separate.
 - Pending: the four architecture outputs (source scoped ACCEPT at `2e2a7b2`;
-  the merge that would generate and register them was denied by harness
-  review and awaits the human's scoped answer, so the candidate's hosted CI
-  at `b05aed8` is red only for those four files), final visual acceptance,
-  the genuine post-publication demo recording, every P2 figure, and the
-  release rehearsal. No v1 release has occurred.
+  the human has approved the work, but the merge that would generate and
+  register them is blocked by an effective harness permission gate that
+  standing approval does not change, so the candidate's hosted CI at
+  `b05aed8` is red only for those four files), final visual acceptance, the
+  genuine post-publication demo recording, every P2 figure, and the release
+  rehearsal. No v1 release has occurred.
 - Related: [ADR 0015](0015-v1-stability-and-replay-compatibility.md),
   `docs/assets/src/README.md`, `docs/assets/src/tools.toml`.

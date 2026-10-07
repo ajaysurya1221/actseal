@@ -28,8 +28,9 @@ PROVISIONAL and selectable only with `--provider jev --experimental-provider`
 ([ADR 0017](0017-experimental-decision-provider.md)); it reads `JEV_API_KEY`
 only at construction, keeps the key out of identity, captures, locks and
 diagnostics, and surfaces missing-key, timeout, malformed-response and
-unavailable outcomes as specified here. No live Jev request has been accepted
-as evidence. Actual fallback execution remains outside v1 exactly as decided;
+unavailable outcomes as specified here. As of 7 October 2026 no live Jev
+result is accepted as evidence (see ADR 0017 for the current verification
+status). Actual fallback execution remains outside v1 exactly as decided;
 the `fallback_used` precedence is unchanged.
 
 ## Consequences

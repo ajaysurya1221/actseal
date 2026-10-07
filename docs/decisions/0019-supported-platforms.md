@@ -46,8 +46,11 @@ exceed the receipts.
   addition, not a patch.
 - Hosted deterministic checks are not native evidence. A change to any
   native path requires its own cached-native receipt before release
-  (plan section G); that gate is currently pending for the changed tests and
-  is not satisfied by green hosted jobs.
+  (plan section G) and is not satisfied by green hosted jobs. (Historical
+  status, superseded: that receipt was pending when this ADR was first
+  written; the completed Task 03 and Task 19 cached-native checks are
+  recorded in "Evidence and status" below, with the final candidate gate
+  kept separate.)
 - Users on unsupported platforms receive explicit failures, not silent
   fallbacks.
 

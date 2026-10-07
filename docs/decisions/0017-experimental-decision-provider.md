@@ -58,12 +58,13 @@ legal guarantee; this ADR does not refresh or re-interpret those terms.
 
 ## Consequences
 
-- On the reviewed candidate branch, `jev` is already admitted in serialized
-  records and the published schemas (V1-011, V1-021) so that captures and
-  faults can carry its identity; the stable default CLI choices and runner
-  registration remain `fixture` and `laya` until Task 19 integrates the
-  experimental flag. Accepted main carries neither change yet. Documentation
-  describes Jev as conditional preparation, not shipped behaviour.
+- `jev` is admitted in serialized records and the published schemas
+  (V1-011, V1-021) so that captures and faults can carry its identity; the
+  stable default CLI choices remain `fixture` and `laya`, and `jev` is
+  reachable only through the explicit experimental opt-in. (Historical
+  status, superseded: when this ADR was first written the opt-in was not yet
+  integrated and documentation described Jev as conditional preparation; the
+  integrated state is recorded in "Evidence and status" below.)
 - A provider-reported version can be wrong or change server-side; evidence
   collected through it carries that weaker identity claim visibly.
 - If the adapter is not integrated and green by the recorded deadline it is
@@ -92,11 +93,11 @@ legal guarantee; this ADR does not refresh or re-interpret those terms.
   socket blocked; the cached-native checks were repeated at that integration
   (six tests) with no skips. Hosted CI on the candidate fails only for the
   absent architecture figure, not for any provider test.
-- Not accepted as evidence: any live Jev behaviour. The one live audit
-  attempt was stopped by a harness permission denial on its `.env` existence
-  preflight before any key was read or request made (ADR 0018); no request,
-  result or credit use exists. The Jev prerelease producer fingerprint is not
-  in the compatibility registry. No v1 release has occurred.
+- Live evidence (status as of 7 October 2026): live collection has not
+  begun and no live Jev result is accepted as evidence; the Task 06
+  operational receipts under `plan/v1/reviews/` and `plan/v1/reports/` hold
+  the chronology. The Jev prerelease producer fingerprint is not in the
+  compatibility registry. No v1 release has occurred.
 - Related: [ADR 0004](0004-identity-normalization-fallback.md) (identity and
   fallback), [ADR 0015](0015-v1-stability-and-replay-compatibility.md)
   (PROVISIONAL surfaces), [providers](../providers.md).

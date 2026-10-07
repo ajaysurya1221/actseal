@@ -3,8 +3,8 @@
 - Status: approved protocol (plan/v1/PLAN.md section C, Decision 3A;
   supplement in plan/v1/tasks/06-collection-supplement.md, amendment V1-013);
   offline implementation and preregistration candidate 3 accepted; live
-  collection not performed (attempt stopped by a harness denial before any
-  key read or call).
+  collection not begun and no live result accepted (status as of
+  7 October 2026).
 - Date: 2026-10-07.
 
 ## Decision
@@ -83,12 +83,12 @@ unchanged assessment, with a correctly powered study deferred.
   `d3edbab`, and preregistration candidate 3 (seal `c7bbc525…a2c`) is
   approved for the fixed 959-case protocol; candidates 1 and 2 are preserved
   byte-for-byte as history.
-- Live collection not performed: the one dispatched live attempt was stopped
-  by a harness permission denial on its `.env` existence preflight, before
-  any key was read or any `--execute` call was made. No retry or alternate
-  credential route is authorized after that denial. No journal, model
-  result, request count, token usage or spend exists to report, and none is
-  invented; the operational details are in the Task 06 receipts, not here.
+- Live collection (status as of 7 October 2026): not begun. No key has been
+  read, no `--execute` call made, and no journal, model result, request
+  count, token usage or spend exists to report; none is invented. The
+  chronology of dispatch attempts and harness decisions is in the Task 06
+  operational receipts under `plan/v1/reviews/` and `plan/v1/reports/`, not
+  here. No alternate credential route is authorized.
 - Related: [ADR 0003](0003-risk-coverage-statistical-contract.md),
   [ADR 0017](0017-experimental-decision-provider.md),
   [statistical contract](../statistical-contract.md).
