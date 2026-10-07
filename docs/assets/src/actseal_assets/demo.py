@@ -10,13 +10,20 @@ credential-looking output) and then renders ``demo-light.gif`` and
 ``demo-dark.gif`` with the pinned agg binary through the reviewed
 ``tools.agg_command`` (speed 1, idle limit beyond the whole cast, pinned
 JetBrains Mono, explicit last-frame duration, one theme per variant). Each
-GIF is parsed block by block; its duration is the sum of the encoded frame
-delays, never a header field or a configured flag, and must fall inside the
-same 20 to 40 second window with at least one frame and strictly fewer than
-3,000,000 bytes.
+GIF is read up to the byte cap and walked block by block with bounded reads;
+its duration is the sum of the frame delays that are actually shown, that is
+one graphic control extension per following image, never a header field, a
+configured flag or a dangling control. It must fall inside the same 20 to 40
+second window with at least one frame and strictly fewer than 3,000,000
+bytes. The walk validates structure (headers, colour tables, descriptors,
+code sizes, non-empty image data, terminators, trailer); it does not decode
+LZW pixels, so a rendered review of the real GIF remains a separate step.
 
 The header's ``command`` field is read as data only; nothing here executes it
-or anything else named by the recording. No asset is created by importing
+or anything else named by the recording. The command and exit markers are
+consistency checks on the recorded text; they cannot prove that the commands
+ran or that the package came from PyPI. That binding is the separate
+post-publication receipt in ``recording.md``. No asset is created by importing
 this module: the inventory registers the renderer only once a genuine capture
 exists, and until then ``render.py --check`` keeps reporting the demo as
 planned. ``tools`` is imported lazily for the same reason as in ``social``:
@@ -69,7 +76,10 @@ REQUIRED_OUTPUT: tuple[str, ...] = (
 OUTPUT_EVENT = "o"
 EXIT_EVENT = "x"
 EXIT_PAYLOAD = "0"
+#: The recorder captured exactly these names (recording.md steps 1, 2 and 6).
+HEADER_ENV_KEYS: frozenset[str] = frozenset({"TERM", "LANG"})
 
+_GIF_SIGNATURES = (b"GIF87a", b"GIF89a")
 _GIF_TRAILER = 0x3B
 _GIF_EXTENSION = 0x21
 _GIF_IMAGE = 0x2C
@@ -77,6 +87,8 @@ _GIF_GRAPHIC_CONTROL = 0xF9
 _GIF_GCE_LENGTH = 4
 _GIF_HEADER_LENGTH = 13
 _GIF_IMAGE_DESCRIPTOR_LENGTH = 9
+_GIF_MIN_CODE_SIZE = 2
+_GIF_MAX_CODE_SIZE = 8
 _EVENT_FIELDS = 3
 
 
@@ -152,9 +164,20 @@ def cast_path(context: RenderContext) -> Path:
 # --- raw cast validation -------------------------------------------------------
 
 
-def _events(data: bytes) -> list[list[object]]:
+def _lines(data: bytes) -> list[str]:
+    return [line for line in data.decode("utf-8").split("\n") if line.strip()]
+
+
+def _header(lines: list[str]) -> dict[str, object]:
+    header = json.loads(lines[0])
+    if not isinstance(header, dict):
+        msg = "header is not a JSON object"
+        raise DemoError(msg)
+    return header
+
+
+def _events(lines: list[str]) -> list[list[object]]:
     """Every event line after the header as a parsed three-element list."""
-    lines = [line for line in data.decode("utf-8").split("\n") if line.strip()]
     events: list[list[object]] = []
     for index, line in enumerate(lines[1:], start=2):
         event = json.loads(line)
@@ -163,6 +186,21 @@ def _events(data: bytes) -> list[list[object]]:
             raise DemoError(msg)
         events.append(event)
     return events
+
+
+def _require_header_env(header: dict[str, object]) -> None:
+    """The captured environment must be exactly the procedure's two names."""
+    env = header.get("env")
+    if not isinstance(env, dict):
+        msg = "header lacks an env object; the capture passes --capture-env TERM,LANG"
+        raise DemoError(msg)
+    keys = set(env)
+    if keys != HEADER_ENV_KEYS or not all(isinstance(value, str) for value in env.values()):
+        msg = (
+            f"header env keys {sorted(keys)}; the approved capture records exactly "
+            f"{sorted(HEADER_ENV_KEYS)} with string values"
+        )
+        raise DemoError(msg)
 
 
 def _require_in_order(output: str, needles: tuple[str, ...]) -> None:
@@ -176,14 +214,16 @@ def _require_in_order(output: str, needles: tuple[str, ...]) -> None:
 
 
 def validate_cast(data: bytes) -> CastFacts:
-    """Accept only a recording captured under the approved procedure.
+    """Accept only a recording whose structure matches the approved procedure.
 
     ``checks.check_cast`` supplies the parse, duration window and credential
     scan. This adds the procedure's stricter rules: asciicast v3 at the
-    approved geometry; every event is output except exactly one final exit
-    event whose payload is the string ``"0"``; and the approved command and
-    exit markers appear in order. The header is data; its ``command`` is
-    never executed.
+    approved geometry; a header ``env`` with exactly ``TERM`` and ``LANG``;
+    every event is an output event with a string payload except exactly one
+    final exit event whose payload is the string ``"0"``; and the approved
+    command and exit markers appear in order. The header is data; its
+    ``command`` is never executed. Passing here is structural consistency,
+    not proof of execution or of PyPI provenance.
     """
     problems = checks.check_cast(data, min_seconds=MIN_SECONDS, max_seconds=MAX_SECONDS)
     if problems:
@@ -198,17 +238,26 @@ def validate_cast(data: bytes) -> CastFacts:
             f"{CAST_SOURCE}: geometry {info.width}x{info.height}; approved capture is {COLS}x{ROWS}"
         )
         raise DemoError(msg)
-    events = _events(data)
+    try:
+        lines = _lines(data)
+        _require_header_env(_header(lines))
+        events = _events(lines)
+    except DemoError as exc:
+        msg = f"{CAST_SOURCE}: {exc}"
+        raise DemoError(msg) from exc
     if not events:
         msg = f"{CAST_SOURCE}: recording has no events"
         raise DemoError(msg)
-    codes = [event[1] for event in events]
-    for index, code in enumerate(codes[:-1], start=2):
+    for index, event in enumerate(events[:-1], start=2):
+        code, payload = event[1], event[2]
         if code != OUTPUT_EVENT:
             msg = (
                 f"{CAST_SOURCE}: line {index}: event code {code!r}; only output events "
                 "may precede the final exit event"
             )
+            raise DemoError(msg)
+        if not isinstance(payload, str):
+            msg = f"{CAST_SOURCE}: line {index}: output payload is not a string"
             raise DemoError(msg)
     last_code, last_payload = events[-1][1], events[-1][2]
     if last_code != EXIT_EVENT:
@@ -227,77 +276,148 @@ def validate_cast(data: bytes) -> CastFacts:
 # --- rendered GIF measurement --------------------------------------------------
 
 
-def _skip_sub_blocks(data: bytes, position: int) -> int:
-    while True:
-        if position >= len(data):
-            msg = "GIF ends inside a data sub-block sequence"
+class _Reader:
+    """Bounded cursor over GIF bytes; every read past the end is a DemoError."""
+
+    __slots__ = ("data", "position")
+
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+        self.position = 0
+
+    def take(self, count: int, what: str) -> bytes:
+        end = self.position + count
+        if end > len(self.data):
+            msg = f"GIF ends inside {what} at byte {self.position}"
             raise DemoError(msg)
-        length = data[position]
-        position += 1
-        if length == 0:
-            return position
-        position += length
+        chunk = self.data[self.position : end]
+        self.position = end
+        return chunk
+
+    def byte(self, what: str) -> int:
+        return self.take(1, what)[0]
+
+    def skip_colour_table(self, flags: int, what: str) -> None:
+        if flags & 0x80:
+            self.take(3 * (2 << (flags & 7)), f"the {what} colour table")
+
+    def skip_sub_blocks(self, what: str) -> int:
+        """Consume sub-blocks through the terminator; return the payload byte count."""
+        total = 0
+        while True:
+            length = self.byte(f"{what} sub-block length")
+            if length == 0:
+                return total
+            self.take(length, f"a {what} sub-block")
+            total += length
+
+    @property
+    def exhausted(self) -> bool:
+        return self.position == len(self.data)
+
+
+def _graphic_control(reader: _Reader) -> int:
+    """A fixed graphic control extension: size 4, four bytes, terminator; returns the delay."""
+    at = reader.position - 2
+    size = reader.byte("a graphic control extension")
+    if size != _GIF_GCE_LENGTH:
+        msg = f"malformed graphic control extension at byte {at}: block size {size}"
+        raise DemoError(msg)
+    body = reader.take(_GIF_GCE_LENGTH, "a graphic control extension")
+    terminator = reader.byte("a graphic control extension terminator")
+    if terminator != 0:
+        msg = f"malformed graphic control extension at byte {at}: no terminator"
+        raise DemoError(msg)
+    return int.from_bytes(body[1:3], "little")
+
+
+def _image(reader: _Reader) -> None:
+    """One image descriptor, optional local table, code size and non-empty data."""
+    at = reader.position - 1
+    descriptor = reader.take(_GIF_IMAGE_DESCRIPTOR_LENGTH, "an image descriptor")
+    width = int.from_bytes(descriptor[4:6], "little")
+    height = int.from_bytes(descriptor[6:8], "little")
+    if width == 0 or height == 0:
+        msg = f"image at byte {at} has zero size {width}x{height}"
+        raise DemoError(msg)
+    reader.skip_colour_table(descriptor[8], "local")
+    code_size = reader.byte("an LZW minimum code size")
+    if not _GIF_MIN_CODE_SIZE <= code_size <= _GIF_MAX_CODE_SIZE:
+        msg = f"image at byte {at} has LZW minimum code size {code_size}; expected 2 to 8"
+        raise DemoError(msg)
+    if reader.skip_sub_blocks("image data") == 0:
+        msg = f"image at byte {at} has no image data"
+        raise DemoError(msg)
 
 
 def measure_gif(data: bytes) -> GifFacts:
-    """Walk every block to the trailer and sum the encoded frame delays.
+    """Walk every block to the trailer and sum the delays of displayed frames.
 
-    The header's logical screen size is irrelevant to duration and is not
-    used. A file that ends before its trailer, carries an unknown block or a
-    malformed graphic control extension is rejected rather than estimated.
+    Structure only: signature, logical screen descriptor, colour tables,
+    extensions, image descriptors, code sizes, sub-blocks, terminators and
+    the trailer are all bounded and validated; LZW pixels are not decoded.
+    Exactly one graphic control extension may precede an image; its delay
+    counts for that image alone. A duplicate or dangling control, an image
+    without data, an unknown block, truncation or trailing bytes is rejected
+    rather than estimated. The logical screen size is never used as duration.
     """
-    try:
-        checks.gif_dimensions(data)
-    except ValueError as exc:
-        raise DemoError(str(exc)) from exc
-    position = _GIF_HEADER_LENGTH
-    flags = data[10]
-    if flags & 0x80:
-        position += 3 * (2 << (flags & 7))
+    if len(data) > MAX_BYTES:
+        msg = f"{len(data)} bytes is not below {MAX_BYTES}; not parsed"
+        raise DemoError(msg)
+    if data[:6] not in _GIF_SIGNATURES:
+        msg = "not a GIF file"
+        raise DemoError(msg)
+    reader = _Reader(data)
+    header = reader.take(_GIF_HEADER_LENGTH, "the header")
+    reader.skip_colour_table(header[10], "global")
     frames = 0
     delay = 0
+    pending: int | None = None
     while True:
-        if position >= len(data):
-            msg = "GIF ends without a trailer"
-            raise DemoError(msg)
-        block = data[position]
-        position += 1
+        block = reader.byte("the block stream")
         if block == _GIF_TRAILER:
             break
         if block == _GIF_EXTENSION:
-            if position >= len(data):
-                msg = "GIF ends inside an extension introducer"
-                raise DemoError(msg)
-            label = data[position]
-            position += 1
+            label = reader.byte("an extension introducer")
             if label == _GIF_GRAPHIC_CONTROL:
-                if position + 1 + _GIF_GCE_LENGTH > len(data) or data[position] != _GIF_GCE_LENGTH:
-                    msg = f"malformed graphic control extension at byte {position - 2}"
+                if pending is not None:
+                    msg = f"duplicate graphic control extension at byte {reader.position - 2}"
                     raise DemoError(msg)
-                delay += int.from_bytes(data[position + 2 : position + 4], "little")
-            position = _skip_sub_blocks(data, position)
+                pending = _graphic_control(reader)
+            else:
+                reader.skip_sub_blocks("extension")
         elif block == _GIF_IMAGE:
-            if position + _GIF_IMAGE_DESCRIPTOR_LENGTH > len(data):
-                msg = "GIF ends inside an image descriptor"
-                raise DemoError(msg)
-            local = data[position + 8]
-            position += _GIF_IMAGE_DESCRIPTOR_LENGTH
-            if local & 0x80:
-                position += 3 * (2 << (local & 7))
-            position += 1  # LZW minimum code size
-            position = _skip_sub_blocks(data, position)
+            _image(reader)
             frames += 1
+            delay += pending or 0
+            pending = None
         else:
-            msg = f"unexpected GIF block 0x{block:02x} at byte {position - 1}"
+            msg = f"unexpected GIF block 0x{block:02x} at byte {reader.position - 1}"
             raise DemoError(msg)
-    if position != len(data):
-        msg = f"{len(data) - position} trailing byte(s) after the GIF trailer"
+    if pending is not None:
+        msg = "dangling graphic control extension with no following image"
+        raise DemoError(msg)
+    if not reader.exhausted:
+        msg = f"{len(data) - reader.position} trailing byte(s) after the GIF trailer"
         raise DemoError(msg)
     return GifFacts(size=len(data), frames=frames, delay_centiseconds=delay)
 
 
+def read_bounded(path: Path) -> bytes:
+    """Read at most the cap plus one byte, so an oversized file is refused unread."""
+    with path.open("rb") as handle:
+        data = handle.read(MAX_BYTES + 1)
+    if len(data) > MAX_BYTES:
+        msg = f"{path.name}: at least {len(data)} bytes is not below {MAX_BYTES}; not parsed"
+        raise DemoError(msg)
+    return data
+
+
 def validate_gif(data: bytes, name: str) -> GifFacts:
-    """Measured duration inside the demo window, at least one frame, under the size cap."""
+    """Size cap first, then structure, then at least one frame inside the window."""
+    if len(data) >= MAX_BYTES:
+        msg = f"{name}: {len(data)} bytes is not below {MAX_BYTES}"
+        raise DemoError(msg)
     try:
         facts = measure_gif(data)
     except DemoError as exc:
@@ -306,14 +426,11 @@ def validate_gif(data: bytes, name: str) -> GifFacts:
     if facts.frames < 1:
         msg = f"{name}: GIF has no image frames"
         raise DemoError(msg)
-    if facts.size >= MAX_BYTES:
-        msg = f"{name}: {facts.size} bytes is not below {MAX_BYTES}"
-        raise DemoError(msg)
     if not math.isfinite(facts.seconds) or facts.seconds < MIN_SECONDS:
-        msg = f"{name}: encoded frame delays sum to {facts.seconds:.2f}s, below {MIN_SECONDS:g}s"
+        msg = f"{name}: displayed frame delays sum to {facts.seconds:.2f}s, below {MIN_SECONDS:g}s"
         raise DemoError(msg)
     if facts.seconds > MAX_SECONDS:
-        msg = f"{name}: encoded frame delays sum to {facts.seconds:.2f}s, above {MAX_SECONDS:g}s"
+        msg = f"{name}: displayed frame delays sum to {facts.seconds:.2f}s, above {MAX_SECONDS:g}s"
         raise DemoError(msg)
     return facts
 
@@ -338,19 +455,23 @@ def agg_arguments(
 
 
 def render_variant(
-    agg: Path,
     cast: Path,
     facts: CastFacts,
     context: RenderContext,
     name: str,
 ) -> bytes:
-    """Render one GIF into ``context.work`` and validate the bytes that run produced."""
+    """Render one GIF into ``context.work`` and validate the bytes that run produced.
+
+    The pinned agg binary is re-hashed immediately before this execution, so
+    a cache changed between variants is refused rather than run.
+    """
     from . import tools  # noqa: PLC0415 - circular with inventory; see module docstring
 
     context.work.mkdir(parents=True, exist_ok=True)
     target = context.work / name
     # A stale file from an earlier run must never be mistaken for this run's output.
     target.unlink(missing_ok=True)
+    agg = require_agg(context)
     command = agg_arguments(
         agg,
         cast,
@@ -363,15 +484,20 @@ def render_variant(
     if target.is_symlink() or not target.is_file():
         msg = f"{agg} exited 0 but did not write {target}"
         raise tools.ToolError(msg)
-    data = target.read_bytes()
+    data = read_bounded(target)
     validate_gif(data, name)
     return data
 
 
 def render(context: RenderContext) -> Mapping[str, bytes]:
-    """Both GIF variants from the committed cast, or fail before agg runs."""
+    """Both GIF variants from the committed cast, or fail before agg runs.
+
+    agg is verified once here so a missing or tampered cache fails before
+    the cast is parsed, and again inside each variant immediately before it
+    executes.
+    """
     require_fonts(context)
-    agg = require_agg(context)
+    require_agg(context)
     cast = cast_path(context)
     facts = validate_cast(cast.read_bytes())
-    return {name: render_variant(agg, cast, facts, context, name) for name in THEMES}
+    return {name: render_variant(cast, facts, context, name) for name in THEMES}

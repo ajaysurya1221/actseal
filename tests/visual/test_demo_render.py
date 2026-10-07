@@ -209,11 +209,21 @@ def _write_cast(kit: ModuleType, root: Path, data: bytes | None = None) -> Path:
     return path
 
 
-def _binary_double(kit: ModuleType, monkeypatch: pytest.MonkeyPatch, path: Path) -> list[str]:
+def _binary_double(
+    kit: ModuleType,
+    monkeypatch: pytest.MonkeyPatch,
+    path: Path,
+    *,
+    fail_on_call: int | None = None,
+) -> list[str]:
+    """Replace ``tools.verified_binary``; ``fail_on_call`` simulates a cache changed later."""
     calls: list[str] = []
 
     def verified_binary(_root: Path, tool: Any, _platform: str | None = None) -> Path:
         calls.append(tool.name)
+        if fail_on_call is not None and len(calls) == fail_on_call:
+            msg = f"{tool.name} at {path}: sha256 changed… does not match pinned (double)"
+            raise kit.tools.ToolError(msg)
         return path
 
     monkeypatch.setattr(kit.tools, "verified_binary", verified_binary)
@@ -421,6 +431,50 @@ def test_required_markers_must_appear_in_order(kit: ModuleType) -> None:
         kit.demo.validate_cast(synthetic_cast(wrong_exit))
 
 
+def test_non_string_output_payloads_are_rejected(kit: ModuleType) -> None:
+    """The shared parser silently skips non-string output; the renderer must not."""
+    for payload in (0, None, ["x"], {"o": 1}, 1.5):
+        events = _with_event(synthetic_events(), 3, [0.0, "o", payload])
+        assert kit.checks.check_cast(synthetic_cast(events), min_seconds=20, max_seconds=40) == []
+        with pytest.raises(kit.demo.DemoError, match=r"line 5: output payload is not a string"):
+            kit.demo.validate_cast(synthetic_cast(events))
+
+
+def _cast_with_header(header_update: dict[str, object], *, drop_env: bool = False) -> bytes:
+    lines = synthetic_cast().decode("utf-8").split("\n")
+    header = json.loads(lines[0])
+    if drop_env:
+        del header["env"]
+    header.update(header_update)
+    lines[0] = json.dumps(header)
+    return "\n".join(lines).encode("utf-8")
+
+
+@pytest.mark.parametrize(
+    ("data", "match"),
+    [
+        (_cast_with_header({}, drop_env=True), "header lacks an env object"),
+        (_cast_with_header({"env": "TERM,LANG"}), "header lacks an env object"),
+        (_cast_with_header({"env": {"TERM": "xterm"}}), r"header env keys \['TERM'\]"),
+        (
+            _cast_with_header({"env": {"TERM": "xterm", "LANG": "C", "SHELL": "/bin/sh"}}),
+            r"header env keys \['LANG', 'SHELL', 'TERM'\]",
+        ),
+        (
+            _cast_with_header({"env": {"TERM": "xterm", "LANG": "C", "AWS_SECRET": "x"}}),
+            r"header env keys \['AWS_SECRET', 'LANG', 'TERM'\]",
+        ),
+        (_cast_with_header({"env": {"TERM": "xterm", "LANG": 1}}), "with string values"),
+        (_cast_with_header({"env": {}}), r"header env keys \[\]"),
+    ],
+    ids=_short_id,
+)
+def test_header_env_must_be_exactly_term_and_lang(kit: ModuleType, data: bytes, match: str) -> None:
+    assert kit.checks.check_cast(data, min_seconds=20, max_seconds=40) == []
+    with pytest.raises(kit.demo.DemoError, match=match):
+        kit.demo.validate_cast(data)
+
+
 def test_credential_looking_output_is_rejected(kit: ModuleType) -> None:
     events = _with_event(synthetic_events(), 1, [0.0, "o", "Authorization: Bearer abc\r\n"])
     with pytest.raises(kit.demo.DemoError, match="credential pattern"):
@@ -458,9 +512,9 @@ def test_measure_sums_frame_delays_not_header_fields(kit: ModuleType) -> None:
     ("data", "match"),
     [
         (b"", "not a GIF file"),
-        (b"GIF89a" + b"\x00" * 3, "not a GIF file"),
+        (b"GIF89a" + b"\x00" * 3, "ends inside the header at byte 0"),
         (b"\x89PNG\r\n\x1a\n" + b"\x00" * 20, "not a GIF file"),
-        (synthetic_gif((100,), trailer=False), "ends without a trailer"),
+        (synthetic_gif((100,), trailer=False), "ends inside the block stream"),
         (synthetic_gif((100,), trailing_junk=b"\x00"), "1 trailing byte"),
         (ONE_FRAME[:-6], "ends inside"),
         (ONE_FRAME.replace(b"\x21\xf9\x04", b"\x21\xf9\x05"), "malformed graphic control"),
@@ -473,6 +527,139 @@ def test_malformed_gifs_are_rejected_not_estimated(
 ) -> None:
     with pytest.raises(kit.demo.DemoError, match=match):
         kit.demo.measure_gif(data)
+
+
+#: Exact inputs from REVIEW 14 (renderer preparation); the first two were wrongly
+#: accepted as 20-second GIFs, the third raised IndexError, the fourth passed as a frame.
+REVIEW_INPUTS = {
+    "dangling_delay": (
+        "47494638396101000100800000000000ffffff2c000000000100010000020244010021f90400d00700003b"
+    ),
+    "duplicate_controls": (
+        "47494638396101000100800000000000ffffff21f90400e803000021f90400e80300002c"
+        "00000000010001000002024401003b"
+    ),
+    "ten_byte_header": "47494638396101000100",
+    "empty_lzw_image": (
+        "47494638396101000100800000000000ffffff21f90400d00700002c00000000010001000002003b"
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("name", "match"),
+    [
+        ("dangling_delay", "dangling graphic control extension with no following image"),
+        ("duplicate_controls", "duplicate graphic control extension at byte 27"),
+        ("ten_byte_header", "GIF ends inside the header at byte 0"),
+        ("empty_lzw_image", "image at byte 27 has no image data"),
+    ],
+)
+def test_review_regression_inputs_are_rejected_with_demo_error(
+    kit: ModuleType, name: str, match: str
+) -> None:
+    data = bytes.fromhex(REVIEW_INPUTS[name])
+    with pytest.raises(kit.demo.DemoError, match=match):
+        kit.demo.measure_gif(data)
+    with pytest.raises(kit.demo.DemoError, match=rf"{LIGHT}: {match}"):
+        kit.demo.validate_gif(data, LIGHT)
+
+
+def test_unshown_control_time_is_never_counted(kit: ModuleType) -> None:
+    """Only a control immediately followed by its image contributes its delay."""
+    # A control, then a comment extension, then the image: the control still
+    # belongs to that image (pending survives other extensions).
+    with_comment = synthetic_gif(())[:-1]
+    with_comment += b"\x21\xf9\x04\x00" + (2000).to_bytes(2, "little") + b"\x00\x00"
+    with_comment += b"\x21\xfe" + _sub_blocks(b"synthetic")
+    with_comment += ONE_FRAME[len(synthetic_gif(())) - 1 + 8 : -1] + b"\x3b"
+    facts = kit.demo.measure_gif(with_comment)
+    assert (facts.frames, facts.delay_centiseconds) == (1, 2000)
+    # An image without any control contributes a frame with zero delay.
+    no_control = synthetic_gif(())[:-1] + ONE_FRAME[len(synthetic_gif(())) - 1 + 8 : -1] + b"\x3b"
+    facts = kit.demo.measure_gif(no_control)
+    assert (facts.frames, facts.delay_centiseconds) == (1, 0)
+
+
+_HEADER_ONLY = synthetic_gif(())[:-1]  # signature, screen descriptor, global table; no trailer
+_FRAME = ONE_FRAME[len(_HEADER_ONLY) : -1]  # one GCE (100 cs) plus one image
+
+
+@pytest.mark.parametrize(
+    ("data", "match"),
+    [
+        (b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00", "ends inside the global colour table"),
+        (_HEADER_ONLY, "ends inside the block stream"),
+        (_HEADER_ONLY + b"\x21", "ends inside an extension introducer"),
+        (_HEADER_ONLY + b"\x21\xf9", "ends inside a graphic control extension"),
+        (_HEADER_ONLY + b"\x21\xf9\x04\x00\x64", "ends inside a graphic control extension"),
+        (
+            _HEADER_ONLY + b"\x21\xf9\x04\x00\x64\x00\x00",
+            "ends inside a graphic control extension terminator",
+        ),
+        (
+            _HEADER_ONLY + b"\x21\xf9\x04\x00\x64\x00\x00\x01\x00\x00" + _FRAME[8:] + b"\x3b",
+            "malformed graphic control extension at byte 19: no terminator",
+        ),
+        (
+            _HEADER_ONLY + b"\x21\xf9\x03\x00\x64\x00\x00" + _FRAME[8:] + b"\x3b",
+            "malformed graphic control extension at byte 19: block size 3",
+        ),
+        (_HEADER_ONLY + b"\x21\xfe\x05ab", "ends inside a extension sub-block"),
+        (_HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x01\x00", "ends inside an image descriptor"),
+        (
+            _HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x80\x00\x00",
+            "ends inside the local colour table",
+        ),
+        (
+            _HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00",
+            "ends inside an LZW minimum code size",
+        ),
+        (
+            _HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44",
+            "ends inside a image data sub-block",
+        ),
+        (
+            _HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01",
+            "ends inside image data sub-block length",
+        ),
+        (
+            _HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x01\x02\x44\x01\x00\x3b",
+            "LZW minimum code size 1; expected 2 to 8",
+        ),
+        (
+            _HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x09\x02\x44\x01\x00\x3b",
+            "LZW minimum code size 9; expected 2 to 8",
+        ),
+        (
+            _HEADER_ONLY + b"\x2c\x00\x00\x00\x00\x00\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b",
+            "zero size 0x1",
+        ),
+    ],
+    ids=_short_id,
+)
+def test_truncated_or_malformed_structure_is_a_demo_error(
+    kit: ModuleType, data: bytes, match: str
+) -> None:
+    with pytest.raises(kit.demo.DemoError, match=match):
+        kit.demo.measure_gif(data)
+
+
+def test_oversized_bytes_are_refused_before_parsing(kit: ModuleType, tmp_path: Path) -> None:
+    oversized = b"GIF89a" + b"\x00" * 2_999_995  # 3,000,001 bytes of junk after the signature
+    with pytest.raises(kit.demo.DemoError, match=r"3000001 bytes is not below 3000000; not parsed"):
+        kit.demo.measure_gif(oversized)
+    exact_cap = oversized[:-1]
+    assert len(exact_cap) == 3_000_000
+    with pytest.raises(kit.demo.DemoError, match=rf"{DARK}: 3000000 bytes is not below 3000000"):
+        kit.demo.validate_gif(exact_cap, DARK)
+    path = tmp_path / "synthetic-oversized.gif"
+    path.write_bytes(b"GIF89a" + b"\x00" * 4_000_000)
+    with pytest.raises(kit.demo.DemoError, match=r"at least 3000001 bytes is not below 3000000"):
+        kit.demo.read_bounded(path)
+    small = tmp_path / "synthetic-small.gif"
+    small.write_bytes(GOOD_GIF)
+    assert kit.demo.read_bounded(small) == GOOD_GIF
 
 
 @pytest.mark.parametrize(
@@ -568,7 +755,7 @@ def test_missing_cast_fails_before_agg_runs(
     context, _, binaries, commands = _doubled(kit, repo, monkeypatch, cast=None)
     with pytest.raises(kit.demo.DemoError, match=r"raw recording .*demo\.cast is not present"):
         kit.demo.render(context)
-    assert binaries == ["agg"]
+    assert binaries == ["agg"]  # the up-front check; no per-variant check ran
     assert commands == []
 
 
@@ -606,7 +793,8 @@ def test_render_produces_both_variants_from_one_cast(
     assert tuple(rendered) == OUTPUTS
     assert rendered[LIGHT] == GOOD_GIF
     assert rendered[DARK] == GOOD_GIF
-    assert binaries == ["agg"]
+    # Verified once before the cast is parsed and again immediately before each variant.
+    assert binaries == ["agg"] * 3
     assert len(commands) == 2
     cast = repo / kit.inventory.SOURCE_DIR / "demo.cast"
     duration = total_seconds(synthetic_events())
@@ -645,6 +833,25 @@ def test_render_is_deterministic_with_the_doubles(
     asset = _temporary_asset(kit)
     _, problems = kit.pipeline._render_twice(asset, context)
     assert problems == []
+
+
+def test_cached_binary_changed_between_variants_is_refused(
+    kit: ModuleType, repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Verification 1 is the up-front check, 2 precedes the light variant, 3 the dark one."""
+    _font_stand_ins(kit, repo)
+    _write_cast(kit, repo)
+    binary = repo / "doubled-cache" / "agg"
+    binaries = _binary_double(kit, monkeypatch, binary, fail_on_call=3)
+    commands = _process_double(kit, monkeypatch)
+    context = _context(kit, repo)
+    with pytest.raises(kit.tools.ToolError, match="sha256 changed"):
+        kit.demo.render(context)
+    assert binaries == ["agg"] * 3
+    # The light variant ran before the change was detected; the dark one never did.
+    assert len(commands) == 1
+    assert commands[0][-1] == str(context.work / LIGHT)
+    assert not (context.work / DARK).exists()
 
 
 def test_tool_failure_propagates_unchanged(
@@ -689,7 +896,10 @@ def test_stale_symlink_target_is_not_accepted(
         ({LIGHT: synthetic_gif((100,) * 41), DARK: GOOD_GIF}, rf"{LIGHT}: .*41\.00s, above 40s"),
         ({LIGHT: GOOD_GIF, DARK: synthetic_gif(())}, rf"{DARK}: GIF has no image frames"),
         ({LIGHT: b"not a gif", DARK: GOOD_GIF}, rf"{LIGHT}: not a GIF file"),
-        ({LIGHT: GOOD_GIF, DARK: synthetic_gif(GOOD_DELAYS, trailer=False)}, "without a trailer"),
+        (
+            {LIGHT: GOOD_GIF, DARK: synthetic_gif(GOOD_DELAYS, trailer=False)},
+            "ends inside the block stream",
+        ),
         (
             {LIGHT: GOOD_GIF, DARK: synthetic_gif(GOOD_DELAYS, padding=3_000_000)},
             "bytes is not below 3000000",
@@ -811,7 +1021,7 @@ def test_pipeline_reports_cast_and_gif_failures_without_writing(
     asset = _temporary_asset(kit)
     report = kit.pipeline.run(repo, mode="write", only=("demo",), assets=(asset,))
     assert _errors(report) == [
-        f"render failed: {LIGHT}: encoded frame delays sum to 19.00s, below 20s"
+        f"render failed: {LIGHT}: displayed frame delays sum to 19.00s, below 20s"
     ]
     assert report.written == []
     assert len(commands) == 1
