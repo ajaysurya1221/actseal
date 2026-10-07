@@ -36,9 +36,16 @@ SVG_NS = "{http://www.w3.org/2000/svg}"
 OUTPUT = "social.png"
 WIDTH = 1280
 HEIGHT = 640
-WORDMARK = "Actseal"
-TAGLINE = "Test model-chosen actions. Replay the evidence."
-STEPS = ("freeze", "run", "replay")
+THESIS = "Does this frozen action policy meet its declared risk and coverage limits?"
+COLUMN_KEYS = ("eyebrow", "thesis", "subline")
+CARD_KEYS = (
+    "card-label",
+    "card-headline",
+    "card-scope",
+    "card-bounds",
+    "card-verdict",
+    "card-footer",
+)
 PINNED_NAMES = ("JetBrainsMono-Regular.ttf", "JetBrainsMono-Bold.ttf")
 FONT_NOT_FETCHED = (
     "requires jetbrains-mono 2.304; not fetched: JetBrainsMono-Regular.ttf, "
@@ -189,7 +196,7 @@ def _doubled(
 # --- copy, declarations and floors: no doubles required -----------------------
 
 
-def test_social_reuses_the_approved_copy_and_declares_one_png(kit: ModuleType) -> None:
+def test_social_reuses_the_hero_copy_and_declares_one_png(kit: ModuleType) -> None:
     social = kit.social
     assert social.OUTPUT == OUTPUT
     assert (social.WIDTH, social.HEIGHT) == (WIDTH, HEIGHT)
@@ -199,15 +206,14 @@ def test_social_reuses_the_approved_copy_and_declares_one_png(kit: ModuleType) -
     )
     assert social.PALETTE is kit.hero.LIGHT
     assert isinstance(social.CANVAS, kit.hero.Canvas)
-    # No social-specific copy exists: wordmark, tagline, motif steps, title and
-    # description all come from the hero module, and like the hero the card
-    # carries no caption paragraph.
-    for name in ("WORDMARK", "TAGLINE", "CAPTION", "MOTIF_STEPS", "TITLE", "DESC"):
+    # No social-specific copy exists: every block, the title and the description
+    # come from the hero module; the card only re-flows the hero's lines.
+    for name in ("EYEBROW", "THESIS", "SUBLINE", "COPY", "CAPTION", "TITLE", "DESC"):
         assert not hasattr(social, name), name
-    assert not hasattr(social.CANVAS, "caption")
-    assert kit.hero.WORDMARK == WORDMARK
-    assert kit.hero.TAGLINE == TAGLINE
-    assert kit.hero.MOTIF_STEPS == STEPS
+    kit.hero.validate_copy((social.CANVAS,))
+    assert kit.hero.THESIS == THESIS
+    for setting in social.CANVAS.settings:
+        assert " ".join(setting.lines) == kit.hero.copy_for(setting.key).text, setting.key
 
 
 def test_inventory_registers_the_social_renderer_without_other_changes(kit: ModuleType) -> None:
@@ -231,63 +237,57 @@ def test_inventory_registers_the_social_renderer_without_other_changes(kit: Modu
 def test_type_sizes_meet_the_floor_and_geometry_fits_the_card(kit: ModuleType) -> None:
     social, hero = kit.social, kit.hero
     canvas = social.CANVAS
-    assert (canvas.width, canvas.display_width) == (WIDTH, social.DISPLAY_WIDTH)
+    assert (canvas.width, canvas.height, canvas.display_width) == (
+        WIDTH,
+        HEIGHT,
+        social.DISPLAY_WIDTH,
+    )
     hero.require_readable(canvas)
-    hero._require_extents(canvas, social.HEIGHT)
-    assert min(canvas.sizes) == canvas.label
-    assert canvas.rendered_px(min(canvas.sizes)) >= MIN_PX
-    assert canvas.rendered_px(canvas.label) == pytest.approx(34.0)
-    assert canvas.wordmark > canvas.tagline > canvas.label
-    # Stacked order: wordmark, tagline, then the motif.
-    assert canvas.margin <= canvas.text_top
-    assert canvas.wordmark_baseline < canvas.tagline_baseline
-    assert canvas.text_bottom < canvas.motif_top
-    assert canvas.motif_bottom <= social.HEIGHT - canvas.margin
-    # The block is centred: the space above the wordmark's cap height and
-    # below the pills differs by less than one unit, and the pill row leaves
-    # the same 85 units at each side.
-    above = canvas.wordmark_baseline - 0.73 * canvas.wordmark
-    below = social.HEIGHT - canvas.motif_bottom
-    assert abs(above - below) < 1
-    assert canvas.motif_x == canvas.text_x == WIDTH - (canvas.motif_x + canvas.motif_width) == 85
-    assert canvas.text_x + canvas.text_width <= WIDTH - canvas.margin
-    too_small = dataclasses.replace(canvas, label=26)
-    with pytest.raises(ValueError, match=r"26 units render at 13.0px .* minimum is 14px"):
-        hero.require_readable(too_small)
-    with pytest.raises(ValueError, match="motif needs 540 units of height"):
-        hero._require_extents(canvas, 560)
+    hero.require_layout(canvas)
+    social.require_card_minimum(canvas)
+    # Every run, the reference footer included, renders at 14 px or more at
+    # the assumed half-scale display: 28 units on the 1280-unit canvas.
+    assert social.MIN_TEXT == 28
+    assert min(canvas.sizes) == social.MIN_TEXT
+    assert canvas.rendered_px(social.MIN_TEXT) == pytest.approx(MIN_PX)
+    assert all(canvas.rendered_px(size) >= MIN_PX for size in canvas.sizes)
+    assert canvas.setting("thesis").size > canvas.setting("subline").size
+    assert canvas.setting("card-headline").size > canvas.setting("card-bounds").size
+    # Column beside the card, both inside the margins, 56 units from each side.
+    assert canvas.side_by_side
+    assert canvas.column_x == WIDTH - (canvas.card_x + canvas.card_width) == 56
+    assert canvas.card_y == HEIGHT - (canvas.card_y + canvas.card_height) == 40
+    assert canvas.column_bottom <= HEIGHT - canvas.margin
+    assert canvas.card_content_bottom <= canvas.card_y + canvas.card_height - canvas.card_pad
+    column_middle = (canvas.column_y + canvas.column_bottom) / 2
+    assert abs(column_middle - (canvas.card_y + canvas.card_height / 2)) <= 1
+    footer = dataclasses.replace(canvas.card[-1], size=26)
+    small = dataclasses.replace(canvas, card=(*canvas.card[:-1], footer))
+    with pytest.raises(ValueError, match="social: card-footer is 26 units; minimum is 28"):
+        social.require_card_minimum(small)
+    thesis = dataclasses.replace(canvas.column[1], size=26)
+    tiny = dataclasses.replace(canvas, column=(canvas.column[0], thesis, canvas.column[2]))
+    with pytest.raises(
+        ValueError, match=r"thesis at 26 units renders at 13.0px .* minimum is 14px"
+    ):
+        hero.require_readable(tiny)
+    with pytest.raises(ValueError, match="card content needs"):
+        hero.require_layout(dataclasses.replace(canvas, card_height=500))
 
 
-def test_card_is_the_desktop_hero_composition_at_three_quarters(kit: ModuleType) -> None:
-    """Every size, stroke and vertical offset is the hero's times SCALE, to whole units."""
+def test_card_is_the_hero_composition_reflowed(kit: ModuleType) -> None:
+    """The same blocks in the same order, column beside card; only breaks and sizes differ."""
     social, hero = kit.social, kit.hero
     card, desktop = social.CANVAS, hero.DESKTOP
-    assert social.SCALE == 0.75
-    for name in (
-        "wordmark",
-        "tagline",
-        "label",
-        "tagline_step",
-        "text_width",
-        "pill_width",
-        "pill_height",
-        "pill_gap",
-        "pill_pad",
-        "border",
-        "arrow_stroke",
-        "arrow_head",
-        "arrow_half",
-        "arrow_clearance",
-    ):
-        expected = social.SCALE * getattr(desktop, name)
-        assert abs(getattr(card, name) - expected) <= 1.5, name
-    assert card.motif_width == social.SCALE * desktop.motif_width
-    for top, bottom in (
-        ("wordmark_baseline", "tagline_baseline"),
-        ("tagline_baseline", "motif_top"),
-    ):
-        offset = getattr(card, bottom) - getattr(card, top)
-        assert offset == social.SCALE * (getattr(desktop, bottom) - getattr(desktop, top))
+    assert tuple(s.key for s in card.column) == tuple(s.key for s in desktop.column) == COLUMN_KEYS
+    assert tuple(s.key for s in card.card) == tuple(s.key for s in desktop.card) == CARD_KEYS
+    assert card.side_by_side
+    assert desktop.side_by_side
+    assert card.radius == desktop.radius
+    for setting in card.settings:
+        assert " ".join(setting.lines) == " ".join(desktop.setting(setting.key).lines)
+    # The headline is never broken, so its three-space gap survives.
+    assert card.setting("card-headline").lines == (kit.hero.CARD_HEADLINE,)
 
 
 def test_exact_png_dimensions_are_required(kit: ModuleType) -> None:
@@ -434,36 +434,31 @@ def test_intermediate_svg_is_the_hero_composition_outlined_on_the_card(
     assert desc is not None
     assert title.text == kit.hero.TITLE
     assert desc.text == kit.hero.DESC
-    canvas = root.find(f"{SVG_NS}rect")
-    assert canvas is not None
-    assert (canvas.get("width"), canvas.get("height"), canvas.get("fill")) == (
+    ground = root.find(f"{SVG_NS}rect")
+    assert ground is not None
+    assert (ground.get("width"), ground.get("height"), ground.get("fill")) == (
         "1280",
         "640",
-        "#ffffff",
+        kit.hero.LIGHT.canvas,
     )
     groups = [child.get("id") for child in root if child.tag == f"{SVG_NS}g"]
-    assert groups == ["wordmark", "tagline", "motif"]
-    motif = root.find(f"{SVG_NS}g[@id='motif']")
-    assert motif is not None
-    steps = [child for child in motif if child.tag == f"{SVG_NS}g"]
-    assert [step.get("id") for step in steps] == [f"step-{step}" for step in STEPS]
-    for step in steps:
-        assert step.find(f"{SVG_NS}rect") is not None
-        assert len(step.findall(f"{SVG_NS}path")) == 1
-    # Two forward arrows and no return route, exactly as in the hero.
-    lines = motif.findall(f".//{SVG_NS}line")
-    assert len(lines) == 2
-    assert all(float(a.get("x2", "0")) > float(a.get("x1", "0")) for a in lines)
-    assert len(motif.findall(f".//{SVG_NS}polygon")) == 2
-    routes = [p for p in root.iter(f"{SVG_NS}path") if p.get("fill") == "none"]
-    assert routes == []
-    glyphs = [p for p in root.iter(f"{SVG_NS}path") if p.get("fill") != "none"]
-    # Wordmark, two tagline lines and three labels.
-    assert len(glyphs) == 6
+    assert groups == ["column", "card"]
+    column = root.find(f"{SVG_NS}g[@id='column']")
+    card = root.find(f"{SVG_NS}g[@id='card']")
+    assert column is not None
+    assert card is not None
+    assert [g.get("id") for g in column] == list(COLUMN_KEYS)
+    card_rect, *blocks = list(card)
+    assert card_rect.tag == f"{SVG_NS}rect"
+    assert card_rect.get("fill") == kit.hero.LIGHT.card
+    assert [g.get("id") for g in blocks] == list(CARD_KEYS)
+    # No arrows, strokes or open routes; every glyph run is filled path data.
+    assert root.findall(f".//{SVG_NS}line") == []
+    assert root.findall(f".//{SVG_NS}polygon") == []
+    assert [p for p in root.iter(f"{SVG_NS}path") if p.get("fill") == "none"] == []
+    glyphs = list(root.iter(f"{SVG_NS}path"))
+    assert glyphs
     assert all((p.get("d") or "").startswith("M") for p in glyphs)
-    xs = [float(r.get("x", "0")) for r in motif.iter(f"{SVG_NS}rect")]
-    assert xs == sorted(xs)
-    assert len({r.get("y") for r in motif.iter(f"{SVG_NS}rect")}) == 1
 
 
 def test_every_outlined_string_is_approved_copy(
@@ -472,15 +467,16 @@ def test_every_outlined_string_is_approved_copy(
     doubled = _doubled(kit, repo, monkeypatch)
     kit.social.render(doubled.context)
     hero = kit.hero
-    approved = {
-        (PINNED_NAMES[1], WORDMARK),
-        *((PINNED_NAMES[0], line) for line in hero.TAGLINE_LINES),
-        *((PINNED_NAMES[0], step) for step in STEPS),
-    }
-    assert set(doubled.outlines) == approved
-    # Each string is measured once and placed once.
-    assert len(doubled.outlines) == 2 * len(approved)
-    assert " ".join(hero.TAGLINE_LINES) == TAGLINE
+    expected: list[tuple[str, str]] = []
+    for setting in kit.social.CANVAS.settings:
+        copy = hero.copy_for(setting.key)
+        for line in hero.line_spans(copy, setting.lines):
+            for span in line:
+                assert span.text in copy.text
+                expected.append((PINNED_NAMES[1 if span.bold else 0], span.text))
+    assert set(doubled.outlines) == set(expected)
+    # Each span is measured once and placed once.
+    assert sorted(doubled.outlines) == sorted(expected * 2)
 
 
 def test_render_is_deterministic_with_the_doubles(
@@ -501,9 +497,13 @@ def test_overflowing_line_fails_instead_of_shrinking(
     kit: ModuleType, repo: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     doubled = _doubled(kit, repo, monkeypatch)
-    narrow = dataclasses.replace(kit.social.CANVAS, text_width=400)
+    narrow = dataclasses.replace(kit.social.CANVAS, column_width=400)
     monkeypatch.setattr(kit.social, "CANVAS", narrow)
-    with pytest.raises(ValueError, match=r"units wide at size 135; only 400 units are available"):
+    with pytest.raises(
+        ValueError,
+        match=r"social: 'actseal · frozen decision' is 420.0 units wide at size 28; "
+        r"only 400 units are available",
+    ):
         kit.social.render(doubled.context)
     assert doubled.commands == []
     assert not (doubled.context.work / OUTPUT).exists()

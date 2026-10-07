@@ -75,7 +75,7 @@ entries do not. Nothing is fetched during validation.
   `translate` and `rotate` preserve size; `scale` contributes its smaller
   axis and `matrix` its minimum singular value (the exact lower bound, so a
   singular or near-singular matrix fails); skews or unparsable transforms are
-  errors. Outlined assets (the hero banner) may not contain `<text>` at all.
+  errors. Outlined assets (the hero) may not contain `<text>` at all.
 - LF line ends, UTF-8 and a final newline.
 
 PNG and GIF outputs are checked by header for exact dimensions and size
@@ -135,36 +135,57 @@ rendered size of a label is its SVG font size times display width over SVG
 width, and every label must reach 14 px. At those widths the earlier 26-unit
 desktop and 30-unit mobile sizes fell to 13.6 and 10.6 px, so the how-it-works
 and architecture figures now use 27-unit desktop and 40-unit mobile labels, and
-layouts wrap or widen rather than shrink. The hero is one stacked composition
-per colour scheme: the wordmark, the two tagline lines and one row of three
-pills (freeze, run, replay) joined by two forward arrows, with no caption, on
-a 1600×700 canvas. Because GitHub serves it at every viewport width (see
-below), its desktop files are declared and validated at 254 CSS px rather than
-838: the 90-unit step labels render at 14.3 px there, the 96-unit tagline at
-15.2 px and the 180-unit wordmark at 28.6 px, and the renderer enforces an
-89-unit label minimum (14.1 px). In the 838 px README column the same runs
-render at 47, 50 and 94 px. Pill borders (4 units) and arrows (8-unit stroke,
-30-unit head) scale with the canvas so the motif stays visible at 254 px.
-Rasterised with the pinned resvg at 254 px, the measured ink heights are
-21 px for the wordmark's capitals, 12 and 15 px for the two tagline lines and
-11, 8 and 13 px for the freeze, run and replay labels. The 720×400 stacked
-mobile canvas is unchanged, with 40-unit labels (14.1 px at 254 px) and a
-40-unit minimum. `social.png` is the desktop composition at three quarters
-scale, centred on the 1280×640 card, with a 135-unit wordmark, a 72-unit
-tagline and 68-unit labels. These are measurements of one repository page on
-one date, not a GitHub guarantee.
+layouts wrap or widen rather than shrink. These are measurements of one
+repository page on one date, not a GitHub guarantee.
+
+The hero is an evidence card (plan/v1/CHANGE_LOG.md V1-058): on a 1600×520
+canvas, a text column (the `actseal` eyebrow, the bold thesis question "Does
+this frozen action policy meet its declared risk and coverage limits?" in
+three lines, and a one-sentence subline) sits beside a card that states one
+recorded run, the preregistered live Jev audit: 639 verification cases at
+threshold 0.80, ACT 580/639 with 24 errors, the scope line "Fixed benchmark;
+unreleased producer", risk [0.0250, 0.0639] against the 0.05 limit, coverage
+[0.879, 0.932], verdict INCONCLUSIVE (exit 2) with "replay requires archived
+producer d3edbab" (the published 1.0.0 package returns ERROR `integrity.lock`
+for this bundle), and the path of the published audit. Every number comes from
+`docs/results/jev-audit-2026-10-08/` (`evidence/verdict.json`,
+`audit_receipt.json`, `inputs/preregistration.json`) and `tests/visual/test_hero.py`
+compares the card with those files. Only the pinned JetBrains Mono Regular and
+Bold outlines are used. The dark variant puts a cream card (#F4F1EA) on the
+#0F1512 ground; the light variant mirrors it with an ink card (#16211D) on
+cream; geometry is identical. The desktop files are declared and validated at
+838 CSS px, where every run reaches 14 px: 27-unit body runs (eyebrow,
+subline, card label, bounds, verdict and footer) at 14.1 px, the 40-unit card
+headline at 21.0 px and the 46-unit thesis at 24.1 px; the renderer enforces
+a 27-unit minimum. Rasterised with the pinned resvg at 838 px, the measured
+ink heights per line are 20 to 24 px for the thesis, 20 px for the card
+headline and 13 to 15 px for body lines, the scope line included (11 px for
+the all-capitals card label). GitHub serves the desktop file at every viewport width (see
+below), so in a 254 px phone column the thesis renders at about 7.3 px, the
+card headline at 6.4 px and body runs at 4.3 px (measured ink 7 to 8, 7 and
+3 to 5 px): below the floor, a known limitation; the README text directly
+above the hero states the same recorded result. The stacked
+720×1576 mobile canvas puts the column above the card and is validated at
+254 CSS px, where every run reaches 14 px (40-unit body, 44-unit thesis and
+card headline at 15.5 px) except the card footer, the reference line with
+the audit path, whose 30-unit runs render at 10.6 px against the 10 px
+reference floor this module enforces for that line only. Lines break at
+fixed points per canvas and must rejoin to the frozen copy; a line that does
+not fit, a block that leaves the margins or the card, or a column that
+overlaps the card makes the renderer raise instead of shrinking anything.
+`social.png` re-flows the same blocks, side by side, for the 1280×640 card in
+the light palette, with every run at 28 units or more (14 px at the assumed
+640 px half-scale display).
 
 The 2026-10-08 live check found that GitHub rewrote the combined colour-scheme and width queries into an always-true media list, making the first mobile-dark source match regardless of viewport width or colour scheme. Bare width queries survived that check. This README therefore adopts GitHub's documented colour-scheme selection pattern.
-Each figure uses only its desktop variants: one
+The hero picture uses only its desktop variants: one
 `<source media="(prefers-color-scheme: dark)">` with the dark file, then the
-light `<img>`. GitHub shows those at every viewport width, including phone
-widths where the how-it-works and architecture labels render below the 14 px
-floor (27 desktop units render at about 4.3 px in a 254 px column). The hero
-was redrawn for this and its desktop files clear the floor at 254 px; the
-earlier 1600×280 banner's tagline rendered there at about 7 px and its step
-labels at about 5 px. The mobile variants stay committed, declared and
-validated at 254 px for other renderers that honour width-based `<source>`
-selection; the README no longer references them.
+light `<img>`. The how-it-works and architecture figures, whose labels render
+below the 14 px floor at phone widths (27 desktop units render at about 4.3 px
+in a 254 px column), are linked from the README rather than embedded. The
+mobile variants stay committed, declared and validated at 254 px for other
+renderers that honour width-based `<source>` selection; the README does not
+reference them.
 
 Text uses `Helvetica, Arial, Liberation Sans, sans-serif`, three
 metric-compatible faces that resolve on macOS, Windows and Linux before the
