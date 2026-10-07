@@ -469,6 +469,7 @@ CLI_OPTIONS: dict[str, set[str]] = {
         "--provider",
         "--responses",
         "--offline",
+        "--experimental-provider",
         "--out",
         "--json",
     },
@@ -479,6 +480,7 @@ CLI_OPTIONS: dict[str, set[str]] = {
         "--provider",
         "--responses",
         "--offline",
+        "--experimental-provider",
         "--out",
         "--json",
     },
@@ -633,7 +635,9 @@ def test_schema_and_limit_constants() -> None:
         "input_too_long",
         "unavailable",
     }
-    assert set(records_module.PROVIDERS) == {"fixture", "laya"}
+    # Admitted serialized providers: the stable CLI choices plus the experimental
+    # Jev identity (V1-011/V1-021). The CLI still offers only fixture and laya.
+    assert set(records_module.PROVIDERS) == {"fixture", "laya", "jev"}
     assert serialization_module.MAX_JSON_BYTES == 128 * 1024 * 1024
     assert serialization_module.MAX_JSON_DEPTH == 32
     assert contract_module.MAX_ROW_BYTES == 1024 * 1024

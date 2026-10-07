@@ -1,0 +1,17 @@
+{
+  "actseal_version": "0.1.0",
+  "format": "actseal-action-gate-recorded-run/1",
+  "implementation_sha256": "a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642",
+  "inputs": {
+    "calibration.jsonl": "8e5c86656e7bd4e4ec9ab4f238c5c23fe0dfbc7f3fb0e183dac75a04b824d999",
+    "contract.toml": "37b90d05c07f6b08d74039fa69d2906d9cd9c23370ba72ce647006c9a7ee10de",
+    "responses.jsonl": "1727c540a6affcf44acbae95b74dc312c8acac05c9af59751bdd0bdcfbc195bb",
+    "verification.jsonl": "ac7f1a78545323d26085cf63bac05004673bcefc4e0953574f07fb96544a3229"
+  },
+  "lock_sha256": "cb009be0039afefd995f6eac3a8bd9767d6bf026a73273b47e87a51fc9fbd715",
+  "note": "Authored synthetic evaluation data (evidence_scope demo) collected through the recorded-response fixture; no model, key or network was involved. The bytes of this run are preserved as produced; a later implementation produces a separately identified run instead of resealing this one.",
+  "replay_engine_version": "actseal-choice-v1",
+  "source_commit": "76758d7084e396c8960718d28c1cad5fb70bac03",
+  "uv_lock_sha256": "4e1d8d9af9cf5610efc43844afc7838720602c2026648ffbc70585e761853189",
+  "verdict_status": "PASS"
+}

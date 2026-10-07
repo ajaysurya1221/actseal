@@ -24,6 +24,17 @@ arbitrary exception text.
 Importing this module imports no adapter or optional library; ``replay`` and
 ``demo`` never initialize a live provider (the demo uses the stdlib fixture
 adapter only inside the runner's fixture branch).
+
+Experimental providers (docs/stability.md PROVISIONAL, ADR 0017): the stable
+``--provider`` choices are ``fixture`` and ``laya``. ``jev`` is accepted by
+``lock`` and ``verify`` only together with the explicit opt-in
+``--experimental-provider``; a missing opt-in, the opt-in with a stable
+provider, or ``--responses`` with ``jev`` is a usage error (ERROR 3) raised
+before any provider is constructed, any environment variable is read or any
+request is made. ``replay`` and ``demo`` do not accept the flag at all. The
+adapter itself rejects ``--offline`` as a setup error before reading its key.
+No receipt field is added for the opt-in: the receipt shapes stay frozen and
+the provider is visible in the recorded ``model_identity``.
 """
 
 from __future__ import annotations
@@ -58,13 +69,18 @@ EXIT_ERROR: Final = 3
 #: Schema version written into every ``--json`` receipt, successes and errors alike.
 RECEIPT_SCHEMA_VERSION: Final = 1
 
+#: STABLE provider choices; selectable without any opt-in.
 _PROVIDERS: Final = ("fixture", "laya")
+#: PROVISIONAL provider choices; each requires ``--experimental-provider``.
+_EXPERIMENTAL_PROVIDERS: Final = ("jev",)
+_PROVIDER_CHOICES: Final = (*_PROVIDERS, *_EXPERIMENTAL_PROVIDERS)
+_EXPERIMENTAL_FLAG: Final = "--experimental-provider"
 _COMMAND_NAMES: Final = ("lock", "verify", "replay", "demo")
 _JSON_FLAG: Final = "--json"
 #: Accepted values per choice argument, keyed by the name argparse uses in diagnostics.
 _CHOICES: Final[Mapping[str, tuple[str, ...]]] = {
     "COMMAND": _COMMAND_NAMES,
-    "--provider": _PROVIDERS,
+    "--provider": _PROVIDER_CHOICES,
 }
 _ARGUMENT_MESSAGE: Final = re.compile(r"^argument (?P<name>[^:]+): (?P<rest>.*)$", re.DOTALL)
 _REQUIRED_MESSAGE: Final = re.compile(r"^the following arguments are required: (?P<names>.+)$")
@@ -131,9 +147,17 @@ class _Parser(argparse.ArgumentParser):
 def _add_provider_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--calibration", required=True, type=Path, metavar="PATH")
     parser.add_argument("--verification", required=True, type=Path, metavar="PATH")
-    parser.add_argument("--provider", required=True, choices=_PROVIDERS)
+    parser.add_argument("--provider", required=True, choices=_PROVIDER_CHOICES)
     parser.add_argument("--responses", type=Path, metavar="PATH", default=None)
     parser.add_argument("--offline", action="store_true")
+    parser.add_argument(
+        _EXPERIMENTAL_FLAG,
+        action="store_true",
+        help=(
+            "opt in to a PROVISIONAL provider (required with --provider jev, "
+            "rejected with fixture or laya)"
+        ),
+    )
 
 
 def _build_parser() -> _Parser:
@@ -177,16 +201,28 @@ def _build_parser() -> _Parser:
 
 
 def _check_provider_options(args: argparse.Namespace) -> None:
-    """``fixture`` requires ``--responses``; ``laya`` forbids it.
+    """Provider/option rules, checked before any input is read or provider built.
 
-    ``--offline`` is accepted by both providers: the fixture adapter performs no
-    network access at all, so the flag simply states its existing behavior.
+    ``fixture`` requires ``--responses``; ``laya`` and ``jev`` forbid it.
+    ``--offline`` is accepted by the stable providers: the fixture adapter
+    performs no network access at all, so the flag simply states its existing
+    behavior. The PROVISIONAL ``jev`` provider is accepted only with the
+    explicit ``--experimental-provider`` opt-in, which the stable providers
+    reject; ``jev`` with ``--offline`` is left to the adapter, which refuses it
+    as a setup error before reading any environment variable.
     """
-    if args.provider == "fixture":
+    provider: str = args.provider
+    experimental: bool = args.experimental_provider
+    if provider in _EXPERIMENTAL_PROVIDERS:
+        if not experimental:
+            raise _UsageError(f"{_EXPERIMENTAL_FLAG} is required with --provider {provider}")
+    elif experimental:
+        raise _UsageError(f"{_EXPERIMENTAL_FLAG} is not accepted with --provider {provider}")
+    if provider == "fixture":
         if args.responses is None:
             raise _UsageError("--responses is required with --provider fixture")
     elif args.responses is not None:
-        raise _UsageError("--responses is not accepted with --provider laya")
+        raise _UsageError(f"--responses is not accepted with --provider {provider}")
 
 
 # --------------------------------------------------------------------------- #

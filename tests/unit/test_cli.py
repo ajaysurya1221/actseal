@@ -17,22 +17,27 @@ import subprocess
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import NoReturn
 
 import pytest
 from test_evidence import CALIBRATION, GOLD, answer_json, verification_jsonl
 from test_providers import pinned_identity
 from test_runner import CONTRACT_TOML, RESOURCE_NAMES, ScriptedModel, write_responses
 
+import actseal
 import actseal.cli as cli_module
+import actseal.experimental.providers.jev as jev_module
 import actseal.runner as runner_module
+from actseal.adapters.base import DecisionModel
 from actseal.assessment import REASON_WORKER_INVALIDATED
 from actseal.cli import EXIT_CODES, EXIT_ERROR, main
-from actseal.contract import read_input_text
+from actseal.contract import parse_contract, read_input_text
 from actseal.evidence import BUNDLE_FILES
 from actseal.locking import parse_lock, validate_lock
 from actseal.records import ModelIdentity
 from actseal.replay import UNKNOWN_LOCK_SHA256, replay
 from actseal.serialization import canonical_json, to_data
+from provider_support import JevProfile
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGED = ROOT / "src" / "actseal" / "demo_data"
@@ -152,6 +157,10 @@ USAGE_ERRORS: list[list[str]] = [
     ["demo", "--out", "x", "extra"],
     ["replay", "dir", "--expected-lock-sha256"],
     ["verify", "--lock", "l", "--calibration", "c", "--verification", "v", "--out", "o"],
+    # --experimental-provider belongs to lock/verify only; replay and demo reject it.
+    ["replay", "dir", "--experimental-provider"],
+    ["demo", "--out", "x", "--experimental-provider"],
+    ["--experimental-provider", "replay", "dir"],
 ]
 
 
@@ -205,17 +214,30 @@ def test_help_lists_exactly_the_frozen_commands(run: Run) -> None:
     for option in ("--contract", "--calibration", "--verification", "--provider", "--responses"):
         assert option in lock_help
     assert "--offline" in lock_help
+    assert "--experimental-provider" in lock_help
+    assert "{fixture,laya,jev}" in lock_help
     assert "--out" in lock_help
     assert "--json" in lock_help
+    _, verify_help, _ = run(["verify", "--help"])
+    assert "--experimental-provider" in verify_help
+    assert "{fixture,laya,jev}" in verify_help
     _, replay_help, _ = run(["replay", "--help"])
     assert "--expected-lock-sha256" in replay_help
     assert "--provider" not in replay_help
+    assert "--experimental-provider" not in replay_help
+    _, demo_help, _ = run(["demo", "--help"])
+    assert "--provider" not in demo_help
+    assert "--experimental-provider" not in demo_help
 
 
 def test_version_exits_0(run: Run) -> None:
-    code, out, _ = run(["--version"])
+    code, out, err = run(["--version"])
     assert code == 0
-    assert out.startswith("actseal 0.1.0")
+    assert err == ""
+    # The 1.0.0 release candidate (Codex metadata commit 0b57933); the printed
+    # version is always the installed package's own version string.
+    assert actseal.__version__ == "1.0.0"
+    assert out == f"actseal {actseal.__version__}\n"
 
 
 def test_exit_code_table_is_frozen() -> None:
@@ -376,20 +398,20 @@ def test_invalid_provider_choice_lists_only_accepted_choices(
     code, out, _ = run([*argv, "--json"])
     assert code == 3
     assert one_json(out)["error"] == (
-        "usage: argument --provider: invalid choice (choose from fixture, laya)"
+        "usage: argument --provider: invalid choice (choose from fixture, laya, jev)"
     )
     code, _, err = run(argv)
     assert code == 3
     assert err == (
         "actseal lock: error: usage: argument --provider: invalid choice "
-        "(choose from fixture, laya)\n"
+        "(choose from fixture, laya, jev)\n"
     )
 
 
 def test_bounded_usage_message_rewrites_every_shape() -> None:
     rewrite = cli_module._bounded_usage_message
     assert rewrite(f"argument --provider: invalid choice: '{SENTINEL}' (choose from 'a')") == (
-        "argument --provider: invalid choice (choose from fixture, laya)"
+        "argument --provider: invalid choice (choose from fixture, laya, jev)"
     )
     assert rewrite(f"argument COMMAND: invalid choice: '{SENTINEL}: x' (choose from 'a')") == (
         "argument COMMAND: invalid choice (choose from lock, verify, replay, demo)"
@@ -1127,7 +1149,8 @@ def test_importing_the_cli_loads_no_adapter() -> None:
             "-c",
             (
                 "import sys; import actseal.cli; import actseal.__main__; "
-                "print(sorted(m for m in sys.modules if m.startswith('actseal.adapters')))"
+                "print(sorted(m for m in sys.modules if m.startswith("
+                "('actseal.adapters', 'actseal.experimental', 'http', 'ssl'))))"
             ),
         ],
         capture_output=True,
@@ -1173,3 +1196,341 @@ def test_identity_helper_reports_only_identity_fields() -> None:
         "adapter_version": "1",
         "normalizer_version": "1",
     }
+
+
+# --------------------------------------------------------------------------- #
+# PROVISIONAL Jev opt-in (ADR 0017): explicit flag, no key, no socket, mocked only
+# --------------------------------------------------------------------------- #
+
+
+def _forbidden(*_args: object, **_kwargs: object) -> NoReturn:
+    pytest.fail("no provider may be built, no key read and no connection opened here")
+
+
+def _forbid_provider_construction(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every seam that could build a provider, read the key or connect fails the test."""
+    monkeypatch.delenv(jev_module.API_KEY_ENV, raising=False)
+    monkeypatch.setattr(cli_module, "open_model", _forbidden)
+    monkeypatch.setattr(cli_module, "lock_run", _forbidden)
+    monkeypatch.setattr(cli_module, "verify_run", _forbidden)
+    monkeypatch.setattr(jev_module, "_api_key_from_environment", _forbidden)
+    monkeypatch.setattr(jev_module, "_default_connect", _forbidden)
+
+
+EXPERIMENTAL_USAGE: list[tuple[str, list[str], str]] = [
+    ("jev", [], "--experimental-provider is required with --provider jev"),
+    (
+        "jev",
+        ["--responses", "r.jsonl"],
+        "--experimental-provider is required with --provider jev",
+    ),
+    (
+        "jev",
+        ["--experimental-provider", "--responses", "r.jsonl"],
+        "--responses is not accepted with --provider jev",
+    ),
+    (
+        "fixture",
+        ["--experimental-provider", "--responses", "r.jsonl"],
+        "--experimental-provider is not accepted with --provider fixture",
+    ),
+    (
+        "laya",
+        ["--experimental-provider"],
+        "--experimental-provider is not accepted with --provider laya",
+    ),
+    (
+        "laya",
+        ["--experimental-provider", "--offline"],
+        "--experimental-provider is not accepted with --provider laya",
+    ),
+]
+
+
+EXPERIMENTAL_USAGE_CASES: list[tuple[str, str, list[str], str]] = [
+    (command, provider, extra, message)
+    for command in ("lock", "verify")
+    for provider, extra, message in EXPERIMENTAL_USAGE
+]
+
+
+@pytest.mark.parametrize(
+    "case",
+    EXPERIMENTAL_USAGE_CASES,
+    ids=[
+        f"{command} {provider} {' '.join(extra)}".strip()
+        for command, provider, extra, _ in EXPERIMENTAL_USAGE_CASES
+    ],
+)
+def test_experimental_flag_rules_are_usage_errors_before_any_provider_or_environment(
+    run: Run,
+    inputs: dict[str, Path],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    case: tuple[str, str, list[str], str],
+) -> None:
+    """Missing or misplaced opt-in is a versioned usage ERROR 3 with nothing constructed."""
+    command, provider, extra, message = case
+    _forbid_provider_construction(monkeypatch)
+    head = (
+        ["lock", "--contract", str(inputs["fixed.toml"])]
+        if command == "lock"
+        else ["verify", "--lock", str(tmp_path / "absent-lock.json")]
+    )
+    out_path = tmp_path / "out"
+    argv = [
+        *head,
+        "--calibration",
+        str(inputs["fixed_calibration.jsonl"]),
+        "--verification",
+        str(inputs["fixed_verification.jsonl"]),
+        "--provider",
+        provider,
+        *extra,
+        "--out",
+        str(out_path),
+    ]
+    code, out, err = run(argv)
+    assert code == 3
+    assert out == ""
+    assert err == f"actseal {command}: error: usage: {message}\n"
+    code, out, err = run([*argv, "--json"])
+    assert code == 3
+    assert err == ""
+    document = one_json(out)
+    assert document["schema_version"] == 1
+    assert document["command"] == command
+    assert document["status"] == "ERROR"
+    assert document["error"] == f"usage: {message}"
+    assert not out_path.exists()
+
+
+def test_jev_offline_is_a_setup_error_before_the_key_is_read(
+    run: Run, inputs: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``--provider jev --experimental-provider --offline`` is ERROR 3 from the adapter."""
+    monkeypatch.delenv(jev_module.API_KEY_ENV, raising=False)
+    monkeypatch.setattr(jev_module, "_api_key_from_environment", _forbidden)
+    monkeypatch.setattr(jev_module, "_default_connect", _forbidden)
+    lock = tmp_path / "lock.json"
+    argv = [
+        "lock",
+        "--contract",
+        str(inputs["fixed.toml"]),
+        "--calibration",
+        str(inputs["fixed_calibration.jsonl"]),
+        "--verification",
+        str(inputs["fixed_verification.jsonl"]),
+        "--provider",
+        "jev",
+        "--experimental-provider",
+        "--offline",
+        "--out",
+        str(lock),
+    ]
+    expected = (
+        "ProviderSetupError: offline: the experimental Jev adapter has no offline mode; "
+        "no request was made"
+    )
+    code, out, err = run([*argv, "--json"])
+    assert code == 3
+    assert err == ""
+    document = one_json(out)
+    assert document["status"] == "ERROR"
+    assert document["error"] == expected
+    assert not lock.exists()
+    code, out, err = run(argv)
+    assert code == 3
+    assert out == ""
+    assert err == f"actseal lock: error: {expected}\n"
+    assert not lock.exists()
+
+
+JEV_COMMON = (
+    "--calibration",
+    "fixed_calibration.jsonl",
+    "--verification",
+    "fixed_verification.jsonl",
+)
+JEV_SELECT = ("--provider", "jev", "--experimental-provider")
+
+
+def _mock_jev_transport(
+    inputs: dict[str, Path], monkeypatch: pytest.MonkeyPatch
+) -> tuple[JevProfile, str, list[DecisionModel]]:
+    """Route ``open_model("jev")`` to a real ``JevModel`` over the conformance fake connection.
+
+    No key is read (the environment read is forbidden and the variable is
+    unset) and no socket is opened (the connection factory is forbidden).
+    """
+    monkeypatch.delenv(jev_module.API_KEY_ENV, raising=False)
+    monkeypatch.setattr(jev_module, "_api_key_from_environment", _forbidden)
+    monkeypatch.setattr(jev_module, "_default_connect", _forbidden)
+    profile = JevProfile()
+    body = profile.valid_raw_body(parse_contract(inputs["fixed.toml"]).question)
+    opened: list[DecisionModel] = []
+
+    def fake_jev(*, offline: bool = False) -> DecisionModel:
+        assert offline is False
+        model = profile.open(body=body)
+        opened.append(model)
+        return model
+
+    monkeypatch.setattr(jev_module, "JevModel", fake_jev)
+    return profile, body, opened
+
+
+def _jev_common(inputs: dict[str, Path]) -> list[str]:
+    return [inputs[token].as_posix() if token in inputs else token for token in JEV_COMMON]
+
+
+def _jev_lock(run: Run, inputs: dict[str, Path], lock: Path) -> dict[str, object]:
+    """Seal a Jev lock through the CLI opt-in; returns the JSON receipt."""
+    argv = ["lock", "--contract", str(inputs["fixed.toml"]), *_jev_common(inputs), *JEV_SELECT]
+    code, stdout, stderr = run([*argv, "--out", str(lock), "--json"])
+    assert code == 0
+    assert stderr == ""
+    return one_json(stdout)
+
+
+def test_jev_cli_round_trip_over_a_fake_transport(
+    run: Run, inputs: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Mocked end to end: lock, verify and replay through the explicit opt-in.
+
+    The real ``JevModel`` runs over the conformance fake connection, so no key
+    is read and no socket is opened. Receipt shapes are the fixture shapes:
+    the opt-in adds no field, and ``model_identity`` names the provider. The
+    bundle replays with the adapter, every transport module and the native
+    stack denied.
+    """
+    profile, _, opened = _mock_jev_transport(inputs, monkeypatch)
+    common = _jev_common(inputs)
+    jev = list(JEV_SELECT)
+    fixture_lock = locked(run, inputs, "fixed", tmp_path)
+    code, stdout, _ = run(lock_argv(inputs, "fixed", tmp_path / "fixture-again.json", "--json"))
+    assert code == 0
+    fixture_lock_receipt = one_json(stdout)
+
+    lock = tmp_path / "jev.lock.json"
+    document = _jev_lock(run, inputs, lock)
+    assert set(document) == set(fixture_lock_receipt)
+    assert document["model_identity"] == {
+        "provider": "jev",
+        "model": jev_module.MODEL,
+        "revision": jev_module.REVISION,
+        "adapter_version": jev_module.ADAPTER_VERSION,
+        "normalizer_version": "1",
+    }
+    sealed = parse_lock(read_input_text(lock))
+    validate_lock(sealed)
+    assert sealed.model_identity.provider == "jev"
+    assert sealed.model_identity.artifact_hashes == ()
+    assert document["lock_sha256"] == sealed.sha256
+
+    out = tmp_path / "jev.evidence"
+    code, stdout, stderr = run(
+        ["verify", "--lock", str(lock), *common, *jev, "--out", str(out), "--json"]
+    )
+    assert stderr == ""
+    document = one_json(stdout)
+    verdict = replay(out, expected_lock_sha256=sealed.sha256)
+    assert verdict.status != "ERROR"
+    assert code == EXIT_CODES[verdict.status]
+    assert document["status"] == verdict.status
+    assert document["reasons"] == list(verdict.reasons)
+    assert document["lock_sha256"] == verdict.lock_sha256 == sealed.sha256
+    assert (document["total"], document["accepted"]) == (verdict.total, verdict.accepted)
+    assert document["failures"] == {}
+    assert len(opened) == 2  # one model for lock, one for verify; nothing replaced mid-run
+    assert all(profile.worker_alive(model) is False for model in opened)
+    assert profile.requests_sent(opened[1]) == verdict.total == 128
+    fixture_out = tmp_path / "fixture.evidence"
+    code, stdout, _ = run(verify_argv(inputs, "fixed", fixture_lock, fixture_out, "--json"))
+    assert code == 0
+    assert set(document) == set(one_json(stdout))
+
+    code, stdout, _ = run(["replay", str(out), "--expected-lock-sha256", sealed.sha256, "--json"])
+    assert code == EXIT_CODES[verdict.status]
+    assert one_json(stdout)["status"] == verdict.status
+    report = isolated(REPLAY_BLOCKED + ",actseal.experimental", ["replay", str(out), "--json"])
+    assert report["blocked_loaded"] == []
+    assert report["code"] == EXIT_CODES[verdict.status]
+    assert one_json(str(report["stdout"]))["lock_sha256"] == sealed.sha256
+
+
+def test_jev_lock_refuses_stable_providers_missing_opt_in_and_offline(
+    run: Run, inputs: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Against a Jev lock: provider mismatch and missing opt-in fail before any factory call.
+
+    With the real constructor restored, ``--offline`` is the adapter's setup
+    error, raised before the (forbidden) key read.
+    """
+    real_jev_model = jev_module.JevModel
+    _mock_jev_transport(inputs, monkeypatch)
+    common = _jev_common(inputs)
+    jev = list(JEV_SELECT)
+    lock = tmp_path / "jev.lock.json"
+    _jev_lock(run, inputs, lock)
+    monkeypatch.setattr(cli_module, "open_model", _forbidden)
+    for provider in (
+        ["--provider", "fixture", "--responses", str(inputs["fixed_responses.jsonl"])],
+        ["--provider", "laya"],
+    ):
+        code, stdout, _ = run(
+            [
+                "verify",
+                "--lock",
+                str(lock),
+                *common,
+                *provider,
+                "--out",
+                str(tmp_path / "no"),
+                "--json",
+            ]
+        )
+        assert code == 3
+        assert one_json(stdout)["error"] == (
+            "IntegrityError: model_identity.provider: requested provider does not match the lock"
+        )
+    # ... and jev without the opt-in is still a usage error against its own lock.
+    code, stdout, _ = run(
+        [
+            "verify",
+            "--lock",
+            str(lock),
+            *common,
+            "--provider",
+            "jev",
+            "--out",
+            str(tmp_path / "no"),
+            "--json",
+        ]
+    )
+    assert code == 3
+    assert one_json(stdout)["error"] == (
+        "usage: --experimental-provider is required with --provider jev"
+    )
+    assert not (tmp_path / "no").exists()
+    # With the real constructor restored, --offline on the Jev lock is a setup error before the key.
+    monkeypatch.setattr(cli_module, "open_model", runner_module.open_model)
+    monkeypatch.setattr(jev_module, "JevModel", real_jev_model)
+    code, stdout, _ = run(
+        [
+            "verify",
+            "--lock",
+            str(lock),
+            *common,
+            *jev,
+            "--offline",
+            "--out",
+            str(tmp_path / "no"),
+            "--json",
+        ]
+    )
+    assert code == 3
+    error = one_json(stdout)["error"]
+    assert isinstance(error, str)
+    assert error.startswith("ProviderSetupError: offline:")
+    assert not (tmp_path / "no").exists()

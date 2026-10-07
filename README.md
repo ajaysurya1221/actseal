@@ -1,109 +1,102 @@
-# Actseal
+<picture>
+  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-dark.svg">
+  <img alt="Actseal wordmark with the tagline Test model-chosen actions. Replay the evidence. Beside it, one loop of three steps: freeze, run and replay. Caption: Replay cannot authenticate responses, prove inference occurred, or establish label truth." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-light.svg" width="100%">
+</picture>
 
-**Decision contracts you can replay.**
+Actseal verifies model-chosen application actions for developers: freeze a policy, check its recorded decisions, and replay the evidence offline.
 
-If your application uses a model to choose an action, a confidence score alone
-does not tell you when that action is justified. Actseal freezes your policy,
-checks its errors and coverage on labelled cases, exercises provider failures,
-and saves evidence that you can replay without the model.
+[![CI](https://github.com/ajaysurya1221/actseal/actions/workflows/ci.yml/badge.svg)](https://github.com/ajaysurya1221/actseal/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/actseal)](https://pypi.org/project/actseal/)
+[![Python 3.12 and 3.13](https://img.shields.io/pypi/pyversions/actseal)](https://pypi.org/project/actseal/)
+[![Apache-2.0 license](https://img.shields.io/badge/license-Apache--2.0-blue)](https://github.com/ajaysurya1221/actseal/blob/main/LICENSE)
 
-## Try the packaged demo
+<picture>
+  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-dark.svg">
+  <img alt="How Actseal works in five stages. Freeze turns the frozen policy, labelled inputs and model identity into one lock. Run collects provider answers and six synthetic faults into decisions: ACT, ABSTAIN, ESCALATE or DENY. Verify applies the risk and coverage bounds and fault rules to one verdict with its exit code: PASS 0, BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes one bounded evidence bundle. Replay recomputes the verdict offline with no model call." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-light.svg" width="100%">
+</picture>
 
-With [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, run
-this on macOS or Linux. It selects Python 3.12 and installs
-[Actseal from PyPI](https://pypi.org/project/actseal/0.1.0/) in uv's tool environment;
-no source checkout, model or API key is needed.
-
-```bash
-uvx --python 3.12 --from actseal==0.1.0 actseal demo --out ./actseal-demo
-```
-
-Choose an output directory that does **not** already exist. Its parent must
-exist; Actseal refuses to overwrite an existing destination. Use a different
-directory name for another demo run.
-
-The demo evaluates the same policy against two authored sets of answers. The
-independently tested wheel produced **bad: BLOCK**, **fixed: PASS**, with both freshly replayed.
-The overall demo exits 0 only when those conditions hold. Here “fixed” names the
-fixture whose authored answers match the labels; no model was trained or repaired.
-
-```text
-actseal-demo/
-  inputs/          # copied contracts, labelled cases and recorded answers
-  bad/lock.json
-  bad/evidence/    # deliberately wrong authored answers
-  fixed/lock.json
-  fixed/evidence/  # authored answers that match the labels
-```
-
-| Authored demo | Verdict | Accepted actions | Wrong actions |
-|---|---|---|---|
-| Bad answers | BLOCK | 128 / 128 | 32 / 128 |
-| Matching-label answers | PASS | 128 / 128 | 0 / 128 |
-
-The installed demo took **0.17 seconds** on the reference Mac after environment
-preparation. Both bundles replayed correctly, and all eight Linux/macOS CI jobs
-produced identical evidence. [The quickstart](docs/quickstart.md) records exact
-bounds and measurement scope. First-time uv/Python/wheel downloads are separate;
-this is a synthetic fixture measurement, not an inference benchmark.
-
-Replay an individual bundle in a separate command:
+Run the packaged demonstration on macOS or Linux with
+[uv](https://docs.astral.sh/uv/getting-started/installation/) installed. The
+first command resolves the latest [Actseal release on PyPI](https://pypi.org/project/actseal/)
+for Python 3.12; no source checkout, model or API key is needed, and
+`./actseal-demo` must not already exist.
 
 ```bash
-uvx --python 3.12 --from actseal==0.1.0 actseal replay ./actseal-demo/fixed/evidence
+uvx --python 3.12 actseal demo --out ./actseal-demo
+uvx --offline --python 3.12 actseal replay ./actseal-demo/fixed/evidence
+uvx --offline --python 3.12 actseal replay ./actseal-demo/bad/evidence
 ```
 
-Replay reconstructs the policy decisions and verdict from recorded data; it
-does not call a provider. Replaying `bad/evidence` should return BLOCK and exit 1,
-even when replay correctly reproduces the result. See the
-[detailed quickstart](docs/quickstart.md) for JSON output, individual lock/verify
-commands and checking an externally obtained lock digest.
+The third command intentionally exits 1: replay faithfully reproduces the
+deliberately bad run's BLOCK. Python and package installation time is
+separate from the demo's own execution. The
+[quickstart](https://github.com/ajaysurya1221/actseal/blob/main/docs/quickstart.md)
+explains each output, the exit codes and how to pin one exact release.
 
-## Read the result
+**Guarantees**
 
-An **ACT** is a decision permitted by the frozen allowlist and selected-label
-probability threshold. **Coverage** is ACT decisions divided by all scheduled
-cases. **Risk** is wrong ACT decisions divided by ACT decisions. Actseal reports
-bounds around those rates; a high score or zero observed errors alone is not PASS.
+- Complete scheduled-case and required fault evidence is checked.
+- PASS requires the frozen risk/coverage bounds and fault rules to pass.
+- Supported evidence is recomputed offline without calling a model.
+
+**Limits**
+
+- Hashes and replay cannot authenticate coherently rewritten responses.
+- They cannot prove inference occurred or that labels are true.
+- Population claims require the stated sampling assumptions; Actseal does not enforce application execution.
+
+<picture>
+  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-dark.svg">
+  <img alt="Actseal architecture in seven groups: the CLI and typed API; contracts and locks; providers; normalization and policy; assessment, statistics and faults; evidence; and replay. Replay reads the evidence bundle and never reaches a provider." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-light.svg" width="100%">
+</picture>
+
+| Read | What it covers |
+|---|---|
+| [Concepts](https://github.com/ajaysurya1221/actseal/blob/main/docs/concepts.md) | Frozen policy, selected-option probability, per-case decisions versus whole-run verdicts, evidence scope, one attempt |
+| [CLI reference](https://github.com/ajaysurya1221/actseal/blob/main/docs/cli.md) and [Python guide](https://github.com/ajaysurya1221/actseal/blob/main/docs/python-api.md) | Exact commands, exit codes, JSON receipts, public functions and runnable examples |
+| [Stability manifest](https://github.com/ajaysurya1221/actseal/blob/main/docs/stability.md), [versioning](https://github.com/ajaysurya1221/actseal/blob/main/docs/versioning.md) and [migration](https://github.com/ajaysurya1221/actseal/blob/main/docs/migration.md) | The 1.x compatibility promise, what may change when, and the 0.1.0 evidence path |
+| [Statistical contract](https://github.com/ajaysurya1221/actseal/blob/main/docs/statistical-contract.md) and [threat model](https://github.com/ajaysurya1221/actseal/blob/main/docs/threat-model.md) | Bounds, verdict rules, sampling assumptions and the authenticity boundary |
+| [Providers](https://github.com/ajaysurya1221/actseal/blob/main/docs/providers.md) and [FAQ](https://github.com/ajaysurya1221/actseal/blob/main/docs/faq.md) | Fixture and optional native Laya setup; the PROVISIONAL experimental Jev cloud adapter behind `--provider jev --experimental-provider` (bring your own key, mocked-transport tests only, no accepted live receipt); answers to "why not PASS" |
+| [Publishing](https://github.com/ajaysurya1221/actseal/blob/main/docs/publishing.md), [CHANGELOG](https://github.com/ajaysurya1221/actseal/blob/main/CHANGELOG.md), [release notes (draft until published)](https://github.com/ajaysurya1221/actseal/blob/main/plan/v1/RELEASE_NOTES.md) and [SECURITY](https://github.com/ajaysurya1221/actseal/blob/main/SECURITY.md) | Release pipeline and receipts, changes per version, the receipt-backed release notes, private vulnerability reporting and support |
+
+## Read a result
+
+An **ACT** is a per-case decision permitted by the frozen allowlist and the
+selected-label probability threshold; it is not a statement that the answer is
+correct. **Coverage** is ACT decisions over all scheduled cases and **risk** is
+wrong ACT decisions over ACT decisions. A whole-run verdict bounds those rates:
 
 | Exit | Verdict | Meaning |
 |---|---|---|
-| 0 | PASS | The valid evidence satisfies the frozen risk/coverage limits and fault checks. |
-| 1 | BLOCK | Valid evidence establishes a limit violation or a deterministic fault-check failure. |
-| 2 | INCONCLUSIVE | Valid evidence cannot establish either PASS or BLOCK. |
-| 3 | ERROR | Inputs/evidence are invalid or incomplete, setup/usage fails, or the native worker experiment is invalidated. |
+| 0 | PASS | Valid evidence satisfies the frozen risk and coverage limits and the fault checks. |
+| 1 | BLOCK | Valid evidence establishes a limit violation or a fault-check failure. |
+| 2 | INCONCLUSIVE | Valid evidence proves neither PASS nor BLOCK. |
+| 3 | ERROR | Invalid or incomplete evidence, a usage or setup failure, or an invalidated native-worker experiment. |
 
-`lock` also returns 0 on success. `demo` returns 0 for its expected BLOCK/PASS
-pair plus matching replays; it does not turn the bad run into PASS. Append
-`--json` to a command for structured output. Failures and warnings are surfaced.
+`lock` exits 0 on success. `demo` exits 0 only for its expected BLOCK/PASS
+pair with matching replays; it never relabels the bad run. Every command
+accepts `--json` for one versioned receipt.
 
-## Use your own policy
+## Scope
 
-v0.1.0 supports one categorical question with 2–16 labels, a frozen action
-allowlist and threshold, recorded fixtures, and an optional pinned native Laya
-CPU adapter. Start with the [quickstart](docs/quickstart.md),
-[statistical contract](docs/statistical-contract.md) and
-[provider setup and limitations](docs/providers.md). The core and replay require
-no model package or hosted service. Jev is deferred, not a v0.1.0 dependency.
+Actseal 1.x supports one categorical question with 2 to 16 labels, a frozen
+action allowlist and threshold, recorded fixture responses and an optional
+pinned native Laya CPU adapter. An experimental Jev cloud adapter ships as a
+PROVISIONAL, explicit opt-in (`--provider jev --experimental-provider`) with
+no 1.x compatibility promise and no accepted live evidence. The runtime core
+depends only on the Python standard library (3.12 or 3.13) on Linux and
+macOS; Windows is unsupported. Replay never imports a provider. The packaged demonstration is synthetic
+(`evidence_scope=demo`) and establishes no population or model-quality
+result. Real interpretation requires independent cases and one prespecified
+attempt under a fixed policy; do not retry until PASS.
 
-The native Laya CLI check at candidate `434c682` also preserved an honest result:
-all 128 synthetic cases ABSTAINed at the fixed threshold, with no provider
-failures. Verification and replay both returned BLOCK for insufficient coverage;
-no accepted cases means risk remains unestimated, [0,1]. The policy was not
-tuned or retried to obtain PASS. [Provider details](docs/providers.md) record
-the environment, warnings and bounds; this is an integration check, not a
-population or model-quality benchmark.
-
-The demonstration is synthetic, marked `evidence_scope=demo`, and establishes no
-population or model-quality result. For real data, the statistical interpretation
-requires independent cases and one prespecified attempt under a fixed policy and
-operating regime. Actseal does not enforce another application's behavior.
-
-Hashes and replay check consistency. Even a trusted lock digest cannot
-authenticate rewritten responses under that lock, prove inference occurred or
-prove the labels true. Read the [threat model](docs/threat-model.md) before using
-evidence to authorize actions.
-
-Apache-2.0; see [LICENSE](LICENSE), [NOTICE](NOTICE) and
-[dependency notices](docs/dependencies.md). Contributions:
-[CONTRIBUTING](CONTRIBUTING.md). Changes: [CHANGELOG](CHANGELOG.md).
+Apache-2.0; see [LICENSE](https://github.com/ajaysurya1221/actseal/blob/main/LICENSE),
+[NOTICE](https://github.com/ajaysurya1221/actseal/blob/main/NOTICE) and
+[dependency notices](https://github.com/ajaysurya1221/actseal/blob/main/docs/dependencies.md).
+Contributions: [CONTRIBUTING](https://github.com/ajaysurya1221/actseal/blob/main/CONTRIBUTING.md).

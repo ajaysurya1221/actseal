@@ -79,8 +79,35 @@ def laya_envelope(answer_json: str) -> str:
     return f'{{"answers":{{"department":{answer_json}}},"model":"laya-rl-agent",{ZERO_USAGE}}}'
 
 
+JEV_ZERO_USAGE = '"usage":{"input_tokens":0,"output_tokens":0}'
+
+
+def jev_identity() -> ModelIdentity:
+    return ModelIdentity(
+        "jev",
+        "jev-1.13.0",
+        "jev-1.13.0",
+        (),
+        "1",
+        "1",
+        (("endpoint", "https://api.typesafe.ai/v1/systemone"),),
+    )
+
+
+def jev_envelope(answer_json: str) -> str:
+    """The canonical Jev fault body: the inner answer plus diagnostic confidence 1.0."""
+    inner = json.loads(answer_json)
+    inner["confidence"] = 1.0
+    answer = json.dumps(inner, sort_keys=True, separators=(",", ":"))
+    return f'{{"answers":{{"department":{answer}}},"model":"jev-1.13.0",{JEV_ZERO_USAGE}}}'
+
+
 IdentityFactory = Callable[[], ModelIdentity]
-PROVIDERS = [pytest.param(make_identity, id="fixture"), pytest.param(laya_identity, id="laya")]
+PROVIDERS = [
+    pytest.param(make_identity, id="fixture"),
+    pytest.param(laya_identity, id="laya"),
+    pytest.param(jev_identity, id="jev"),
+]
 
 
 # --------------------------------------------------------------------------- #
@@ -252,6 +279,63 @@ def test_laya_bodies_are_exact_zero_usage_envelopes() -> None:
         }
 
 
+def test_jev_bodies_are_exact_envelopes_with_diagnostic_confidence_one() -> None:
+    """V1-011: the six scenarios keep their ids, order and dispositions under a Jev identity."""
+    lock = make_lock(jev_identity())
+    fixture_lock = make_lock()
+    assert [spec.scenario_id for spec in lock.fault_inventory] == [
+        spec.scenario_id for spec in fixture_lock.fault_inventory
+    ]
+    for kind in ("identity_mismatch", "unknown_choice", "low_confidence"):
+        inner = fault_capture(fixture_lock, spec_for(kind))[1].body_json
+        assert inner is not None
+        _, capture = fault_capture(lock, spec_for(kind))
+        assert capture.body_json == jev_envelope(inner)
+        body = json.loads(capture.body_json or "")
+        assert set(body) == {"model", "answers", "usage"}
+        assert body["model"] == "jev-1.13.0"
+        assert body["usage"] == {"input_tokens": 0, "output_tokens": 0}
+        answer = body["answers"]["department"]
+        assert set(answer) == {"type", "choice", "probabilities", "confidence"}
+        assert answer["confidence"] == 1.0
+    for kind in ("timeout", "rate_limit"):
+        assert fault_capture(lock, spec_for(kind))[1].body_json is None
+    assert fault_capture(lock, spec_for("malformed_response"))[1].body_json == "{"
+
+
+def test_jev_low_confidence_abstains_despite_vendor_confidence_one() -> None:
+    """The one-hot vendor confidence is 1.0 while the selected probability is 0.0."""
+    results = {r.scenario_id: r for r in run_fault_campaign(make_lock(jev_identity()))}
+    low = results["fault.low_confidence"]
+    assert isinstance(low.outcome, ChoiceAnswer)
+    assert low.outcome.provider_confidence == 1.0
+    assert low.outcome.selected_probability == 0.0
+    assert low.outcome.choice == "billing"
+    assert low.decision.action == "ABSTAIN"
+    assert low.decision.reason == "policy.low_confidence"
+    unknown = results["fault.unknown_choice"]
+    assert isinstance(unknown.outcome, ProviderFailure)
+    assert unknown.outcome.code == "unknown_choice"
+    assert unknown.decision.action == "DENY"
+    mismatch = results["fault.identity_mismatch"]
+    assert isinstance(mismatch.outcome, ProviderFailure)
+    assert mismatch.outcome.code == "identity_mismatch"
+    assert mismatch.capture.identity.revision == "jev-1.13.0:fault"
+    assert json.loads(mismatch.capture.body_json or "")["model"] == "jev-1.13.0"
+
+
+def test_jev_campaign_rederives_on_offline_round_trip() -> None:
+    """Serialized Jev fault results decode and re-normalize to themselves without any adapter."""
+    lock = make_lock(jev_identity())
+    for result in run_fault_campaign(lock):
+        decoded = from_data(FaultResult, to_data(result))
+        assert decoded == result
+        assert normalize(decoded.capture, lock.contract.question, lock.model_identity) == (
+            decoded.outcome
+        )
+        assert evaluate(decoded.outcome, lock.contract.policy) == decoded.decision
+
+
 def test_identity_mismatch_changes_only_the_revision() -> None:
     lock = make_lock()
     _, capture = fault_capture(lock, spec_for("identity_mismatch"))
@@ -418,6 +502,60 @@ def test_laya_campaign_envelope_defects_escalate(mutate: object, code: str) -> N
     decision = evaluate(outcome, lock.contract.policy)
     assert decision.action == "ESCALATE"
     assert decision.reason == f"provider.{code}"
+
+
+def _jev_low_confidence() -> tuple[PlanLock, CapturedOutcome, dict[str, object]]:
+    lock = make_lock(jev_identity())
+    _, capture = fault_capture(lock, spec_for("low_confidence"))
+    body = json.loads(capture.body_json or "")
+    assert isinstance(body, dict)
+    return lock, capture, body
+
+
+@pytest.mark.parametrize(
+    ("mutate", "code"),
+    [
+        (lambda b: b.update({"model": "jev-1.12.0"}), "identity_mismatch"),
+        (lambda b: b.update({"model": "laya-rl-agent"}), "identity_mismatch"),
+        (lambda b: b.update({"model": 1}), "malformed_response"),
+        (
+            lambda b: b["answers"].update({"other": b["answers"].pop("department")}),
+            "malformed_response",
+        ),
+        (lambda b: b["answers"].clear(), "malformed_response"),
+        (lambda b: b["usage"].update({"input_tokens": True}), "malformed_response"),
+        (lambda b: b["usage"].update({"state_tokens": 0}), "malformed_response"),
+        (lambda b: b["usage"].pop("output_tokens"), "malformed_response"),
+        (lambda b: b.pop("usage"), "malformed_response"),
+        (lambda b: b["answers"]["department"].pop("confidence"), "malformed_response"),
+        (lambda b: b["answers"]["department"].update({"action": {}}), "malformed_response"),
+        (lambda b: b["answers"]["department"].update({"confidence": 2.0}), "malformed_response"),
+    ],
+)
+def test_jev_campaign_envelope_defects_escalate(mutate: object, code: str) -> None:
+    lock, capture, body = _jev_low_confidence()
+    mutate(body)  # type: ignore[operator]
+    outcome = normalize(_with_body(capture, body), lock.contract.question, lock.model_identity)
+    assert isinstance(outcome, ProviderFailure)
+    assert outcome.code == code
+    decision = evaluate(outcome, lock.contract.policy)
+    assert decision.action == "ESCALATE"
+    assert decision.reason == f"provider.{code}"
+
+
+def test_jev_and_laya_campaigns_reject_each_other_s_envelopes() -> None:
+    jev_lock, jev_capture, _ = _jev_low_confidence()
+    laya_lock, laya_capture, _ = _laya_low_confidence()
+    assert jev_capture.body_json is not None
+    assert laya_capture.body_json is not None
+    swapped = replace(jev_capture, body_json=laya_capture.body_json)
+    outcome = normalize(swapped, jev_lock.contract.question, jev_lock.model_identity)
+    assert isinstance(outcome, ProviderFailure)
+    assert outcome.code == "malformed_response"
+    swapped = replace(laya_capture, body_json=jev_capture.body_json)
+    outcome = normalize(swapped, laya_lock.contract.question, laya_lock.model_identity)
+    assert isinstance(outcome, ProviderFailure)
+    assert outcome.code == "malformed_response"
 
 
 def test_fixture_campaign_rejects_a_native_envelope_body() -> None:

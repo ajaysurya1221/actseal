@@ -9,6 +9,11 @@ The documented quickstart command shapes are checked against the installed
 ``--help`` output, the console demo is timed against the 60-second target, and
 every exit code (0/1/2/3) is exercised through both installed entrypoints with
 parseable JSON. No model is loaded or downloaded.
+
+Supplied wheel: when ``ACTSEAL_TEST_WHEEL`` names an existing absolute
+``actseal-*.whl`` path, that exact file is installed and ``uv build`` is never
+invoked. The release workflow uses this to test the immutable built artifact.
+Any other value fails the run; the tests never fall back to rebuilding.
 """
 
 from __future__ import annotations
@@ -158,8 +163,39 @@ def uv() -> str:
     return binary
 
 
+def supplied_wheel() -> Path | None:
+    """The exact wheel named by ``ACTSEAL_TEST_WHEEL``; ``None`` means build one here.
+
+    ``ACTSEAL_TEST_DIST`` (the downloaded release artifact directory) may only
+    appear together with ``ACTSEAL_TEST_WHEEL``, and the wheel must live inside it.
+    """
+    raw = os.environ.get("ACTSEAL_TEST_WHEEL")
+    dist = os.environ.get("ACTSEAL_TEST_DIST")
+    if raw is None:
+        if dist is not None:
+            pytest.fail(
+                f"ACTSEAL_TEST_DIST={dist!r} set without ACTSEAL_TEST_WHEEL; refusing to rebuild"
+            )
+        return None
+    path = Path(raw)
+    if not path.is_absolute():
+        problem = "is not an absolute path"
+    elif not path.is_file():
+        problem = "is not an existing regular file"
+    elif not (path.name.startswith("actseal-") and path.suffix == ".whl"):
+        problem = "is not named actseal-*.whl"
+    elif dist is not None and path.resolve().parent != Path(dist).resolve():
+        problem = f"is not inside ACTSEAL_TEST_DIST={dist!r}"
+    else:
+        return path
+    pytest.fail(f"ACTSEAL_TEST_WHEEL={raw!r} {problem}; refusing to rebuild")
+
+
 @pytest.fixture(scope="module")
 def wheel(outside: Path, uv: str) -> Path:
+    supplied = supplied_wheel()
+    if supplied is not None:
+        return supplied
     dist = outside / "dist"
     tool([uv, "build", "--no-sources", "--wheel", "--out-dir", str(dist)], cwd=ROOT)
     wheels = sorted(dist.glob("actseal-*.whl"))
@@ -240,7 +276,9 @@ def test_installed_package_is_isolated_from_the_checkout(
 ) -> None:
     report = guarded(installed, REPLAY_BLOCKED, ["--version"], cwd=outside)
     assert report["code"] == 0
-    assert str(report["stdout"]).startswith("actseal 0.1.0")
+    # The 1.0.0 release candidate (Codex metadata commit 0b57933): the installed
+    # wheel reports exactly its own version string.
+    assert str(report["stdout"]) == "actseal 1.0.0\n"
     package = Path(str(report["package_file"]))
     assert package.is_relative_to(installed.venv.resolve())
     assert not package.is_relative_to(ROOT.resolve())

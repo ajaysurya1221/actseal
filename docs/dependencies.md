@@ -190,6 +190,6 @@ This is an exact-version declaration and selected license-file audit, not an exh
 
 Record dependency updates as explicit changes to the frozen provider identity when they can affect predictions or normalization. Re-run the native reference smoke and associated fixtures before accepting such an update; then regenerate the committed lockfile using the pinned uv version. Do not float package or model aliases in published evidence.
 
-Jev is an optional v2 service adapter, not a dependency or substitute for the open local path. Its [customer agreement](https://typesafe.ai/legal/mca) is proprietary service terms, not an OSI license. No vendor SDK, hosted tier, access key, or paid API call is required by the v1 reference stack.
+The experimental Jev adapter (`actseal.experimental.providers.jev`, PROVISIONAL, explicit opt-in only) is implemented with the standard library and adds no dependency; it is not a substitute for the open local path and ships with no accepted live receipt. Its [customer agreement](https://typesafe.ai/legal/mca) is proprietary service terms, not an OSI license. No vendor SDK, hosted tier, access key, or paid API call is required by the 1.x reference stack.
 
 Before release, CI must verify the final lockfile, build, tests, lint, formatting, types, and pre-commit commands. A successful upstream smoke does not replace those product checks. Include all attributed copied-code notices in the repository and distribution, and report any newly introduced dependency/license before merging it.
