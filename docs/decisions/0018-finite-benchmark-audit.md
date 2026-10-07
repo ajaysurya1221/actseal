@@ -92,3 +92,31 @@ unchanged assessment, with a correctly powered study deferred.
 - Related: [ADR 0003](0003-risk-coverage-statistical-contract.md),
   [ADR 0017](0017-experimental-decision-provider.md),
   [statistical contract](../statistical-contract.md).
+
+## Status addendum — 8 October 2026
+
+This addendum supersedes the live-collection status above, which is kept as
+written on 7 October 2026.
+
+- Live collection ran once under the frozen protocol and was accepted at
+  review on 8 October 2026. Run id `ec3877960b376021ce4c81110dad353c`;
+  producer: the unreleased benchmark snapshot `d3edbab`
+  (`d3edbab2dfbd44a0e9e272e1671143517832e3b4`, Python 3.12.13), not the
+  published 1.0.0 package; preregistration candidate 3 (seal
+  `c7bbc525…a2c`), lock seal `e901ad5e…a87a`.
+- Collection: COMPLETE. 959 single-attempt captures (320 calibration, 639
+  verification); none started without capture, none unattempted; within the
+  90-minute budget.
+- Verification verdict: **INCONCLUSIVE** (`evidence.insufficient`). 580/639
+  cases received ACT with 24 accepted errors; the risk interval
+  [0.02498087158203282, 0.06393316057415596] contains `max_risk` 0.05, so the
+  evidence proves neither PASS nor BLOCK. Results remain `demo` scope as the
+  consequences above require.
+- The complete run, the producer source archive and offline verification
+  instructions are published in
+  [docs/results/jev-audit-2026-10-08](../results/jev-audit-2026-10-08/README.md).
+- No compatibility-registry entry is added. The exact snapshot replays the
+  bundle; the published 1.0.0 package reports `integrity.lock` for this
+  unregistered producer. Any future cross-release entry requires its own
+  exact-producer/verifier review and archived-evidence regression tests under
+  [ADR 0015](0015-v1-stability-and-replay-compatibility.md).
