@@ -10,9 +10,21 @@ re-verifies the pinned SHA-256 first.
 
 from __future__ import annotations
 
-from . import checks, cli, how_it_works, inventory, outline, pipeline, references, svg, tools
+from . import (
+    architecture,
+    checks,
+    cli,
+    how_it_works,
+    inventory,
+    outline,
+    pipeline,
+    references,
+    svg,
+    tools,
+)
 
 __all__ = [
+    "architecture",
     "checks",
     "cli",
     "how_it_works",

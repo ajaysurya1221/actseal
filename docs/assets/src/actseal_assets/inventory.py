@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import hero, how_it_works, social
+from . import architecture, hero, how_it_works, social
 
 ASSET_DIR = "docs/assets"
 SOURCE_DIR = "docs/assets/src"
@@ -129,9 +129,9 @@ def _mobile_svg(path: str, width: int, height: int) -> Output:
     return _svg(path, width, height, display_width=MOBILE_DISPLAY_WIDTH)
 
 
-# Heights other than the hero, how-it-works and social preview are
-# provisional; the task that implements each figure finalizes them together
-# with its renderer.
+# Heights other than the hero, how-it-works, architecture and social preview
+# are provisional; the task that implements each figure finalizes them
+# together with its renderer.
 ASSETS: tuple[Asset, ...] = (
     Asset(
         name="hero",
@@ -196,7 +196,29 @@ ASSETS: tuple[Asset, ...] = (
         priority="P1",
         task="13",
         summary="At most seven shipped groups traced to modules; replay never reaches providers.",
-        outputs=(_svg("architecture.svg", 1600, 900),),
+        outputs=(
+            _svg(
+                "architecture-light.svg",
+                architecture.DESKTOP_WIDTH,
+                architecture.DESKTOP_HEIGHT,
+            ),
+            _svg(
+                "architecture-dark.svg",
+                architecture.DESKTOP_WIDTH,
+                architecture.DESKTOP_HEIGHT,
+            ),
+            _mobile_svg(
+                "architecture-mobile-light.svg",
+                architecture.MOBILE_WIDTH,
+                architecture.mobile_height(),
+            ),
+            _mobile_svg(
+                "architecture-mobile-dark.svg",
+                architecture.MOBILE_WIDTH,
+                architecture.mobile_height(),
+            ),
+        ),
+        renderer=architecture.render,
     ),
     Asset(
         name="demo",
