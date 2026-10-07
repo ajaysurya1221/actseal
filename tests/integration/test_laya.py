@@ -7,6 +7,14 @@ the reason; it never skips into a claimed pass. Run exactly:
 
     HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya \
         pytest -m integration tests/integration/test_laya.py
+
+Every test owns its model: the ``model`` fixture is function-scoped and closes
+in ``finally``, so at most one native worker is resident at a time and the
+close test cannot invalidate a model another test is still using. The close
+test is deliberately first in file order as an extra ordering check: a shared
+model would make the later smoke and reuse tests fail. Do not run this file
+under xdist. The shared lifecycle and binding checks are the ones every
+provider double passes in ``tests/conformance``.
 """
 
 from __future__ import annotations
@@ -38,6 +46,14 @@ from actseal.records import (
     ProviderFailure,
 )
 from actseal.serialization import strict_json_loads
+from provider_support import (
+    capture_or_fail,
+    check_capture_binds,
+    check_close_lifecycle,
+    check_identity_immutable,
+    child_alive,
+    child_pid,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -85,18 +101,37 @@ def _require_prerequisites() -> None:
             pytest.fail(f"prerequisite missing: pinned artifact not cached: {name}")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def model() -> Iterator[LayaModel]:
+    """One freshly loaded resident model per test, always closed afterwards."""
     _require_prerequisites()
     instance = LayaModel(offline=True)
     try:
         yield instance
     finally:
         instance.close()
+        assert not child_alive(instance)
+
+
+def test_close_leaves_no_worker_and_is_idempotent(model: LayaModel) -> None:
+    child = model._child
+    assert child is not None
+    assert child.poll() is None
+    request = DecisionRequest("smoke-005", SMOKE_STATE, SMOKE_QUESTION)
+    capture = check_close_lifecycle(
+        model,
+        request,
+        after_close="unavailable",
+        timeout_s=30.0,
+        alive=lambda: child_alive(model),
+    )
+    assert child.poll() is not None
+    assert "laya.unavailable:closed" in capture.warnings
+    assert model._child is child  # no replacement worker was ever started
 
 
 def test_loaded_identity_is_the_pinned_model(model: LayaModel) -> None:
-    identity = model.identity()
+    identity = check_identity_immutable(model)
     assert identity.provider == "laya"
     assert identity.model == MODEL_ID
     assert identity.revision == REVISION
@@ -118,7 +153,8 @@ def test_loaded_identity_is_the_pinned_model(model: LayaModel) -> None:
 
 def test_smoke_request_preserves_envelope_and_normalizes(model: LayaModel) -> None:
     request = DecisionRequest("smoke-001", SMOKE_STATE, SMOKE_QUESTION)
-    capture = model.decide(request, timeout_s=30.0)
+    capture = capture_or_fail(model, request, 30.0)
+    check_capture_binds(capture, request, model.identity())
     assert capture.request_sha256 == request_sha256(request)
     assert capture.identity == model.identity()
     assert capture.failure_code is None, capture
@@ -147,11 +183,20 @@ def test_smoke_request_preserves_envelope_and_normalizes(model: LayaModel) -> No
 
 
 def test_second_request_reuses_the_healthy_worker(model: LayaModel) -> None:
+    pid = child_pid(model)
+    assert pid is not None
+    assert child_alive(model)
+    first = capture_or_fail(model, DecisionRequest("smoke-001", SMOKE_STATE, SMOKE_QUESTION), 30.0)
+    assert first.failure_code is None, first
     request = DecisionRequest(
         "smoke-002", "The app crashes on launch after the update.", SMOKE_QUESTION
     )
-    capture = model.decide(request, timeout_s=30.0)
+    capture = capture_or_fail(model, request, 30.0)
+    check_capture_binds(capture, request, model.identity())
     assert capture.failure_code is None, capture
+    assert capture.request_sha256 != first.request_sha256
+    assert child_alive(model)
+    assert child_pid(model) == pid  # the same resident worker answered both requests
     outcome = normalize(capture, SMOKE_QUESTION, model.identity())
     assert isinstance(outcome, ChoiceAnswer), outcome
     assert outcome.choice in SMOKE_QUESTION.labels
@@ -169,16 +214,4 @@ def test_oversized_state_is_rejected_before_inference(model: LayaModel) -> None:
         DecisionRequest("smoke-004", SMOKE_STATE, SMOKE_QUESTION), timeout_s=30.0
     )
     assert healthy.failure_code is None
-
-
-def test_close_leaves_no_worker_and_is_idempotent(model: LayaModel) -> None:
-    child = model._child
-    assert child is not None
-    assert child.poll() is None
-    model.close()
-    assert child.poll() is not None
-    model.close()
-    capture = model.decide(
-        DecisionRequest("smoke-005", SMOKE_STATE, SMOKE_QUESTION), timeout_s=30.0
-    )
-    assert capture.failure_code == "unavailable"
+    assert child_alive(model)

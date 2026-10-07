@@ -6,8 +6,8 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 - [x] 01 Run full baseline; retain two failures and native success.
 - [x] 01R repair and independent 2302-test verification ACCEPT; PR #10 merged with hosted CI green.
 - [x] 02 Freeze stable public interfaces, schema versions and compatible replay; PR15 merged after eight green checks.
-- [ ] 03 Shared provider conformance and native fixture repair.
-- [ ] 04 Numerical boundary/properties/eight mutations.
+- [x] 03 Shared provider conformance and native fixture repair; independent checks and PR20 merged.
+- [x] 04 Numerical boundary/properties/eight mutations; all8 killed and PR21 merged.
 - [ ] 05–06 Optional experimental Jev and preregistered descriptive audit, subject to cut.
 - [ ] 07–08 Application example and complete docs.
 - [ ] 09 Harden/rehearse CI and exact-artifact trusted publication.
@@ -19,4 +19,8 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work:03/04 drafts are preserved and reviewed; Claude quota resets at01:50 IST.02 core and10 toolchain are merged.09 CI helper strictness is committed/independently accepted at0060f27; Claude schema/docs completion, final assets and hosted rehearsal remain. The Task06 collection supplement is recorded; no live requests have occurred.12 needs a content revision. Asset-download and exact local-check permission requests remain pending. All handles are terminal; see STATE.md before resuming. INTEGRATION_CHECKLIST.md records final fingerprint, archived-evidence and packaged-registry checks.
+Current work: all five scoped approvals are resolved. Independent native03, mutations04 and exact-source example07 checks pass; workflow12 is accepted/merged; real hero11 is independently reviewed with green push CI, but PR25 conflicts with the merged workflow registration. V1-030 assigns the narrow combined resolution to Claude15. Example PR35 merge preview fails the planned compatibility registry gate; keep its original archive unchanged and fix through Task19.
+
+Fable quota resets10:30IST today; the two implementation sessions are terminal. Resume the exact existing sessions after reset, preserving the untracked Task06 draft and applying its preregistration-binding review. Social15 needs only the verified resvg filename repair before real generation. No model/billing substitution.
+
+Pending separate key-loading approval affects only the optional live Jev audit. No real Jev key was accessed, no live Jev or hosted-provider request was made, and no v1 tag or publication exists. Full release requirements remain unchanged.

@@ -20,9 +20,11 @@ Local modifications (Apache-2.0 section 4(b) notice; this file was changed):
 
 * ``clopper_pearson_tail`` additionally rejects booleans and non-integer counts
   with ``TypeError`` and a boolean, non-numeric or non-finite tail with
-  ``TypeError``/``ValueError`` before the copied validation runs. These are
-  Actseal's public-boundary rules from CONTRACTS section 1; they reject inputs
-  the original accepted by Python's bool/int promotion and never widen the
+  ``TypeError``/``ValueError`` before the copied validation runs. An integer
+  tail too large to convert to binary64 is treated as non-finite
+  (``ValueError``) rather than leaking ``OverflowError``. These are Actseal's
+  public-boundary rules from CONTRACTS section 1; they reject inputs the
+  original accepted by Python's bool/int promotion and never widen the
   numerical domain.
 * ``_validate`` (lines 22-25), ``clopper_pearson`` (lines 116-120) and every
   Wilson/Newcombe/Bonferroni unit are intentionally not ported: CONTRACTS
@@ -148,10 +150,20 @@ def _require_count(name: str, value: object) -> int:
 
 
 def _require_tail(value: object) -> float:
-    """Actseal boundary: the tail is a finite number, never a boolean."""
+    """Actseal boundary: the tail is a finite number, never a boolean.
+
+    An integer too large for binary64 makes ``math.isfinite`` raise
+    ``OverflowError`` instead of answering; such a tail is not finite in the
+    supported domain and is reported as the documented ``ValueError`` without
+    echoing the input.
+    """
     if type(value) is bool or not isinstance(value, int | float):
         raise TypeError("tail must be a number")
-    if not math.isfinite(value):
+    try:
+        finite = math.isfinite(value)
+    except OverflowError:
+        finite = False
+    if not finite:
         raise ValueError("tail must be finite")
     return value
 

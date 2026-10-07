@@ -50,35 +50,27 @@ from actseal.records import (
     Option,
     ProviderFailure,
 )
-from actseal.serialization import sha256_bytes, to_data
+from actseal.serialization import sha256_bytes
 from conftest import make_question, make_request
+from provider_support import (
+    FAKE_WORKER,
+    ROW_FAIL,
+    ROW_OK,
+    child_alive,
+    pinned_identity,
+    spawn,
+    write_fake_worker,
+    write_rows,
+)
+
+# Re-exported for tests/unit/test_runner.py and tests/unit/test_cli.py, which import the
+# fake worker and the pinned identity from this module; the definitions now live in
+# tests/provider_support.py so the conformance suite can share them.
+__all__ = ["FAKE_WORKER", "pinned_identity"]
 
 # --------------------------------------------------------------------------- #
 # Fixture adapter
 # --------------------------------------------------------------------------- #
-
-ROW_OK: dict[str, Any] = {
-    "case_id": "v-001",
-    "body_json": '{"type": "choice", "choice": "billing", '
-    '"probabilities": {"billing": 0.95, "technical": 0.04, "sales": 0.01}}',
-    "failure_code": None,
-    "warnings": [],
-}
-ROW_FAIL = {
-    "case_id": "v-002",
-    "body_json": None,
-    "failure_code": "timeout",
-    "warnings": ["w.slow"],
-}
-
-
-def write_rows(path: Path, rows: list[object], *, trailing_newline: bool = True) -> bytes:
-    text = "\n".join(json.dumps(row) if not isinstance(row, str) else row for row in rows)
-    if trailing_newline:
-        text += "\n"
-    data = text.encode("utf-8")
-    path.write_bytes(data)
-    return data
 
 
 @pytest.fixture
@@ -693,142 +685,10 @@ def test_infer_mask_token_in_text_is_neutralized_before_counting() -> None:
 # Laya subprocess lifecycle with a fake worker
 # --------------------------------------------------------------------------- #
 
-FAKE_WORKER = r"""
-import json
-import os
-import sys
-import time
-
-mode = sys.argv[1] if len(sys.argv) > 1 else "ok"
-out = sys.stdout.buffer
-inp = sys.stdin.buffer
-
-
-def send(obj):
-    out.write(json.dumps(obj).encode("utf-8") + b"\n")
-    out.flush()
-
-
-identity = json.loads(os.environ["ACTSEAL_FAKE_IDENTITY"])
-if mode == "hang-on-start":
-    time.sleep(60)
-if mode == "exit-on-start":
-    sys.exit(3)
-if mode == "setup-error":
-    send({"kind": "setup_error", "warnings": ["laya.setup:ValueError"]})
-    sys.exit(1)
-if mode == "garbage-on-start":
-    out.write(b"not json\n")
-    out.flush()
-    time.sleep(60)
-if mode == "deep-on-start":
-    out.write(b"[" * 10001 + b"]" * 10001 + b"\n")
-    out.flush()
-    time.sleep(60)
-if mode == "wrong-identity":
-    identity["revision"] = "0000000000000000000000000000000000000000"
-if mode == "bad-identity":
-    identity = {"provider": "laya"}
-if mode == "echo-env":
-    send({"kind": "ready", "identity": identity,
-          "warnings": ["env:" + os.environ.get("HF_HUB_OFFLINE", "unset")
-                       + ":" + os.environ.get("TRANSFORMERS_OFFLINE", "unset")]})
-else:
-    send({"kind": "ready", "identity": identity,
-          "warnings": ["laya.load_warning:RuntimeWarning:clamped"]})
-if mode == "stop-reading":
-    time.sleep(60)  # ready, but never reads stdin: a large request cannot be written
-
-while True:
-    line = inp.readline()
-    if not line:
-        sys.exit(0)
-    msg = json.loads(line)
-    if msg["kind"] == "close":
-        if mode == "ignore-close":
-            time.sleep(60)
-        sys.exit(0)
-    seq = msg["seq"]
-    if mode == "hang-on-decide":
-        time.sleep(60)
-    if mode == "exit-on-decide":
-        sys.exit(4)
-    if mode == "garbage-on-decide":
-        out.write(b"{\n")
-        out.flush()
-        continue
-    if mode == "huge-on-decide":
-        out.write(b"[" + b"1," * 700000 + b"1]\n")
-        out.flush()
-        continue
-    if mode == "deep-on-decide":
-        out.write(b"[" * 10001 + b"]" * 10001 + b"\n")
-        out.flush()
-        continue
-    if mode == "duplicate-keys-on-decide":
-        out.write(b'{"kind": "reply", "kind": "reply", "seq": ' + str(seq).encode() + b"}\n")
-        out.flush()
-        continue
-    if mode == "slow-reply":
-        time.sleep(0.6)
-    if mode == "fail-decide":
-        send({"kind": "reply", "seq": seq, "failure": "provider_error",
-              "warnings": ["laya.exception:RuntimeError"]})
-        continue
-    if mode == "bad-failure":
-        send({"kind": "reply", "seq": seq, "failure": "weird", "warnings": []})
-        continue
-    labels = list(msg["question"]["criteria"])
-    probabilities = {label: 0.0 for label in labels}
-    probabilities[labels[0]] = 1.0
-    body = {
-        "model": "laya-rl-agent",
-        "answers": {msg["question_id"]: {"type": "choice", "choice": labels[0],
-                                          "probabilities": probabilities}},
-        "usage": {"input_tokens": len(msg["state"]), "output_tokens": 0,
-                  "state_tokens": 1, "state_tokens_dropped": 0,
-                  "truncated": False, "truncated_questions": []},
-    }
-    reply_seq = seq - 1 if mode == "stale-seq" else seq
-    send({"kind": "reply", "seq": reply_seq, "body": body,
-          "warnings": ["laya.predict_warning:x"] if mode == "warn" else []})
-"""
-
-
-def pinned_identity() -> ModelIdentity:
-    return ModelIdentity(
-        "laya",
-        MODEL_ID,
-        REVISION,
-        ARTIFACT_HASHES,
-        ADAPTER_VERSION,
-        NORMALIZER_VERSION,
-        (("device", "cpu"), ("dtype", "torch.float32"), ("threads", "4")),
-    )
-
 
 @pytest.fixture
 def fake_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    script = tmp_path / "fake_worker.py"
-    script.write_text(FAKE_WORKER, encoding="utf-8")
-    monkeypatch.setenv("ACTSEAL_FAKE_IDENTITY", json.dumps(to_data(pinned_identity())))
-    return script
-
-
-def spawn(
-    script: Path, mode: str = "ok", *, startup: float = 10.0, grace: float = 0.3
-) -> LayaModel:
-    return LayaModel._spawn(
-        (sys.executable, str(script), mode),
-        offline=True,
-        startup_timeout_s=startup,
-        close_grace_s=grace,
-    )
-
-
-def child_alive(model: LayaModel) -> bool:
-    child = model._child
-    return child is not None and child.poll() is None
+    return write_fake_worker(tmp_path, monkeypatch)
 
 
 def test_fake_worker_round_trip(fake_worker: Path) -> None:
