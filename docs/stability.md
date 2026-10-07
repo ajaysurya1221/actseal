@@ -374,7 +374,7 @@ amendment.
 | Module | Names | Meaning |
 |---|---|---|
 | `actseal` | `__version__` | Installed package version |
-| `actseal.records` | `SCHEMA_VERSION`, `CONTRACT_SCHEMA_VERSION` (1); `LOCK_SCHEMA_VERSION` (2); `MIN_OPTIONS` (2), `MAX_OPTIONS` (16); `MAX_CASES_PER_SPLIT` (10000); `MASS_TOLERANCE` (1e-12); `FAILURE_CODES`; `PROVIDERS` | Contract TOML and lock schema versions; option, case and probability-mass limits; the eight failure codes; the stable provider set `{fixture, laya}` |
+| `actseal.records` | `SCHEMA_VERSION`, `CONTRACT_SCHEMA_VERSION` (1); `LOCK_SCHEMA_VERSION` (2); `MIN_OPTIONS` (2), `MAX_OPTIONS` (16); `MAX_CASES_PER_SPLIT` (10000); `MASS_TOLERANCE` (1e-12); `FAILURE_CODES`; `PROVIDERS` | Contract TOML and lock schema versions; option, case and probability-mass limits; the eight failure codes; the admitted serialized provider set `{fixture, laya, jev}`, where `fixture` and `laya` are the stable CLI choices and `jev` is the identity provider of the PROVISIONAL experimental adapter (admitted for recorded evidence and replay; not a stable CLI choice) |
 | `actseal.serialization` | `MAX_JSON_BYTES` (128 MiB), `MAX_JSON_DEPTH` (32) | Strict-parser ceilings |
 | `actseal.contract` | `MAX_ROW_BYTES` (1 MiB) | JSONL row ceiling |
 | `actseal.locking` | `FAULT_INVENTORY`, `MAX_LOCK_BYTES` (32 MiB) | The frozen six-scenario fault table in order; lock document ceiling |

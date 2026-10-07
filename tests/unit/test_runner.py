@@ -572,6 +572,23 @@ def test_provider_mismatch_is_rejected_before_the_factory(tmp_path: Path) -> Non
             inputs / "calibration.jsonl",
             inputs / "verification.jsonl",
             tmp_path / "run",
+            provider="unsupported",
+            model_factory=never_called,
+        )
+
+
+def test_admitted_jev_provider_against_a_fixture_lock_is_rejected_before_the_factory(
+    tmp_path: Path,
+) -> None:
+    """``jev`` is an admitted identity provider (V1-011) but this lock is a fixture lock."""
+    lock_path = lock_for(tmp_path, make_identity())
+    inputs = tmp_path / "in"
+    with pytest.raises(IntegrityError, match="provider"):
+        verify_run(
+            lock_path,
+            inputs / "calibration.jsonl",
+            inputs / "verification.jsonl",
+            tmp_path / "run",
             provider="jev",
             model_factory=never_called,
         )
@@ -878,7 +895,69 @@ def test_open_model_fixture_rules(tmp_path: Path) -> None:
     assert offline.identity() == model.identity()
     offline.close()
     with pytest.raises(SchemaError, match="provider"):
+        open_model("unsupported", responses=None, offline=False)
+    with pytest.raises(SchemaError, match="provider"):
         open_model("jev", responses=None, offline=False)
+
+
+def test_open_model_rejects_admitted_but_unregistered_jev_without_constructing_laya(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """V1-011 guard: ``jev`` is admitted by ``records.PROVIDERS`` but not registered here.
+
+    Before the guard the non-fixture branch would have constructed Laya for any
+    admitted provider. Every argument combination must fail loudly with a
+    ``SchemaError`` naming ``provider`` and construct nothing.
+    """
+    constructed: list[dict[str, object]] = []
+
+    class FakeLaya:
+        def __init__(self, *, offline: bool = False) -> None:
+            constructed.append({"offline": offline})
+
+    monkeypatch.setattr(laya_module, "LayaModel", FakeLaya)
+    for responses in (None, tmp_path / "r.jsonl"):
+        for offline in (True, False):
+            with pytest.raises(SchemaError, match="provider") as excinfo:
+                open_model("jev", responses=responses, offline=offline)
+            assert "not registered" in str(excinfo.value)
+    assert constructed == []
+    # The registered providers are exactly the stable CLI choices until Task 19.
+    assert sorted(runner_module._REGISTERED_PROVIDERS) == ["fixture", "laya"]
+
+
+def test_open_model_jev_rejection_imports_no_adapter_in_a_fresh_interpreter() -> None:
+    """The guard fires before any adapter import: a blocked import never happens."""
+    script = (
+        "import importlib.abc, sys\n"
+        "class Deny(importlib.abc.MetaPathFinder):\n"
+        "    def find_spec(self, name, path=None, target=None):\n"
+        "        if name.startswith(('actseal.adapters.', 'actseal.experimental')):\n"
+        "            raise ImportError('adapter import attempted: ' + name)\n"
+        "        return None\n"
+        "sys.meta_path.insert(0, Deny())\n"
+        "from actseal.errors import SchemaError\n"
+        "from actseal.runner import open_model\n"
+        "for offline in (True, False):\n"
+        "    try:\n"
+        "        open_model('jev', responses=None, offline=offline)\n"
+        "    except SchemaError as exc:\n"
+        "        assert 'provider' in str(exc), str(exc)\n"
+        "    else:\n"
+        "        raise SystemExit('jev was constructed')\n"
+        "loaded = sorted(m for m in sys.modules if m.startswith("
+        "('actseal.adapters.', 'actseal.experimental', 'laya', 'torch')))\n"
+        "print(loaded)\n"
+    )
+    result = subprocess.run(  # noqa: S603 - fixed interpreter and literal script, no user input
+        [sys.executable, "-I", "-c", script],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr[-2000:]
+    assert result.stdout.strip() == "[]"
 
 
 def test_open_model_laya_rules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

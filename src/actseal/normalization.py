@@ -13,7 +13,10 @@ Order of checks (plan/CONTRACTS.md section 4, docs/providers.md):
 3. The raw body must be strict JSON. Dispatch on ``expected_identity.provider``:
    ``fixture`` bodies are inner answer objects; ``laya`` bodies are the entire
    native envelope whose generic marker, requested answer id and usage
-   diagnostics are validated before the inner answer is extracted.
+   diagnostics are validated before the inner answer is extracted; ``jev``
+   bodies are the entire HTTP response object of the experimental cloud
+   adapter (plan/v1/CHANGE_LOG.md V1-011), validated by the frozen profile
+   below.
 4. The inner answer must be ``type='choice'`` with a string choice. An unknown
    choice is ``unknown_choice``. Probabilities must cover exactly the declared
    labels with finite non-boolean numbers in [0, 1] and a positive total within
@@ -23,6 +26,19 @@ Order of checks (plan/CONTRACTS.md section 4, docs/providers.md):
 Provider ``confidence`` is preserved as ``provider_confidence``; native
 ``action`` metadata is accepted only as an object and otherwise ignored. Nothing
 here authorizes an action; that is the policy evaluator's job.
+
+Jev profile (PROVISIONAL, frozen before any live collection). The body is
+exactly ``{model, answers, usage}``. ``model`` must be a string; ``answers`` must
+hold exactly the requested question id; ``usage`` must be exactly
+``{input_tokens, output_tokens}`` with nonnegative non-boolean integers. Only
+after that shape check is the answering model compared with the pinned
+``jev-1.13.0``: a different string is ``identity_mismatch`` (a vendor-reported
+version claim that does not match the locked target), never an argmax or
+tolerance adjustment. The inner answer is exactly ``{type, choice,
+probabilities, confidence}``; its mass tolerance is the Actseal restriction
+``1e-12``, which is not a verified vendor rounding claim. Any out-of-profile
+field or type is ``malformed_response``. The vendor ``confidence`` is kept as
+diagnostic ``provider_confidence`` and never gates an action.
 
 Warnings are bounded codes (``normalize.<check>``) appended after the capture's
 own warnings. They never echo body text.
@@ -61,9 +77,19 @@ NORMALIZER_VERSION: Final = "1"
 FIXTURE_MASS_TOLERANCE: Final = 1e-12
 LAYA_MASS_TOLERANCE_PER_OPTION: Final = 0.00005
 LAYA_MODEL_MARKER: Final = "laya-rl-agent"
+#: Experimental Jev profile (PROVISIONAL; not part of the stable manifest). The
+#: pinned vendor target every Jev response must report, and the explicit
+#: Actseal mass restriction for that profile. Shared with ``actseal.faults`` and
+#: the experimental adapter so the strings exist exactly once.
+_JEV_MODEL: Final = "jev-1.13.0"
+_JEV_MASS_TOLERANCE: Final = 1e-12
 
 _ANSWER_REQUIRED: Final[frozenset[str]] = frozenset({"type", "choice", "probabilities"})
 _ANSWER_OPTIONAL: Final[frozenset[str]] = frozenset({"confidence", "answer_confidence", "action"})
+_JEV_ANSWER_REQUIRED: Final[frozenset[str]] = frozenset(
+    {"type", "choice", "probabilities", "confidence"}
+)
+_JEV_USAGE_KEYS: Final[frozenset[str]] = frozenset({"input_tokens", "output_tokens"})
 _ENVELOPE_KEYS: Final[frozenset[str]] = frozenset({"model", "answers", "usage"})
 _USAGE_COUNTS: Final[tuple[str, ...]] = (
     "input_tokens",
@@ -187,17 +213,50 @@ def _laya_inner_answer(body: object, question_id: str) -> object:
 
 
 # --------------------------------------------------------------------------- #
+# Jev envelope (experimental profile)
+# --------------------------------------------------------------------------- #
+
+
+def _jev_inner_answer(body: object, question_id: str) -> object:
+    """Validate the frozen Jev response shape, then the answering model, then extract."""
+    envelope = _mapping(body, "body_type")
+    if set(envelope) != _ENVELOPE_KEYS:
+        raise _malformed("envelope_keys")
+    model = envelope["model"]
+    if type(model) is not str:
+        raise _malformed("model_type")
+    answers = _mapping(envelope["answers"], "answers")
+    if set(answers) != {question_id}:
+        raise _malformed("answers")
+    usage = _mapping(envelope["usage"], "usage")
+    if set(usage) != _JEV_USAGE_KEYS:
+        raise _malformed("usage.keys")
+    for name in sorted(_JEV_USAGE_KEYS):
+        _count(usage[name], f"usage.{name}")
+    if model != _JEV_MODEL:
+        # A well-formed response from a different answering model: the vendor's
+        # version claim does not match the locked target. Never repaired.
+        raise _RejectedError("identity_mismatch", "normalize.answering_model")
+    return answers[question_id]
+
+
+# --------------------------------------------------------------------------- #
 # Inner answer
 # --------------------------------------------------------------------------- #
 
 
 def _answer(
-    inner: object, question: ChoiceQuestion, tolerance: float
+    inner: object,
+    question: ChoiceQuestion,
+    tolerance: float,
+    *,
+    required: frozenset[str] = _ANSWER_REQUIRED,
+    optional: frozenset[str] = _ANSWER_OPTIONAL,
 ) -> tuple[str, tuple[tuple[str, float], ...], float | None, bool]:
     """Return ``(choice, ordered normalized probabilities, confidence, renormalized)``."""
     answer = _mapping(inner, "body_type")
     keys = set(answer)
-    if not keys >= _ANSWER_REQUIRED or not keys <= (_ANSWER_REQUIRED | _ANSWER_OPTIONAL):
+    if not keys >= required or not keys <= (required | optional):
         raise _malformed("answer_keys")
     if answer["type"] != "choice":
         raise _malformed("type")
@@ -261,11 +320,22 @@ def normalize(
             raise _malformed("invalid_json") from None
         if expected_identity.provider == "laya":
             inner = _laya_inner_answer(body, question.question_id)
-            tolerance = laya_mass_tolerance(len(question.options))
+            choice, probabilities, confidence, renormalized = _answer(
+                inner, question, laya_mass_tolerance(len(question.options))
+            )
+        elif expected_identity.provider == "jev":
+            inner = _jev_inner_answer(body, question.question_id)
+            choice, probabilities, confidence, renormalized = _answer(
+                inner,
+                question,
+                _JEV_MASS_TOLERANCE,
+                required=_JEV_ANSWER_REQUIRED,
+                optional=frozenset(),
+            )
         else:
-            inner = body
-            tolerance = FIXTURE_MASS_TOLERANCE
-        choice, probabilities, confidence, renormalized = _answer(inner, question, tolerance)
+            choice, probabilities, confidence, renormalized = _answer(
+                body, question, FIXTURE_MASS_TOLERANCE
+            )
     except _RejectedError as rejected:
         return ProviderFailure(rejected.code, (*warnings, rejected.warning), fallback_used)
     if renormalized:

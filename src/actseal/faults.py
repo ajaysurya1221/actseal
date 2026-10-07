@@ -24,9 +24,15 @@ Canonical shape:
   labels; ``low_confidence`` keeps the first allowed label selected at 0.0 and
   gives the first different known label 1.0 (selected-probability gating, not
   argmax substitution). For a ``laya`` identity the answer is wrapped in the
-  synthetic zero-usage native envelope before serialization.
+  synthetic zero-usage native envelope before serialization. For a ``jev``
+  identity (experimental, plan/v1/CHANGE_LOG.md V1-011) the answer additionally
+  carries the diagnostic vendor ``confidence`` 1.0 that a one-hot distribution
+  implies, including the ``low_confidence`` case whose *selected* probability
+  is 0.0, and is wrapped in ``{model: jev-1.13.0, answers, usage:
+  {input_tokens: 0, output_tokens: 0}}``. That confidence proves the vendor
+  score is not the ACT gate. Zero usage is synthetic fault data, not inference.
 
-This module imports no adapter, assessment or replay code.
+This module imports no adapter, transport, assessment or replay code.
 """
 
 from __future__ import annotations
@@ -35,7 +41,7 @@ from dataclasses import replace
 from typing import Final
 
 from actseal.errors import SchemaError
-from actseal.normalization import LAYA_MODEL_MARKER, normalize, request_sha256
+from actseal.normalization import _JEV_MODEL, LAYA_MODEL_MARKER, normalize, request_sha256
 from actseal.policy import evaluate
 from actseal.records import (
     CapturedOutcome,
@@ -64,6 +70,9 @@ _ZERO_USAGE: Final[dict[str, object]] = {
     "truncated": False,
     "truncated_questions": [],
 }
+_JEV_ZERO_USAGE: Final[dict[str, object]] = {"input_tokens": 0, "output_tokens": 0}
+#: Vendor Choice confidence ``(p_max - 1/n) / (1 - 1/n)`` of a one-hot distribution.
+_JEV_ONE_HOT_CONFIDENCE: Final = 1.0
 
 
 def _canonical_body(lock: PlanLock, kind: str) -> tuple[str, ModelIdentity]:
@@ -95,6 +104,13 @@ def _canonical_body(lock: PlanLock, kind: str) -> tuple[str, ModelIdentity]:
             "model": LAYA_MODEL_MARKER,
             "answers": {lock.contract.question.question_id: answer},
             "usage": dict(_ZERO_USAGE),
+        }
+    elif lock.model_identity.provider == "jev":
+        answer["confidence"] = _JEV_ONE_HOT_CONFIDENCE
+        body = {
+            "model": _JEV_MODEL,
+            "answers": {lock.contract.question.question_id: answer},
+            "usage": dict(_JEV_ZERO_USAGE),
         }
     return canonical_json(body).decode("utf-8"), identity
 
