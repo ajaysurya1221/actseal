@@ -1,8 +1,12 @@
 # Actseal v1 architecture
 
-[CONTRACTS](../plan/CONTRACTS.md) defines exact schemas and signatures.
-The [CLI review](../plan/reviews/T50-02.md) and [native integration receipt](../plan/reports/T70-native.md)
-record tested product paths; the [final report](../plan/FINAL_REPORT.md) tracks release verification.
+The [stability manifest](stability.md), [versioning policy](versioning.md),
+[migration guide](migration.md) and [wire schemas](schemas/README.md) are
+normative for 1.x. [CONTRACTS](../plan/CONTRACTS.md) is the historical v0.1
+core contract that those documents superseded; it remains the record of the
+unchanged statistical and policy semantics. The [CLI review](../plan/reviews/T50-02.md)
+and [native integration receipt](../plan/reports/T70-native.md) record the
+v0.1 tested product paths; the 1.0.0 candidate's receipts are under `plan/v1/`.
 
 Actseal evaluates one frozen categorical decision policy. The application supplies a question with 2–16 labels, an allowed-label subset, a prespecified selected-probability threshold and risk/coverage limits. The application remains responsible for obeying the returned disposition and deploying the same trusted policy/system that was evaluated.
 
@@ -33,13 +37,13 @@ Locking performs no inference or threshold fitting. The CLI constructs the selec
 |---|---|
 | records / errors / serialization | Immutable validated records, bounded strict JSON, canonical bytes, hashes and installed-source fingerprint. |
 | contract / locking / policy | Parse inputs, validate self-seals/inventories, evaluate the frozen selector. No provider or fault-runtime import in locking. |
-| adapters / normalization | Capture provider-shaped data; separately validate identity, schema and selected probability. Normalization imports no model or adapter. |
+| adapters / normalization | Capture provider-shaped data (`adapters.fixture`, `adapters.laya`, and the PROVISIONAL `experimental.providers.jev`); separately validate identity, schema and selected probability. Normalization imports no model, adapter or transport. |
 | faults | Pure canonical capture generator and six-scenario campaign using the same normalizer/evaluator. No assessment/replay import. |
 | stats / assessment | Audited CP kernel; complete semantic/inventory validation before risk/coverage assessment. |
 | evidence / replay | Exclusive atomic publication of data-only bundles and fresh offline semantic recomputation. No provider imports or network calls. |
 | runner / CLI / packaged demo | Compose accepted interfaces, enforce collection constants, close providers and expose explicit statuses. |
 
-The decision-model boundary is `identity() -> ModelIdentity`, `decide(request, *, timeout_s) -> CapturedOutcome`, and `close() -> None`. v1 has a recorded fixture adapter and an optional pinned native Laya CPU adapter. Core fixture/replay paths require no model library, key or service. Jev and actual fallback execution are outside v1.
+The decision-model boundary is `identity() -> ModelIdentity`, `decide(request, *, timeout_s) -> CapturedOutcome`, and `close() -> None`. 1.x has a recorded fixture adapter and an optional pinned native Laya CPU adapter as stable providers, plus the PROVISIONAL experimental Jev cloud adapter (`actseal.experimental.providers.jev`), selectable only with `--provider jev --experimental-provider` and carrying no compatibility promise or accepted live evidence; see [providers](providers.md). Core fixture/replay paths require no model library, key or service. Actual fallback execution is outside v1.
 
 ## Policy and provider behavior
 
@@ -47,9 +51,9 @@ Policy order is fixed: any fallback flag → ESCALATE; unknown-choice failure �
 
 Laya captures retain the complete native response, including answer IDs and usage/truncation diagnostics. Pre-inference token-layout validation and pure replayable response checks are both required. See [providers](providers.md) for exact pins, rounding tolerance and the published checkpoint calibration caveat.
 
-The v1 collection protocol fixes startup at 120 seconds and each normal request at 30.0 seconds, with no deadline override; the fingerprint-bound runner enforces these [ADR 0008](decisions/0008-fixed-collection-deadlines.md) constants. The accepted adapter terminates and joins its resident worker on timeout; later calls remain unavailable. Unexpected death/EOF/unusable IPC also invalidates it. The collector retains every scheduled terminal record without restart or replacement samples.
+The v1 collection protocol fixes startup at 120 seconds and each normal request at 30.0 seconds, with no deadline override; the fingerprint-bound runner enforces these [ADR 0008](decisions/0008-fixed-collection-deadlines.md) constants. The worker semantics are Laya-specific: the native adapter runs one resident model in a spawned worker process, terminates and joins it on timeout, and leaves later calls unavailable; unexpected death/EOF/unusable IPC also invalidates it. The fixture adapter reads one local file in process, and the experimental Jev adapter makes one in-process stdlib HTTPS attempt per request with the deadline as its socket timeout (not a hard wall-clock bound). The collector retains every scheduled terminal record without restart or replacement samples for every provider.
 
-Under [ADR 0009](decisions/0009-worker-loss-invalidates-statistical-run.md), a regular Laya timeout/unavailable invalidates the statistical experiment as ERROR, even when the captured failure correctly produces ESCALATE. Its bundle is diagnostic evidence. Canonical injected faults are separate, and nonfatal failures remain in a valid experiment's denominator.
+Under [ADR 0009](decisions/0009-worker-loss-invalidates-statistical-run.md), a regular Laya timeout/unavailable invalidates the statistical experiment as ERROR, even when the captured failure correctly produces ESCALATE. Its bundle is diagnostic evidence. That rule is specific to the resident native worker; a fixture or Jev `timeout`/`unavailable` capture is an ordinary terminal failure record that stays in the denominator and escalates. Canonical injected faults are separate, and nonfatal failures remain in a valid experiment's denominator.
 
 The support-triage demo evaluates **different authored fixture outcomes under the same policy and limits**. Its two authored runs produce BLOCK and PASS; they do not demonstrate a repaired model, a threshold fitted to observed outcomes or a paired model comparison. [ADR 0013](decisions/0013-prespecified-synthetic-demo.md) fixes the synthetic inputs before T50 implementation. [T50 acceptance](../plan/reviews/T50-02.md) records actual installed-demo results and matching cross-platform evidence.
 

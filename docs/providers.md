@@ -1,6 +1,6 @@
 # Providers: native Laya reference and normalization
 
-Status: full T30 accepted at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7` and merged as `87d2cd1`, 6 October 2026. Earlier candidate `17ed0875541ecfa6402991dc90e278beb2f4cc01` passed native product tests on macOS and Linux, and [REVIEW T30-03](../plan/reviews/T30-03.md) confirms those adapter/normalization/native-test bytes are unchanged in the accepted task. Historical upstream and product milestone receipts remain distinct below. [Frozen contracts](../plan/CONTRACTS.md) govern the product boundary.
+Status: full T30 accepted at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7` and merged as `87d2cd1`, 6 October 2026. Earlier candidate `17ed0875541ecfa6402991dc90e278beb2f4cc01` passed native product tests on macOS and Linux, and [REVIEW T30-03](../plan/reviews/T30-03.md) confirms those adapter/normalization/native-test bytes are unchanged in the accepted task. Historical upstream and product milestone receipts remain distinct below. The [stability manifest](stability.md) is normative for the 1.x product boundary; [CONTRACTS](../plan/CONTRACTS.md) is the historical v0.1 record of the unchanged provider semantics.
 
 ## Reference runtime
 
@@ -382,8 +382,10 @@ normalized selected-option probability from the returned distribution. Jev's
 preserved as `provider_confidence` evidence only, and provider confidence
 fields cannot be interchanged under a common threshold.
 
-Verification status: **No live Jev request has been made or verified** in
-this source. Every Jev test runs over a mocked transport (a stdlib fake
+Verification status: **as of 7 October 2026 no live Jev request has been
+accepted as evidence**; the one live audit attempt was stopped by a harness
+permission denial before any key was read or request made, and no result,
+journal or spend exists. Every Jev test runs over a mocked transport (a stdlib fake
 connection or an injected exchange) with the key read and every socket
 blocked; the shared provider conformance suite, the canonical fault campaign
 and CLI/runner routing are exercised that way. Mocked behaviour is evidence
