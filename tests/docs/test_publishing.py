@@ -66,8 +66,10 @@ def test_guide_describes_oidc_exchange_not_token_absence() -> None:
     assert "No token or secret is involved" not in guide
     assert "No PyPI API token is stored" in guide
     assert "short-lived GitHub OIDC token" in guide
-    assert "temporary upload" in guide
-    assert "expires with the" in guide
+    assert "project-scoped" in guide
+    assert "valid for 15 minutes from creation" in guide
+    assert "https://docs.pypi.org/trusted-publishers/" in guide
+    assert "expires with the" not in guide  # the corrected 08-token-expiry finding
 
 
 def test_guide_requires_pre_tag_documentation_finalization() -> None:

@@ -65,10 +65,12 @@ bytes and are never labelled public PyPI receipts.
    the `publish` job pauses on the `pypi` environment until the repository
    owner approves it. No PyPI API token is stored in the repository or its
    secrets: the job requests a short-lived GitHub OIDC token for its own run,
-   PyPI's Trusted Publishing exchanges that identity for a temporary upload
-   credential scoped to this project, and the credential expires with the
-   job. The pinned PyPA action performs the exchange and generates
-   attestations. Only this job has `id-token: write`; it checks out no source
+   and PyPI's Trusted Publishing exchanges that identity for a project-scoped
+   API token that, per the
+   [official documentation](https://docs.pypi.org/trusted-publishers/), is
+   valid for 15 minutes from creation. The pinned PyPA action performs the
+   exchange and generates attestations. Only this job has `id-token: write`;
+   it checks out no source
    and builds nothing. It downloads the verified artifact by ID, re-checks the
    bytes against the build checksums with `sha256sum --check --strict`, and
    uploads with `skip-existing: false`.
