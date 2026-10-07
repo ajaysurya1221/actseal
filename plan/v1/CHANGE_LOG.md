@@ -642,3 +642,14 @@ added in this package; the recorded demo, source recording, audit files, schemas
 contract and compatibility registry are unchanged. Presentation guards in
 `tests/docs/test_readme.py` are updated to the new opening; executable demo, output,
 exit-code, link, image and limitation checks stay.
+
+### V1-058 readability exceptions (recorded at review, 8 October 2026)
+
+The evidence-card hero is validated at the 838 CSS-px desktop column (previously 254 px for
+the desktop files); on a 254 px phone column the desktop hero's thesis renders at about 7.3 px,
+its card headline at 6.4 px and its body at 4.3 px. The stacked mobile variants keep every run
+at or above 14 px except the card footer (the audit path), held to an explicit 10 px floor.
+These exceptions are accepted because the README prose directly above the hero states the
+question, counts, INCONCLUSIVE verdict, boundaries and audit link; the threshold and the risk
+and coverage intervals remain in the image, its accessible description and the linked audit.
+This supersedes the V1-057 closing note's hero acceptance.
