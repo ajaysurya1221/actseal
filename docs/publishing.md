@@ -59,11 +59,14 @@ bytes and are never labelled public PyPI receipts.
    `plan/v1/reports/` and `plan/v1/reviews/` as listed in `pyproject.toml`,
    so the release notes at the tag must already state the final
    implementation, scope and inclusion facts (Jev, example, benchmark,
-   figures) and may contain **only** named placeholders for publication
-   receipts that cannot exist before the upload: the distribution hashes
-   and sizes, the workflow run and artifact ids, the attestation inspection,
-   the post-publication install and smoke results, and the genuine demo
-   recording. No other draft, candidate or pending marker may remain.
+   figures) and may contain **only** named placeholders for the final
+   release receipts populated as the tagged release pipeline completes:
+   build-time values that exist once the tagged `build` job has run but
+   before any upload (the distribution hashes and sizes, the workflow run
+   and artifact ids), and post-publication values that exist only after the
+   upload (the attestation inspection, the PyPI install and smoke results,
+   and the genuine demo recording). No other draft, candidate or pending
+   marker may remain.
    Historical reports and reviews under `plan/v1/` keep their original
    content. After publication those named placeholders are filled, in a
    later documentation commit, in the repository's
