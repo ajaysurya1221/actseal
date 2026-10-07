@@ -22,11 +22,14 @@ Actual workflow receipts are now under plan/v1/receipts/. Container receipt
 records demo0, fixed replay0 and bad replay1 outside the checkout. Attestation
 presence/identity/subjects inspected; no independent cryptographic verification.
 
-Task14 capture-only phase is running in the prepared recording worktree,
+Task14 raw capture is ACCEPT (review14-capture.md, reportf55fd5b); activation
+is running in the prepared recording worktree,
 SAME Claude session241e6a45-571b-4ca9-ad83-243d7c53b003, Fable5.1/high,
 normal permissions. Actual verified public-wheel path and release receipts
-were supplied. Raw capture review precedes activation/README integration.
-Task21 has not started. GitHub release remains a draft. Final release acceptance
+were supplied. Raw cast is21.517s, GIFs24.51s, genuine exits0/0/1. Parent replayed both
+recorded bundles via the bound installed PyPI executable (PASS0/BLOCK1).
+Task21 is preparing final documentation in its independent owned worktree;
+its final tests/acceptance await the media integration. GitHub release remains a draft. Final release acceptance
 still requires genuine media, independent review, final docs/receipts and green
 hosted CI before the postpublication changes merge. Public launch stays draft.
 
