@@ -20,12 +20,15 @@ and recomputes through contracts and assessment, which in turn re-normalizes
 and re-evaluates every record. No edge joins replay and providers.
 
 Two canvases are rendered in the light and dark palettes shared with the
-how-it-works figure. The desktop canvas is 1600x980 for an 880 CSS px README
-column (labels at least 26 units, 14.3 rendered px); the mobile canvas stacks
-the groups at 720 units for a 360 CSS px column (labels at least 30 units).
-Every line is measured against the conservative width model and the renderer
-fails rather than shrinking text. These are structural checks of the SVG
-bytes; viewing the rendered pixels is a separate review step.
+how-it-works figure. The desktop canvas is 1600 units wide and measures 838
+CSS px in the README at 1280 px and wider viewports (labels at least 27
+units, 14.1 rendered px); the mobile canvas stacks the groups at 720 units and
+is validated at the narrowest measured column, 254 CSS px at a 320 px
+viewport (labels at least 40 units, 14.1 rendered px). Notes and arrow labels
+wrap on word boundaries where a column is too narrow. Every line is measured
+against the conservative width model and the renderer fails rather than
+shrinking text. These are structural checks of the SVG bytes; viewing the
+rendered pixels is a separate review step.
 """
 
 from __future__ import annotations
@@ -192,9 +195,9 @@ class Metrics:
 DESKTOP = Metrics(
     heading=32,
     heading_line=36,
-    body=26,
+    body=27,
     line=34,
-    pad=16,
+    pad=12,
     heading_top=14,
     divider_gap=12,
     body_gap=8,
@@ -205,10 +208,10 @@ DESKTOP = Metrics(
     label_gap=12,
 )
 MOBILE = Metrics(
-    heading=36,
-    heading_line=42,
-    body=30,
-    line=40,
+    heading=44,
+    heading_line=50,
+    body=40,
+    line=52,
     pad=20,
     heading_top=16,
     divider_gap=14,
@@ -229,8 +232,8 @@ ARROW_HEAD = 12
 ARROW_HALF = 7
 ARROW_CLEARANCE = 4
 
-DESKTOP_MARGIN = 20
-DESKTOP_COLUMN_GAP = 36
+DESKTOP_MARGIN = 16
+DESKTOP_COLUMN_GAP = 28
 DESKTOP_COLUMNS = 4
 DESKTOP_TOP = 24
 DESKTOP_ROW_GAPS = (80, 60)
@@ -251,7 +254,8 @@ RIGHT_LANE = 0.8
 ASSESSMENT_ENTRY = 80
 
 MOBILE_MARGIN = 36
-MOBILE_GAP = 60
+# Tall enough for a two-line wrapped arrow label between neighbouring boxes.
+MOBILE_GAP = 130
 MOBILE_TOP = 24
 MOBILE_SPINE = 350
 MOBILE_OUTER_CHANNEL = 12
@@ -340,10 +344,10 @@ def layout(group: Group, metrics: Metrics, inner: float) -> Layout:
         y = bottom + metrics.boundary_pad + metrics.body
     y += metrics.note_gap
     notes: list[tuple[str, int]] = []
-    for text in group.notes:
-        _require_fit(text, metrics.body, inner)
-        notes.append((text, y))
-        y += metrics.line
+    for note in group.notes:
+        for text in wrap(tuple(note.split(" ")), metrics.body, inner, separator=" "):
+            notes.append((text, y))
+            y += metrics.line
     last = y - metrics.line
     height = last + round(metrics.body * DESCENDER) + metrics.bottom
     return Layout(
@@ -496,17 +500,20 @@ def _label(
     metrics: Metrics,
     palette: Palette,
 ) -> None:
+    """Write the edge label, wrapped on word boundaries and centred on ``baseline``."""
     if edge.label is None:
         return
-    _require_fit(edge.label, metrics.body, max_width)
-    node.add(
-        "text",
-        x=x,
-        y=baseline,
-        font_size=metrics.body,
-        fill=palette.muted,
-        text_anchor=anchor,
-    ).text(edge.label)
+    lines = wrap(tuple(edge.label.split(" ")), metrics.body, max_width, separator=" ")
+    first = baseline - (len(lines) - 1) * metrics.line / 2
+    for index, line in enumerate(lines):
+        node.add(
+            "text",
+            x=x,
+            y=first + index * metrics.line,
+            font_size=metrics.body,
+            fill=palette.muted,
+            text_anchor=anchor,
+        ).text(line)
 
 
 # --------------------------------------------------------------------------- #
