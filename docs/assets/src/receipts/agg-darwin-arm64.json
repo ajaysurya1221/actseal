@@ -1,0 +1,13 @@
+{
+  "filename": "agg-aarch64-apple-darwin",
+  "installed": "/Users/ajay/.cache/actseal-assets/agg-1.9.0/agg-aarch64-apple-darwin",
+  "license": "GPL-3.0-or-later",
+  "platform": "darwin-arm64",
+  "retrieved": "2026-10-07",
+  "sha256": "742b2b6230529b72f310acb835e9479496000f2eabc97b0993cabe1d7fe70171",
+  "source_commit": "26ca84c02523973198fca28533369edcfc7ed929",
+  "source_url": "https://github.com/asciinema/agg/releases/tag/v1.9.0",
+  "tool": "agg",
+  "url": "https://github.com/asciinema/agg/releases/download/v1.9.0/agg-aarch64-apple-darwin",
+  "version": "1.9.0"
+}
