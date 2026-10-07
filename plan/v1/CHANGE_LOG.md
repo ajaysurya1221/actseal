@@ -504,3 +504,37 @@ remain visible without the P2boundaryfigure. No statistical, source, registry,
 provider or test behavior is changed by this decision. Finaldocs corrections,
 exactfinalcandidatechecks/tag, deploymentapproval and postpublication receipts
 remain mandatory. Publiclaunchpost remains a draft.
+
+## V1-053 — Activate the approved post-publication media and receipts path
+
+7 October 2026. Human deployment approval completed and release workflow
+37603727302 passed all nine jobs. Both public PyPI distributions were downloaded,
+hashed and compared byte-for-byte with the GitHub draft assets. Review20-publication
+accepts publication scope; no tag, distribution or runtime change is authorized.
+The human explicitly requested continuation of recording, final report/receipt
+review and GitHub release notes. Decision2A remains the postpublication exception.
+
+Task14 runs in two bounded phases in the same Fable5.1/high session. First capture
+from official PyPI with the existing approved procedure and preserve the private
+attempt and provenance. After Codex raw-capture ACCEPT, authorize only copying the
+untouched cast, light/dark GIFs and receipt; registering the existing accepted demo
+renderer in the inventory; and changing corresponding visual tests from planned
+to implemented. Preserve negative validations, renderer flags, tool/font pins,
+other figure bytes, public interfaces and original evidence. Asset documentation
+may update its own completion status with the actual receipt. The task reports
+all failed attempts; no retiming, output editing or re-recording to change verdicts.
+
+Task21 owns final report, launch DRAFT, receipt-backed release notes and README
+demo integration below the frozen opening sequence. It may update only stale
+publication/media status in docs/publishing.md and ADR0020 with receipt links;
+all semantic and historical claims remain. Task14 owns docs/assets/**; Task21
+must not edit those files. Task21 does not author Codex state/reviews or workflow
+receipts. Any necessary docs-test expectation update must only reflect actual
+completion, retain all prior negative checks, and be separately identified.
+
+Codex alone owns integration/review, state, receipt copying and final GitHub
+publication. Independent ACCEPT and exact-head green hosted CI are required before
+main merges. The tag and PyPI metadata/distributions remain unchanged; later media
+and documentation are explicitly identified as postpublication repository content.
+Social preview upload stays manual. Denied Task06 operations and cancelled tasks
+remain untouched; optional scope stays frozen under V1-052.
