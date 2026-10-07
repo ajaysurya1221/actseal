@@ -24,6 +24,8 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
+import pytest
+
 from docs.conftest import ROOT, fences
 
 README = ROOT / "README.md"
@@ -114,6 +116,8 @@ LIMITS = [
         "Actseal does not enforce application execution."
     ),
 ]
+#: The four architecture files stay committed, declared outputs; the README
+#: references only the two desktop variants (see DARK_MEDIA below).
 ARCHITECTURE_FILES = (
     "architecture-light.svg",
     "architecture-dark.svg",
@@ -121,20 +125,23 @@ ARCHITECTURE_FILES = (
     "architecture-mobile-dark.svg",
 )
 FIGURES = ("hero", "how-it-works", "architecture")
+#: Every committed variant of each figure, referenced or not.
+FIGURE_VARIANTS = ("-light", "-dark", "-mobile-light", "-mobile-dark")
 #: The genuine post-publication recording (Task 14, Decision 2A), one GIF per
 #: colour scheme, placed after the architecture figure and before the
 #: documentation table.
 DEMO_FILES = ("demo-light.gif", "demo-dark.gif")
-#: Narrowest browser viewport (CSS px) that selects the desktop variants.
-#: Read-only measurements of the public repository view at candidate 5e7931a
-#: (review 13) gave the README image 838 px at 1280 and 1366 px viewports and
-#: only 758 px at 1200; a 1600-unit desktop canvas with 26-unit labels drops
-#: below the 14 px floor anywhere under 1280 px, so every narrower viewport
-#: selects the vertical variants.
-DESKTOP_MIN_VIEWPORT = 1280
-MOBILE_MEDIA = f"(max-width: {DESKTOP_MIN_VIEWPORT - 1}px)"
-MOBILE_VIEWPORTS = (320, 360, 800, 1000, 1200, DESKTOP_MIN_VIEWPORT - 1)
-DESKTOP_VIEWPORTS = (DESKTOP_MIN_VIEWPORT, 1366, 1920)
+#: The only ``<source media>`` Actseal's README policy allows. Live QA of the
+#: public page on 2026-10-08 (innerWidth 1920, dark scheme) found the media
+#: lists that combined ``prefers-color-scheme`` with ``max-width`` rewritten to
+#: the always-true ``(prefers-color-scheme: light),(prefers-color-scheme: dark)``,
+#: so every visitor received the first, mobile-dark source upscaled; bare width
+#: queries survived that check. The README therefore adopts GitHub's documented
+#: colour-scheme pattern: each figure has exactly this one dark ``<source>`` and
+#: the light ``<img>``, and selection does not depend on the viewport width.
+DARK_MEDIA = "(prefers-color-scheme: dark)"
+#: Viewports (CSS px) at which selection is checked: phone, tablet and desktop.
+VIEWPORTS = (320, 375, 768, 1200, 1279, 1280, 1366, 1920)
 MEDIA_FEATURE = re.compile(r"^\((?P<name>[a-z-]+):\s*(?P<value>[^)]+)\)$")
 MARKDOWN_IMAGE = re.compile(r"!\[(?P<alt>[^\]]*)\]\((?P<target>[^)\s]+)\)")
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]*\]\((?P<target>[^)\s]+)\)")
@@ -191,37 +198,30 @@ class _Images(HTMLParser):
             self._open = None
 
 
-def _media_matches(media: str, *, viewport: int, dark: bool) -> bool:
-    """Evaluate the small media-query subset the README is allowed to use.
+def _media_matches(media: str, *, dark: bool) -> bool:
+    """Evaluate a media query under Actseal's README policy.
 
-    Only ``prefers-color-scheme`` and ``max-width``/``min-width`` joined by
-    ``and`` are understood; anything else fails loudly rather than being
-    silently treated as matching or non-matching.
+    The policy accepts only a single ``prefers-color-scheme`` feature, the
+    pattern GitHub documents for colour-scheme images. An ``and`` combination
+    or a comma-separated list fails loudly, because the combined colour-scheme
+    and width queries were rewritten on the live page; a bare width query also
+    fails, by policy, even though bare width queries survived the 2026-10-08
+    check, so that figure selection never depends on the viewport width.
     """
-    for clause in media.split(" and "):
-        feature = MEDIA_FEATURE.match(clause.strip())
-        assert feature is not None, media
-        name, value = feature["name"], feature["value"].strip()
-        if name == "prefers-color-scheme":
-            assert value in {"dark", "light"}, media
-            if (value == "dark") != dark:
-                return False
-        elif name in {"max-width", "min-width"}:
-            assert value.endswith("px"), media
-            limit = int(value[: -len("px")])
-            if (name == "max-width" and viewport > limit) or (
-                name == "min-width" and viewport < limit
-            ):
-                return False
-        else:
-            raise AssertionError(f"unsupported media feature in README: {media}")
-    return True
+    assert " and " not in media, f"combined media in README: {media}"
+    assert "," not in media, f"combined media in README: {media}"
+    feature = MEDIA_FEATURE.match(media.strip())
+    assert feature is not None, media
+    name, value = feature["name"], feature["value"].strip()
+    assert name == "prefers-color-scheme", f"unsupported media feature in README: {media}"
+    assert value in {"dark", "light"}, media
+    return (value == "dark") == dark
 
 
-def _selected(picture: _Picture, *, viewport: int, dark: bool) -> str:
+def _selected(picture: _Picture, *, dark: bool) -> str:
     """Asset name a browser picks: the first matching ``<source>``, else the ``<img>``."""
     for media, target in picture.sources:
-        if _media_matches(media, viewport=viewport, dark=dark):
+        if _media_matches(media, dark=dark):
             return _local_asset(target).name
     assert picture.fallback is not None
     return _local_asset(picture.fallback).name
@@ -571,92 +571,92 @@ def test_every_image_resolves_to_a_committed_implemented_asset() -> None:
 
 
 def test_architecture_filenames_are_the_frozen_four() -> None:
-    """The names are frozen now; their outputs arrive with Task 13."""
+    """All four names stay committed, declared outputs; the README references the desktop two."""
+    outputs = _implemented_outputs()
+    for name in ARCHITECTURE_FILES:
+        assert (ASSETS / name).is_file(), name
+        assert name in outputs, name
     referenced = {
         _local_asset(target).name
         for target, _ in _html_images().images
         if not _is_badge(target) and "architecture" in target
     }
-    assert referenced == set(ARCHITECTURE_FILES)
+    assert referenced == {"architecture-light.svg", "architecture-dark.svg"}
 
 
-def test_picture_variants_cover_light_dark_desktop_and_mobile() -> None:
+def test_picture_references_desktop_variants_and_keeps_mobile_files_declared() -> None:
+    """Each figure references dark then light; its mobile variants stay committed and declared."""
     names = [_local_asset(t).name for t, _ in _html_images().images if not _is_badge(t)]
+    outputs = _implemented_outputs()
     for figure in FIGURES:
         assert [n for n in names if n.startswith(figure)] == [
-            f"{figure}-mobile-dark.svg",
-            f"{figure}-mobile-light.svg",
             f"{figure}-dark.svg",
             f"{figure}-light.svg",
         ], figure
+        for variant in FIGURE_VARIANTS:
+            name = f"{figure}{variant}.svg"
+            assert (ASSETS / name).is_file(), name
+            assert name in outputs, name
+    assert "-mobile-" not in _text()
 
 
 # --------------------------------------------------------------------------- #
-# Responsive selection at real GitHub widths (review 13, V1-051)
+# Selection as GitHub serves it (live QA 2026-10-08)
 # --------------------------------------------------------------------------- #
 
 
-def test_every_picture_uses_the_measured_breakpoint_with_dark_before_light() -> None:
-    """Source order is what a browser evaluates: dark+mobile, mobile, dark, then the light img.
+def test_every_source_uses_only_the_documented_colour_scheme_query() -> None:
+    """One dark ``<source>`` then the light ``<img>`` per figure; no width or combined media.
 
-    A ``<picture>`` takes the first ``<source>`` whose media query matches, so
-    the dark mobile row must precede the scheme-agnostic mobile row and the
-    dark desktop row must precede the light ``<img>`` fallback. Every width
-    clause must be the single measured breakpoint; the historical 600 px
-    switch left 800 to 1200 px windows on undersized desktop canvases.
+    On the live page the ``<source media>`` lists that combined
+    ``prefers-color-scheme`` with ``max-width`` were rewritten into an
+    always-true list, so width-based selection served the first source to
+    everyone. Actseal's README policy therefore allows only the documented
+    colour-scheme query, and the demo recording follows the same rule.
     """
     for figure, picture in _figure_pictures().items():
         assert [(media, _local_asset(target).name) for media, target in picture.sources] == [
-            (f"(prefers-color-scheme: dark) and {MOBILE_MEDIA}", f"{figure}-mobile-dark.svg"),
-            (MOBILE_MEDIA, f"{figure}-mobile-light.svg"),
-            ("(prefers-color-scheme: dark)", f"{figure}-dark.svg"),
+            (DARK_MEDIA, f"{figure}-dark.svg"),
         ], figure
         assert picture.fallback is not None
         assert _local_asset(picture.fallback).name == f"{figure}-light.svg"
-    assert "600px" not in _text()
+    for picture in _html_images().picture_blocks:
+        assert [media for media, _ in picture.sources] == [DARK_MEDIA]
+    text = _text()
+    for width_query in ("max-width", "min-width", "1279px", "600px"):
+        assert width_query not in text, width_query
 
 
-def test_viewports_below_1280_select_the_vertical_variants() -> None:
-    """320 to 1279 px viewports (254 to under 838 px images) get the mobile files, both schemes."""
+def test_every_viewport_selects_the_desktop_variant_for_its_scheme() -> None:
+    """Selection depends on the colour scheme only, at phone, tablet and desktop widths."""
     for figure, picture in _figure_pictures().items():
-        for viewport in MOBILE_VIEWPORTS:
-            assert (
-                _selected(picture, viewport=viewport, dark=True) == f"{figure}-mobile-dark.svg"
-            ), (
-                figure,
-                viewport,
-            )
-            assert (
-                _selected(picture, viewport=viewport, dark=False) == f"{figure}-mobile-light.svg"
-            ), (
-                figure,
-                viewport,
-            )
+        for viewport in VIEWPORTS:
+            # The media queries carry no width feature, so the viewport cannot
+            # change the choice; it is iterated to state the intent explicitly.
+            assert _selected(picture, dark=True) == f"{figure}-dark.svg", (figure, viewport)
+            assert _selected(picture, dark=False) == f"{figure}-light.svg", (figure, viewport)
 
 
-def test_viewports_at_1280_and_above_select_the_desktop_variants() -> None:
-    """1280 and 1366 px viewports render the README image at 838 px and get the desktop files."""
-    for figure, picture in _figure_pictures().items():
-        for viewport in DESKTOP_VIEWPORTS:
-            assert _selected(picture, viewport=viewport, dark=True) == f"{figure}-dark.svg", (
-                figure,
-                viewport,
-            )
-            assert _selected(picture, viewport=viewport, dark=False) == f"{figure}-light.svg", (
-                figure,
-                viewport,
-            )
+def test_combined_and_width_media_queries_are_rejected_by_the_policy_model() -> None:
+    """The rewritten combined forms and, by policy, a bare width query must fail here."""
+    for media in (
+        f"{DARK_MEDIA} and (max-width: 1279px)",
+        "(max-width: 1279px)",
+        "(prefers-color-scheme: light),(prefers-color-scheme: dark)",
+    ):
+        with pytest.raises(AssertionError, match=r"combined media|unsupported media feature"):
+            _media_matches(media, dark=True)
+    assert _media_matches(DARK_MEDIA, dark=True)
+    assert not _media_matches(DARK_MEDIA, dark=False)
 
 
-def test_breakpoint_change_kept_every_picture_full_width_without_new_paths() -> None:
-    """The responsive fix changes media queries only: same four files per figure, same width."""
+def test_every_picture_stays_full_width_with_two_files_per_figure() -> None:
+    """Three figures and the recording, each full width, two files each."""
     text = _text()
     assert text.count('width="100%"') == 4  # three figures plus the demo recording
     referenced = {_local_asset(t).name for t, _ in _html_images().images if not _is_badge(t)}
     assert referenced == {
-        f"{figure}{variant}.svg"
-        for figure in FIGURES
-        for variant in ("-light", "-dark", "-mobile-light", "-mobile-dark")
+        f"{figure}{variant}.svg" for figure in FIGURES for variant in ("-light", "-dark")
     } | set(DEMO_FILES)
 
 

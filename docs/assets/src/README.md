@@ -144,8 +144,17 @@ renderer enforces minimums of 28 desktop units (14.7 px) and 40 mobile units.
 `social.png` is the same composition re-spaced and vertically centred on the
 1280×640 card, with a 144-unit wordmark, a 56-unit tagline and 40-unit labels.
 These are measurements of one repository page on
-one date, not a GitHub guarantee; the README's responsive selection decides
-which variant each viewport receives.
+one date, not a GitHub guarantee.
+
+The 2026-10-08 live check found that GitHub rewrote the combined colour-scheme and width queries into an always-true media list, making the first mobile-dark source match regardless of viewport width or colour scheme. Bare width queries survived that check. This README therefore adopts GitHub's documented colour-scheme selection pattern.
+Each figure uses only its desktop variants: one
+`<source media="(prefers-color-scheme: dark)">` with the dark file, then the
+light `<img>`. GitHub shows those at every viewport width, including phone
+widths where their labels render below the 14 px floor (in a 254 px column the
+desktop hero's tagline renders at about 7 px and its step labels at about
+5 px). The mobile variants stay committed, declared and validated at 254 px for
+other renderers that honour width-based `<source>` selection; the README no
+longer references them.
 
 Text uses `Helvetica, Arial, Liberation Sans, sans-serif`, three
 metric-compatible faces that resolve on macOS, Windows and Linux before the
