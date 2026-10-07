@@ -36,20 +36,134 @@ def test_asset_jobs_provision_pinned_inputs_before_fail_closed_regeneration(
     install = "uv sync --frozen --group dev --group assets"
     provision = (
         "uv run --frozen python docs/assets/src/setup_tools.py --tool jetbrains-mono\n"
-        "uv run --frozen python docs/assets/src/setup_tools.py --tool resvg"
+        "uv run --frozen python docs/assets/src/setup_tools.py --tool resvg\n"
+        "uv run --frozen python docs/assets/src/setup_tools.py --tool agg"
     )
-    for command in (install, provision, regenerate):
+    probe = "uv run --frozen python tools/check_release.py agg-version"
+    for command in (install, provision, probe, regenerate):
         assert runs.count(command) == 1
         step = steps[runs.index(command)]
         assert "if" not in step
         assert "continue-on-error" not in step
         assert "shell" not in step  # Keep GitHub's fail-closed bash invocation.
-    assert runs.index(install) < runs.index(provision) < runs.index(regenerate)
+    assert runs.index(install) < runs.index(provision) < runs.index(probe) < runs.index(regenerate)
     assert sum("setup_tools.py" in run for run in runs) == 1
+    assert sum("agg-version" in run for run in runs) == 1
+    assert provision.count("\n") == 2  # exactly three provisioning commands
     if filename == "ci.yml":
         tests = "uv run --frozen --group assets pytest tests/visual"
         assert runs.count(tests) == 1
         assert runs.index(install) < runs.index(tests) < runs.index(provision)
+    # The same strict rule the publish checker applies also holds for the ordinary job.
+    tool._check_assets_job(job, regenerate)
+
+
+CI_ASSET_MUTATIONS: dict[str, tuple[str, str, str]] = {
+    "agg-provision-omitted": (
+        "          uv run --frozen python docs/assets/src/setup_tools.py --tool agg\n",
+        "",
+        "exact provision command once",
+    ),
+    "provision-reordered": (
+        (
+            "setup_tools.py --tool resvg\n          uv run --frozen python docs/assets/src/"
+            "setup_tools.py --tool agg\n"
+        ),
+        (
+            "setup_tools.py --tool agg\n          uv run --frozen python docs/assets/src/"
+            "setup_tools.py --tool resvg\n"
+        ),
+        "exact provision command once",
+    ),
+    "probe-omitted": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        "        run: echo skipped\n",
+        "exact probe command once",
+    ),
+    "probe-conditional": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        (
+            "        if: runner.os == 'Linux'\n"
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+        ),
+        "probe step must not set if",
+    ),
+    "probe-ignored-failure": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        (
+            "        continue-on-error: true\n"
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+        ),
+        "probe step must not set continue-on-error",
+    ),
+    "probe-shell-escape": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        "        run: uv run --frozen python tools/check_release.py agg-version || true\n",
+        "exact probe command once",
+    ),
+    "probe-duplicated": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        (
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+            "      - name: Probe again\n"
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+        ),
+        "exact probe command once",
+    ),
+    "provision-shell": (
+        (
+            "      - name: Fetch pinned authoring fonts and tools with hash verification\n"
+            "        run: |"
+        ),
+        (
+            "      - name: Fetch pinned authoring fonts and tools with hash verification\n"
+            "        shell: bash {0}\n        run: |"
+        ),
+        "provision step must not set shell",
+    ),
+    "probe-after-regeneration": (
+        (
+            "      - name: Probe the pinned Linux recording renderer (hash-verified, fail-closed)\n"
+            "        # Proves the approved agg pin runs here; it does not render a GIF.\n"
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+        ),
+        "",
+        "in that order",
+    ),
+    "job-conditional": (
+        "  assets:\n    name: assets (committed references and regeneration)\n",
+        (
+            "  assets:\n    if: github.event_name == 'push'\n"
+            "    name: assets (committed references and regeneration)\n"
+        ),
+        "assets job must be unconditional",
+    ),
+}
+
+
+@pytest.mark.parametrize("name", sorted(CI_ASSET_MUTATIONS))
+def test_ordinary_asset_job_rejects_each_provisioning_escape(
+    tool: types.ModuleType, tmp_path: Path, name: str
+) -> None:
+    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    old, new, fragment = CI_ASSET_MUTATIONS[name]
+    assert old in text, name
+    mutated = tmp_path / "ci.yml"
+    if name == "probe-after-regeneration":
+        regenerate = (
+            "        run: uv run --frozen --group assets python docs/assets/src/render.py --check\n"
+        )
+        assert text.count(regenerate) == 1
+        new_text = text.replace(old, "").replace(regenerate, regenerate + old)
+    else:
+        new_text = text.replace(old, new)
+    mutated.write_text(new_text, encoding="utf-8")
+    job = tool._load_workflow(mutated)["jobs"]["assets"]
+    with pytest.raises(tool.ReleaseCheckError) as excinfo:
+        tool._check_assets_job(
+            job, "uv run --frozen --group assets python docs/assets/src/render.py --check"
+        )
+    assert fragment in str(excinfo.value), (name, str(excinfo.value))
 
 
 @pytest.fixture(scope="module")
@@ -206,13 +320,97 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     "assets-gate-missing": (
         "run: uv run --frozen python tools/check_release.py assets",
         "run: uv run --frozen python tools/check_release.py workflow",
-        "assets job must run check_release.py assets",
+        "exact regenerate command once",
     ),
-    "assets-no-tool-fetch": ("setup_tools.py", "setup.py", "fetch the pinned authoring tools"),
+    "assets-no-tool-fetch": ("setup_tools.py", "setup.py", "exact provision command once"),
+    "assets-agg-provision-omitted": (
+        "          uv run --frozen python docs/assets/src/setup_tools.py --tool agg\n",
+        "",
+        "exact provision command once",
+    ),
+    "assets-provision-reordered": (
+        (
+            "setup_tools.py --tool resvg\n          uv run --frozen python docs/assets/src/"
+            "setup_tools.py --tool agg\n"
+        ),
+        (
+            "setup_tools.py --tool agg\n          uv run --frozen python docs/assets/src/"
+            "setup_tools.py --tool resvg\n"
+        ),
+        "exact provision command once",
+    ),
+    "assets-probe-omitted": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        "        run: echo skipped\n",
+        "exact probe command once",
+    ),
+    "assets-probe-conditional": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        (
+            "        if: runner.os == 'Linux'\n"
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+        ),
+        "probe step must not set if",
+    ),
+    "assets-probe-ignored-failure": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        (
+            "        continue-on-error: true\n"
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+        ),
+        "probe step must not set continue-on-error",
+    ),
+    "assets-probe-shell-escape": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        "        run: uv run --frozen python tools/check_release.py agg-version || true\n",
+        "exact probe command once",
+    ),
+    "assets-probe-duplicated": (
+        "        run: uv run --frozen python tools/check_release.py agg-version\n",
+        (
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+            "      - name: Probe again\n"
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+        ),
+        "exact probe command once",
+    ),
+    "assets-job-conditional": (
+        "  assets:\n    name: assets (regenerate required static assets)\n",
+        (
+            "  assets:\n    if: github.event_name == 'push'\n"
+            "    name: assets (regenerate required static assets)\n"
+        ),
+        "assets job must be unconditional",
+    ),
+    "assets-job-ignores-failure": (
+        "  assets:\n    name: assets (regenerate required static assets)\n",
+        (
+            "  assets:\n    continue-on-error: true\n"
+            "    name: assets (regenerate required static assets)\n"
+        ),
+        "assets job must not ignore failures",
+    ),
+    "assets-regenerate-before-probe": (
+        (
+            "      - name: Probe the pinned Linux recording renderer (hash-verified, fail-closed)\n"
+            "        # Proves the approved agg pin runs here; it does not render a GIF.\n"
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+            "      - name: Regenerate and compare the required static assets\n"
+            "        run: uv run --frozen python tools/check_release.py assets\n"
+        ),
+        (
+            "      - name: Regenerate and compare the required static assets\n"
+            "        run: uv run --frozen python tools/check_release.py assets\n"
+            "      - name: Probe the pinned Linux recording renderer (hash-verified, fail-closed)\n"
+            "        # Proves the approved agg pin runs here; it does not render a GIF.\n"
+            "        run: uv run --frozen python tools/check_release.py agg-version\n"
+        ),
+        "in that order",
+    ),
     "assets-no-group": (
         "uv sync --frozen --group dev --group assets",
         "uv sync --frozen --group dev",
-        "locked assets dependency group",
+        "exact install command once",
     ),
     "no-supplied-dist": (
         "          ACTSEAL_TEST_DIST: ${{ runner.temp }}/dist\n",

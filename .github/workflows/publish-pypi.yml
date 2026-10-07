@@ -180,6 +180,10 @@ jobs:
         run: |
           uv run --frozen python docs/assets/src/setup_tools.py --tool jetbrains-mono
           uv run --frozen python docs/assets/src/setup_tools.py --tool resvg
+          uv run --frozen python docs/assets/src/setup_tools.py --tool agg
+      - name: Probe the pinned Linux recording renderer (hash-verified, fail-closed)
+        # Proves the approved agg pin runs here; it does not render a GIF.
+        run: uv run --frozen python tools/check_release.py agg-version
       - name: Regenerate and compare the required static assets
         run: uv run --frozen python tools/check_release.py assets
 
