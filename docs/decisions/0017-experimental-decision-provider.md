@@ -1,8 +1,9 @@
 # ADR 0017: Optional experimental Jev decision provider behind an explicit flag
 
 - Status: approved boundary (plan/v1/PLAN.md sections C and E; amendment
-  V1-011); included in the 1.0.0 candidate as PROVISIONAL (V1-036) with the
-  explicit CLI opt-in integrated; no accepted live evidence.
+  V1-011); included in 1.0.0 as PROVISIONAL (V1-036, retained by the human
+  decision V1-049) with the explicit CLI opt-in integrated; mocked-transport
+  evidence only, no accepted live evidence, live audit not run.
 - Date: 2026-10-07.
 
 ## Decision
@@ -84,20 +85,28 @@ legal guarantee; this ADR does not refresh or re-interpret those terms.
   source only; the final Task 19 integration (CLI opt-in, runner registration
   and any registry entry) changes source and therefore requires its own
   native revalidation before acceptance.
-- Status on 7 October 2026 (1.0.0 candidate, source fingerprint
-  `8f316f67…98ed3`): the inclusion decision is **retain as PROVISIONAL**
-  (V1-036). The explicit CLI opt-in `--provider jev --experimental-provider`
-  and the `open_model("jev", ...)` branch are integrated and scoped-accepted
+- Status on 7 October 2026 (1.0.0 source fingerprint
+  `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3`): the
+  inclusion decision is **retain as PROVISIONAL** (V1-036). A 14:00 IST
+  removal trigger was activated and then superseded by the human (V1-049);
+  the reviewed adapter is retained and its removal drafts were never merged.
+  The explicit CLI opt-in `--provider jev --experimental-provider` and the
+  `open_model("jev", ...)` branch are integrated and scoped-accepted
   (Task 19 `b0031f5`); the shared conformance suite, canonical fault campaign
   and CLI/runner routing are exercised over mocked transports with every
   socket blocked; the cached-native checks were repeated at that integration
-  (six tests) with no skips. Hosted CI on the candidate fails only for the
-  absent architecture figure, not for any provider test.
-- Live evidence (status as of 7 October 2026): live collection has not
-  begun and no live Jev result is accepted as evidence; the Task 06
-  operational receipts under `plan/v1/reviews/` and `plan/v1/reports/` hold
-  the chronology. The Jev prerelease producer fingerprint is not in the
-  compatibility registry. No v1 release has occurred.
+  (six tests) with no skips. (Historical: hosted CI on the earlier candidate
+  heads `b05aed8` and `5e7931a` failed only for the then-absent architecture
+  figure, never for a provider test; those figures were later accepted at
+  `77a13bd`.)
+- Live evidence: the optional preregistered live audit was not run for
+  1.0.0. No key was read, no `--execute` call was made, and no journal,
+  request count or verdict exists; the 959-case preregistration is a
+  preregistration, not a run receipt. No live Jev result is accepted as
+  evidence. The Task 06 operational receipts under `plan/v1/reviews/` and
+  `plan/v1/reports/` hold the chronology, including the harness denials.
+  The Jev prerelease producer fingerprint is not in the compatibility
+  registry.
 - Related: [ADR 0004](0004-identity-normalization-fallback.md) (identity and
   fallback), [ADR 0015](0015-v1-stability-and-replay-compatibility.md)
   (PROVISIONAL surfaces), [providers](../providers.md).

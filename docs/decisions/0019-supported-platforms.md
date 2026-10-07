@@ -1,7 +1,8 @@
 # ADR 0019: Supported platforms for v1.0
 
-- Status: approved (plan/v1/PLAN.md section C, candidate (h); section G
-  definition of done); recorded during Task 08 documentation.
+- Status: approved (plan/v1/PLAN.md section C, option (h); section G
+  definition of done); recorded during Task 08 documentation and finalized
+  for 1.0.0 in "Evidence and status" below.
 - Date: 2026-10-07.
 
 ## Decision
@@ -69,14 +70,26 @@ exceed the receipts.
   passed independently; the v1 Task 03 conformance acceptance at `212a1d6`
   (177 conformance/provider tests plus five cached-native tests); and the
   Task 19 integration, where the cached-native tests were repeated (six
-  tests, no skips) on the candidate source. These complete the native checks
-  for the changed paths in the candidate.
+  tests, no skips) on the 1.0.0 source. These complete the native checks for
+  the changed paths in 1.0.0; the source fingerprint has not changed since.
 - Authoring platform: the pinned Linux x86_64 agg binary was actually
   executed in hosted CI at PR 18 head `0e32c6c` (runs 37581140052 and
   37581142565, all ten jobs green) with its hash verified before execution;
   that establishes Linux binary execution for the asset pipeline, not GIF
   rendering.
-- Separate final gate: the candidate's own exact-head hosted CI at `b05aed8`
-  is red solely for the four absent architecture figures, so the final
-  candidate gate, the release rehearsal and publication remain open; no v1
-  release has occurred.
+- Historical: exact-head hosted CI at the earlier candidate heads `b05aed8`
+  and `5e7931a` failed. The only test failures were the four then-absent
+  architecture figures, and lint and type steps passed, but the downstream
+  build, packaging, reproduction and hook steps were skipped after the
+  failure and were not run; those runs establish nothing about them. The
+  figures were accepted at `77a13bd` and the README that references them at
+  `95e17b4`.
+- Integrated head: all ten hosted source and assets jobs (Linux and macOS,
+  Python 3.12 and 3.13, both assets jobs) succeeded at the exact combined
+  head `ff0f66c` (push run 37599734305, PR run 37599764080;
+  `plan/v1/reviews/19-combined-static.md`), which merged to `main` as
+  `277d729`. The non-publishing `publish-pypi.yml` rehearsal 37599844342 at
+  the same head passed its four exact-artifact platform verify jobs with
+  publish, post-publish and mirror intentionally skipped. The hosted matrix
+  result for the tagged commit itself is a release pipeline receipt
+  recorded in `plan/v1/RELEASE_NOTES.md`, not a claim of this ADR.

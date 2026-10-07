@@ -478,3 +478,29 @@ The retained candidate remains5e7931a with unchanged source fingerprint8f316f67.
 Cancelled cut drafts stay isolated. Any new permission denial stops the action;
 executors must not recover denied sub-operations with narrower commands or
 Read/git-show alternatives. Neither cancelled cut task is resumed.
+
+## V1-052 — Freeze optional scope for publication; retain experimental Jev
+
+7October,approximately15:06IST. The reviewed source and required static visuals
+merged as277d729 after independentACCEPT and10exact-head green hosted checks;
+nonpublishing rehearsal37599844342 also passed allsix mandatory jobs. The
+actual README first-screen blind review passed, with the three evidence limits
+correctly understood. The fixed publication date remains the release priority.
+
+Codex closes optional scope for1.0 now: defer unstarted Task06 live collection
+and undispatched P2Tasks16–18 to1.1. This is a release-focus decision under the
+approved scope-flex authority, NOT a reinstatement of the superseded14:00cut.
+Retain the independently reviewed experimental Jev adapter, explicitopt-in and
+mocked-transport-only claims. The live audit is still harness-blocked/unstarted;
+no key, execute, journal, calls or creditusage exists. Do not bypass that denial,
+create a fabricated ERROR run, alter frozen preregistration or reseal evidence.
+Preserve candidates, scratch, denial receipts and cancelled cut drafts. Any
+future live run needs its effective access prerequisite and fresh compatible
+implementation review, keeping thresholds/inventories fixed before inference.
+
+Required P1staticfigures and social are accepted; actualPyPIrecording remains
+mandatory under approved2Apost-publication exception. Plain-text evidence limits
+remain visible without the P2boundaryfigure. No statistical, source, registry,
+provider or test behavior is changed by this decision. Finaldocs corrections,
+exactfinalcandidatechecks/tag, deploymentapproval and postpublication receipts
+remain mandatory. Publiclaunchpost remains a draft.

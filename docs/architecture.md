@@ -6,7 +6,10 @@ normative for 1.x. [CONTRACTS](../plan/CONTRACTS.md) is the historical v0.1
 core contract that those documents superseded; it remains the record of the
 unchanged statistical and policy semantics. The [CLI review](../plan/reviews/T50-02.md)
 and [native integration receipt](../plan/reports/T70-native.md) record the
-v0.1 tested product paths; the 1.0.0 candidate's receipts are under `plan/v1/`.
+v0.1 tested product paths; the 1.0.0 reports and reviews are under `plan/v1/`.
+The 1.0.0 implementation is the source with fingerprint
+`8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3`; the
+architecture figure in the README draws these seven groups from it.
 
 Actseal evaluates one frozen categorical decision policy. The application supplies a question with 2–16 labels, an allowed-label subset, a prespecified selected-probability threshold and risk/coverage limits. The application remains responsible for obeying the returned disposition and deploying the same trusted policy/system that was evaluated.
 
