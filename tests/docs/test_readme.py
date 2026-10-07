@@ -4,8 +4,9 @@ Every image in README.md, including each ``<source srcset>`` and ``<img src>``
 inside ``<picture>`` markup, must be an absolute same-repository URL that maps
 to an existing, declared, implemented asset under ``docs/assets``. There is no
 HTTP fetch, no skip and no xfail: a figure whose files are not committed yet
-(the architecture figure until Task 13 lands) fails here, by design. Badges
-from the explicit allowlist are exempt from the file check only.
+(the architecture figure until Task 13 landed; the demo recording until the
+Task 14 activation lands) fails here, by design. Badges from the explicit
+allowlist are exempt from the file check only.
 """
 
 from __future__ import annotations
@@ -54,6 +55,9 @@ ARCHITECTURE_FILES = (
     "architecture-mobile-dark.svg",
 )
 FIGURES = ("hero", "how-it-works", "architecture")
+#: The genuine post-publication recording (Task 14, Decision 2A), one GIF per
+#: colour scheme, integrated by Task 21 below the frozen opening sequence.
+DEMO_FILES = ("demo-light.gif", "demo-dark.gif")
 #: Narrowest browser viewport (CSS px) that selects the desktop variants.
 #: Read-only measurements of the public repository view at candidate 5e7931a
 #: (review 13) gave the README image 838 px at 1280 and 1366 px viewports and
@@ -162,10 +166,22 @@ def _figure_pictures() -> dict[str, _Picture]:
     for block in blocks:
         assert block.fallback is not None
         name = _local_asset(block.fallback).name
+        if name == DEMO_FILES[0]:
+            continue  # the recording has no responsive variants; tested separately
         figure = next(f for f in FIGURES if name == f"{f}-light.svg")
         by_figure[figure] = block
     assert list(by_figure) == list(FIGURES), list(by_figure)
     return by_figure
+
+
+def _demo_picture() -> _Picture:
+    blocks = [
+        b
+        for b in _html_images().picture_blocks
+        if b.fallback is not None and _local_asset(b.fallback).name == DEMO_FILES[0]
+    ]
+    assert len(blocks) == 1, "exactly one demo recording <picture>"
+    return blocks[0]
 
 
 def _text() -> str:
@@ -301,7 +317,7 @@ def test_hero_alt_text_states_the_three_evidence_limits() -> None:
 def test_every_image_has_alt_text_and_is_absolute() -> None:
     html = _html_images()
     markdown = _markdown_images()
-    assert html.pictures == 3  # hero, how-it-works, architecture
+    assert html.pictures == 4  # hero, how-it-works, architecture, demo recording
     for target, markdown_alt in markdown:
         assert target.startswith("https://"), target
         assert markdown_alt.strip(), target
@@ -309,7 +325,7 @@ def test_every_image_has_alt_text_and_is_absolute() -> None:
         assert target.startswith("https://"), target
         if html_alt is not None:
             assert html_alt.strip(), target
-    assert sum(1 for _, html_alt in html.images if html_alt is not None) == 3
+    assert sum(1 for _, html_alt in html.images if html_alt is not None) == 4
 
 
 def test_every_image_resolves_to_a_committed_implemented_asset() -> None:
@@ -410,10 +426,45 @@ def test_viewports_at_1280_and_above_select_the_desktop_variants() -> None:
 def test_breakpoint_change_kept_every_picture_full_width_without_new_paths() -> None:
     """The responsive fix changes media queries only: same four files per figure, same width."""
     text = _text()
-    assert text.count('width="100%"') == 3
+    assert text.count('width="100%"') == 4  # three figures plus the demo recording
     referenced = {_local_asset(t).name for t, _ in _html_images().images if not _is_badge(t)}
     assert referenced == {
         f"{figure}{variant}.svg"
         for figure in FIGURES
         for variant in ("-light", "-dark", "-mobile-light", "-mobile-dark")
-    }
+    } | set(DEMO_FILES)
+
+
+# --------------------------------------------------------------------------- #
+# Genuine post-publication demo recording (Task 14 capture, Task 21 integration)
+# --------------------------------------------------------------------------- #
+
+
+def test_demo_recording_sits_below_the_frozen_opening_with_dark_before_light() -> None:
+    """The recording is added after the navigation table and never touches the first screen.
+
+    Decision 2A captures the recording from the published PyPI release, so it
+    is absent from the tagged tree; the README integrates it below the frozen
+    opening sequence (hero, description, badges, how-it-works, quickstart,
+    guarantees, limits, architecture, navigation table). One GIF per colour
+    scheme, dark ``<source>`` first, light ``<img>`` fallback, no responsive
+    width variants, and alt text that states the three exits.
+    """
+    text = _text()
+    links = text.index("docs/stability.md")
+    demo = text.index(DEMO_FILES[0])
+    assert links < demo < text.index("## Read a result")
+    assert text.index("## Watch the recorded demo") < demo
+    picture = _demo_picture()
+    assert [(media, _local_asset(target).name) for media, target in picture.sources] == [
+        ("(prefers-color-scheme: dark)", "demo-dark.gif"),
+    ]
+    assert picture.fallback is not None
+    assert _local_asset(picture.fallback).name == "demo-light.gif"
+    alt = next(alt for target, alt in _html_images().images if DEMO_FILES[0] in target)
+    assert alt is not None
+    for phrase in ("quickstart commands", "PyPI", "1.0.0", "exits 0", "exits 1", "BLOCK", "PASS"):
+        assert phrase in alt, phrase
+    prose = re.sub(r"\s+", " ", text)
+    assert "it is not authenticated model evidence" in prose
+    assert "do not contain it" in prose  # absent from the tag and the PyPI page (Decision 2A)

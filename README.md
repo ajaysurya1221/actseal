@@ -65,6 +65,20 @@ explains each output, the exit codes and how to pin one exact release.
 | [Providers](https://github.com/ajaysurya1221/actseal/blob/main/docs/providers.md) and [FAQ](https://github.com/ajaysurya1221/actseal/blob/main/docs/faq.md) | Fixture and optional native Laya setup; the PROVISIONAL experimental Jev cloud adapter behind `--provider jev --experimental-provider` (bring your own key, mocked-transport tests only, no accepted live receipt); answers to "why not PASS" |
 | [Publishing](https://github.com/ajaysurya1221/actseal/blob/main/docs/publishing.md), [CHANGELOG](https://github.com/ajaysurya1221/actseal/blob/main/CHANGELOG.md), [release notes](https://github.com/ajaysurya1221/actseal/blob/main/plan/v1/RELEASE_NOTES.md) and [SECURITY](https://github.com/ajaysurya1221/actseal/blob/main/SECURITY.md) | Release pipeline and receipts, changes per version, the receipt-backed release notes, private vulnerability reporting and support |
 
+## Watch the recorded demo
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/demo-dark.gif">
+  <img alt="Terminal recording of the three quickstart commands run against the public PyPI actseal 1.0.0 release. The demo prints BLOCK for the bad run and PASS for the fixed run and exits 0; the fixed replay prints PASS and exits 0; the bad replay prints BLOCK with the reason risk.exceeds_limit and exits 1." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/demo-light.gif" width="100%">
+</picture>
+
+This is an unedited capture of the three commands above against the
+published 1.0.0 wheel, rendered from the raw cast with the pinned
+authoring toolchain at speed 1; it shows the expected exits 0, 0 and 1. It
+was recorded after publication, so the tagged source and the package page
+on PyPI do not contain it. The recording illustrates the demo; it is not
+authenticated model evidence.
+
 ## Read a result
 
 An **ACT** is a per-case decision permitted by the frozen allowlist and the

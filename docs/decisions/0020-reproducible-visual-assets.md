@@ -7,9 +7,13 @@
   (ten variants regenerated; the desktop hero SVGs and `social.png` are
   byte-unchanged). The blind first-screen preflight and the final
   first-screen review on the integrated README both passed. The P2 figures
-  were not implemented for 1.0.0 and are outside its delivered scope; the
-  demo recording and the tagged publication remain future gates (the
-  recording follows the post-PyPI exception, Decision 2A).
+  were not implemented for 1.0.0 and are deferred to 1.1 (V1-052). The
+  tagged publication is complete: run 37603727302 passed all nine jobs,
+  including the `assets` job, on tag `v1.0.0`. The genuine demo was captured
+  from the published PyPI release under Decision 2A and its raw capture is
+  accepted (`plan/v1/reviews/14-capture.md`); copying it into the repository
+  and registering it in the inventory is the separately reviewed Task 14
+  activation.
 - Date: 2026-10-07.
 
 ## Decision
@@ -151,11 +155,20 @@ design.
   This is one reviewer's reading of one screenshot, not a timed human
   study; the screenshot's PyPI badge shows the then-current 0.1.0 release.
   The `710ae55` preflight above is retained as history.
-- Future gates, not claimed here: the genuine demo recording, captured from
-  the published PyPI release after publication under Decision 2A and absent
-  from the tagged tree; the tagged pipeline's own `assets` job; and the
-  tagged publication itself. Their receipts belong to the release review
-  and `plan/v1/RELEASE_NOTES.md`.
+- Publication and recording (7 October 2026): tag `v1.0.0`
+  (`04c10d3`) ran `publish-pypi.yml` as run 37603727302 with all nine jobs
+  SUCCESS, including the `assets` regeneration job on the tagged commit
+  (`plan/v1/reviews/20-publication.md`, `plan/v1/receipts/`). The genuine
+  demo was then captured from the official PyPI 1.0.0 wheel with the pinned
+  asciinema and agg: raw cast 21.517 s with exits 0, 0 and 1 visible, two
+  GIFs of 24.51 s, 8 frames and 979×918 px at 571,102 and 569,379 bytes,
+  each rendered twice to identical bytes; raw capture ACCEPT at `f55fd5b`
+  (`plan/v1/reviews/14-capture.md`, `plan/v1/reports/14-capture.md`). The
+  recording is absent from the tag, wheel, sdist and PyPI page and present
+  only in the later repository, as Decision 2A approved. Still open: the
+  Task 14 activation (copying the cast and GIFs, registering `demo` in the
+  inventory, hosted Linux regeneration) and its review; the README's
+  recording section (Task 21) references the activated files.
 - Related: [ADR 0015](0015-v1-stability-and-replay-compatibility.md),
   `docs/assets/src/README.md`, `docs/assets/src/tools.toml`.
 
