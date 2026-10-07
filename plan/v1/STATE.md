@@ -10,12 +10,13 @@ All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; s
 
 ## Current constraint and next action
 
-Current checkpoint: 7 October, approximately13:44IST. Main is
-`a210affb3742735fd41b34a94c2bc223c3e615a4` after planning PR43
-(reviewed2f82eff46ee7ef6a745054e6515def5af110ea0c) passed all eight
-hosted checks in runs37590743493/37590702682 and merged at08:06:15UTC.
-Root now prepares the deadline checkpoint on `codex/v1-deadline-checkpoint`.
-This is a planning checkpoint, not acceptance of the still-red candidate.
+Current checkpoint: 7 October,14:00IST. Main is
+`336fae685880a3a74ba353fd032d7c85f38bb6e0` after planning PR44
+(reviewed2e44b25) passed all eight hosted checks and merged. The exact PR39
+candidate5e7931a still has ten failed jobs, so V1-048 activates the approved
+Jev adapter plus unstarted audit deferral to1.1. Claude19/08 cut dispatches
+are being prepared on separate branches; no cut product change exists yet.
+Root records this at `codex/v1-jev-cut-activation`.
 
 1. **Task13 blocked:** the human added both exact merge Bash rules; Codex
    fixed only one missing JSON comma without changing a permission entry.
@@ -45,13 +46,13 @@ This is a planning checkpoint, not acceptance of the still-red candidate.
    assets:425pass/1fail. Lint/types passed; downstream build/packaging/evidence,
    hooks and real authoring checks were skipped, not verified by these runs.
    No product-source change: fingerprint8f316f67…98ed3 is unchanged. PR39 stays
-   unaccepted; no main merge, tag or publication. V1-047 and conditional19C/19D
-   specs prepare the14:00 Jev cut; they are NOT yet activated or dispatched.
+   unaccepted; no main merge, tag or publication. V1-048 now activates19C/19D; product changes and new exact-producer
+   compatibility approval are pending. No old registry approval carries forward.
 
 The one-time10:30IST heartbeat already resumed the original15/06 sessions;
 no duplicate reset/session. A distinct one-time14:00 cutoff heartbeat is
-registered as `apply-actseal-jev-cutoff`; it must refresh the gate before
-activating any cut. Earlier checkpoint narratives remain in
+registered as `apply-actseal-jev-cutoff`; the gate has now been refreshed
+and applied in this active turn. A later heartbeat must not duplicate dispatch. Earlier checkpoint narratives remain in
 Git history, CHANGE_LOG and immutable reports/reviews. Exact active process
 IDs and private packet paths are in `/tmp/actseal-v1-orchestration/active.json`.
 No model/account/billing substitution; normal hooks and all review gates stay.
@@ -63,8 +64,8 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 | 00–02 | ACCEPT and merged. Baseline2302 tests includes native; core source0595512 froze schema/compatibility interfaces. |
 | 03 | ACCEPT212a1d6 after independent177 conformance/provider +5 cached native tests and hooks. PR20 mergeda47c7f5. |
 | 04 | ACCEPT732914d after252 tests, all8 targeted mutations killed, hooks and strict helper types. PR21 mergedbaecd26; main CI37566825489 passed. |
-| 05 | Offline source5849c68/headc2e27d2 scoped ACCEPT. New independent390 focused +5 native tests pass; placeholder verified. Explicit CLI integration, final inclusion/live gates remain. PR28 still draft. |
-| 06 | Offline ACCEPTd3edbab/candidate3 after87 parent checks and independent probes. Live phase authorized but harness-blocked and unstarted; no key/request/journal. Candidates1/2 and scratch preserved. |
+| 05 | DEFERRED to1.1 by V1-048. Offline source5849c68/headc2e27d2 and its scoped ACCEPT remain preserved on the existing branch. Claude19 will remove only the unreleased Jev slice; no live capability claim. |
+| 06 | Live audit DEFERRED to1.1, unstarted. Preserve offline ACCEPTd3edbab/candidate3,87 parent checks and independent probes, all candidates/scratch and denial history. No key/request/journal/spend. |
 | 07 | Exactsource277d8e2 scoped ACCEPT and locally integrated. Final two-entry registry and corrected tests now replay the original nine-file archive unchanged; parent focused/installed tests pass. Earlier failed merge-preview remains history; final candidate hostedCI/main merge still pending. |
 | 08 | Final-facts correction2ccdac6 scoped ACCEPT; parent105 docs tests pass with1 missing-architecture failure, hooks pass, independent re-review passes. Locally integrated into19; fullvisual/hosted/release gates pending. DraftPR41 still710ae55 supports prior blind preflight only. |
 | 09 | Scoped CI/packaging source accepted, including Linuxagg probebb3b8f8 and actual-sdist checks. PR18 head0e32c6c has ten green hosted jobs37581140052/37581142565; Linuxagg1.9.0 hash-verified execution confirmed in job112660836035. Parent882 tests pass plus1 explicit obsolete-manifest observation skip. Accepted glue integrated locally into19. Final release rehearsal, exact artifacts and publication remain pending; green PR18 does not establish the combined candidate's acceptance. |
@@ -79,7 +80,7 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 
 ## Branches, processes and receipts
 
-Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-deadline-checkpoint`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
+Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-jev-cut-activation`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
 
 - Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, completed atfcdcfe4 and merged7820dba; all accepted asset bytes preserved.
 - Reused former baseline worktree: Task03 branch preserved. Now Task11-only completion branch736d912, cherry-picking Claude commits461f9ee/db56f36/7bb32f4 onto5f3fee5; files byte-identical. This isolates finished hero assets from unfinished social registration.

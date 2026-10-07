@@ -367,3 +367,33 @@ the final admitted providers; mandatory images, original checks, ACCEPT and
 exact-head green hosted CI remain required. Prepare a one-time same-thread
 14:00 wakeup so the already approved cut is not missed while waiting for the
 human's pending manual-merge response.
+
+## V1-048 — Activate the approved 14:00 Jev cut
+
+At2026-10-07T08:30:16Z (14:00:16IST), Codex verified the current clock, then
+refreshed PR39. Its exact head remains5e7931a1ec8b0197d87ddc1e01a0835e011b470f;
+all ten hosted jobs in37590464434/37590468512 remain completed/failed. The
+independently identified failures are the four missing architecture SVGs.
+Task13 still sits clean at6ba49ae with no completed manual merge. The complete
+candidate therefore failed PLAN/V1-036's14:00 integration-and-green gate.
+
+Activate V1-047 and tasks19C/19D: defer the optional Jev adapter and its
+unstarted live audit to1.1. Offline adapter work passed its scoped reviews;
+this is a deadline/integration cut, not a finding of provider malfunction.
+No live request, journal, key read or Jev credit use occurred. Preserve the
+accepted source and all benchmark candidates on their existing branches.
+
+Resume the existing Claude19 and Claude08 Fable5.1/high sessions under normal
+permissions on separate cut branches from5e7931a. The reviewed conditional
+specs now govern execution; their prepared status records their earlier state.
+Ownership and all protected paths in those specs remain unchanged. Freeze
+packaged source before a new independent exact-hash compatibility approval;
+no registry edit is authorized by this activation. Task13/06 denials remain
+unmodified and may not be retried or routed around. The final architecture
+will depict fixture and Laya only. No mandatory gate is cut.
+
+The preceding planning checkpointPR44 was independently ACCEPTed at
+2e44b25f6002a6fa99b619e1543eef30dd8b8ab7 and passed all eight exact-head hosted
+checks in37592834007/37592827050. It merged as336fae685880a3a74ba353fd032d7c85f38bb6e0
+at08:23:18UTC. Earlier superseded CI remains historical, not acceptance of
+the new head. This activation does not claim full release acceptance.
