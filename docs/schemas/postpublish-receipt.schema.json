@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:postpublish-receipt:1",
+  "title": "Actseal post-publication receipt (schema 1, promotion profile)",
+  "description": "postpublish-receipt.json written by `tools/check_release.py postpublish` after installing the published version from the official PyPI index in the pinned clean container. The promotion profile requires the official index and file host, non-yanked metadata, both distributions with provenance present, and the exact demo/replay smoke outcomes (demo 0 with bad BLOCK and fixed PASS, fixed replay 0, bad replay 1). A local or test-index run (for example a `file://` index or a run that allowed missing attestations) is inspection-only and never validates. The provenance fields record that PEP 740 attestation presence, trusted-publisher identity and statement subjects were inspected; they do not claim cryptographic verification. This receipt carries no lock_sha256; the uv.lock hash lives in the build and release receipts. Unknown fields are rejected everywhere; the helper additionally enforces exact integer counts, inventory equality with the verified distributions and the Production/Stable classifier for 1.x.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "version",
+    "index",
+    "ok",
+    "published_metadata",
+    "files",
+    "checks",
+    "note"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "actseal-postpublish-receipt" },
+    "version": { "$ref": "#/$defs/Version" },
+    "index": { "$ref": "#/$defs/OfficialIndex" },
+    "ok": { "const": true },
+    "published_metadata": { "$ref": "#/$defs/PublishedMetadata" },
+    "files": { "$ref": "#/$defs/PublishedFiles" },
+    "checks": { "$ref": "#/$defs/SmokeChecks" },
+    "note": { "$ref": "#/$defs/InspectionNote" }
+  },
+  "if": { "properties": { "version": { "pattern": "^[1-9]" } } },
+  "then": {
+    "properties": {
+      "published_metadata": {
+        "properties": {
+          "classifiers": { "contains": { "const": "Development Status :: 5 - Production/Stable" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$(?![\\s\\S])" },
+    "Version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$(?![\\s\\S])"
+    },
+    "OfficialIndex": { "const": "https://pypi.org" },
+    "InspectionNote": {
+      "const": "Attestation presence, publisher identity and statement subjects were inspected; no independent cryptographic verification is claimed."
+    },
+    "PublishedMetadata": {
+      "description": "The PyPI `info` facts that must equal the downloaded wheel's METADATA: project name, version, summary and the sorted classifier list; the release must not be yanked.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "summary", "classifiers", "yanked"],
+      "properties": {
+        "name": { "const": "actseal" },
+        "version": { "$ref": "#/$defs/Version" },
+        "summary": { "type": "string", "minLength": 1 },
+        "classifiers": {
+          "description": "The published classifier list as PyPI reports it, sorted; duplicates and, for 0.x releases, an empty list are recorded as found. 1.x releases must contain the Production/Stable classifier (see the if/then at the receipt root).",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "yanked": { "const": false }
+      }
+    },
+    "Publisher": {
+      "description": "The only trusted publisher identity accepted: this repository's `publish-pypi.yml` workflow in the `pypi` environment.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "repository", "workflow", "environment"],
+      "properties": {
+        "kind": { "const": "GitHub" },
+        "repository": { "const": "ajaysurya1221/actseal" },
+        "workflow": { "const": "publish-pypi.yml" },
+        "environment": { "const": "pypi" }
+      }
+    },
+    "Provenance": {
+      "description": "Inspection record for one published file. `attestations` counts the PyPI Publish attestations whose decoded statement named this file and its digest; it is at least the number of publisher bundles. No signature or certificate is verified here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["present", "attestations", "publishers", "subject_sha256"],
+      "properties": {
+        "present": { "const": true },
+        "attestations": { "type": "integer", "minimum": 1 },
+        "publishers": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Publisher" } },
+        "subject_sha256": { "$ref": "#/$defs/Sha256" }
+      }
+    },
+    "PublishedFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "url",
+        "size",
+        "sha256",
+        "declared_sha256",
+        "matches_build",
+        "provenance"
+      ],
+      "properties": {
+        "filename": {
+          "type": "string",
+          "pattern": "^actseal-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-py3-none-any\\.whl|\\.tar\\.gz)$(?![\\s\\S])"
+        },
+        "url": { "type": "string", "pattern": "^https://files\\.pythonhosted\\.org/" },
+        "size": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/Sha256" },
+        "declared_sha256": { "$ref": "#/$defs/Sha256" },
+        "matches_build": { "const": true },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      }
+    },
+    "PublishedFiles": {
+      "description": "Exactly the wheel and the sdist, sorted by filename. The helper additionally requires `sha256 == declared_sha256 == provenance.subject_sha256` per file and equality with the verified build inventory.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/PublishedFile" }
+    },
+    "SmokeChecks": {
+      "description": "The frozen installed-demo expectations recorded from the clean-container run.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version_output",
+        "demo_exit",
+        "fixed_replay_exit",
+        "bad_replay_exit",
+        "demo_bad_status",
+        "demo_fixed_status",
+        "installed_outside_checkout"
+      ],
+      "properties": {
+        "version_output": {
+          "type": "string",
+          "pattern": "^actseal (0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$(?![\\s\\S])"
+        },
+        "demo_exit": { "const": 0 },
+        "fixed_replay_exit": { "const": 0 },
+        "bad_replay_exit": { "const": 1 },
+        "demo_bad_status": { "const": "BLOCK" },
+        "demo_fixed_status": { "const": "PASS" },
+        "installed_outside_checkout": { "const": true }
+      }
+    },
+    "EmbeddedPostpublish": {
+      "description": "The post-publication evidence as embedded in the release receipt: the same body without the standalone receipt's schema_version, kind, version and ok fields. The release receipt carries its own schema_version, kind and version and has no ok field; the post-publication receipt has no lock_sha256.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "published_metadata", "files", "checks", "note"],
+      "properties": {
+        "index": { "$ref": "#/$defs/OfficialIndex" },
+        "published_metadata": { "$ref": "#/$defs/PublishedMetadata" },
+        "files": { "$ref": "#/$defs/PublishedFiles" },
+        "checks": { "$ref": "#/$defs/SmokeChecks" },
+        "note": { "$ref": "#/$defs/InspectionNote" }
+      }
+    }
+  }
+}

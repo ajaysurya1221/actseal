@@ -10,20 +10,28 @@ All deadlines are7October2026, Asia/Kolkata. The14:00 Jev-cut trigger is superse
 
 ## Current constraint and next action
 
-Current checkpoint: 7 October,approximately14:05IST. Main remains
-`336fae685880a3a74ba353fd032d7c85f38bb6e0`. The human relaxed the14:00cut
+Current checkpoint: 7 October,approximately14:50IST. Main is
+`4da1084f28eac70cf251783c02f1c8cd12ad25e4`. The human relaxed the14:00cut
 after its activation; V1-049 retains the reviewed experimental Jev adapter.
 Both removal sessions are stopped. Preserve four staged deletion drafts in
 the isolated cut branch; never treat that dirty checkout as the candidate.
 The immutable candidate5e7931a and its original branch remain intact.
-PR45 records activation plus the superseding human decision; no cut merges.
+PR45 records activation plus the superseding human decision; it merged after
+independent ACCEPT and eight exact-head green checks. No cut merges.
 
 1. **Task13 unblocked by human action:** both manual merges are complete,
    independently verified at head05eca93e6623c181927a53100114b85d17459968.
    First mergebb35cfa integrates7820dba; second05eca93 integrates1fd9d08.
    Checkout is clean and accepted hero/workflow/social bytes match7820dba.
-   Continue only the owned architecture generation/tests; no merge retry.
-   Four earlier denial receipts remain historical. No actual output yet.
+   Architecture/readability77a13bd is now scoped ACCEPT after parent337visual
+   and3898ordinary tests, typing/hooks, full regeneration and all12variant
+   pixel review at838px desktop/254px mobile. Paired responsive README
+   95e17b4 is scoped ACCEPT with additive receipt corrections. Both are
+   combined locally atc1b5481 oncodex/v1-architecture-review. Parent590combined
+   docs/visual checks, docs gate, hooks and16image references pass; all12SVGs
+   andsocial regenerate. Full combined suite/hostedCI/rehearsal and final
+   browser-first-screen gates remain. No runtime/registry/example changes
+   from5e7931a. Earlier REVISE/denial reports remain historical.
 
 2. **Task06 unstarted/blocked:** V1-041 authorized narrowly loading the key
    for the already reviewed audit; later normal resumptions were denied by
@@ -68,20 +76,20 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 | 05 | RETAIN experimental adapter per human overrideV1-049; original offline scoped ACCEPT and candidate5e7931a preserved. Removal drafts isolated/cancelled; final integration gates remain. |
 | 06 | Optional live audit unstarted and harness-blocked. Preserve offline ACCEPTd3edbab/candidate3, all candidates/scratch and denial history. Human timing change does not clear the actual preflight denial. No key/request/journal/spend. |
 | 07 | Exactsource277d8e2 scoped ACCEPT and locally integrated. Final two-entry registry and corrected tests now replay the original nine-file archive unchanged; parent focused/installed tests pass. Earlier failed merge-preview remains history; final candidate hostedCI/main merge still pending. |
-| 08 | Final-facts correction2ccdac6 scoped ACCEPT; parent105 docs tests pass with1 missing-architecture failure, hooks pass, independent re-review passes. Locally integrated into19; fullvisual/hosted/release gates pending. DraftPR41 still710ae55 supports prior blind preflight only. |
+| 08 | Responsive95e17b4 scoped ACCEPT, combined with13R atc1b5481; parent590docs/visual checks and docs gate now pass. Task08F pre-tag factual finalization is next. DraftPR41 still710ae55 supports prior blind preflight only; final browser/hosted/release gates pending. |
 | 09 | Scoped CI/packaging source accepted, including Linuxagg probebb3b8f8 and actual-sdist checks. PR18 head0e32c6c has ten green hosted jobs37581140052/37581142565; Linuxagg1.9.0 hash-verified execution confirmed in job112660836035. Parent882 tests pass plus1 explicit obsolete-manifest observation skip. Accepted glue integrated locally into19. Final release rehearsal, exact artifacts and publication remain pending; green PR18 does not establish the combined candidate's acceptance. |
 | 10 | Toolchain ACCEPT030ef840, merged6ad1e91. |
 | 11 | Actual hero/font/OFL bytes independently accepted and preserved in combinedPR31, merged7820dba after8 green checks. IsolatedPR25 closed as superseded; source history retained. Final README blind test remains. |
 | 12 | ACCEPTf712dae after actual offline pixel review and regeneration. PR22 merged227c7da. No browser workaround. |
-| 13 | Human manually completed both prerequisite merges; parent verified cleanhead05eca93, ancestry and unchanged accepted assets. Resume owned architecture generation only; prior denials preserved. No final output ACCEPT yet. |
+| 13 | Scoped ACCEPT77a13bd: actual12variants, corrected838/254px readability, parent337visual+3898ordinary checks, strict types/hooks andregeneration PASS. Desktophero/social bytes unchanged. Combined590docs/visual checks PASS; exact-head hostedCI/finalfirstscreen pending. |
 | 14 | Procedure/helper11a31fc scoped ACCEPT/greenPR30; standalone renderer a47a320 scoped ACCEPT after all bounded repairs, parent425visual+103independentfocused checks. Fulltask pending genuine PyPI cast/GIF, provenance, rendering and activation. |
 | 15 | ACCEPTfcdcfe4;283 parent+independent visual tests,2,958 parent core tests,types/hooks,actualpixels/regeneration and8 hosted checks pass. PR31 merged7820dba. Social1280x640 exists; user upload not done. |
 | 16–18 | Optional P2, only after mandatory P1 acceptance; not dispatched. |
-| 19–22 | Scoped source/registry corrections b0031f5 and receiptf43291d ACCEPT; original source fingerprint8f316f67…98ed3 stays fixed. Accepted08/14renderer/09 andmain5c9a3d0 integrated locally at5e7931a; parent530 docs/visual checks pass with2 known architecture failures. Mandatory architecture, final docs/current-status facts, exact-head full hostedCI/rehearsal, release/publication/final receipts remain. No v1 tag or PyPI publication. |
+| 19–22 | Sourcefingerprint8f316f67…98ed3 remains fixed. Accepted5e source, currentplanning, responsive95e17b4 and architecture77a13bd combined locally atc1b5481. Parent590docs/visual checks,docs gate/hooks/regeneration pass; earlier missingarchitecture failures resolved locally. Full hostedCI/rehearsal, pre-tagfacts/finalfirstscreen and publication/finalreceipts remain. No v1 tag or PyPI publication. |
 
 ## Branches, processes and receipts
 
-Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-jev-cut-activation`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
+Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-architecture-review`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12 and planning PR45; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
 
 - Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, completed atfcdcfe4 and merged7820dba; all accepted asset bytes preserved.
 - Reused former baseline worktree: Task03 branch preserved. Now Task11-only completion branch736d912, cherry-picking Claude commits461f9ee/db56f36/7bb32f4 onto5f3fee5; files byte-identical. This isolates finished hero assets from unfinished social registration.

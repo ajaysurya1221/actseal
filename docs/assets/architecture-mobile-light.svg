@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg aria-labelledby="title desc" height="3148" role="img" viewBox="0 0 720 3148" width="720" xmlns="http://www.w3.org/2000/svg">
+  <title id="title">Actseal architecture: seven shipped groups and their modules</title>
+  <desc id="desc">Seven groups, each listing the actseal modules that implement it. Contracts and locks: contract, records, errors, serialization, locking and compatibility parse, seal and validate the lock with no model call. CLI and typed API: cli, runner, __init__, __main__ and demo_data drive the lock, verify, replay and demo commands. Providers: adapters.base, adapters.fixture, adapters.laya and the PROVISIONAL experimental.providers.jev; the dashed live-inference boundary encloses the Laya and Jev adapters, because the fixture adapter reads a recorded file. Fixture and Laya are the stable providers; Jev is an experimental cloud adapter selected only by explicit opt-in, with no stability promise and no claim here that its service was exercised. Normalization and policy: normalization and policy are pure functions that turn one raw capture into one decision. Assessment, statistics and faults: assessment, stats and faults; the six fault scenarios are synthetic, generated from the lock with no model call, and assessment recomputes every decision before the verdict. Evidence: evidence writes the seven-file bounded data-only bundle atomically. Replay: replay reads the bundle and recomputes the verdict offline through contracts and assessment; no arrow joins replay and providers, and replay imports no provider module.</desc>
+  <rect fill="#ffffff" height="3148" width="720" x="0" y="0"/>
+  <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="group-contracts">
+    <rect fill="#f6f8fa" height="372" rx="10" stroke="#d0d7de" stroke-width="2" width="648" x="36" y="24"/>
+    <text fill="#1f2328" font-size="44" font-weight="bold" x="56" y="84">Contracts / locks</text>
+    <line stroke="#d0d7de" stroke-width="2" x1="56" x2="664" y1="98" y2="98"/>
+    <text fill="#0969da" font-size="40" x="56" y="148">contract · records · errors</text>
+    <text fill="#0969da" font-size="40" x="56" y="200">serialization · locking</text>
+    <text fill="#0969da" font-size="40" x="56" y="252">compatibility</text>
+    <text fill="#57606a" font-size="40" x="56" y="316">parse, seal, validate</text>
+    <text fill="#57606a" font-size="40" x="56" y="368">no model call</text>
+    <g data-source="contracts" data-target="assessment" id="edge-contracts-assessment">
+      <polyline fill="none" points="688,372 708,372 708,1982 700,1982" stroke="#0969da" stroke-width="3"/>
+      <polygon fill="#0969da" points="688,1982 700,1975 700,1989"/>
+      <text fill="#57606a" font-size="40" text-anchor="end" x="684" y="448">6 synthetic faults</text>
+    </g>
+  </g>
+  <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="group-cli">
+    <rect fill="#f6f8fa" height="268" rx="10" stroke="#d0d7de" stroke-width="2" width="648" x="36" y="526"/>
+    <text fill="#1f2328" font-size="44" font-weight="bold" x="56" y="586">CLI / typed API</text>
+    <line stroke="#d0d7de" stroke-width="2" x1="56" x2="664" y1="600" y2="600"/>
+    <text fill="#0969da" font-size="40" x="56" y="650">cli · runner · __init__</text>
+    <text fill="#0969da" font-size="40" x="56" y="702">__main__ · demo_data</text>
+    <text fill="#57606a" font-size="40" x="56" y="766">lock, verify, replay, demo</text>
+    <g data-source="cli" data-target="contracts" id="edge-cli-contracts">
+      <polyline fill="none" points="350,522 350,412" stroke="#0969da" stroke-width="3"/>
+      <polygon fill="#0969da" points="350,400 343,412 357,412"/>
+    </g>
+    <g data-source="cli" data-target="providers" id="edge-cli-providers">
+      <polyline fill="none" points="350,798 350,908" stroke="#0969da" stroke-width="3"/>
+      <polygon fill="#0969da" points="350,920 343,908 357,908"/>
+    </g>
+  </g>
+  <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="group-providers">
+    <rect fill="#f6f8fa" height="506" rx="10" stroke="#d0d7de" stroke-width="2" width="648" x="36" y="924"/>
+    <text fill="#1f2328" font-size="44" font-weight="bold" x="56" y="984">Providers</text>
+    <line stroke="#d0d7de" stroke-width="2" x1="56" x2="664" y1="998" y2="998"/>
+    <text fill="#0969da" font-size="40" x="56" y="1048">adapters.base · adapters.fixture</text>
+    <g id="live-boundary-providers">
+      <rect fill="none" height="170" rx="6" stroke="#0969da" stroke-dasharray="8 6" stroke-width="2" width="624" x="48" y="1064"/>
+      <text fill="#0969da" font-size="40" x="56" y="1112">adapters.laya</text>
+      <text fill="#0969da" font-size="40" x="56" y="1164">experimental.providers.jev</text>
+      <text fill="#57606a" font-size="40" x="56" y="1216">live inference</text>
+    </g>
+    <text fill="#57606a" font-size="40" x="56" y="1298">fixture: recorded file</text>
+    <text fill="#57606a" font-size="40" x="56" y="1350">laya: pinned checkpoint</text>
+    <text fill="#57606a" font-size="40" x="56" y="1402">jev: PROVISIONAL opt-in</text>
+    <g data-source="providers" data-target="normalization" id="edge-providers-normalization">
+      <polyline fill="none" points="350,1434 350,1544" stroke="#0969da" stroke-width="3"/>
+      <polygon fill="#0969da" points="350,1556 343,1544 357,1544"/>
+    </g>
+  </g>
+  <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="group-normalization">
+    <rect fill="#f6f8fa" height="268" rx="10" stroke="#d0d7de" stroke-width="2" width="648" x="36" y="1560"/>
+    <text fill="#1f2328" font-size="44" font-weight="bold" x="56" y="1620">Normalization / policy</text>
+    <line stroke="#d0d7de" stroke-width="2" x1="56" x2="664" y1="1634" y2="1634"/>
+    <text fill="#0969da" font-size="40" x="56" y="1684">normalization · policy</text>
+    <text fill="#57606a" font-size="40" x="56" y="1748">pure; no provider import</text>
+    <text fill="#57606a" font-size="40" x="56" y="1800">decision per capture</text>
+    <g data-source="normalization" data-target="assessment" id="edge-normalization-assessment">
+      <polyline fill="none" points="350,1832 350,1942" stroke="#0969da" stroke-width="3"/>
+      <polygon fill="#0969da" points="350,1954 343,1942 357,1942"/>
+      <text fill="#57606a" font-size="40" text-anchor="start" x="362" y="1913">decisions</text>
+    </g>
+  </g>
+  <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="group-assessment">
+    <rect fill="#f6f8fa" height="370" rx="10" stroke="#d0d7de" stroke-width="2" width="648" x="36" y="1958"/>
+    <text fill="#1f2328" font-size="44" font-weight="bold" x="56" y="2018">Assessment / statistics</text>
+    <text fill="#1f2328" font-size="44" font-weight="bold" x="56" y="2068">faults</text>
+    <line stroke="#d0d7de" stroke-width="2" x1="56" x2="664" y1="2082" y2="2082"/>
+    <text fill="#0969da" font-size="40" x="56" y="2132">assessment · stats · faults</text>
+    <text fill="#57606a" font-size="40" x="56" y="2196">6 synthetic faults; no model call</text>
+    <text fill="#57606a" font-size="40" x="56" y="2248">recomputes decisions, then the</text>
+    <text fill="#57606a" font-size="40" x="56" y="2300">verdict</text>
+    <g data-source="assessment" data-target="evidence" id="edge-assessment-evidence">
+      <polyline fill="none" points="350,2332 350,2442" stroke="#0969da" stroke-width="3"/>
+      <polygon fill="#0969da" points="350,2454 343,2442 357,2442"/>
+      <text fill="#57606a" font-size="40" text-anchor="start" x="362" y="2387">verdict, records,</text>
+      <text fill="#57606a" font-size="40" text-anchor="start" x="362" y="2439">faults</text>
+    </g>
+  </g>
+  <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="group-evidence">
+    <rect fill="#f6f8fa" height="268" rx="10" stroke="#d0d7de" stroke-width="2" width="648" x="36" y="2458"/>
+    <text fill="#1f2328" font-size="44" font-weight="bold" x="56" y="2518">Evidence</text>
+    <line stroke="#d0d7de" stroke-width="2" x1="56" x2="664" y1="2532" y2="2532"/>
+    <text fill="#0969da" font-size="40" x="56" y="2582">evidence</text>
+    <text fill="#57606a" font-size="40" x="56" y="2646">7-file bundle, bounded</text>
+    <text fill="#57606a" font-size="40" x="56" y="2698">atomic publish</text>
+    <g data-source="evidence" data-target="replay" id="edge-evidence-replay">
+      <polyline fill="none" points="350,2730 350,2840" stroke="#0969da" stroke-width="3"/>
+      <polygon fill="#0969da" points="350,2852 343,2840 357,2840"/>
+    </g>
+  </g>
+  <g font-family="Helvetica, Arial, Liberation Sans, sans-serif" id="group-replay">
+    <rect fill="#f6f8fa" height="268" rx="10" stroke="#d0d7de" stroke-width="2" width="648" x="36" y="2856"/>
+    <text fill="#1f2328" font-size="44" font-weight="bold" x="56" y="2916">Replay</text>
+    <line stroke="#d0d7de" stroke-width="2" x1="56" x2="664" y1="2930" y2="2930"/>
+    <text fill="#0969da" font-size="40" x="56" y="2980">replay</text>
+    <text fill="#57606a" font-size="40" x="56" y="3044">offline; no provider import</text>
+    <text fill="#57606a" font-size="40" x="56" y="3096">recomputes the verdict</text>
+    <g data-source="replay" data-target="contracts" id="edge-replay-contracts">
+      <polyline fill="none" points="32,3100 12,3100 12,372 20,372" stroke="#57606a" stroke-width="3"/>
+      <polygon fill="#57606a" points="32,372 20,365 20,379"/>
+      <text fill="#57606a" font-size="40" text-anchor="start" x="36" y="448">lock, inputs</text>
+    </g>
+    <g data-source="replay" data-target="assessment" id="edge-replay-assessment">
+      <polyline fill="none" points="32,2880 24,2880 24,2304 20,2304" stroke="#57606a" stroke-width="3"/>
+      <polygon fill="#57606a" points="32,2304 20,2297 20,2311"/>
+      <text fill="#57606a" font-size="40" text-anchor="start" x="36" y="2380">recompute</text>
+    </g>
+  </g>
+</svg>

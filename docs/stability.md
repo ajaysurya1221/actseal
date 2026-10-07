@@ -58,17 +58,21 @@ output.
 
 | Command | Required | Optional |
 |---|---|---|
-| `lock` | `--contract PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out PATH` | `--responses PATH`, `--offline`, `--json` |
-| `verify` | `--lock PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out DIRECTORY` | `--responses PATH`, `--offline`, `--json` |
+| `lock` | `--contract PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out PATH` | `--responses PATH`, `--offline`, `--json`; PROVISIONAL: `--provider jev` with `--experimental-provider` |
+| `verify` | `--lock PATH`, `--calibration PATH`, `--verification PATH`, `--provider {fixture,laya}`, `--out DIRECTORY` | `--responses PATH`, `--offline`, `--json`; PROVISIONAL: `--provider jev` with `--experimental-provider` |
 | `replay` | `DIRECTORY` (positional bundle directory) | `--expected-lock-sha256 HEX`, `--json` |
 | `demo` | `--out NEW_DIRECTORY` | `--json` |
 | root | | `--version` (root only), `-h`/`--help` |
 
 Provider rules: `fixture` requires `--responses`; `laya` forbids it; `--offline`
-is accepted by both. The stable provider choices are `fixture` and `laya`. A
-Jev transport, if it ships, is PROVISIONAL: it requires
-`--provider jev --experimental-provider`, is never selected implicitly and is
-not part of this task's deliverable.
+is accepted by both. The STABLE provider choices are `fixture` and `laya`; they
+reject `--experimental-provider`. The experimental Jev adapter is PROVISIONAL
+(ADR 0017): `lock` and `verify` accept it only as
+`--provider jev --experimental-provider`, it is never selected implicitly,
+it rejects `--responses`, its adapter rejects `--offline` as a setup error
+before reading `JEV_API_KEY`, and `replay`/`demo` do not accept the flag. The
+`jev` choice, the flag and the adapter carry no 1.x promise and may change or
+be removed in any release; the receipt shapes below are unchanged by it.
 
 Exit codes are STABLE: `PASS` 0, `BLOCK` 1, `INCONCLUSIVE` 2, `ERROR` 3. Usage
 errors, setup errors, invalid inputs, existing destinations and operating-system
@@ -276,7 +280,10 @@ unknown fields, duplicate keys, malformed hashes, unsupported engines and any
 wildcard or range form. The file is packaged beside the module and is outside
 the implementation fingerprint (which hashes only `*.py`). Entries are added
 only by review with archived-evidence regression tests; the 1.0.0 registry
-ships empty until Codex approves the released source hash. The registry is
+ships exactly two reviewed entries for `actseal-choice-v1` (the 1.0.0 source
+itself and the unreleased prerelease producer of the retained
+`examples/action_gate` archive), listed with their provenance in the
+[versioning policy](versioning.md#registry-approval-process). The registry is
 trusted verifier configuration, not proof that evidence is authentic.
 
 ### Runner and CLI (`actseal.runner`, `actseal.cli`)
@@ -374,7 +381,7 @@ amendment.
 | Module | Names | Meaning |
 |---|---|---|
 | `actseal` | `__version__` | Installed package version |
-| `actseal.records` | `SCHEMA_VERSION`, `CONTRACT_SCHEMA_VERSION` (1); `LOCK_SCHEMA_VERSION` (2); `MIN_OPTIONS` (2), `MAX_OPTIONS` (16); `MAX_CASES_PER_SPLIT` (10000); `MASS_TOLERANCE` (1e-12); `FAILURE_CODES`; `PROVIDERS` | Contract TOML and lock schema versions; option, case and probability-mass limits; the eight failure codes; the stable provider set `{fixture, laya}` |
+| `actseal.records` | `SCHEMA_VERSION`, `CONTRACT_SCHEMA_VERSION` (1); `LOCK_SCHEMA_VERSION` (2); `MIN_OPTIONS` (2), `MAX_OPTIONS` (16); `MAX_CASES_PER_SPLIT` (10000); `MASS_TOLERANCE` (1e-12); `FAILURE_CODES`; `PROVIDERS` | Contract TOML and lock schema versions; option, case and probability-mass limits; the eight failure codes; the admitted serialized provider set `{fixture, laya, jev}`, where `fixture` and `laya` are the stable CLI choices and `jev` is the identity provider of the PROVISIONAL experimental adapter (admitted for recorded evidence and replay; not a stable CLI choice) |
 | `actseal.serialization` | `MAX_JSON_BYTES` (128 MiB), `MAX_JSON_DEPTH` (32) | Strict-parser ceilings |
 | `actseal.contract` | `MAX_ROW_BYTES` (1 MiB) | JSONL row ceiling |
 | `actseal.locking` | `FAULT_INVENTORY`, `MAX_LOCK_BYTES` (32 MiB) | The frozen six-scenario fault table in order; lock document ceiling |

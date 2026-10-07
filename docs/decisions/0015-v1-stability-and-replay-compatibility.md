@@ -44,8 +44,9 @@ and any wildcard or range form. Entries are added only by review with
 archived-evidence regression tests; because every source change alters the
 fingerprint, a reviewed exact-fingerprint entry for an existing engine may
 ship in a patch release. The registry is trusted verifier configuration, not
-proof of evidence authenticity. The 1.0.0 registry ships empty until the
-released fingerprint is approved at integration.
+proof of evidence authenticity. As decided, the registry stayed empty until
+integration; the 1.0.0 candidate's registry now holds exactly the two
+mappings recorded in the status section below.
 
 **0.1.0 evidence is isolated, not migrated.** Schema-1 locks and manifests
 are detected before generic decoding and rejected with `LegacySchemaError`
@@ -78,3 +79,20 @@ schema validation tests enforce them. The receipt schema gained a shared
 `BundlePayload` definition in 02R2 after review showed nested demo runs did
 not carry command-level fields; that repair corrected the schema to the
 shipped output, not the output to the schema.
+
+## Status — 7 October 2026
+
+Amendment V1-037 approved exactly two `actseal-choice-v1` entries after an
+independent compatibility probe, and the packaged
+`compatibility_registry.json` of the 1.0.0 candidate contains exactly them:
+the candidate source fingerprint
+`8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3` and the
+original producer `a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642`
+of the retained `examples/action_gate/recorded/a5fe090202f7` archive (an
+unreleased prerelease tree, not the released 0.1.0). Both are producer/engine
+mappings, not an archive allowlist; the unchanged archive replays with its
+full stored verdict under both, and empty, one-sided and wrong-engine
+registries still reject it in explicit temporary fixtures. Any further Python
+source change invalidates the first entry and requires a new fingerprint and
+review ([versioning policy](../versioning.md)). No v1 tag or publication has
+occurred.

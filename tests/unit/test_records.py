@@ -622,7 +622,11 @@ BAD_CONSTRUCTIONS: list[tuple[str, Any, str]] = [
         lambda: Verdict("INCONCLUSIVE", (), 0, 0, 0, Interval(0, 1), Interval(0, 1), "demo", HEX_1),
         "total",
     ),
-    ("Identity unknown provider", lambda: _replace(make_identity(), provider="jev"), "provider"),
+    (
+        "Identity unknown provider",
+        lambda: _replace(make_identity(), provider="unsupported"),
+        "provider",
+    ),
     (
         "Identity provider wrong case",
         lambda: _replace(make_identity(), provider="Laya"),

@@ -110,7 +110,7 @@
           "additionalProperties": false,
           "required": ["provider", "model", "revision", "adapter_version", "normalizer_version"],
           "properties": {
-            "provider": { "enum": ["fixture", "laya"] },
+            "provider": { "enum": ["fixture", "laya", "jev"] },
             "model": { "type": "string", "minLength": 1 },
             "revision": { "type": "string", "minLength": 1 },
             "adapter_version": { "type": "string", "minLength": 1 },

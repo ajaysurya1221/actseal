@@ -47,8 +47,13 @@ FORBIDDEN_WORDS = (
 )
 MAX_GROUPS = 7
 MAX_STAGE_LINES = 6
-DESKTOP_MIN_LABEL = 26
-MOBILE_MIN_LABEL = 30
+# Floors derived from the measured README image widths (REVIEW 13): 838 px for
+# the 1600-unit desktop canvas and 254 px for the 720-unit mobile canvas.
+DESKTOP_MIN_LABEL = 27
+MOBILE_MIN_LABEL = 40
+README_DISPLAY_WIDTH = 838
+MOBILE_DISPLAY_WIDTH = 254
+MIN_RENDERED_PX = 14.0
 
 
 @pytest.fixture(scope="module")
@@ -92,13 +97,34 @@ def test_every_output_passes_the_validators(kit: ModuleType, rendered: dict[str,
 def test_desktop_canvas_is_final_and_mobile_is_narrow(kit: ModuleType) -> None:
     asset = kit.inventory.get_asset("how-it-works")
     sizes = {o.path: (o.width, o.height, o.display_width) for o in asset.outputs}
+    assert kit.inventory.README_DISPLAY_WIDTH == README_DISPLAY_WIDTH
+    assert kit.inventory.MOBILE_DISPLAY_WIDTH == MOBILE_DISPLAY_WIDTH
     for name in DESKTOP:
-        assert sizes[name] == (1600, 400, kit.inventory.README_DISPLAY_WIDTH)
+        assert sizes[name] == (1600, 400, README_DISPLAY_WIDTH)
     for name in MOBILE:
         width, height, display = sizes[name]
-        assert (width, display) == (720, kit.inventory.MOBILE_DISPLAY_WIDTH)
+        assert (width, display) == (720, MOBILE_DISPLAY_WIDTH)
         assert height is not None
         assert height == kit.how_it_works.mobile_height() > width
+
+
+def test_every_label_clears_the_floor_at_the_measured_readme_widths(
+    kit: ModuleType, rendered: dict[str, bytes]
+) -> None:
+    """Effective rendered size = font-size x (measured display width / SVG width)."""
+    asset = kit.inventory.get_asset("how-it-works")
+    for output in asset.outputs:
+        root = _tree(rendered[output.path])
+        assert output.width is not None
+        assert output.display_width is not None
+        assert int(root.get("width", "0")) == output.width
+        scale = output.display_width / output.width
+        sizes = [float(t.get("font-size", "0")) for t in root.iter(f"{SVG_NS}text")]
+        assert sizes, output.path
+        assert min(sizes) * scale >= MIN_RENDERED_PX, (output.path, min(sizes) * scale)
+        # The previous 26/30-unit sizes would not clear the floor at these widths.
+        old = 26 if output.path in DESKTOP else 30
+        assert old * scale < MIN_RENDERED_PX
 
 
 @pytest.mark.parametrize("name", [*DESKTOP, *MOBILE])

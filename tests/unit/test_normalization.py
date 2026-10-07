@@ -11,8 +11,11 @@ from typing import Any
 
 import pytest
 
+import actseal.normalization as normalization_module
 from actseal.errors import SchemaError
 from actseal.normalization import (
+    _JEV_MASS_TOLERANCE,
+    _JEV_MODEL,
     FIXTURE_MASS_TOLERANCE,
     LAYA_MASS_TOLERANCE_PER_OPTION,
     NORMALIZER_VERSION,
@@ -675,7 +678,299 @@ def test_laya_identity_is_checked_before_envelope() -> None:
 
 def test_unsupported_expected_provider_is_a_schema_error() -> None:
     with pytest.raises(SchemaError):
-        ModelIdentity("jev", "m", "r", (), "1", "1", ())
+        ModelIdentity("unsupported", "m", "r", (), "1", "1", ())
+
+
+# --------------------------------------------------------------------------- #
+# Jev envelopes (experimental profile, V1-011): frozen shape, model, tolerance
+# --------------------------------------------------------------------------- #
+
+JEV_MODEL = "jev-1.13.0"
+JEV_USAGE: dict[str, Any] = {"input_tokens": 12, "output_tokens": 0}
+
+
+def jev_identity() -> ModelIdentity:
+    return ModelIdentity(
+        "jev",
+        JEV_MODEL,
+        JEV_MODEL,
+        (),
+        "1",
+        "1",
+        (("endpoint", "https://api.typesafe.ai/v1/systemone"),),
+    )
+
+
+def jev_answer(**changes: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "type": "choice",
+        "choice": "billing",
+        "probabilities": dict(GOOD_ANSWER["probabilities"]),
+        "confidence": 0.925,
+    }
+    data.update(changes)
+    return data
+
+
+def jev_envelope(
+    answer: object,
+    *,
+    question_id: str = "department",
+    usage: object = _DEFAULT_USAGE,
+    model: object = JEV_MODEL,
+) -> dict[str, Any]:
+    return {
+        "model": model,
+        "answers": {question_id: answer},
+        "usage": dict(JEV_USAGE) if usage is _DEFAULT_USAGE else usage,
+    }
+
+
+def jev_capture(body: object, *, warnings: tuple[str, ...] = ()) -> CapturedOutcome:
+    text = body if isinstance(body, str) else json.dumps(body)
+    return CapturedOutcome(HEX_A, jev_identity(), text, None, warnings, False)
+
+
+def test_jev_profile_constants_are_frozen_and_private() -> None:
+    assert _JEV_MODEL == JEV_MODEL
+    assert _JEV_MASS_TOLERANCE == 1e-12 == FIXTURE_MASS_TOLERANCE
+    # PROVISIONAL profile: not part of the stable manifest (docs/stability.md).
+    assert "_JEV_MODEL" not in normalization_module.__all__
+    assert not any(name.startswith("JEV") for name in normalization_module.__all__)
+
+
+def test_jev_envelope_normalizes_and_keeps_vendor_confidence_diagnostic() -> None:
+    answer = jev_answer(
+        choice="sales",
+        probabilities={"technical": 0.3, "sales": 0.2, "billing": 0.5},
+        confidence=0.25,
+    )
+    outcome = expect_answer(
+        normalize(jev_capture(jev_envelope(answer)), make_question(), jev_identity())
+    )
+    assert outcome.choice == "sales"
+    assert outcome.probabilities == (("billing", 0.5), ("technical", 0.3), ("sales", 0.2))
+    assert outcome.selected_probability == 0.2  # the selected label, not the argmax 0.5
+    assert outcome.provider_confidence == 0.25
+    assert outcome.warnings == ()
+    assert outcome.fallback_used is False
+
+
+def test_jev_selected_probability_gates_not_argmax_or_vendor_confidence() -> None:
+    answer = jev_answer(
+        choice="sales",
+        probabilities={"billing": 0.9, "technical": 0.1, "sales": 0.0},
+        confidence=0.99,
+    )
+    outcome = expect_answer(
+        normalize(jev_capture(jev_envelope(answer)), make_question(), jev_identity())
+    )
+    assert outcome.choice == "sales"
+    assert outcome.selected_probability == 0.0
+    assert outcome.provider_confidence == 0.99
+
+
+@pytest.mark.parametrize("model", ["jev-1.12.0", "jev-1.13.1", "jev", "laya-rl-agent", ""])
+def test_jev_wrong_answering_model_is_identity_mismatch(model: str) -> None:
+    capture = jev_capture(jev_envelope(jev_answer(), model=model))
+    outcome = expect_failure(
+        normalize(capture, make_question(), jev_identity()), "identity_mismatch"
+    )
+    assert outcome.warnings == ("normalize.answering_model",)
+
+
+def test_jev_answering_model_is_checked_after_shape_and_before_the_answer() -> None:
+    # Wrong model plus an unknown choice: the vendor version claim wins (no argmax, no repair).
+    capture = jev_capture(jev_envelope(jev_answer(choice="refunds"), model="jev-1.12.0"))
+    expect_failure(normalize(capture, make_question(), jev_identity()), "identity_mismatch")
+    # Wrong model inside a malformed envelope: the shape is rejected first.
+    capture = jev_capture({"model": "laya-rl-agent", "answers": {}, "usage": {}})
+    outcome = expect_failure(
+        normalize(capture, make_question(), jev_identity()), "malformed_response"
+    )
+    assert "normalize.answers" in outcome.warnings
+    capture = jev_capture(jev_envelope(jev_answer(), model=1))
+    outcome = expect_failure(
+        normalize(capture, make_question(), jev_identity()), "malformed_response"
+    )
+    assert "normalize.model_type" in outcome.warnings
+
+
+def _jev_usage(**changes: Any) -> dict[str, Any]:
+    usage = dict(JEV_USAGE)
+    usage.update(changes)
+    return usage
+
+
+@pytest.mark.parametrize(
+    ("body", "warning"),
+    [
+        ([], "normalize.body_type"),
+        (GOOD_ANSWER, "normalize.envelope_keys"),
+        (jev_answer(), "normalize.envelope_keys"),
+        ({"model": JEV_MODEL, "answers": {"department": jev_answer()}}, "normalize.envelope_keys"),
+        ({**jev_envelope(jev_answer()), "metadata": {"api": "0.2.0"}}, "normalize.envelope_keys"),
+        ({**jev_envelope(jev_answer()), "answers": []}, "normalize.answers"),
+        ({**jev_envelope(jev_answer()), "answers": {}}, "normalize.answers"),
+        (jev_envelope(jev_answer(), question_id="other"), "normalize.answers"),
+        (
+            {
+                **jev_envelope(jev_answer()),
+                "answers": {"department": jev_answer(), "other": jev_answer()},
+            },
+            "normalize.answers",
+        ),
+        (jev_envelope(jev_answer(), usage=None), "normalize.usage"),
+        (jev_envelope(jev_answer(), usage=[]), "normalize.usage"),
+        (jev_envelope(jev_answer(), usage={}), "normalize.usage.keys"),
+        (jev_envelope(jev_answer(), usage={"input_tokens": 12}), "normalize.usage.keys"),
+        (jev_envelope(jev_answer(), usage=_jev_usage(state_tokens=0)), "normalize.usage.keys"),
+        (jev_envelope(jev_answer(), usage=_jev_usage(truncated=False)), "normalize.usage.keys"),
+        (
+            jev_envelope(jev_answer(), usage=_jev_usage(input_tokens=True)),
+            "normalize.usage.input_tokens",
+        ),
+        (
+            jev_envelope(jev_answer(), usage=_jev_usage(input_tokens=-1)),
+            "normalize.usage.input_tokens",
+        ),
+        (
+            jev_envelope(jev_answer(), usage=_jev_usage(input_tokens=1.0)),
+            "normalize.usage.input_tokens",
+        ),
+        (
+            jev_envelope(jev_answer(), usage=_jev_usage(output_tokens="0")),
+            "normalize.usage.output_tokens",
+        ),
+        (
+            jev_envelope(jev_answer(), usage=_jev_usage(output_tokens=None)),
+            "normalize.usage.output_tokens",
+        ),
+        (jev_envelope(jev_answer(), usage=NATIVE_USAGE), "normalize.usage.keys"),
+    ],
+)
+def test_jev_envelope_violations_are_malformed(body: object, warning: str) -> None:
+    outcome = expect_failure(
+        normalize(jev_capture(body), make_question(), jev_identity()), "malformed_response"
+    )
+    assert warning in outcome.warnings
+
+
+@pytest.mark.parametrize(
+    ("changes", "warning"),
+    [
+        ({"answer_confidence": 0.95}, "normalize.answer_keys"),
+        ({"action": {"act_probability": 1.0}}, "normalize.answer_keys"),
+        ({"extra": 1}, "normalize.answer_keys"),
+        ({"type": "score"}, "normalize.type"),
+        ({"choice": 1}, "normalize.choice_type"),
+        ({"probabilities": {"billing": 0.95, "technical": 0.05}}, "normalize.probabilities_keys"),
+        (
+            {"probabilities": {"billing": True, "technical": 0.0, "sales": 0.0}},
+            "normalize.probability_value",
+        ),
+        ({"confidence": True}, "normalize.confidence"),
+        ({"confidence": 1.5}, "normalize.confidence"),
+        ({"confidence": "high"}, "normalize.confidence"),
+        ({"confidence": None}, "normalize.confidence"),
+        (
+            {"probabilities": {"billing": 0.8085, "technical": 0.0877, "sales": 0.1039}},
+            "normalize.probability_sum",  # Laya's four-decimal tolerance is never applied to Jev
+        ),
+        (
+            {"probabilities": {"billing": 0.5, "technical": 0.3, "sales": 0.2 + 1.1e-12}},
+            "normalize.probability_sum",
+        ),
+    ],
+)
+def test_jev_answer_violations_are_malformed(changes: dict[str, Any], warning: str) -> None:
+    capture = jev_capture(jev_envelope(jev_answer(**changes)))
+    outcome = expect_failure(
+        normalize(capture, make_question(), jev_identity()), "malformed_response"
+    )
+    assert warning in outcome.warnings
+
+
+@pytest.mark.parametrize("missing", ["type", "choice", "probabilities", "confidence"])
+def test_jev_answer_requires_every_profile_field(missing: str) -> None:
+    answer = jev_answer()
+    del answer[missing]
+    outcome = expect_failure(
+        normalize(jev_capture(jev_envelope(answer)), make_question(), jev_identity()),
+        "malformed_response",
+    )
+    assert "normalize.answer_keys" in outcome.warnings
+
+
+def test_jev_mass_tolerance_boundary_is_the_explicit_restriction() -> None:
+    inside = jev_answer(probabilities={"billing": 0.5, "technical": 0.3, "sales": 0.2 + 0.9e-12})
+    outcome = expect_answer(
+        normalize(jev_capture(jev_envelope(inside)), make_question(), jev_identity())
+    )
+    assert "normalize.renormalized" in outcome.warnings
+    assert math.fsum(p for _, p in outcome.probabilities) == pytest.approx(1.0, abs=1e-12)
+    outside = jev_answer(probabilities={"billing": 0.5, "technical": 0.3, "sales": 0.2 + 1.1e-12})
+    expect_failure(
+        normalize(jev_capture(jev_envelope(outside)), make_question(), jev_identity()),
+        "malformed_response",
+    )
+
+
+def test_jev_unknown_choice_is_a_distinct_failure() -> None:
+    capture = jev_capture(jev_envelope(jev_answer(choice="refunds")))
+    outcome = expect_failure(normalize(capture, make_question(), jev_identity()), "unknown_choice")
+    assert "normalize.unknown_choice" in outcome.warnings
+
+
+def test_jev_identity_is_checked_before_envelope() -> None:
+    capture = CapturedOutcome(HEX_A, make_identity(), "{", None, (), False)
+    expect_failure(normalize(capture, make_question(), jev_identity()), "identity_mismatch")
+    foreign = replace(jev_identity(), runtime=(*jev_identity().runtime, ("zz", "x")))
+    capture = CapturedOutcome(
+        HEX_A, foreign, json.dumps(jev_envelope(jev_answer())), None, (), False
+    )
+    expect_failure(normalize(capture, make_question(), jev_identity()), "identity_mismatch")
+
+
+def test_profiles_do_not_accept_each_other_s_envelopes() -> None:
+    body = jev_envelope(jev_answer())
+    outcome = expect_failure(
+        normalize(fixture_capture(body), make_question(), make_identity()), "malformed_response"
+    )
+    assert "normalize.answer_keys" in outcome.warnings
+    outcome = expect_failure(
+        normalize(laya_capture(body), make_question(), laya_identity()), "malformed_response"
+    )
+    assert "normalize.model_marker" in outcome.warnings
+    outcome = expect_failure(
+        normalize(jev_capture(envelope(GOOD_ANSWER)), make_question(), jev_identity()),
+        "malformed_response",
+    )
+    assert "normalize.usage.keys" in outcome.warnings
+
+
+def test_jev_capture_warnings_precede_normalization_warnings() -> None:
+    capture = jev_capture(jev_envelope(jev_answer(choice="refunds")), warnings=("w.first",))
+    outcome = expect_failure(normalize(capture, make_question(), jev_identity()), "unknown_choice")
+    assert outcome.warnings == ("w.first", "normalize.unknown_choice")
+
+
+def test_normalization_imports_no_experimental_or_transport_module() -> None:
+    script = (
+        "import sys\n"
+        "import actseal.normalization, actseal.faults\n"
+        "loaded = sorted(name for name in sys.modules if name.startswith("
+        "('actseal.experimental', 'actseal.adapters', 'http.client', 'ssl')))\n"
+        "print(loaded)\n"
+    )
+    result = subprocess.run(  # noqa: S603 - fixed interpreter and literal script, no user input
+        [sys.executable, "-I", "-c", script],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=60,
+    )
+    assert result.stdout.strip() == "[]"
 
 
 # --------------------------------------------------------------------------- #

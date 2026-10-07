@@ -86,7 +86,12 @@ identical.
 
 Later 1.x releases may replay 1.0.0 evidence once both fingerprints are
 registered for `actseal-choice-v1` in the packaged registry (see the
-[versioning policy](versioning.md)). Until an entry is approved, evidence from a
-different 1.x source tree is ERROR with reason `integrity.lock`, reporting the
+[versioning policy](versioning.md)). The 1.0.0 registry approves exactly two
+fingerprints: the 1.0.0 source itself and the unreleased prerelease producer
+of the retained `examples/action_gate/recorded/a5fe090202f7` archive, so that
+archive replays to its stored verdict under 1.0.0. That prerelease producer
+carried a `0.1.0` version string but is not the released actseal 0.1.0: its
+evidence is schema 2 and is unaffected by the legacy rule above. Evidence from
+any other source tree is ERROR with reason `integrity.lock`, reporting the
 decoded lock digest; the ERROR is a verifier-configuration limit, not a
 statement that the evidence is invalid.

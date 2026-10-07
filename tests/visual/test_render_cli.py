@@ -3,8 +3,8 @@
 Every test here is hermetic: the pinned-tool cache is pointed at an empty,
 test-local directory (also for the subprocess checks), so nothing stats or
 reads the operator's real cache and no result depends on its contents.
-Nothing runs a binary or fontTools; the how-it-works figure needs neither,
-so it is the one asset a bootstrap repository can write and check.
+Nothing runs a binary or fontTools; the how-it-works and architecture figures
+need neither, so they are the assets a bootstrap repository can write and check.
 """
 
 from __future__ import annotations
@@ -22,12 +22,14 @@ from visual.visual_support import MANIFEST, REPO_ROOT, SRC_DIR
 RENDER = SRC_DIR / "render.py"
 CACHE_ENV = "ACTSEAL_ASSET_TOOLS"
 
-# Three assets are implemented. The how-it-works figure needs no pinned input
-# and renders anywhere. The hero needs the pinned font; the social preview
-# needs the font and the resvg binary; a bootstrap repository has fetched
-# neither. Every other asset is planned.
-IMPLEMENTED = ("hero", "how-it-works", "social")
-PLANNED = ("architecture", "demo", "where", "matrix", "boundary")
+# Four assets are implemented. The how-it-works and architecture figures need
+# no pinned input and render anywhere. The hero needs the pinned font; the
+# social preview needs the font and the resvg binary; a bootstrap repository
+# has fetched neither. Every other asset is planned.
+IMPLEMENTED = ("hero", "how-it-works", "architecture", "social")
+PLANNED = ("demo", "where", "matrix", "boundary")
+#: A planned asset used where a test needs one that is explicitly not implemented.
+PLANNED_EXAMPLE = ("where", "16")
 FONT_NOT_FETCHED = (
     "requires jetbrains-mono 2.304; not fetched: JetBrainsMono-Regular.ttf, "
     "JetBrainsMono-Bold.ttf, OFL.txt"
@@ -40,17 +42,20 @@ SOCIAL_SKIPPED = f"[error] social: {SKIPPED}"
 FONTS_INFO = "[info] fonts: jetbrains-mono 2.304 not fetched; run setup_tools.py"
 # Hero font + skipped, social resvg + font + skipped.
 PREREQUISITE_ERRORS = 5
-# Four how-it-works outputs that a bootstrap repository has not committed yet.
+# Four how-it-works outputs and four architecture outputs that a bootstrap
+# repository has not committed yet.
 WORKFLOW_OUTPUTS = 4
+ARCHITECTURE_OUTPUTS = 4
+FONT_FREE_OUTPUTS = WORKFLOW_OUTPUTS + ARCHITECTURE_OUTPUTS
 FRESH_CHECK_SUMMARY = (
-    f"1 asset(s) checked; 5 planned/not implemented; "
-    f"{PREREQUISITE_ERRORS + WORKFLOW_OUTPUTS} error(s)"
+    f"2 asset(s) checked; 4 planned/not implemented; "
+    f"{PREREQUISITE_ERRORS + FONT_FREE_OUTPUTS} error(s)"
 )
 WRITE_SUMMARY = (
-    f"1 asset(s) checked; 5 planned/not implemented; {PREREQUISITE_ERRORS} error(s); "
-    f"{WORKFLOW_OUTPUTS} file(s) written"
+    f"2 asset(s) checked; 4 planned/not implemented; {PREREQUISITE_ERRORS} error(s); "
+    f"{FONT_FREE_OUTPUTS} file(s) written"
 )
-CHECKED_SUMMARY = f"1 asset(s) checked; 5 planned/not implemented; {PREREQUISITE_ERRORS} error(s)"
+CHECKED_SUMMARY = f"2 asset(s) checked; 4 planned/not implemented; {PREREQUISITE_ERRORS} error(s)"
 
 
 @pytest.fixture(autouse=True)
@@ -77,6 +82,17 @@ def _workflow_outputs(kit: ModuleType) -> list[str]:
     outputs: list[str] = sorted(kit.how_it_works.OUTPUTS)
     assert len(outputs) == WORKFLOW_OUTPUTS
     return outputs
+
+
+def _architecture_outputs(kit: ModuleType) -> list[str]:
+    outputs: list[str] = sorted(kit.architecture.OUTPUTS)
+    assert len(outputs) == ARCHITECTURE_OUTPUTS
+    return outputs
+
+
+def _font_free_outputs(kit: ModuleType) -> list[str]:
+    """Every file a bootstrap repository can write: both font-free figures."""
+    return sorted([*_workflow_outputs(kit), *_architecture_outputs(kit)])
 
 
 def _social_resvg_error(kit: ModuleType, cache: Path) -> str:
@@ -128,14 +144,27 @@ def _assert_workflow_matches(kit: ModuleType, out: str) -> None:
     assert "[error] how-it-works" not in out
 
 
+def _assert_architecture_not_committed(kit: ModuleType, out: str) -> None:
+    for output in kit.architecture.OUTPUTS:
+        assert f"[error] architecture: docs/assets/{output} is not committed; run render.py" in out
+    assert "[ok] architecture" not in out
+    assert "architecture: not implemented" not in out
+
+
+def _assert_architecture_matches(kit: ModuleType, out: str) -> None:
+    for output in kit.architecture.OUTPUTS:
+        assert f"[ok] architecture: docs/assets/{output} matches regeneration (" in out
+    assert "[error] architecture" not in out
+
+
 def test_fresh_check_reports_planned_prerequisites_and_uncommitted_workflow(
     kit: ModuleType, repo: Path, tool_cache: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """A bootstrap repository: planned assets informational, hero and social blocked.
 
-    The how-it-works figure renders (one asset checked) but its four outputs
-    are not committed yet; the hero and the social preview report their
-    missing pinned inputs and are never counted as checked.
+    The how-it-works and architecture figures render (two assets checked) but
+    their eight outputs are not committed yet; the hero and the social preview
+    report their missing pinned inputs and are never counted as checked.
     """
     assert set(IMPLEMENTED) | set(PLANNED) == set(kit.inventory.ASSET_NAMES)
     assert kit.cli.main(["--check"], root=repo) == 1
@@ -144,8 +173,9 @@ def test_fresh_check_reports_planned_prerequisites_and_uncommitted_workflow(
     _assert_hero_blocked(out)
     _assert_social_blocked(kit, tool_cache, out)
     _assert_workflow_not_committed(kit, out)
+    _assert_architecture_not_committed(kit, out)
     assert FONTS_INFO in out
-    assert out.count("[error]") == PREREQUISITE_ERRORS + WORKFLOW_OUTPUTS
+    assert out.count("[error]") == PREREQUISITE_ERRORS + FONT_FREE_OUTPUTS
     assert out.rstrip().endswith(FRESH_CHECK_SUMMARY)
     assert _asset_files(repo) == []
 
@@ -153,7 +183,7 @@ def test_fresh_check_reports_planned_prerequisites_and_uncommitted_workflow(
 def test_write_then_check_writes_only_the_workflow_and_keeps_prerequisite_errors(
     kit: ModuleType, repo: Path, tool_cache: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Global --write produces exactly the four workflow files; hero and social stay blocked."""
+    """Global --write produces exactly the eight font-free files; hero and social stay blocked."""
     assert kit.cli.main(["--write"], root=repo) == 1
     written = capsys.readouterr().out
     _assert_planned_informational(written)
@@ -161,9 +191,11 @@ def test_write_then_check_writes_only_the_workflow_and_keeps_prerequisite_errors
     _assert_social_blocked(kit, tool_cache, written)
     for output in kit.how_it_works.OUTPUTS:
         assert f"[ok] how-it-works: wrote docs/assets/{output} (" in written
+    for output in kit.architecture.OUTPUTS:
+        assert f"[ok] architecture: wrote docs/assets/{output} (" in written
     assert written.count("[error]") == PREREQUISITE_ERRORS
     assert written.rstrip().endswith(WRITE_SUMMARY)
-    assert _asset_files(repo) == _workflow_outputs(kit)
+    assert _asset_files(repo) == _font_free_outputs(kit)
 
     assert kit.cli.main(["--check"], root=repo) == 1
     checked = capsys.readouterr().out
@@ -171,9 +203,10 @@ def test_write_then_check_writes_only_the_workflow_and_keeps_prerequisite_errors
     _assert_hero_blocked(checked)
     _assert_social_blocked(kit, tool_cache, checked)
     _assert_workflow_matches(kit, checked)
+    _assert_architecture_matches(kit, checked)
     assert checked.count("[error]") == PREREQUISITE_ERRORS
     assert checked.rstrip().endswith(CHECKED_SUMMARY)
-    assert _asset_files(repo) == _workflow_outputs(kit)
+    assert _asset_files(repo) == _font_free_outputs(kit)
 
 
 def test_workflow_only_write_then_check_passes(
@@ -191,8 +224,30 @@ def test_workflow_only_write_then_check_passes(
     _assert_workflow_matches(kit, out)
     assert "hero" not in out
     assert "social" not in out
+    assert "architecture" not in out
     assert out.rstrip().endswith("1 asset(s) checked; 0 planned/not implemented; 0 error(s)")
     assert _asset_files(repo) == _workflow_outputs(kit)
+
+
+def test_architecture_only_write_then_check_passes(
+    kit: ModuleType, repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The architecture figure needs no pinned input: it writes and checks in a bootstrap repo."""
+    assert kit.cli.main(["--write", "--only", "architecture"], root=repo) == 0
+    written = capsys.readouterr().out
+    assert "[error]" not in written
+    assert written.rstrip().endswith(
+        "1 asset(s) checked; 0 planned/not implemented; 0 error(s); 4 file(s) written"
+    )
+    assert kit.cli.main(["--check", "--only", "architecture"], root=repo) == 0
+    out = capsys.readouterr().out
+    assert "[error]" not in out
+    _assert_architecture_matches(kit, out)
+    assert "hero" not in out
+    assert "social" not in out
+    assert "how-it-works" not in out
+    assert out.rstrip().endswith("1 asset(s) checked; 0 planned/not implemented; 0 error(s)")
+    assert _asset_files(repo) == _architecture_outputs(kit)
 
 
 def test_only_implemented_hero_without_font_exits_one(
@@ -203,6 +258,7 @@ def test_only_implemented_hero_without_font_exits_one(
     _assert_hero_blocked(out)
     assert "social" not in out
     assert "how-it-works" not in out
+    assert "architecture" not in out
     assert out.rstrip().endswith("0 asset(s) checked; 0 planned/not implemented; 2 error(s)")
     assert _asset_files(repo) == []
 
@@ -217,6 +273,7 @@ def test_only_implemented_social_without_prerequisites_exits_one(
     _assert_social_blocked(kit, tool_cache, out)
     assert "hero" not in out
     assert "how-it-works" not in out
+    assert "architecture" not in out
     assert out.count("[error]") == 3
     expected = "0 asset(s) checked; 0 planned/not implemented; 3 error(s)"
     if mode == "--write":
@@ -228,12 +285,14 @@ def test_only_implemented_social_without_prerequisites_exits_one(
 def test_only_planned_asset_exits_one(
     kit: ModuleType, repo: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    assert kit.cli.main(["--check", "--only", "architecture"], root=repo) == 1
+    name, task = PLANNED_EXAMPLE
+    assert kit.cli.main(["--check", "--only", name], root=repo) == 1
     out = capsys.readouterr().out
-    assert "[error] architecture: not implemented (planned in Task 13)" in out
+    assert f"[error] {name}: not implemented (planned in Task {task})" in out
     assert "hero" not in out
     assert "social" not in out
     assert "how-it-works" not in out
+    assert "architecture" not in out
 
 
 @pytest.mark.parametrize(
@@ -284,7 +343,7 @@ def test_render_script_runs_without_fonttools(
 ) -> None:
     """Global --write then --check work without fontTools.
 
-    The workflow figure is written and then matches; the only errors are the
+    Both font-free figures are written and then match; the only errors are the
     missing pinned inputs of the hero and the social preview, reported before
     any outlining or tool run; nothing raises or imports fontTools, and the
     empty test cache is the only cache consulted.
@@ -296,13 +355,14 @@ def test_render_script_runs_without_fonttools(
     _assert_planned_informational(written)
     assert written.count("[error]") == PREREQUISITE_ERRORS
     assert WRITE_SUMMARY in written
-    assert _asset_files(repo) == _workflow_outputs(kit)
+    assert _asset_files(repo) == _font_free_outputs(kit)
 
     checked = _run_without_fonttools(repo, tool_cache, ["--check"])
     assert checked.rstrip().endswith("exit=1")
     _assert_hero_blocked(checked)
     _assert_social_blocked(kit, tool_cache, checked)
     _assert_workflow_matches(kit, checked)
+    _assert_architecture_matches(kit, checked)
     assert "[ok] references: 0 image reference(s) checked" in checked
     assert checked.count("[error]") == PREREQUISITE_ERRORS
     assert CHECKED_SUMMARY in checked
@@ -328,12 +388,14 @@ def test_render_script_check_of_planned_asset_runs_without_fonttools(
     repo: Path, tool_cache: Path
 ) -> None:
     """The explicit planned-asset request is the only error; implemented assets are untouched."""
-    out = _run_without_fonttools(repo, tool_cache, ["--check", "--only", "architecture"])
+    name, task = PLANNED_EXAMPLE
+    out = _run_without_fonttools(repo, tool_cache, ["--check", "--only", name])
     assert out.rstrip().endswith("exit=1")
-    assert "[error] architecture: not implemented (planned in Task 13)" in out
+    assert f"[error] {name}: not implemented (planned in Task {task})" in out
     assert "hero" not in out
     assert "social" not in out
     assert "how-it-works" not in out
+    assert "architecture" not in out
     assert "0 asset(s) checked; 1 planned/not implemented; 1 error(s)" in out
 
 

@@ -1,12 +1,14 @@
 """Shared provider conformance: every provider profile passes exactly the same cases.
 
 The ``profile`` fixture is parametrized over every name in ``PROFILE_NAMES``
-(the recorded fixture adapter and the Laya adapter over its fake worker). No
-case skips, xfails or branches a provider out of a check. Provider-specific
-facts (whether ``close`` releases a worker, whether body text is verbatim or
-canonical, what follows a timeout) are declared by the profile and asserted.
-The checks themselves live in ``tests/provider_support.py`` and are the same
-functions the negative doubles in ``test_provider_doubles.py`` must fail.
+(the recorded fixture adapter, the Laya adapter over its fake worker and the
+experimental Jev adapter over a fake connection). No case skips, xfails or
+branches a provider out of a check. Provider-specific facts (whether ``close``
+releases a worker, whether body text is verbatim or canonical, what follows a
+timeout, which body fields are evidence-only) are declared by the profile and
+asserted. The checks themselves live in ``tests/provider_support.py`` and are
+the same functions the negative doubles in ``test_provider_doubles.py`` must
+fail.
 """
 
 from __future__ import annotations
@@ -83,8 +85,8 @@ def opened(model: DecisionModel) -> Iterator[DecisionModel]:
         model.close()
 
 
-def test_profiles_cover_fixture_and_laya() -> None:
-    assert PROFILE_NAMES == ("fixture", "laya-fake")
+def test_profiles_cover_fixture_laya_and_experimental_jev() -> None:
+    assert PROFILE_NAMES == ("fixture", "laya-fake", "jev-fake")
 
 
 def test_protocol_shape_and_identity_are_stable(
@@ -196,8 +198,9 @@ def test_raw_body_is_preserved_without_repair_and_normalizes(
             model, request, raw, profile.preserved(raw), expected_warnings
         )
         assert capture.body_json is not None
-        assert '"action"' in capture.body_json  # fields the normalizer ignores are still evidence
-        assert '"answer_confidence"' in capture.body_json
+        assert profile.evidence_only_fields  # every profile declares evidence-only content
+        for name in profile.evidence_only_fields:
+            assert f'"{name}"' in capture.body_json  # fields normalization ignores stay evidence
         answer = check_valid_body_normalizes(capture, question, identity)
         assert answer.warnings == expected_warnings
         check_identity_mismatch_precedes_body(capture, question, identity)

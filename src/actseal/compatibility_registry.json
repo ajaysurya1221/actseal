@@ -1,4 +1,7 @@
 {
   "schema_version": 1,
-  "implementations": {}
+  "implementations": {
+    "8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3": "actseal-choice-v1",
+    "a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642": "actseal-choice-v1"
+  }
 }
