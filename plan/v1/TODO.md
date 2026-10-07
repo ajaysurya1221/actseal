@@ -6,8 +6,8 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 - [x] 01 Run full baseline; retain two failures and native success.
 - [x] 01R repair and independent 2302-test verification ACCEPT; PR #10 merged with hosted CI green.
 - [x] 02 Freeze stable public interfaces, schema versions and compatible replay; PR15 merged after eight green checks.
-- [ ] 03 Shared provider conformance and native fixture repair.
-- [ ] 04 Numerical boundary/properties/eight mutations.
+- [x] 03 Shared provider conformance and native fixture repair; independent checks and PR20 merged.
+- [x] 04 Numerical boundary/properties/eight mutations; all8 killed and PR21 merged.
 - [ ] 05–06 Optional experimental Jev and preregistered descriptive audit, subject to cut.
 - [ ] 07–08 Application example and complete docs.
 - [ ] 09 Harden/rehearse CI and exact-artifact trusted publication.
@@ -19,10 +19,8 @@ Codex owns this checklist. Full requirements remain in the immutable PLAN.md.
 
 Cut deadlines: Jev 2026-10-07 14:00 IST; static P1 15:59; optional 17:59; publish by 23:59. Mandatory failures stop publication; never tune evidence for PASS.
 
-Current work: Task13 architecture source/unit preparation has scoped ACCEPT at2e2a7b2 with286 parent visual and50 independent focused checks. Final provider inclusion, registration, committed outputs and rendered acceptance remain required. Task15 source/test preparation and Task08 ADR repairs have scoped ACCEPT and eight green hosted jobs each.
+Current work: all five scoped approvals are resolved. Independent native03, mutations04 and exact-source example07 checks pass; workflow12 is accepted/merged; real hero11 is independently reviewed with green push CI, but PR25 conflicts with the merged workflow registration. V1-030 assigns the narrow combined resolution to Claude15. Example PR35 merge preview fails the planned compatibility registry gate; keep its original archive unchanged and fix through Task19.
 
-Task09 ordinary-CI provisioning has local scoped ACCEPT at bdedc1e (64 parent checks, 41 independent checks). Do not push this branch while tool-download approval is pending. Checkpoint11 is merged at 0348fa0 after independent ACCEPT and eight green jobs.
+Fable quota resets10:30IST today; the two implementation sessions are terminal. Resume the exact existing sessions after reset, preserving the untracked Task06 draft and applying its preregistration-binding review. Social15 needs only the verified resvg filename repair before real generation. No model/billing substitution.
 
-Task06 remains stopped after retrying denied public-cache access; the deviation and scoped approval request remain open. Native03, mutation04, example07, actual visuals and tracked .env.example access also remain approval-blocked. No v1 tag or publication exists.
-
-Next gate: finish Task13 draft CI and checkpoint12 review. All executor processes are terminal; remaining full-task operations need the pending approvals. Preserve all original acceptance and publication gates.
+Pending separate key-loading approval affects only the optional live Jev audit. No real Jev key was accessed, no live Jev or hosted-provider request was made, and no v1 tag or publication exists. Full release requirements remain unchanged.

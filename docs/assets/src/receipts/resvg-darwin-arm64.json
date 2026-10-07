@@ -1,0 +1,16 @@
+{
+  "archive_retained": "/Users/ajay/.cache/actseal-assets/resvg-0.48.1/resvg-macos-aarch64.zip",
+  "archive_sha256": "06440eb5aa14a28cbfc7e40ae39e1ffa71adc051b89fbaa913b4f1d9b905d09f",
+  "extracted_sha256": "50e57a945189f74ee89766a2d5b8e1a8e5254416880f9e57b36d1307e71e94ce",
+  "filename": "resvg-macos-aarch64.zip",
+  "installed": "/Users/ajay/.cache/actseal-assets/resvg-0.48.1/resvg",
+  "license": "Apache-2.0 OR MIT",
+  "platform": "darwin-arm64",
+  "retrieved": "2026-10-07",
+  "sha256": "06440eb5aa14a28cbfc7e40ae39e1ffa71adc051b89fbaa913b4f1d9b905d09f",
+  "source_commit": "68b14c4c3bccdb60344c777406486b54c36ec1a4",
+  "source_url": "https://github.com/linebender/resvg/releases/tag/v0.48.1",
+  "tool": "resvg",
+  "url": "https://github.com/linebender/resvg/releases/download/v0.48.1/resvg-macos-aarch64.zip",
+  "version": "0.48.1"
+}
