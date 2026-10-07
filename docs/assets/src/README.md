@@ -134,11 +134,16 @@ desktop variants at `README_DISPLAY_WIDTH = 838` and mobile variants at
 rendered size of a label is its SVG font size times display width over SVG
 width, and every label must reach 14 px. At those widths the earlier 26-unit
 desktop and 30-unit mobile sizes fell to 13.6 and 10.6 px, so the how-it-works
-and architecture figures now use 27-unit desktop and 40-unit mobile labels, the
-hero mobile variant uses 40-unit caption and step labels with a four-line
-caption, and layouts wrap or widen rather than shrink. The desktop hero (28-unit
-captions, 14.7 px) and the social preview were already above the floor and
-their bytes are unchanged. These are measurements of one repository page on
+and architecture figures now use 27-unit desktop and 40-unit mobile labels, and
+layouts wrap or widen rather than shrink. The hero, compacted in the 2026-10-08
+editorial review, draws the wordmark, the two tagline lines and three pills
+(freeze, run, replay) joined by two forward arrows, with no caption, on a
+1600×280 desktop canvas and a 720×400 stacked mobile canvas. Its step labels
+are 32 units on desktop (16.8 px) and 40 units on mobile (14.1 px); the
+renderer enforces minimums of 28 desktop units (14.7 px) and 40 mobile units.
+`social.png` is the same composition re-spaced and vertically centred on the
+1280×640 card, with a 144-unit wordmark, a 56-unit tagline and 40-unit labels.
+These are measurements of one repository page on
 one date, not a GitHub guarantee; the README's responsive selection decides
 which variant each viewport receives.
 

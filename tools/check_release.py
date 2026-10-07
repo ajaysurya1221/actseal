@@ -158,9 +158,14 @@ REQUIRED_DOCS = (
     "CONTRIBUTING.md",
     "CHANGELOG.md",
 )
+# Opening copy from the 2026-10-08 editorial review: the bold line and the
+# one-paragraph description that follow the hero.
+README_TAGLINE = "**Frozen policy. Measured risk and coverage. Offline replay.**"
 README_DESCRIPTION = (
-    "Actseal verifies model-chosen application actions for developers: freeze a "
-    "policy, check its recorded decisions, and replay the evidence offline."
+    "A model can choose the right label often and still act on the wrong cases. "
+    "Actseal checks a frozen action policy against labelled cases, bounds errors "
+    "among accepted actions and coverage across all scheduled cases, and saves "
+    "evidence for offline replay."
 )
 README_QUICKSTART = (
     "uvx --python 3.12 actseal demo --out ./actseal-demo",
@@ -2020,7 +2025,8 @@ def _check_readme_links(root: Path) -> None:
 
 def _check_readme_copy(root: Path) -> None:
     text = (root / "README.md").read_text(encoding="utf-8")
-    _require(README_DESCRIPTION in text, "README.md lacks the approved one-sentence description")
+    _require(README_TAGLINE in text, "README.md lacks the approved bold opening line")
+    _require(README_DESCRIPTION in text, "README.md lacks the approved opening description")
     for line in README_QUICKSTART:
         _require(line in text, f"README.md lacks quickstart command {line!r}")
     _require(
