@@ -744,7 +744,7 @@ def test_parse_lock_keeps_the_recorded_seal_and_never_reseals() -> None:
         (lambda d: d["contract"]["policy"].update(known_labels=["x", "y"]), "known_labels"),
         (lambda d: d["verification_cases"][0].update(expected_label="legal"), "known label"),
         (lambda d: d["fault_inventory"][0].update(expected_action="SKIP"), "unsupported value"),
-        (lambda d: d["model_identity"].update(provider="jev"), "unsupported value"),
+        (lambda d: d["model_identity"].update(provider="unsupported"), "unsupported value"),
     ],
 )
 def test_parse_lock_rejects_malformed_documents(mutate: Any, fragment: str) -> None:

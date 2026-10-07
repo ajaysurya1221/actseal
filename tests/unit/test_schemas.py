@@ -59,6 +59,14 @@ FILES = (
     "cli-receipt.schema.json",
     "compatibility-registry.schema.json",
 )
+# Release-tooling receipt schemas (amendment V1-016). They share the directory and
+# index but are produced by tools/check_release.py, not the package; their content
+# is validated in tests/release/test_release_schemas.py.
+RELEASE_FILES = (
+    "build-receipt.schema.json",
+    "postpublish-receipt.schema.json",
+    "release-receipt.schema.json",
+)
 
 
 def load(name: str) -> dict[str, object]:
@@ -112,9 +120,11 @@ def test_schema_files_are_strict_draft_2020_12_documents(name: str) -> None:
 
 def test_schema_readme_lists_every_file() -> None:
     readme = (SCHEMAS / "README.md").read_text(encoding="utf-8")
-    for name in FILES:
+    for name in (*FILES, *RELEASE_FILES):
         assert f"[{name}]({name})" in readme, name
-    assert sorted(path.name for path in SCHEMAS.iterdir()) == sorted([*FILES, "README.md"])
+    assert sorted(path.name for path in SCHEMAS.iterdir()) == sorted(
+        [*FILES, *RELEASE_FILES, "README.md"]
+    )
 
 
 def test_lock_schema_matches_the_record_fields_and_versions() -> None:

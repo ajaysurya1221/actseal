@@ -18,6 +18,11 @@ unless uv's cache already holds it. The venv uses the current interpreter and
 the wheel installs with ``--no-deps --offline``. Dedicated isolation tests
 replace sockets and deny provider imports; the console timing and entrypoint
 checks run ordinarily and do not independently establish network isolation.
+
+Supplied wheel: when ``ACTSEAL_TEST_WHEEL`` names an existing absolute
+``actseal-*.whl`` path, that exact file is installed and ``uv build`` is never
+invoked. The release workflow uses this to test the immutable built artifact.
+Any other value fails the run; the tests never fall back to rebuilding.
 """
 
 from __future__ import annotations
@@ -139,8 +144,39 @@ def outside(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return directory
 
 
+def supplied_wheel() -> Path | None:
+    """The exact wheel named by ``ACTSEAL_TEST_WHEEL``; ``None`` means build one here.
+
+    ``ACTSEAL_TEST_DIST`` (the downloaded release artifact directory) may only
+    appear together with ``ACTSEAL_TEST_WHEEL``, and the wheel must live inside it.
+    """
+    raw = os.environ.get("ACTSEAL_TEST_WHEEL")
+    dist = os.environ.get("ACTSEAL_TEST_DIST")
+    if raw is None:
+        if dist is not None:
+            pytest.fail(
+                f"ACTSEAL_TEST_DIST={dist!r} set without ACTSEAL_TEST_WHEEL; refusing to rebuild"
+            )
+        return None
+    path = Path(raw)
+    if not path.is_absolute():
+        problem = "is not an absolute path"
+    elif not path.is_file():
+        problem = "is not an existing regular file"
+    elif not (path.name.startswith("actseal-") and path.suffix == ".whl"):
+        problem = "is not named actseal-*.whl"
+    elif dist is not None and path.resolve().parent != Path(dist).resolve():
+        problem = f"is not inside ACTSEAL_TEST_DIST={dist!r}"
+    else:
+        return path
+    pytest.fail(f"ACTSEAL_TEST_WHEEL={raw!r} {problem}; refusing to rebuild")
+
+
 @pytest.fixture(scope="module")
 def wheel(outside: Path) -> Path:
+    supplied = supplied_wheel()
+    if supplied is not None:
+        return supplied
     uv = shutil.which("uv")
     if uv is None:
         pytest.fail("uv is required on PATH to build the wheel under test")
