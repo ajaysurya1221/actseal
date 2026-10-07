@@ -212,12 +212,26 @@ def _local_asset(target: str) -> Path:
 
 
 def _implemented_outputs() -> set[str]:
-    """Outputs of implemented assets, read from the committed inventory source."""
-    inventory = (ASSETS / "src" / "actseal_assets" / "inventory.py").read_text(encoding="utf-8")
+    """Outputs of implemented assets, read from the committed inventory source.
+
+    Only ``Asset`` blocks that bind a ``renderer=`` count. Literal output names
+    are read from the block; the activated ``demo`` asset declares its two GIFs
+    through ``demo.THEMES``, whose names are the literal ``LIGHT_OUTPUT`` and
+    ``DARK_OUTPUT`` constants in ``demo.py``. Planned assets still contribute
+    nothing, so a README reference to one still fails.
+    """
+    src = ASSETS / "src" / "actseal_assets"
+    inventory = (src / "inventory.py").read_text(encoding="utf-8")
     outputs: set[str] = set()
     for block in re.split(r"\n    Asset\(", inventory)[1:]:
-        if "renderer=" in block:
-            outputs.update(re.findall(r"\"([A-Za-z0-9-]+\.(?:svg|png|gif))\"", block))
+        if "renderer=" not in block:
+            continue
+        outputs.update(re.findall(r"\"([A-Za-z0-9-]+\.(?:svg|png|gif))\"", block))
+        if "for name in demo.THEMES" in block:
+            demo = (src / "demo.py").read_text(encoding="utf-8")
+            outputs.update(
+                re.findall(r"^(?:LIGHT|DARK)_OUTPUT = \"([A-Za-z0-9-]+\.gif)\"$", demo, re.M)
+            )
     return outputs
 
 

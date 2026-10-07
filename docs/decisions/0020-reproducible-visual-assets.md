@@ -11,9 +11,13 @@
   tagged publication is complete: run 37603727302 passed all nine jobs,
   including the `assets` job, on tag `v1.0.0`. The genuine demo was captured
   from the published PyPI release under Decision 2A and its raw capture is
-  accepted (`plan/v1/reviews/14-capture.md`); copying it into the repository
-  and registering it in the inventory is the separately reviewed Task 14
-  activation.
+  accepted (`plan/v1/reviews/14-capture.md`); its activation into the
+  repository (`demo-light.gif`, `demo-dark.gif`, the raw cast and the public
+  receipt, inventory registration) is accepted at `31c9916` with the
+  additive correction `a3397fe` (`plan/v1/reviews/14-activation.md`) and
+  merged to `main` as `0a0a228` (PR 48) after ten hosted source and assets
+  jobs. All 15 generated outputs (12 SVG, 2 GIF, 1 PNG) regenerate
+  byte-identically.
 - Date: 2026-10-07.
 
 ## Decision
@@ -165,10 +169,21 @@ design.
   each rendered twice to identical bytes; raw capture ACCEPT at `f55fd5b`
   (`plan/v1/reviews/14-capture.md`, `plan/v1/reports/14-capture.md`). The
   recording is absent from the tag, wheel, sdist and PyPI page and present
-  only in the later repository, as Decision 2A approved. Still open: the
-  Task 14 activation (copying the cast and GIFs, registering `demo` in the
-  inventory, hosted Linux regeneration) and its review; the README's
-  recording section (Task 21) references the activated files.
+  only in the later repository, as Decision 2A approved. Activation ACCEPT
+  at `31c9916` plus additive correction `a3397fe`
+  (`plan/v1/reviews/14-activation.md`, `plan/v1/reports/14-activation.md`,
+  `14-activation-correction.md`): the untouched cast at
+  `docs/assets/src/demo.cast`, both GIFs under `docs/assets/`, the public
+  receipt `docs/assets/src/receipts/demo-capture.json`, the `demo`
+  inventory entry with both outputs, and 15 generated outputs regenerating
+  byte-identically with 16 README references; merged to `main` as `0a0a228`
+  (PR 48) after all ten hosted source and assets jobs succeeded (runs
+  37607862358 and 37607886554). Accepted qualifications: the controlled
+  `env -i` environment covered the package probes and the capture, not the
+  separate authoring-environment diffs, validation and renders; the capture
+  ran through uv 0.12.5's `#!/bin/sh` relocatable launcher bound by its exec
+  target and `pyvenv.cfg`. The README's recording section (Task 21)
+  references the activated files.
 - Related: [ADR 0015](0015-v1-stability-and-replay-compatibility.md),
   `docs/assets/src/README.md`, `docs/assets/src/tools.toml`.
 

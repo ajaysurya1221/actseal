@@ -15,9 +15,11 @@ accepted-action risk and coverage bounds and six provider-failure rules; seal
 one bounded evidence bundle; recompute the verdict offline with no model call.
 
 1.0 is the first release with a documented 1.x contract: a stability manifest
-for the CLI and typed Python surface, published JSON schemas for every wire
-format and receipt, a reviewed compatibility registry for cross-release
-replay, and an isolated path for 0.1.0 evidence that is never converted.
+for the CLI and typed Python surface, published JSON Schemas for the lock,
+evidence-bundle, CLI-receipt and release-receipt formats (the TOML contract
+is specified separately), a reviewed compatibility registry for
+cross-release replay, and an isolated path for 0.1.0 evidence that is never
+converted.
 
 Try it with uv installed and no `./actseal-demo` directory:
 
@@ -48,6 +50,6 @@ failure record and offline replay would make a deployment review easier.
 
 ## Not to be added before posting
 
-No GitHub release link until the draft is published; no recording link until
-the Task 14 activation is accepted; no live Jev result, performance number or
-adoption claim.
+No GitHub release link until the draft is published; no live Jev result,
+performance number or adoption claim. The recording may be linked from the
+repository README once this documentation gate and Task 22 close.
