@@ -85,9 +85,11 @@ cloud adapter's identity: `model` and `revision` are the configured vendor
 target `jev-1.13.0`, `artifact_hashes` is empty because no model-weight hash
 exists for a cloud target, and the version a response reports is a vendor
 claim, not a weight attestation. Admitting the value in these schemas records
-and replays such evidence; it does not register `jev` as a CLI provider (the
-`--provider` choices stay `fixture` and `laya`, and the CLI-receipt enum only
-describes nested `ModelIdentity` objects).
+and replays such evidence. Separately, the runner and CLI register `jev` as a
+PROVISIONAL choice: `lock` and `verify` accept it only as
+`--provider jev --experimental-provider` (ADR 0017), the stable choices remain
+`fixture` and `laya`, and the CLI-receipt enum only describes nested
+`ModelIdentity` objects. No receipt field is added by the opt-in flag.
 
 **Jev body profile (PROVISIONAL).** A `jev` capture's `body_json` is the
 verbatim HTTP response text. The pure normalizer accepts exactly

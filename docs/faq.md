@@ -114,11 +114,13 @@ exits 1, as expected.
 
 The current stable providers are `fixture` (recorded responses) and `laya`
 (the optional pinned native CPU adapter). In the v1.0 scope
-`ModelIdentity.provider` accepts only those two, so a provider of your own
-cannot be sealed into a lock through the stable runner today. A later 1.x
-release may add a provider as an additive, explicitly selected option. A Jev
-transport is conditional experimental preparation, not shipped, and would be
-selectable only under an explicit experimental flag; see
+`ModelIdentity.provider` accepts those two plus `jev`, the PROVISIONAL
+experimental cloud adapter that `lock` and `verify` accept only as
+`--provider jev --experimental-provider` (bring your own `JEV_API_KEY`; no
+offline mode; may change or be removed in any release; its live behaviour has
+not been verified, only mocked transports). A provider of your own cannot be
+sealed into a lock through the runner today. A later 1.x release may add a
+provider as an additive, explicitly selected option; see
 [providers](providers.md).
 
 ## Does Actseal run on Windows?

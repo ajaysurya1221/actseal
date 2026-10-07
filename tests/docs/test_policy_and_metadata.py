@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+import actseal.cli as cli_module
 from actseal.records import PROVIDERS
 from docs.conftest import DOCS, ROOT
 
@@ -46,27 +47,59 @@ def test_zero_dependency_core_claim_is_stated_where_the_core_is_described() -> N
     assert "runtime core stays dependency-free" in _prose(ROOT / "CONTRIBUTING.md")
 
 
-def test_providers_doc_describes_jev_as_unshipped_and_experimental() -> None:
-    """Exact current behaviour: no Jev adapter is installed and the docs say so.
+def test_providers_doc_distinguishes_stable_providers_from_provisional_jev() -> None:
+    """Exact current behaviour: fixture/laya are stable; Jev is a PROVISIONAL opt-in.
 
-    Integration follow-up (Task 19 inclusion decision): if Jev ships as a
-    PROVISIONAL provider, update providers/cli/python-api/faq and replace this
-    test with the experimental-flag behaviour; if it is cut, update only the
-    deadline sentence. Neither outcome is claimed here.
+    The experimental module is installed and importable, admitted in
+    ``records.PROVIDERS`` and registered behind ``--experimental-provider``.
+    Documentation must say so without claiming a stable, default or
+    live-verified provider: the only Jev evidence in this source is mocked
+    transport coverage, and final inclusion remains a separate review.
     """
-    assert set(PROVIDERS) == {"fixture", "laya"}
-    with pytest.raises(ModuleNotFoundError):
-        importlib.import_module("actseal.experimental.providers.jev")
+    assert set(PROVIDERS) == {"fixture", "laya", "jev"}
+    assert cli_module._PROVIDERS == ("fixture", "laya")
+    assert cli_module._EXPERIMENTAL_PROVIDERS == ("jev",)
+    module = importlib.import_module("actseal.experimental.providers.jev")
+    assert module.API_KEY_ENV == "JEV_API_KEY"
     text = _prose(DOCS / "providers.md")
-    assert "## Jev: conditional experimental work, not shipped" in text
-    assert "deferred to v2" not in text
-    assert "the current source ships no Jev adapter" in text
-    assert "--provider jev --experimental-provider" in text
+    assert "## Jev: PROVISIONAL experimental provider, explicit opt-in only" in text
+    for phrase in (
+        "--provider jev --experimental-provider",
+        "`JEV_API_KEY`",
+        "No live Jev request has been made or verified",
+        "mocked",
+        "not part of the default quickstart, demo or stable provider set",
+        "`replay` never imports",
+        "`--offline`",
+        "`--responses`",
+        "may change or be removed in any release",
+    ):
+        assert phrase in text, phrase
+    for stale in (
+        "ships no Jev adapter",
+        "not shipped",
+        "deferred to v2",
+        "the stable provider set is exactly",
+        "exactly two",
+        "only those two",
+    ):
+        assert stale not in text, stale
     for document in ("python-api.md", "faq.md"):
         prose = _prose(DOCS / document)
         assert "current stable providers" in prose, document
         assert "In the v1.0 scope" in prose, document
+        assert "PROVISIONAL" in prose, document
+        assert "--experimental-provider" in prose, document
         assert "In 1.x the runner accepts only" not in prose, document
+        assert "accepts only those two" not in prose, document
+        assert "accepts exactly these two" not in prose, document
+        assert "not shipped" not in prose, document
+    cli_prose = _prose(DOCS / "cli.md")
+    assert "--provider jev --experimental-provider" in cli_prose
+    assert "PROVISIONAL" in cli_prose
+    stability = _prose(DOCS / "stability.md")
+    assert "`--provider jev --experimental-provider`" in stability
+    assert "not part of this task's deliverable" not in stability
 
 
 def test_security_policy_support_rule_and_reportability_are_preserved() -> None:

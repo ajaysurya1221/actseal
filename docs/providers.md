@@ -319,22 +319,85 @@ At the same candidate, all four ordinary Linux/macOS Python 3.12/3.13 jobs passe
 
 The recorded times are whole test-suite elapsed times, not latency benchmarks. The milestone verifies the tested native paths without establishing broader hardware support, model accuracy, calibration or deployment reliability. The canonical fault campaign and full task subsequently passed [REVIEW T30-03](../plan/reviews/T30-03.md) at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`, merged as `87d2cd1`; the review preserves the earlier native receipt because its relevant source/test bytes are unchanged. The native CLI receipt above and [release report](../plan/FINAL_REPORT.md) record later integration and publication checks.
 
-## Jev: conditional experimental work, not shipped
+## Jev: PROVISIONAL experimental provider, explicit opt-in only
 
-No proprietary provider is required in 1.x, and the current source ships no
-Jev adapter: the stable provider set is exactly `fixture` and `laya`, and the
-runner rejects any other name. The v1.0.0 plan (plan/v1/PLAN.md, sections C
-and E) permits an **optional, experimental** Jev transport under
-`actseal.experimental.providers.jev`, selectable only with
-`--provider jev --experimental-provider`, PROVISIONAL under the
-[stability manifest](stability.md) and subject to a fixed integration deadline
-after which it moves to a later 1.x release. Whether and when it ships is
-decided at integration; nothing below is a description of released behaviour.
+No proprietary provider is required in 1.x: the stable providers are `fixture`
+and `laya`, and the zero-dependency core, assessment and replay work without
+any key or account. The source also contains an **experimental** TypeSafe/Jev
+cloud adapter, `actseal.experimental.providers.jev.JevModel(*, offline: bool = False)`,
+PROVISIONAL under the [stability manifest](stability.md) and
+[ADR 0017](decisions/0017-experimental-decision-provider.md). It may change or
+be removed in any release; nothing about it is a 1.x promise, and its
+inclusion in a published release remains a separate reviewed decision
+(plan/v1/PLAN.md sections C and E).
 
-If implemented, the TypeSafe/Jev adapter reads **`JEV_API_KEY`**, despite the vendor examples' different variable name. It must never serialize credentials into requests-at-rest, evidence, logs, or locks.
+Selection is always explicit; nothing routes to Jev implicitly:
 
-The [official API](https://docs.typesafe.ai/api) uses Bearer authentication and `POST https://api.typesafe.ai/v1/systemone` with `state`, `model`, and `questions`; responses contain `model`, `answers`, and `usage`. [OpenAPI](https://api.typesafe.ai/openapi.json) reports API version 0.2.0. [Model docs](https://docs.typesafe.ai/models) listed `jev-1.13.0`, $0.042 per million input tokens, and free output tokens on 6 October 2026. Account availability was not tested.
+- `lock` and `verify` accept it only as `--provider jev --experimental-provider`.
+  Without the flag the command is a usage error (exit 3) raised before any
+  provider is built, any environment variable is read or any request is
+  made. The flag is rejected with `fixture` or `laya`; `replay` and `demo` do
+  not accept it at all.
+- `--responses` is rejected with `jev`. `--offline` is rejected by the adapter
+  itself with `ProviderSetupError` (exit 3) before it reads `JEV_API_KEY`: the
+  adapter has no offline mode, unlike Laya's cached-offline inference.
+- From Python, `open_model("jev", responses=None, offline=False)` is the
+  opt-in; the experimental module is imported only in that branch. `replay`
+  never imports it, and importing `actseal.cli` or `actseal.runner` loads no
+  transport.
 
-Jev's [Choice confidence](https://docs.typesafe.ai/confidence) is `(max(p) - 1/n) / (1 - 1/n)`, while Laya reports a separate top-probability `answer_confidence` and an entropy-derived `confidence`. Provider confidence fields cannot be interchanged under a common threshold. The future adapter must expose explicitly named normalized scores and preserve raw fields.
+Execution profile (fixed in the adapter; no endpoint, model, retry or
+fallback option exists): `POST https://api.typesafe.ai/v1/systemone` with the
+pinned `jev-1.13.0` target, Bearer authentication from **`JEV_API_KEY`**
+(bring your own key; the vendor examples use a different variable name), one
+attempt per request with the runner's fixed 30-second deadline as the
+per-operation socket timeout, no redirect following and no fallback to another
+provider. Identity is `provider=jev`, `model` and `revision` both `jev-1.13.0`,
+an empty artifact-hash tuple (a cloud target has no weight hash) and a runtime
+naming the endpoint and profile; the reported version is a vendor claim, not
+a weight attestation, and is weaker than Laya's verified artifact hashes. The
+key lives only in the private transport object and is never written into
+identity, captures, evidence, locks, warnings or diagnostics. A successful body
+that echoes the key, literally or behind up to three levels of JSON string
+escapes, is not recorded: it is captured as `malformed_response` with warning
+`jev.credential_echo`. That guard detects the key in those encodings only and
+is not a general secret sanitizer; raw bodies remain data to review before
+sharing.
+
+Capture and normalization: successful bodies are read to the end of their HTTP
+framing, capped at 1 MiB, and captured verbatim. The pure normalizer's Jev
+profile ([schemas README](schemas/README.md)) accepts exactly
+`{model, answers, usage}` with the locked question id, usage
+`{input_tokens, output_tokens}` and an inner
+`{type: "choice", choice, probabilities, confidence}` whose mass is within
+`1e-12` of 1; a well-formed body naming another model is `identity_mismatch`
+and any other shape is `malformed_response`. Status mapping: `429` ->
+`rate_limit`; `529` and other `5xx` -> `unavailable`; `401`, `422`, redirects
+and other statuses -> `provider_error`; a socket timeout -> `timeout`;
+connection, TLS and incomplete transfers -> `unavailable`. Gating uses the
+normalized selected-option probability from the returned distribution. Jev's
+[Choice confidence](https://docs.typesafe.ai/confidence) is
+`(max(p) - 1/n) / (1 - 1/n)`, while Laya reports a separate top-probability
+`answer_confidence` and an entropy-derived `confidence`; the vendor value is
+preserved as `provider_confidence` evidence only, and provider confidence
+fields cannot be interchanged under a common threshold.
+
+Verification status: **No live Jev request has been made or verified** in
+this source. Every Jev test runs over a mocked transport (a stdlib fake
+connection or an injected exchange) with the key read and every socket
+blocked; the shared provider conformance suite, the canonical fault campaign
+and CLI/runner routing are exercised that way. Mocked behaviour is evidence
+about the adapter's local handling only, not about the vendor service, its
+availability, its accuracy, its cost or its account terms. Jev is not part of
+the default quickstart, demo or stable provider set; a bundle collected
+through it replays with the same offline normalizer and without the adapter.
+Any registry entry for evidence it produces and any live audit remain
+separate reviewed decisions. The [official API](https://docs.typesafe.ai/api)
+uses Bearer authentication and `POST https://api.typesafe.ai/v1/systemone`
+with `state`, `model`, and `questions`; responses contain `model`, `answers`,
+and `usage`. [OpenAPI](https://api.typesafe.ai/openapi.json) reports API
+version 0.2.0. [Model docs](https://docs.typesafe.ai/models) listed
+`jev-1.13.0`, $0.042 per million input tokens, and free output tokens on
+6 October 2026. Account availability was not tested.
 
 A Jev-to-Laya fallback cannot inherit certification of Jev alone. Record both attempted identities and the reason, surface fallback use, and ESCALATE unless the entire chain has separately approved evidence. Chain certification is outside the v1.0 scope; v1.0 performs no automatic fallback, and any later certified chain would need its own reviewed sampling rule and error budget. The [TypeSafe MCA](https://typesafe.ai/legal/mca), updated 23 September 2026, permits customer application integration but restricts standalone resale and use of service/output to develop similar or competing products. Do not train the local model from Jev outputs or expose pooled credentials.

@@ -364,16 +364,24 @@ and `LayaModel(*, offline: bool = False)`, the optional pinned native CPU
 adapter described in [providers](providers.md). `open_model` builds either by
 name.
 
-In the v1.0 scope the runner accepts exactly these two: today
-`ModelIdentity.provider` accepts `fixture` or `laya`, and `verify_run` requires
-the requested provider to equal the locked one. A class of your own can satisfy
-the protocol for typing and for tests, but it cannot be sealed into a lock or
-collected against through the stable runner. Calling `decide` directly
-produces raw captures; it does not execute the locked collection protocol,
-which the runner owns together with its fixed deadlines. A later 1.x release
-may add a provider only as an additive, explicitly selected option under the
-[versioning policy](versioning.md); an experimental Jev transport is
-conditional preparation and is not shipped (see [providers](providers.md)).
+In the v1.0 scope the runner accepts those two stable providers plus one
+PROVISIONAL experimental provider: `ModelIdentity.provider` accepts `fixture`,
+`laya` or `jev`, and `verify_run` requires the requested provider to equal the
+locked one. `open_model("jev", responses=None, offline=False)` is the Python
+opt-in for the experimental Jev cloud adapter
+(`actseal.experimental.providers.jev.JevModel(*, offline: bool = False)`): the
+explicit string selects it, the module is imported only in that branch,
+`responses` is rejected, and `offline=True` raises `ProviderSetupError` before
+the adapter reads `JEV_API_KEY`. On the command line the same selection
+additionally requires `--experimental-provider`. Nothing under
+`actseal.experimental` is part of the 1.x promise; see
+[providers](providers.md) for its boundary and current (mocked-only)
+verification status. A class of your own can satisfy the protocol for typing
+and for tests, but it cannot be sealed into a lock or collected against through
+the runner. Calling `decide` directly produces raw captures; it does not
+execute the locked collection protocol, which the runner owns together with its
+fixed deadlines. A later 1.x release may add a provider only as an additive,
+explicitly selected option under the [versioning policy](versioning.md).
 
 ## Errors
 
