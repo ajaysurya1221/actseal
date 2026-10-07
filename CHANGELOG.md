@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Corrected GitHub README figure selection to use dark or light desktop variants at every viewport width. This supersedes the v1.0.0 statement that the README selects vertical variants below 1280 px. Mobile SVGs remain committed; phone text legibility remains a known limitation.
+
 ## v1.0.0
 
 This entry describes the 1.0.0 implementation as reviewed and accepted before

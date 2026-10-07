@@ -1,6 +1,4 @@
 <picture>
-  <source media="(prefers-color-scheme: dark) and (max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-mobile-dark.svg">
-  <source media="(max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-dark.svg">
   <img alt="Actseal. Test model-chosen actions. Replay the evidence. Three steps: freeze, run, replay." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-light.svg" width="100%">
 </picture>
@@ -53,8 +51,6 @@ download or network.
 ## How it works
 
 <picture>
-  <source media="(prefers-color-scheme: dark) and (max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-mobile-dark.svg">
-  <source media="(max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-dark.svg">
   <img alt="How Actseal works in five stages. Freeze turns the frozen policy, labelled inputs and model identity into one lock. Run collects provider answers and six synthetic faults into decisions: ACT, ABSTAIN, ESCALATE or DENY. Verify applies the risk and coverage bounds and fault rules to one verdict with its exit code: PASS 0, BLOCK 1, INCONCLUSIVE 2 or ERROR 3. Seal writes one bounded evidence bundle. Replay recomputes the verdict offline with no model call." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-light.svg" width="100%">
 </picture>
@@ -120,8 +116,6 @@ the authenticity boundary.
 ## Architecture
 
 <picture>
-  <source media="(prefers-color-scheme: dark) and (max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-mobile-dark.svg">
-  <source media="(max-width: 1279px)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-dark.svg">
   <img alt="Actseal architecture in seven groups: the CLI and typed API; contracts and locks; providers; normalization and policy; assessment, statistics and faults; evidence; and replay. Replay reads the evidence bundle and never reaches a provider." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/architecture-light.svg" width="100%">
 </picture>
