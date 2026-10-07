@@ -601,10 +601,11 @@ deleted; branches without a merged pull request at their tip were kept.
 ## V1-057 — README figure selection on GitHub and a temporary legibility exception (8 October 2026)
 
 A live check of the published README on github.com (viewport 1920 px, dark
-theme) found that GitHub rewrites any `<source media>` combining
-`prefers-color-scheme` with a width query into an always-true media list, so
-the first mobile-dark source matched for every visitor at every width and in
-both themes; bare width queries survived. The v1.0.0 "responsive selection"
+theme) found that GitHub rewrites `<source media>` queries server-side to the
+viewer's own theme: a query combining `prefers-color-scheme: dark` with a
+width query became an always-true media list for dark-theme viewers, so the
+first mobile-dark source matched for them at every viewport width; light-theme
+viewers were selected correctly, and bare width queries survived. The v1.0.0 "responsive selection"
 statement therefore did not describe what GitHub served. Authorized repair:
 the three figure pictures use GitHub's documented colour-scheme selection
 (one dark source, light fallback) with the desktop variants; the mobile SVGs
