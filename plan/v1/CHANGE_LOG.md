@@ -584,3 +584,16 @@ v1.0.1 tag and publication are left to the human: the intended release commit
 is recorded in the acceptance record so no later, unreviewed tree is tagged.
 Publication uses the full existing tag-triggered pipeline; plan/v1 receipts
 remain 1.0.0 history and are never relabelled.
+
+## V1-056 — Editorial release-page summary and repository settings (8 October 2026)
+
+The hosted v1.0.0 GitHub release body was replaced with a concise editorial
+summary that links the unchanged receipt-backed RELEASE_NOTES.md at the tagged
+commit 4abcd9a and states that the replacement happened. The original published
+body (16,330 bytes, SHA-256 9cc940395fa69cff628a07d1b4bc51b7267387a4e06f858c3605736386eef0a1 as
+recorded in STATE.md) is preserved in the repository history and in the
+operator's hand-off folder; no tag, asset or distribution changed. Repository
+settings set the same day: description, homepage (PyPI), seventeen topics and
+the social preview (the reviewed docs/assets/social.png). Forty-nine merged
+remote branches whose merged pull-request head equalled the branch tip were
+deleted; branches without a merged pull request at their tip were kept.
