@@ -6,25 +6,25 @@ Codex owns this state, plans and REVIEWs. Claude Code Fable5.1/high authors prod
 
 Approved PLAN SHA256: `bb3538db868f929c1f779dcbcd105936f521acba51fbfe7c08988fedcd0fdcaa`. Decisions1A/2A/3A; original approval2026-10-06T16:04:49.582Z. Human authorized autonomous Claude CLI while AFK (V1-005), then explicitly approved all five scoped requests on7October (V1-029): pinned official fonts/tools; cached native/mutation checks and actual visual previews; example tests/temp files; placeholder-only `.env.example`; read-only public Banking77 cache. Those five approval blockers are resolved. Normal permissions/hooks remain. Those five requests did not include actual `.env` or credential access. Later V1-041 separately authorized narrow JEV_API_KEY loading, but effective harness denials still block it; no key access occurred.
 
-All deadlines are7October2026, Asia/Kolkata: Jev integrated/green or cut14:00; static P1/social/recording procedure15:59; optional cut17:59; publication23:59. Mandatory failures stop publication. No model/billing substitution, threshold tuning, resealing or weakened acceptance. Core remains zero third-party runtime dependencies.
+All deadlines are7October2026, Asia/Kolkata. The14:00 Jev-cut trigger is superseded by the human inV1-049; retain the reviewed adapter. Static P1/social/recording procedure15:59; optional cut17:59; publication23:59. Mandatory failures stop publication. No model/billing substitution, threshold tuning, resealing or weakened acceptance. Core remains zero third-party runtime dependencies.
 
 ## Current constraint and next action
 
-Current checkpoint: 7 October, approximately13:44IST. Main is
-`a210affb3742735fd41b34a94c2bc223c3e615a4` after planning PR43
-(reviewed2f82eff46ee7ef6a745054e6515def5af110ea0c) passed all eight
-hosted checks in runs37590743493/37590702682 and merged at08:06:15UTC.
-Root now prepares the deadline checkpoint on `codex/v1-deadline-checkpoint`.
-This is a planning checkpoint, not acceptance of the still-red candidate.
+Current checkpoint: 7 October,approximately14:05IST. Main remains
+`336fae685880a3a74ba353fd032d7c85f38bb6e0`. The human relaxed the14:00cut
+after its activation; V1-049 retains the reviewed experimental Jev adapter.
+Both removal sessions are stopped. Preserve four staged deletion drafts in
+the isolated cut branch; never treat that dirty checkout as the candidate.
+The immutable candidate5e7931a and its original branch remain intact.
+PR45 records activation plus the superseding human decision; no cut merges.
 
-1. **Task13 blocked:** the human added both exact merge Bash rules; Codex
-   fixed only one missing JSON comma without changing a permission entry.
-   The same session's fourth attempt used a merge with an output pipe and
-   was denied Auto-Mode Bypass. Report6ba49ae is preserved; its claimed cd
-   prefix was absent from the raw stream and is corrected in the review.
-   Rule mismatch is an unverified hypothesis. No merge or architecture
-   output exists. A concrete manual Terminal request is pending with the
-   user. No automated retry or alternate executor/command route is allowed.
+1. **Task13 unblocked by human action:** both manual merges are complete,
+   independently verified at head05eca93e6623c181927a53100114b85d17459968.
+   First mergebb35cfa integrates7820dba; second05eca93 integrates1fd9d08.
+   Checkout is clean and accepted hero/workflow/social bytes match7820dba.
+   Continue only the owned architecture generation/tests; no merge retry.
+   Four earlier denial receipts remain historical. No actual output yet.
+
 2. **Task06 unstarted/blocked:** V1-041 authorized narrowly loading the key
    for the already reviewed audit; later normal resumptions were denied by
    the actual harness. No key was read, no launcher/--execute ran, no journal
@@ -45,13 +45,15 @@ This is a planning checkpoint, not acceptance of the still-red candidate.
    assets:425pass/1fail. Lint/types passed; downstream build/packaging/evidence,
    hooks and real authoring checks were skipped, not verified by these runs.
    No product-source change: fingerprint8f316f67…98ed3 is unchanged. PR39 stays
-   unaccepted; no main merge, tag or publication. V1-047 and conditional19C/19D
-   specs prepare the14:00 Jev cut; they are NOT yet activated or dispatched.
+   unaccepted; no main merge, tag or publication. V1-049 cancels19C/19D after the human relaxed thecut. The retained
+   candidate source and its scoped registry approval are unchanged. Mandatory
+   images, final fullgreen checks and release acceptance remain outstanding.
 
 The one-time10:30IST heartbeat already resumed the original15/06 sessions;
 no duplicate reset/session. A distinct one-time14:00 cutoff heartbeat is
-registered as `apply-actseal-jev-cutoff`; it must refresh the gate before
-activating any cut. Earlier checkpoint narratives remain in
+registered as `apply-actseal-jev-cutoff`; the gate has now been refreshed
+and applied, then superseded by the human inV1-049. A later heartbeat
+must not repeat the cancelled cut or start a live audit. Earlier checkpoint narratives remain in
 Git history, CHANGE_LOG and immutable reports/reviews. Exact active process
 IDs and private packet paths are in `/tmp/actseal-v1-orchestration/active.json`.
 No model/account/billing substitution; normal hooks and all review gates stay.
@@ -63,15 +65,15 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 | 00–02 | ACCEPT and merged. Baseline2302 tests includes native; core source0595512 froze schema/compatibility interfaces. |
 | 03 | ACCEPT212a1d6 after independent177 conformance/provider +5 cached native tests and hooks. PR20 mergeda47c7f5. |
 | 04 | ACCEPT732914d after252 tests, all8 targeted mutations killed, hooks and strict helper types. PR21 mergedbaecd26; main CI37566825489 passed. |
-| 05 | Offline source5849c68/headc2e27d2 scoped ACCEPT. New independent390 focused +5 native tests pass; placeholder verified. Explicit CLI integration, final inclusion/live gates remain. PR28 still draft. |
-| 06 | Offline ACCEPTd3edbab/candidate3 after87 parent checks and independent probes. Live phase authorized but harness-blocked and unstarted; no key/request/journal. Candidates1/2 and scratch preserved. |
+| 05 | RETAIN experimental adapter per human overrideV1-049; original offline scoped ACCEPT and candidate5e7931a preserved. Removal drafts isolated/cancelled; final integration gates remain. |
+| 06 | Optional live audit unstarted and harness-blocked. Preserve offline ACCEPTd3edbab/candidate3, all candidates/scratch and denial history. Human timing change does not clear the actual preflight denial. No key/request/journal/spend. |
 | 07 | Exactsource277d8e2 scoped ACCEPT and locally integrated. Final two-entry registry and corrected tests now replay the original nine-file archive unchanged; parent focused/installed tests pass. Earlier failed merge-preview remains history; final candidate hostedCI/main merge still pending. |
 | 08 | Final-facts correction2ccdac6 scoped ACCEPT; parent105 docs tests pass with1 missing-architecture failure, hooks pass, independent re-review passes. Locally integrated into19; fullvisual/hosted/release gates pending. DraftPR41 still710ae55 supports prior blind preflight only. |
 | 09 | Scoped CI/packaging source accepted, including Linuxagg probebb3b8f8 and actual-sdist checks. PR18 head0e32c6c has ten green hosted jobs37581140052/37581142565; Linuxagg1.9.0 hash-verified execution confirmed in job112660836035. Parent882 tests pass plus1 explicit obsolete-manifest observation skip. Accepted glue integrated locally into19. Final release rehearsal, exact artifacts and publication remain pending; green PR18 does not establish the combined candidate's acceptance. |
 | 10 | Toolchain ACCEPT030ef840, merged6ad1e91. |
 | 11 | Actual hero/font/OFL bytes independently accepted and preserved in combinedPR31, merged7820dba after8 green checks. IsolatedPR25 closed as superseded; source history retained. Final README blind test remains. |
 | 12 | ACCEPTf712dae after actual offline pixel review and regeneration. PR22 merged227c7da. No browser workaround. |
-| 13 | Originalsource2e2a7b2 scoped ACCEPT; completion blocked after fourth effective harness denial at6ba49ae despite actual human-added rules. Manual Terminal request pending. No merge or output generation. |
+| 13 | Human manually completed both prerequisite merges; parent verified cleanhead05eca93, ancestry and unchanged accepted assets. Resume owned architecture generation only; prior denials preserved. No final output ACCEPT yet. |
 | 14 | Procedure/helper11a31fc scoped ACCEPT/greenPR30; standalone renderer a47a320 scoped ACCEPT after all bounded repairs, parent425visual+103independentfocused checks. Fulltask pending genuine PyPI cast/GIF, provenance, rendering and activation. |
 | 15 | ACCEPTfcdcfe4;283 parent+independent visual tests,2,958 parent core tests,types/hooks,actualpixels/regeneration and8 hosted checks pass. PR31 merged7820dba. Social1280x640 exists; user upload not done. |
 | 16–18 | Optional P2, only after mandatory P1 acceptance; not dispatched. |
@@ -79,7 +81,7 @@ No model/account/billing substitution; normal hooks and all review gates stay.
 
 ## Branches, processes and receipts
 
-Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-deadline-checkpoint`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
+Checkpoint13 source64d7314 was independently ACCEPTed and merged as23ea1b502e7b2eea815f599e6d39a09506fe60ea after eight hosted checks passed (PR36). PR37 V1-030/031 merged20b9969 with eight green checks. Checkpoint14PR38 mergedb789f8e after8 greenchecks; assetsPR31 then merged7820dba. Current planning continuation is `codex/v1-jev-cut-activation`; earlier checkpoint12 mergedee7bab953dede409c848d8c7b3d13caa9ddd971c. Main subsequently merged03/04/12; refresh origin before integration. Live process map, exact packets and raw streams remain private at `/tmp/actseal-v1-orchestration/active.json`.
 
 - Hero/social worktree: `/Users/ajay/.codex/worktrees/actseal-v1-hero/not-yet-named`, completed atfcdcfe4 and merged7820dba; all accepted asset bytes preserved.
 - Reused former baseline worktree: Task03 branch preserved. Now Task11-only completion branch736d912, cherry-picking Claude commits461f9ee/db56f36/7bb32f4 onto5f3fee5; files byte-identical. This isolates finished hero assets from unfinished social registration.
