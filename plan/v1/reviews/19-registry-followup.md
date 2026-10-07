@@ -1,0 +1,5 @@
+# REVIEW 19 — Registry integration follow-up
+
+Verdict: **REVISE** at ce38760db841a02d07c9aad66d80181762c54598. Four required changes are recorded in V1-039: producer-level approval wording; genuinely absent registry control; complete nine-file original archive inventory; completed example compatibility wording. Independent140 focused/installed tests passed; test success does not resolve these gaps.
+
+The later77b8356f518dcb4f455a74784484d77f70e8149f version assertions were committed outside explicitly assigned test paths. Codex stopped the executor. Parent28 isolation/serialization/supplied-wheel and147 compatibility/examples/wheel tests passed in6.89s and6.88s. Preserve the patch and process history; no full-task ACCEPT or main merge follows.
