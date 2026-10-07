@@ -27,7 +27,8 @@ MANIFEST_FILE = "docs/assets/src/tools.toml"
 # variants are validated at the 1280-and-wider width and the mobile variants
 # at the narrowest measured width, so every label clears the floor across the
 # whole measured range. Labels are checked against these widths, not against
-# the native SVG size.
+# the native SVG size. The hero's desktop files are also declared at the
+# narrowest width, because GitHub serves them at every width (V1-057).
 README_DISPLAY_WIDTH = 838
 MOBILE_DISPLAY_WIDTH = 254
 
@@ -37,10 +38,11 @@ DEMO_GIF_MAX_BYTES = 3_000_000
 DEMO_MIN_SECONDS = 20.0
 DEMO_MAX_SECONDS = 40.0
 
-# The compact banner (2026-10-08 editorial review): 1600x280 desktop and
-# 720x400 stacked mobile canvases, the same values as hero.py.
+# The hero (V1-057 follow-up): one 1600x700 stacked desktop composition per
+# colour scheme, validated at 254 CSS px because GitHub serves it at every
+# width, and the 720x400 stacked mobile canvas; the same values as hero.py.
 HERO_WIDTH = 1600
-HERO_HEIGHT = 280
+HERO_HEIGHT = 700
 HERO_MOBILE_WIDTH = 720
 HERO_MOBILE_HEIGHT = 400
 
@@ -146,9 +148,23 @@ ASSETS: tuple[Asset, ...] = (
         task="11",
         summary="Wordmark, approved tagline and one forward freeze/run/replay sequence; outlined.",
         outputs=(
-            _svg("hero-light.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
-            _svg("hero-dark.svg", HERO_WIDTH, HERO_HEIGHT, outlined=True),
-            # Stacked variants validated at 254 CSS px; outlined like the desktop files.
+            # The README serves these at every width, so they are validated at 254 CSS px.
+            _svg(
+                "hero-light.svg",
+                HERO_WIDTH,
+                HERO_HEIGHT,
+                outlined=True,
+                display_width=MOBILE_DISPLAY_WIDTH,
+            ),
+            _svg(
+                "hero-dark.svg",
+                HERO_WIDTH,
+                HERO_HEIGHT,
+                outlined=True,
+                display_width=MOBILE_DISPLAY_WIDTH,
+            ),
+            # Stacked variants the README no longer references; still declared,
+            # rendered and validated at 254 CSS px, outlined like the desktop files.
             Output(
                 path="hero-mobile-light.svg",
                 kind="svg",

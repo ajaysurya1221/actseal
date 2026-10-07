@@ -2,7 +2,8 @@
 
 The composition is the hero's, unchanged in copy and symbolism: the "Actseal"
 wordmark, the approved two-line tagline and one forward freeze/run/replay
-sequence, stacked on a 1280x640 canvas in the hero's light palette. Like the
+sequence, stacked as in the desktop hero at three quarters of its size and
+centred on a 1280x640 canvas in the hero's light palette. Like the
 hero, it carries no caption paragraph and no return arrow. Nothing is added:
 no further claim, no padlock, shield, checkmark, badge or other security
 symbol, no new copy. Every visible string is outlined through the hero's
@@ -51,28 +52,35 @@ DISPLAY_WIDTH = 640
 RESVG = "resvg"
 PALETTE = hero.LIGHT
 
-# Stacked like the hero's mobile variant, at social-card proportions, with the
-# block centred vertically on the card. The motif spans the full text column.
-# All sizes are in SVG units on the 1280x640 canvas.
+# The hero's desktop composition at SCALE, rounded to whole units and centred
+# on the card: the 1480x587-unit block becomes 1110x441 units, which leaves 85
+# units at each side and about 100 above and below. All sizes are in SVG units
+# on the 1280x640 canvas.
+SCALE = 0.75
 CANVAS = hero.Canvas(
     name="social",
     width=WIDTH,
     display_width=DISPLAY_WIDTH,
     margin=40,
-    text_x=64,
-    text_width=1152,
-    wordmark=144,
-    wordmark_baseline=204,
-    tagline=56,
-    tagline_baseline=294,
-    tagline_step=68,
-    label=40,
-    motif_x=64,
-    motif_top=446,
-    pill_width=320,
-    pill_height=88,
-    pill_gap=96,
-    pill_pad=16,
+    text_x=85,
+    text_width=1125,
+    wordmark=135,
+    wordmark_baseline=198,
+    tagline=72,
+    tagline_baseline=291,
+    tagline_step=86,
+    label=68,
+    motif_x=85,
+    motif_top=438,
+    pill_width=316,
+    pill_height=102,
+    pill_gap=81,
+    pill_pad=30,
+    border=3,
+    arrow_stroke=6,
+    arrow_head=22,
+    arrow_half=14,
+    arrow_clearance=10,
 )
 
 

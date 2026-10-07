@@ -7,6 +7,7 @@
 - Package metadata project URLs for the quickstart documentation, repository, issue tracker and changelog.
 - `CITATION.cff` software citation metadata for the 1.0.0 release.
 - Corrected GitHub README figure selection to use dark or light desktop variants at every viewport width. This supersedes the v1.0.0 statement that the README selects vertical variants below 1280 px. Mobile SVGs remain committed; phone text legibility remains a known limitation.
+- Redrew the README hero as one stacked composition per colour scheme (1600×700) whose smallest type, the step labels, is 14.3 nominal CSS px at a 254 px image width; `social.png` uses the same composition. The workflow and architecture figures remain below the 14 px floor at phone widths.
 
 ## v1.0.0 — 2026-10-07
 

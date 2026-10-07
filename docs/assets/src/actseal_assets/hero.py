@@ -8,15 +8,23 @@ file raises ``OutlineError`` before any glyph is drawn. The pipeline verifies
 the font hashes against ``tools.toml`` before calling ``render``; this module
 only checks presence so that a direct call still fails loudly.
 
-Two canvases are rendered, each in a light and a dark palette. The desktop
-canvas is 1600x280 and measures 838 CSS px in the README at 1280 px and wider
-viewports; its smallest text, the 32-unit step labels, renders at 16.8 px and
-the 28-unit desktop label minimum would render at 14.7 px. The mobile canvas
-is 720x400 and stacks the same content; it is validated at the narrowest
-measured column, 254 CSS px at a 320 px viewport, so its smallest text is
-40 units (14.1 rendered px). Line breaks are fixed in this file and every line
-is measured with the real glyph advances at render time; a line that would
-not fit raises ``ValueError``. Text is never shrunk to fit.
+Two canvases are rendered, each in a light and a dark palette. GitHub selects
+the README figures by colour scheme only (plan/v1/CHANGE_LOG.md V1-057), so
+every viewer receives the desktop file, at every viewport width. The desktop
+canvas is therefore one stacked composition, 1600x700: the wordmark, the two
+tagline lines and one row of three pills. It is validated at the narrowest
+measured README image width, 254 CSS px at a 320 px viewport, where every
+text run must reach 14 px: the 90-unit step labels render at 14.3 px, the
+96-unit tagline at 15.2 px and the 180-unit wordmark at 28.6 px, and the
+enforced label minimum is 89 units (14.1 px). The same file measures 838 CSS
+px at 1280 px and wider viewports, where the composition is reviewed. Stroke
+weights scale with the canvas so the pill borders and arrows stay visible at
+254 px. The mobile canvas is 720x400 and stacks the same content at mobile
+proportions; the README no longer references it, but it stays declared,
+rendered and validated at 254 CSS px, so its smallest text is 40 units
+(14.1 rendered px). Line breaks are fixed in this file and every line is
+measured with the real glyph advances at render time; a line that would not
+fit raises ``ValueError``. Text is never shrunk to fit.
 
 The copy is the approved wordmark and two-line tagline; the 2026-10-08
 editorial review removed the caption paragraph from the artwork, and the
@@ -67,21 +75,26 @@ OUTPUTS: tuple[str, ...] = (
 )
 
 DESKTOP_WIDTH = 1600
-DESKTOP_HEIGHT = 280
+DESKTOP_HEIGHT = 700
 MOBILE_WIDTH = 720
 MOBILE_HEIGHT = 400
 # Measured CSS widths of a README image (838 px at 1280/1366 px viewports,
 # 254 px at 320 px); the same values as inventory.py, repeated here because
-# inventory imports this module.
+# inventory imports this module. GitHub serves the desktop file at every
+# width, so both canvases are validated at the narrowest width; the desktop
+# composition is reviewed at the widest.
 DESKTOP_DISPLAY_WIDTH = 838
 MOBILE_DISPLAY_WIDTH = 254
 # Same floor as checks.MIN_LABEL_PX; outlined assets are exempt from that
 # validator, so this module enforces the floor on its own type sizes.
 MIN_LABEL_PX = 14.0
-# Smallest step-label sizes the editorial specification allows per canvas.
-MIN_DESKTOP_LABEL = 28
+# Smallest step-label sizes allowed per canvas: the 14 px floor at 254 CSS px
+# needs 14 x 1600 / 254 = 88.2 desktop units and 14 x 720 / 254 = 39.7 mobile
+# units, rounded up.
+MIN_DESKTOP_LABEL = 89
 MIN_MOBILE_LABEL = 40
 
+# Default stroke weights (the mobile canvas); larger canvases set their own.
 BORDER = 2
 ARROW_STROKE = 3
 ARROW_HEAD = 12
@@ -160,6 +173,13 @@ class Canvas:
     pill_height: int
     pill_gap: int
     pill_pad: int
+    # Stroke weights scale with the canvas; the defaults are the mobile
+    # canvas's values.
+    border: int = BORDER
+    arrow_stroke: int = ARROW_STROKE
+    arrow_head: int = ARROW_HEAD
+    arrow_half: int = ARROW_HALF
+    arrow_clearance: int = ARROW_CLEARANCE
 
     @property
     def sizes(self) -> tuple[int, ...]:
@@ -191,25 +211,34 @@ class Canvas:
         return size * min(1.0, self.display_width / self.width)
 
 
+# One stacked composition, validated at 254 CSS px. The pill row starts at
+# the text column and ends within four units of the first tagline line's ink,
+# so the block has one left and one right edge; the visible margins are about
+# 60 units on every side.
 DESKTOP = Canvas(
     name="desktop",
     width=DESKTOP_WIDTH,
-    display_width=DESKTOP_DISPLAY_WIDTH,
-    margin=24,
-    text_x=72,
-    text_width=760,
-    wordmark=104,
-    wordmark_baseline=110,
-    tagline=44,
-    tagline_baseline=180,
-    tagline_step=52,
-    label=32,
-    motif_x=848,
-    motif_top=104,
-    pill_width=184,
-    pill_height=72,
-    pill_gap=64,
-    pill_pad=16,
+    display_width=MOBILE_DISPLAY_WIDTH,
+    margin=40,
+    text_x=60,
+    text_width=1500,
+    wordmark=180,
+    wordmark_baseline=188,
+    tagline=96,
+    tagline_baseline=312,
+    tagline_step=114,
+    label=90,
+    motif_x=60,
+    motif_top=508,
+    pill_width=420,
+    pill_height=136,
+    pill_gap=110,
+    pill_pad=40,
+    border=4,
+    arrow_stroke=8,
+    arrow_head=30,
+    arrow_half=18,
+    arrow_clearance=14,
 )
 MOBILE = Canvas(
     name="mobile",
@@ -333,17 +362,20 @@ def _polygon(points: tuple[tuple[float, float], ...]) -> str:
     return " ".join(f"{svg.fmt(px)},{svg.fmt(py)}" for px, py in points)
 
 
-def _arrow_right(group: svg.Node, x1: float, x2: float, y: float, color: str) -> None:
+def _arrow_right(
+    group: svg.Node, canvas: Canvas, *, x1: float, x2: float, y: float, color: str
+) -> None:
+    head_x = x2 - canvas.arrow_head
     group.add(
         "line",
         x1=x1,
         y1=y,
-        x2=x2 - ARROW_HEAD,
+        x2=head_x,
         y2=y,
         stroke=color,
-        stroke_width=ARROW_STROKE,
+        stroke_width=canvas.arrow_stroke,
     )
-    head = ((x2, y), (x2 - ARROW_HEAD, y - ARROW_HALF), (x2 - ARROW_HEAD, y + ARROW_HALF))
+    head = ((x2, y), (head_x, y - canvas.arrow_half), (head_x, y + canvas.arrow_half))
     group.add("polygon", points=_polygon(head), fill=color)
 
 
@@ -365,7 +397,7 @@ def _motif(root: svg.Node, fonts: Fonts, palette: Palette, canvas: Canvas) -> No
             rx=height / 2,
             fill=palette.box,
             stroke=palette.border,
-            stroke_width=BORDER,
+            stroke_width=canvas.border,
         )
         _glyphs(
             pill,
@@ -379,9 +411,9 @@ def _motif(root: svg.Node, fonts: Fonts, palette: Palette, canvas: Canvas) -> No
             centered=True,
         )
         if index + 1 < len(MOTIF_STEPS):
-            x1 = left + canvas.pill_width + ARROW_CLEARANCE
-            x2 = left + canvas.pill_width + canvas.pill_gap - ARROW_CLEARANCE
-            _arrow_right(pill, x1, x2, middle, palette.accent)
+            x1 = left + canvas.pill_width + canvas.arrow_clearance
+            x2 = left + canvas.pill_width + canvas.pill_gap - canvas.arrow_clearance
+            _arrow_right(pill, canvas, x1=x1, x2=x2, y=middle, color=palette.accent)
 
 
 def _require_extents(canvas: Canvas, height: int) -> None:

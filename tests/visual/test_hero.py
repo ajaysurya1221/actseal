@@ -59,11 +59,16 @@ FORBIDDEN_WORDS = (
     "certified",
 )
 MIN_PX = 14.0
-#: Compact canvases from the 2026-10-08 editorial specification.
-DESKTOP_SIZE = (1600, 280)
+#: The stacked desktop composition GitHub serves at every width (V1-057
+#: follow-up) and the unreferenced 720x400 mobile canvas.
+DESKTOP_SIZE = (1600, 700)
 MOBILE_SIZE = (720, 400)
-#: Smallest step-label sizes the specification allows (28 desktop, 40 mobile units).
-MIN_DESKTOP_LABEL = 28
+#: Measured README image widths: 254 CSS px at a 320 px viewport, 838 at 1280+.
+NARROWEST = 254
+WIDEST = 838
+#: Smallest step-label sizes allowed: 14 px at 254 CSS px, rounded up to whole
+#: units (88.2 on the 1600-unit canvas, 39.7 on the 720-unit canvas).
+MIN_DESKTOP_LABEL = 89
 MIN_MOBILE_LABEL = 40
 UPEM = 1000
 ADVANCE = 600
@@ -137,8 +142,10 @@ def test_inventory_registers_four_outlined_outputs_and_the_renderer(kit: ModuleT
     assert tuple(o.path for o in asset.outputs) == hero.OUTPUTS == (*DESKTOP, *MOBILE)
     assert asset.needs == ("jetbrains-mono", "fonttools")
     sizes = {o.path: (o.width, o.height, o.display_width, o.outlined) for o in asset.outputs}
+    # GitHub serves the desktop files at every width, so all four are declared
+    # at the narrowest measured README image width.
     for name in DESKTOP:
-        assert sizes[name] == (*DESKTOP_SIZE, kit.inventory.README_DISPLAY_WIDTH, True)
+        assert sizes[name] == (*DESKTOP_SIZE, kit.inventory.MOBILE_DISPLAY_WIDTH, True)
     for name in MOBILE:
         assert sizes[name] == (*MOBILE_SIZE, kit.inventory.MOBILE_DISPLAY_WIDTH, True)
     assert (hero.DESKTOP_WIDTH, hero.DESKTOP_HEIGHT) == DESKTOP_SIZE
@@ -156,6 +163,7 @@ def test_inventory_registers_four_outlined_outputs_and_the_renderer(kit: ModuleT
 def test_type_sizes_meet_the_floor_at_display_width(kit: ModuleType) -> None:
     hero = kit.hero
     for canvas in (hero.DESKTOP, hero.MOBILE):
+        assert canvas.display_width == NARROWEST, canvas.name
         hero.require_readable(canvas)
         smallest = min(canvas.sizes)
         assert smallest == canvas.label, canvas.name
@@ -167,19 +175,62 @@ def test_type_sizes_meet_the_floor_at_display_width(kit: ModuleType) -> None:
     assert hero.MOBILE.label >= MIN_MOBILE_LABEL
     hero.require_label_minimum(hero.DESKTOP, MIN_DESKTOP_LABEL)
     hero.require_label_minimum(hero.MOBILE, MIN_MOBILE_LABEL)
-    # The minimum labels, 28 units x 838/1600 and 40 units x 254/720, both clear
-    # the floor; 30 mobile units would not (30 x 254/720 = 10.6 px).
-    assert hero.DESKTOP.rendered_px(MIN_DESKTOP_LABEL) == pytest.approx(14.665)
+    # The minimum labels, 89 units x 254/1600 and 40 units x 254/720, both clear
+    # the floor; 88 desktop units and 39 mobile units would not.
+    assert hero.DESKTOP.rendered_px(MIN_DESKTOP_LABEL) == pytest.approx(14.129, abs=0.001)
     assert hero.MOBILE.rendered_px(MIN_MOBILE_LABEL) == pytest.approx(14.111, abs=0.001)
+    assert hero.DESKTOP.rendered_px(MIN_DESKTOP_LABEL - 1) < MIN_PX
+    assert hero.MOBILE.rendered_px(MIN_MOBILE_LABEL - 1) < MIN_PX
     assert hero.MOBILE.rendered_px(30) < MIN_PX
-    too_small = dataclasses.replace(hero.DESKTOP, label=20)
-    with pytest.raises(ValueError, match=r"20 units render at 10.5px .* minimum is 14px"):
-        hero.require_readable(too_small)
+    # The 1600x280 desktop banner GitHub served at phone widths failed by half:
+    # its 44-unit tagline rendered at 7.0 px and its 32-unit labels at 5.1 px.
+    compact = dataclasses.replace(hero.DESKTOP, wordmark=104, tagline=44, label=32)
+    with pytest.raises(ValueError, match=r"desktop: 44 units render at 7.0px at 254 CSS px"):
+        hero.require_readable(compact)
+    labels_only = dataclasses.replace(compact, tagline=96)
+    with pytest.raises(ValueError, match=r"32 units render at 5.1px at 254 CSS px; minimum is 14"):
+        hero.require_readable(labels_only)
     old_mobile = dataclasses.replace(hero.MOBILE, label=30)
     with pytest.raises(ValueError, match=r"30 units render at 10.6px at 254 CSS px"):
         hero.require_readable(old_mobile)
-    with pytest.raises(ValueError, match="step labels are 26 units; minimum is 28 units"):
-        hero.require_label_minimum(dataclasses.replace(hero.DESKTOP, label=26), MIN_DESKTOP_LABEL)
+    with pytest.raises(ValueError, match="step labels are 88 units; minimum is 89 units"):
+        hero.require_label_minimum(dataclasses.replace(hero.DESKTOP, label=88), MIN_DESKTOP_LABEL)
+    with pytest.raises(ValueError, match="step labels are 32 units; minimum is 89 units"):
+        hero.require_label_minimum(dataclasses.replace(hero.DESKTOP, label=32), MIN_DESKTOP_LABEL)
+
+
+def test_desktop_text_sizes_at_both_measured_widths(kit: ModuleType) -> None:
+    """Nominal CSS px of every desktop text run at 254 and 838 px image widths."""
+    desktop = kit.hero.DESKTOP
+    assert desktop.sizes == (180, 96, 90)
+    at_254 = [size * NARROWEST / desktop.width for size in desktop.sizes]
+    at_838 = [size * WIDEST / desktop.width for size in desktop.sizes]
+    assert at_254 == pytest.approx([28.575, 15.24, 14.2875])
+    assert at_838 == pytest.approx([94.275, 50.28, 47.1375])
+    assert all(px >= MIN_PX for px in at_254)
+    assert [desktop.rendered_px(size) for size in desktop.sizes] == pytest.approx(at_254)
+
+
+def test_motif_strokes_scale_with_the_desktop_canvas(kit: ModuleType) -> None:
+    """Arrows and pill borders stay visible at 254 px; the mobile canvas keeps its weights."""
+    hero = kit.hero
+    desktop, mobile = hero.DESKTOP, hero.MOBILE
+    scale = NARROWEST / desktop.width
+    assert desktop.arrow_stroke * scale >= 1.0
+    assert desktop.arrow_head * scale >= 4.0
+    assert 2 * desktop.arrow_half * scale >= 4.0
+    assert desktop.border * scale >= 0.5
+    # The previous 3-unit arrow stroke would have rendered at 0.48 px here.
+    assert hero.ARROW_STROKE * scale < 0.5
+    assert desktop.arrow_head + 2 * desktop.arrow_clearance < desktop.pill_gap
+    weights = ("border", "arrow_stroke", "arrow_head", "arrow_half", "arrow_clearance")
+    assert tuple(getattr(mobile, name) for name in weights) == (
+        hero.BORDER,
+        hero.ARROW_STROKE,
+        hero.ARROW_HEAD,
+        hero.ARROW_HALF,
+        hero.ARROW_CLEARANCE,
+    )
 
 
 def test_undersized_labels_fail_before_any_font_is_read(
@@ -190,37 +241,45 @@ def test_undersized_labels_fail_before_any_font_is_read(
     monkeypatch.setattr(hero, "MOBILE", dataclasses.replace(hero.MOBILE, label=36))
     with pytest.raises(ValueError, match="mobile: step labels are 36 units; minimum is 40"):
         hero.render(_context(kit, tmp_path))
+    monkeypatch.setattr(hero, "DESKTOP", dataclasses.replace(hero.DESKTOP, label=88))
+    with pytest.raises(ValueError, match="desktop: step labels are 88 units; minimum is 89"):
+        hero.render(_context(kit, tmp_path))
 
 
 def test_fixed_geometry_fits_both_canvases(kit: ModuleType) -> None:
     hero = kit.hero
     hero._require_extents(hero.DESKTOP, hero.DESKTOP_HEIGHT)
     hero._require_extents(hero.MOBILE, hero.MOBILE_HEIGHT)
-    # Desktop: text column beside the motif, both inside the 280-unit height.
+    # Both canvases stack wordmark, tagline, then the motif, without overlap.
+    for canvas, (width, height) in ((hero.DESKTOP, DESKTOP_SIZE), (hero.MOBILE, MOBILE_SIZE)):
+        assert canvas.margin <= canvas.text_top < canvas.text_bottom, canvas.name
+        assert canvas.text_bottom <= canvas.motif_top, canvas.name
+        assert canvas.motif_bottom <= height - canvas.margin, canvas.name
+        assert canvas.motif_x + canvas.motif_width <= width - canvas.margin, canvas.name
+        assert canvas.motif_x == canvas.text_x, canvas.name
+    # Desktop: one block with even visible margins. The pill row spans 1480 of
+    # the 1500-unit text column and leaves 60 units at each side and below; the
+    # wordmark's cap height (0.73 em) leaves 56.6 units above it.
     desktop = hero.DESKTOP
-    assert desktop.text_x + desktop.text_width <= desktop.motif_x
-    assert desktop.margin <= desktop.text_top < desktop.text_bottom
-    assert desktop.text_bottom <= hero.DESKTOP_HEIGHT - desktop.margin
-    assert desktop.margin <= desktop.motif_top < desktop.motif_bottom
-    assert desktop.motif_bottom <= hero.DESKTOP_HEIGHT - desktop.margin
-    # The pills sit on the canvas's vertical centre line.
-    assert desktop.motif_top + desktop.pill_height / 2 == hero.DESKTOP_HEIGHT / 2
-    # Mobile: wordmark, tagline, then the motif, stacked without overlap.
-    mobile = hero.MOBILE
-    assert mobile.margin <= mobile.text_top
-    assert mobile.text_bottom <= mobile.motif_top
-    assert mobile.motif_bottom <= hero.MOBILE_HEIGHT - mobile.margin
-    assert mobile.motif_x + mobile.motif_width <= hero.MOBILE_WIDTH - mobile.margin
+    assert desktop.motif_width == 1480
+    assert desktop.motif_x == DESKTOP_SIZE[0] - (desktop.motif_x + desktop.motif_width) == 60
+    assert DESKTOP_SIZE[1] - desktop.motif_bottom == 56
+    assert desktop.wordmark_baseline - 0.73 * desktop.wordmark == pytest.approx(56.6)
+    # Labels keep at least pill_pad from the pill ends at the nominal 0.6 em advance.
+    widest = max(len(step) for step in STEPS) * 0.6 * desktop.label
+    assert widest + 2 * desktop.pill_pad <= desktop.pill_width
     crowded = dataclasses.replace(desktop, motif_x=1200)
     with pytest.raises(ValueError, match="motif exceeds the canvas width"):
         hero._require_extents(crowded, hero.DESKTOP_HEIGHT)
-    with pytest.raises(ValueError, match="tagline needs 246 units of height"):
-        hero._require_extents(desktop, 260)
+    with pytest.raises(ValueError, match="tagline needs 455 units of height"):
+        hero._require_extents(desktop, 480)
+    with pytest.raises(ValueError, match="motif needs 644 units of height"):
+        hero._require_extents(desktop, 680)
     with pytest.raises(ValueError, match="motif needs 352 units of height"):
-        hero._require_extents(mobile, 360)
-    with pytest.raises(ValueError, match="wordmark reaches 2 units from the top"):
-        hero._require_extents(dataclasses.replace(desktop, wordmark_baseline=86), 280)
-    overlapping = dataclasses.replace(desktop, motif_x=800)
+        hero._require_extents(hero.MOBILE, 360)
+    with pytest.raises(ValueError, match="wordmark reaches 6 units from the top"):
+        hero._require_extents(dataclasses.replace(desktop, wordmark_baseline=150), 700)
+    overlapping = dataclasses.replace(desktop, motif_top=440)
     with pytest.raises(ValueError, match="text column overlaps the motif"):
         hero._require_extents(overlapping, hero.DESKTOP_HEIGHT)
 
@@ -397,6 +456,22 @@ def test_structure_has_one_forward_motif_and_no_caption(
     assert len({r.get("y") for r in motif.iter(f"{SVG_NS}rect")}) == 1
 
 
+def test_rendered_pills_and_strokes_follow_each_canvas(
+    kit: ModuleType, rendered: dict[str, bytes]
+) -> None:
+    hero = kit.hero
+    for names, canvas in ((DESKTOP, hero.DESKTOP), (MOBILE, hero.MOBILE)):
+        for name in names:
+            motif = _tree(rendered[name]).find(f"{SVG_NS}g[@id='motif']")
+            assert motif is not None
+            rects = list(motif.iter(f"{SVG_NS}rect"))
+            assert {r.get("stroke-width") for r in rects} == {str(canvas.border)}, name
+            assert {r.get("rx") for r in rects} == {kit.svg.fmt(canvas.pill_height / 2)}, name
+            assert {r.get("width") for r in rects} == {str(canvas.pill_width)}, name
+            strokes = {line.get("stroke-width") for line in motif.iter(f"{SVG_NS}line")}
+            assert strokes == {str(canvas.arrow_stroke)}, name
+
+
 def test_light_and_dark_differ_only_in_color(rendered: dict[str, bytes]) -> None:
     for light_name, dark_name in (DESKTOP, MOBILE):
         assert rendered[light_name] != rendered[dark_name]
@@ -421,7 +496,7 @@ def test_overflowing_line_fails_instead_of_shrinking(
 ) -> None:
     hero = kit.hero
     monkeypatch.setattr(hero, "DESKTOP", dataclasses.replace(hero.DESKTOP, text_width=300))
-    with pytest.raises(ValueError, match=r"units wide at size 104; only 300 units are available"):
+    with pytest.raises(ValueError, match=r"units wide at size 180; only 300 units are available"):
         hero.render(_context(kit, doubles_root))
 
 
