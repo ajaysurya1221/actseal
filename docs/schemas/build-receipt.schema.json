@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:build-receipt:1",
+  "title": "Actseal release build receipt (schema 1, promotion profile)",
+  "description": "build-receipt.json written by `tools/check_release.py distributions` in the release workflow's build job, before the immutable distributions artifact exists. The promotion profile described here requires a release tag, a full source commit and the originating workflow run; a rehearsal build (branch ref, null tag, null workflow metadata) is inspection-only and never validates. `lock_sha256` is the SHA-256 of the repository `uv.lock` at the source commit, not an Actseal decision lock. Unknown fields are rejected everywhere. The helper is stricter: exact integer schema version, lowercase hashes, exactly one wheel and one sdist whose names, sizes and hashes equal the built files.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "version",
+    "tag",
+    "ref",
+    "source_commit",
+    "lock_sha256",
+    "workflow_run",
+    "distributions"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "actseal-build-receipt" },
+    "version": { "$ref": "#/$defs/Version" },
+    "tag": { "$ref": "#/$defs/Tag" },
+    "ref": { "$ref": "#/$defs/TagRef" },
+    "source_commit": { "$ref": "#/$defs/GitSha" },
+    "lock_sha256": { "$ref": "#/$defs/Sha256" },
+    "workflow_run": { "$ref": "#/$defs/BuildWorkflowRun" },
+    "distributions": { "$ref": "#/$defs/Distributions" }
+  },
+  "$defs": {
+    "Sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$(?![\\s\\S])" },
+    "GitSha": { "type": "string", "pattern": "^[0-9a-f]{40}$(?![\\s\\S])" },
+    "Version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$(?![\\s\\S])"
+    },
+    "Tag": {
+      "type": "string",
+      "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$(?![\\s\\S])"
+    },
+    "TagRef": {
+      "type": "string",
+      "pattern": "^refs/tags/v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$(?![\\s\\S])"
+    },
+    "Decimal": {
+      "description": "A positive ASCII decimal identifier without leading zeros, as GitHub reports run and artifact IDs.",
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$(?![\\s\\S])"
+    },
+    "BuildWorkflowRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "attempt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Decimal" },
+        "attempt": { "$ref": "#/$defs/Decimal" }
+      }
+    },
+    "Distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "size", "sha256"],
+      "properties": {
+        "filename": {
+          "type": "string",
+          "pattern": "^actseal-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-py3-none-any\\.whl|\\.tar\\.gz)$(?![\\s\\S])"
+        },
+        "size": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/Sha256" }
+      }
+    },
+    "Distributions": {
+      "description": "Exactly the wheel and the sdist of the receipt's version, sorted by filename. Name/version agreement and uniqueness are cross-field checks enforced by the helper.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/Distribution" }
+    }
+  }
+}

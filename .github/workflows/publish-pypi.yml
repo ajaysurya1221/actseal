@@ -1,31 +1,41 @@
 name: Publish to PyPI
 
-# Promote the reviewed release bytes; do not rebuild the existing release.
-# Update the version, commit, CI receipt and hashes together for the next release.
+# Release pipeline: validate the tag/source/package identity, build the two
+# distributions exactly once, verify those immutable bytes on every supported
+# platform, regenerate the required static assets with the pinned toolchain,
+# upload through Trusted Publishing after approval, verify the public PyPI copy
+# in a clean container, then mirror identical assets to a draft GitHub
+# release. workflow_dispatch is a rehearsal and never uploads.
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
-    inputs:
-      publish:
-        description: Upload to PyPI after validation (requires a configured Trusted Publisher)
-        type: boolean
-        required: true
-        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: pypi-actseal
+  group: pypi-actseal-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  validate:
-    if: github.repository == 'ajaysurya1221/actseal' && github.ref == 'refs/heads/main'
+  build:
+    name: build (validate identity, build once)
+    if: github.repository == 'ajaysurya1221/actseal'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
-      actions: read
+    outputs:
+      version: ${{ steps.identity.outputs.version }}
+      release: ${{ steps.identity.outputs.release }}
+      wheel: ${{ steps.distributions.outputs.wheel }}
+      sdist: ${{ steps.distributions.outputs.sdist }}
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+      artifact-digest: ${{ steps.upload.outputs.artifact-digest }}
+      metadata-artifact-id: ${{ steps.upload-metadata.outputs.artifact-id }}
+      metadata-artifact-digest: ${{ steps.upload-metadata.outputs.artifact-digest }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -36,64 +46,293 @@ jobs:
           version: '0.12.5'
           python-version: '3.12'
           enable-cache: false
-      - name: Check release identity and successful CI
+      - name: Install locked development tools
+        run: uv sync --frozen --group dev
+      - name: Check the workflow contract
+        run: uv run --frozen python tools/check_release.py workflow
+      - name: Validate tag, source, lock and package version agreement
+        id: identity
         env:
-          GH_TOKEN: ${{ github.token }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_SHA: ${{ github.sha }}
         run: |
-          set -euo pipefail
-          expected_commit=83fd04a5d340000aed6518109dce666dc208ad70
-          test "$(git rev-parse 'refs/tags/v0.1.0^{commit}')" = "$expected_commit"
-          gh release view v0.1.0 --repo "$GITHUB_REPOSITORY" \
-            --json tagName,isDraft,isPrerelease,assets > "$RUNNER_TEMP/release.json"
-          jq -e '.tagName == "v0.1.0" and (.isDraft | not) and (.isPrerelease | not)
-            and ([.assets[].name] | sort) ==
-              ["actseal-0.1.0-py3-none-any.whl", "actseal-0.1.0.tar.gz"]' \
-            "$RUNNER_TEMP/release.json"
-          gh run view 37456279878 --repo "$GITHUB_REPOSITORY" \
-            --json headSha,conclusion,jobs > "$RUNNER_TEMP/release-ci.json"
-          jq -e --arg sha "$expected_commit" '.headSha == $sha
-            and .conclusion == "success" and (.jobs | length) == 4
-            and all(.jobs[]; .conclusion == "success")' "$RUNNER_TEMP/release-ci.json"
-      - name: Download and verify the approved distributions
+          uv run --frozen python tools/check_release.py metadata \
+            --ref "$RELEASE_REF" --sha "$RELEASE_SHA" >> "$GITHUB_OUTPUT"
+      - name: Validate release documentation before building
+        run: uv run --frozen python tools/check_release.py docs
+      - name: Build the wheel and source distribution exactly once
+        # uv writes a .gitignore into its out-dir; the packages-dir must hold
+        # only the two distributions, so remove that marker before validation.
+        run: |
+          uv build --no-sources --out-dir "$RUNNER_TEMP/dist"
+          rm -f "$RUNNER_TEMP/dist/.gitignore"
+      - name: Validate the built distributions and record checksums
+        id: distributions
         env:
-          GH_TOKEN: ${{ github.token }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_VERSION: ${{ steps.identity.outputs.version }}
         run: |
-          set -euo pipefail
-          mkdir dist
-          gh release download v0.1.0 --repo "$GITHUB_REPOSITORY" --dir dist \
-            --pattern 'actseal-0.1.0-py3-none-any.whl' --pattern 'actseal-0.1.0.tar.gz'
-          cd dist
-          sha256sum --check --strict <<'CHECKSUMS'
-          672b60815394cf9673c6a9f78437750ffc40d44467627604f48c5e1c5f77e906  actseal-0.1.0-py3-none-any.whl
-          1781149ff09a21f14691daf0f6777f29022ec01293463394ac4f569f6897be2a  actseal-0.1.0.tar.gz
-          CHECKSUMS
-      - name: Validate PyPI metadata without uploading
-        run: uvx --from twine==7.0.0 twine check --strict dist/*
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+          mkdir -p "$RUNNER_TEMP/release-metadata"
+          uv run --frozen python tools/check_release.py distributions "$RUNNER_TEMP/dist" \
+            --version "$RELEASE_VERSION" --ref "$RELEASE_REF" --sha "$RELEASE_SHA" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --sha256sums "$RUNNER_TEMP/release-metadata/SHA256SUMS" \
+            --build-receipt "$RUNNER_TEMP/release-metadata/build-receipt.json" >> "$GITHUB_OUTPUT"
+      - name: Strict PyPI metadata check
+        run: uvx --from twine==7.0.0 twine check --strict "$RUNNER_TEMP"/dist/*
+      - name: Upload the immutable distributions (wheel and sdist only)
+        id: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: pypi-distributions
-          path: dist/*
+          name: distributions-${{ steps.identity.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/dist/
           if-no-files-found: error
-          retention-days: 7
+          compression-level: 0
+          overwrite: false
+          retention-days: 90
+      - name: Upload the build receipt and checksums
+        id: upload-metadata
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-metadata-${{ steps.identity.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-metadata/
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 90
+
+  verify:
+    name: verify (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      UV_PYTHON: ${{ matrix.python }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ['3.12', '3.13']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.5'
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - name: Install locked development tools
+        run: uv sync --frozen --group dev
+      - name: Lint and formatting
+        run: |
+          uv run --frozen ruff check .
+          uv run --frozen ruff format --check .
+      - name: Strict type checks
+        run: uv run --frozen mypy --strict src tests
+      - name: Offline unit and acceptance tests
+        run: uv run --frozen pytest -m "not integration and not packaging"
+      - name: Repository hooks
+        run: uv run --frozen pre-commit run --all-files
+      - name: Download the exact built distributions by artifact ID
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: ${{ runner.temp }}/dist
+      - name: Download the build checksums by artifact ID
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.build.outputs.metadata-artifact-id }}
+          path: ${{ runner.temp }}/release-metadata
+      - name: Verify the downloaded distributions against the build checksums
+        env:
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          uv run --frozen python tools/check_release.py verify-distributions "$RUNNER_TEMP/dist" \
+            --version "$RELEASE_VERSION" --sha256sums "$RUNNER_TEMP/release-metadata/SHA256SUMS"
+      - name: Supplied-artifact packaging acceptance (no rebuild)
+        env:
+          ACTSEAL_TEST_DIST: ${{ runner.temp }}/dist
+          ACTSEAL_TEST_WHEEL: ${{ runner.temp }}/dist/${{ needs.build.outputs.wheel }}
+        run: uv run --frozen pytest -m packaging
+
+  assets:
+    name: assets (regenerate required static assets)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.5'
+          python-version: '3.12'
+          enable-cache: true
+      - name: Install the locked authoring dependency group
+        run: uv sync --frozen --group dev --group assets
+      - name: Fetch the pinned authoring fonts and tools with hash verification
+        run: |
+          uv run --frozen python docs/assets/src/setup_tools.py --tool jetbrains-mono
+          uv run --frozen python docs/assets/src/setup_tools.py --tool resvg
+      - name: Regenerate and compare the required static assets
+        run: uv run --frozen python tools/check_release.py assets
 
   publish:
-    needs: validate
-    if: inputs.publish
+    name: publish (Trusted Publishing, approval gate)
+    needs: [build, verify, assets]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && needs.build.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
       name: pypi
-      url: https://pypi.org/project/actseal/
+      url: https://pypi.org/project/actseal/${{ needs.build.outputs.version }}/
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - name: Download the exact verified distributions by artifact ID
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: pypi-distributions
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
           path: dist
-      - name: Publish with PyPI Trusted Publishing
+      - name: Download the build checksums by artifact ID
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.build.outputs.metadata-artifact-id }}
+          path: release-metadata
+      - name: Confirm the bytes about to be uploaded are the verified bytes
+        env:
+          WHEEL: ${{ needs.build.outputs.wheel }}
+          SDIST: ${{ needs.build.outputs.sdist }}
+        run: |
+          set -euo pipefail
+          test "$(find dist -mindepth 1 | wc -l)" -eq 2
+          test -f "dist/$WHEEL"
+          test -f "dist/$SDIST"
+          cd dist
+          sha256sum --check --strict ../release-metadata/SHA256SUMS
+      - name: Publish with PyPI Trusted Publishing and attestations
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           packages-dir: dist/
           print-hash: true
           attestations: true
+          skip-existing: false
+
+  verify-published:
+    name: verify-published (clean container, official PyPI)
+    needs: [build, publish]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    container:
+      image: python@sha256:d657ab0ade19f404a6ccc883ab399540de667aff751748ce23c07330c5a89e64
+    outputs:
+      receipt-artifact-id: ${{ steps.upload-receipt.outputs.artifact-id }}
+      receipt-artifact-digest: ${{ steps.upload-receipt.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download the build checksums by artifact ID
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.build.outputs.metadata-artifact-id }}
+          path: ${{ runner.temp }}/release-metadata
+      - name: Install the published version from PyPI outside the checkout and verify it
+        env:
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/postpublish"
+          python tools/check_release.py postpublish \
+            --version "$RELEASE_VERSION" \
+            --sha256sums "$RUNNER_TEMP/release-metadata/SHA256SUMS" \
+            --checkout "$GITHUB_WORKSPACE" \
+            --workdir /tmp/actseal-postpublish \
+            --out "$RUNNER_TEMP/postpublish/postpublish-receipt.json"
+      - name: Upload the post-publication receipt
+        id: upload-receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: postpublish-receipt-${{ needs.build.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/postpublish/
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 90
+
+  mirror:
+    name: mirror (draft GitHub release with identical assets)
+    needs: [build, verify, assets, publish, verify-published]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.5'
+          python-version: '3.12'
+          enable-cache: false
+      - name: Install locked development tools
+        run: uv sync --frozen --group dev
+      - name: Download the exact published distributions by artifact ID
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: ${{ runner.temp }}/dist
+      - name: Download the build checksums by artifact ID
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.build.outputs.metadata-artifact-id }}
+          path: ${{ runner.temp }}/release-metadata
+      - name: Download the post-publication receipt by artifact ID
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.verify-published.outputs.receipt-artifact-id }}
+          path: ${{ runner.temp }}/postpublish
+      - name: Bind the immutable artifact identity into the release receipt
+        env:
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+          ARTIFACT_ID: ${{ needs.build.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ needs.build.outputs.artifact-digest }}
+          VERIFY_RESULT: ${{ needs.verify.result }}
+        run: |
+          uv run --frozen python tools/check_release.py release-receipt \
+            --version "$RELEASE_VERSION" \
+            --dist "$RUNNER_TEMP/dist" \
+            --sha256sums "$RUNNER_TEMP/release-metadata/SHA256SUMS" \
+            --build-receipt "$RUNNER_TEMP/release-metadata/build-receipt.json" \
+            --postpublish "$RUNNER_TEMP/postpublish/postpublish-receipt.json" \
+            --artifact-id "$ARTIFACT_ID" --artifact-digest "$ARTIFACT_DIGEST" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --verify-result "$VERIFY_RESULT" \
+            --out "$RUNNER_TEMP/release-metadata/release-receipt.json"
+      - name: Create or update only a draft GitHub release with identical assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          uv run --frozen python tools/check_release.py mirror \
+            --tag "$RELEASE_TAG" \
+            --dist "$RUNNER_TEMP/dist" \
+            --sha256sums "$RUNNER_TEMP/release-metadata/SHA256SUMS" \
+            --release-receipt "$RUNNER_TEMP/release-metadata/release-receipt.json"
+      - name: Upload the bound release receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-receipt-${{ needs.build.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-metadata/release-receipt.json
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 90
