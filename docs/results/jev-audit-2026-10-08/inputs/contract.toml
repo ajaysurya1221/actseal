@@ -1,0 +1,52 @@
+schema_version = 1
+name = "jev-audit-banking77-16"
+evidence_scope = "demo"
+population = "Banking77 (PolyAI task-specific-datasets @ 57ec275d, CC-BY-4.0): 16 of 77 intents selected by case-sensitive label sort; 320 calibration texts from the training split and 639 deduplicated verification texts from the test split, frozen before inference. A finite public benchmark subset: demo-scope descriptive evidence only; not the full 77-class task, not IID population evidence, not a powered calibration study, and no claim about label truth or absence from model training."
+
+[question]
+question_id = "intent"
+instructions = "Classify this online banking customer message into exactly one of the listed intents. Choose the single intent that best matches what the customer is asking about or reporting."
+options = [
+  {label = "Refund_not_showing_up", description = "A refund the customer expects has not appeared in their account."},
+  {label = "activate_my_card", description = "The customer wants to activate a new card."},
+  {label = "age_limit", description = "Minimum or maximum age to open or use an account."},
+  {label = "apple_pay_or_google_pay", description = "Using or adding the card with Apple Pay or Google Pay."},
+  {label = "atm_support", description = "Which ATMs can be used, or how to use the card at an ATM."},
+  {label = "automatic_top_up", description = "Setting up, changing or understanding automatic top-ups."},
+  {label = "balance_not_updated_after_bank_transfer", description = "A bank transfer into the account has not updated the balance."},
+  {label = "balance_not_updated_after_cheque_or_cash_deposit", description = "A cheque or cash deposit has not updated the balance."},
+  {label = "beneficiary_not_allowed", description = "A transfer was refused because the beneficiary is not allowed."},
+  {label = "cancel_transfer", description = "The customer wants to cancel or reverse a transfer they made."},
+  {label = "card_about_to_expire", description = "The card is expiring soon and the customer asks about a replacement."},
+  {label = "card_acceptance", description = "Where or whether the card is accepted."},
+  {label = "card_arrival", description = "When an ordered card will arrive, or that it has not arrived."},
+  {label = "card_delivery_estimate", description = "How long card delivery takes or the estimated delivery time."},
+  {label = "card_linking", description = "Linking a card to the account or the app."},
+  {label = "card_not_working", description = "The card does not work when the customer tries to use it."},
+]
+
+[policy]
+allowed_labels = [
+  "Refund_not_showing_up",
+  "activate_my_card",
+  "age_limit",
+  "apple_pay_or_google_pay",
+  "atm_support",
+  "automatic_top_up",
+  "balance_not_updated_after_bank_transfer",
+  "balance_not_updated_after_cheque_or_cash_deposit",
+  "beneficiary_not_allowed",
+  "cancel_transfer",
+  "card_about_to_expire",
+  "card_acceptance",
+  "card_arrival",
+  "card_delivery_estimate",
+  "card_linking",
+  "card_not_working",
+]
+threshold = 0.8
+
+[risk]
+max_risk = 0.05
+min_coverage = 0.5
+alpha = 0.05
