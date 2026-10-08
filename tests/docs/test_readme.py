@@ -906,4 +906,5 @@ def test_demo_recording_sits_below_the_opening_with_dark_before_light() -> None:
         assert phrase in alt, phrase
     prose = re.sub(r"\s+", " ", text)
     assert "it is not authenticated model evidence" in prose
-    assert "do not contain it" in prose  # absent from the tag and the PyPI page (Decision 2A)
+    # Absent from the v1.0.0 tag and that version's PyPI page (Decision 2A).
+    assert "is absent from the immutable v1.0.0 tag and that version's PyPI description" in prose

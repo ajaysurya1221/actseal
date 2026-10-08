@@ -24,7 +24,8 @@ Subcommands:
 ``agg-version``          fail-closed probe of the approved agg pin on Linux
 ``candidate``            Task 20 release gate (fails until v1 assets exist)
 ``docs``                 Task 08 documentation gate
-``receipts``             Task 21 final receipt gate
+``receipts``             Task 21 final receipt gate, at the agreed version's
+                         receipt and document paths (``receipt_paths``)
 """
 
 from __future__ import annotations
@@ -172,7 +173,10 @@ README_QUICKSTART = (
     "uvx --offline --python 3.12 actseal replay ./actseal-demo/fixed/evidence",
     "uvx --offline --python 3.12 actseal replay ./actseal-demo/bad/evidence",
 )
-RECEIPT_PATHS = {
+# 1.0.0 keeps its historical receipt and document paths; later releases each
+# own a directory under RELEASES_DIR (see ``receipt_paths``).
+HISTORICAL_RECEIPT_VERSION = (1, 0, 0)
+HISTORICAL_RECEIPT_PATHS = {
     "release_receipt": "plan/v1/receipts/release-receipt.json",
     "sha256sums": "plan/v1/receipts/SHA256SUMS",
     "postpublish": "plan/v1/receipts/postpublish-receipt.json",
@@ -180,6 +184,16 @@ RECEIPT_PATHS = {
     "final_report": "plan/v1/FINAL_REPORT.md",
     "launch": "plan/v1/LAUNCH.md",
 }
+RELEASES_DIR = "plan/v1/releases"
+RELEASE_FILES = {
+    "release_receipt": "release-receipt.json",
+    "sha256sums": "SHA256SUMS",
+    "postpublish": "postpublish-receipt.json",
+    "release_notes": "RELEASE_NOTES.md",
+    "final_report": "FINAL_REPORT.md",
+}
+# Named publication-receipt placeholder, for example ``<<build.wheel.sha256>>``.
+PLACEHOLDER_RE = re.compile(r"<<[a-z0-9_.-]+>>")
 ATTESTATION_NOTE = (
     "Attestation presence, publisher identity and statement subjects were inspected; "
     "no independent cryptographic verification is claimed."
@@ -2262,56 +2276,86 @@ def check_candidate(root: Path, workflow_path: Path, renderer: str = DEFAULT_REN
     _raise_all(failures, "candidate")
 
 
+def receipt_paths(version: str) -> dict[str, str]:
+    """Repository-relative receipt and release-document paths for ``version``.
+
+    1.0.0 keeps its historical layout: the receipts under ``plan/v1/receipts/``
+    and ``plan/v1/RELEASE_NOTES.md``, ``plan/v1/FINAL_REPORT.md`` and
+    ``plan/v1/LAUNCH.md``. Earlier versions resolve to the same paths as
+    before; the gate never accepts them, because their version differs from
+    the 1.0.0 receipts. Every later version owns
+    ``plan/v1/releases/<version>/`` with ``release-receipt.json``,
+    ``SHA256SUMS``, ``postpublish-receipt.json``, ``RELEASE_NOTES.md`` and
+    ``FINAL_REPORT.md``. The launch post, which must remain a draft, is a
+    1.0.0 requirement only: a patch release has no launch post, so later
+    versions have no ``launch`` entry.
+    """
+    if parse_version(version) <= HISTORICAL_RECEIPT_VERSION:
+        return dict(HISTORICAL_RECEIPT_PATHS)
+    return {key: f"{RELEASES_DIR}/{version}/{name}" for key, name in RELEASE_FILES.items()}
+
+
 def _check_receipt_documents(root: Path, version: str) -> None:
-    receipt = _read_json(root / RECEIPT_PATHS["release_receipt"], "release receipt")
-    post = _read_json(root / RECEIPT_PATHS["postpublish"], "post-publication receipt")
+    paths = receipt_paths(version)
+    receipt = _read_json(root / paths["release_receipt"], "release receipt")
+    post = _read_json(root / paths["postpublish"], "post-publication receipt")
     inventory = validate_release_receipt(receipt, version, None)
     validate_postpublish_receipt(post, version, inventory, official_index=True)
-    sums = read_sha256sums(root / RECEIPT_PATHS["sha256sums"])
+    sums = read_sha256sums(root / paths["sha256sums"])
     recorded = {item.filename: item.sha256 for item in inventory}
     _require(sums == recorded, "SHA256SUMS receipt differs from release receipt distributions")
 
 
 def _check_release_notes(root: Path, version: str) -> None:
-    notes_path = root / RECEIPT_PATHS["release_notes"]
-    _require(notes_path.is_file(), f"{RECEIPT_PATHS['release_notes']} is missing")
+    paths = receipt_paths(version)
+    notes_path = root / paths["release_notes"]
+    _require(notes_path.is_file(), f"{paths['release_notes']} is missing")
     notes = notes_path.read_text(encoding="utf-8")
-    receipt_text = (root / RECEIPT_PATHS["release_receipt"]).read_text(encoding="utf-8")
-    post_text = (root / RECEIPT_PATHS["postpublish"]).read_text(encoding="utf-8")
-    receipt = _read_json(root / RECEIPT_PATHS["release_receipt"], "release receipt")
-    for distribution in receipt.get("distributions", []):
-        for key in ("filename", "sha256"):
-            _require(
-                str(distribution.get(key)) in notes, f"release notes omit {distribution.get(key)}"
-            )
     _require(
         f"{PYPI_BASE_URL}/project/{PROJECT_NAME}/{version}/" in notes,
         "release notes lack the PyPI link",
     )
     _require("how-it-works" in notes, "release notes must include the how-it-works figure")
+    final_report = root / paths["final_report"]
+    _require(final_report.is_file(), f"{paths['final_report']} is missing")
+    report = final_report.read_text(encoding="utf-8")
+    absent = [
+        paths[key]
+        for key in ("release_receipt", "postpublish")
+        if not (root / paths[key]).is_file()
+    ]
+    _require(not absent, f"release notes cannot be checked against missing receipts: {absent}")
+    receipt_text = (root / paths["release_receipt"]).read_text(encoding="utf-8")
+    post_text = (root / paths["postpublish"]).read_text(encoding="utf-8")
+    receipt = _read_json(root / paths["release_receipt"], "release receipt")
+    for distribution in receipt.get("distributions", []):
+        for key in ("filename", "sha256"):
+            _require(
+                str(distribution.get(key)) in notes, f"release notes omit {distribution.get(key)}"
+            )
     unmapped = [
         h for h in SHA256_HEX_RE.findall(notes) if h not in receipt_text and h not in post_text
     ]
     _require(not unmapped, f"release notes claim hashes absent from receipts: {unmapped}")
+    unfilled = sorted(set(PLACEHOLDER_RE.findall(notes)) | set(PLACEHOLDER_RE.findall(report)))
+    _require(not unfilled, f"release notes or final report keep unfilled placeholders: {unfilled}")
     run_id = str(receipt.get("workflow_run", {}).get("id"))
     _require(run_id.isdigit(), "release receipt lacks a numeric workflow run id")
-    final_report = root / RECEIPT_PATHS["final_report"]
-    _require(final_report.is_file(), f"{RECEIPT_PATHS['final_report']} is missing")
-    _require(
-        run_id in final_report.read_text(encoding="utf-8"), "final report omits the workflow run id"
-    )
-    launch = root / RECEIPT_PATHS["launch"]
-    _require(launch.is_file(), f"{RECEIPT_PATHS['launch']} is missing")
-    _require(
-        "draft" in launch.read_text(encoding="utf-8").lower(), "launch post must remain a draft"
-    )
+    _require(run_id in report, "final report omits the workflow run id")
+    if "launch" in paths:
+        launch = root / paths["launch"]
+        _require(launch.is_file(), f"{paths['launch']} is missing")
+        _require(
+            "draft" in launch.read_text(encoding="utf-8").lower(), "launch post must remain a draft"
+        )
 
 
 def check_receipts(root: Path) -> None:
     version = agreed_version(root)
+    paths = receipt_paths(version)
     failures = _collect(
         [
-            lambda: _check_required_files(root, RECEIPT_PATHS.values()),
+            lambda: _check_required_files(root, paths.values()),
             lambda: _check_receipt_documents(root, version),
             lambda: _check_release_notes(root, version),
         ]

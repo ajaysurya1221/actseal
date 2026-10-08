@@ -117,14 +117,14 @@ before evidence from other producers replays under it. The exact-source path
 (rule 2) never consults the registry.
 
 The 1.0.1 registry holds exactly three entries, all for `actseal-choice-v1`.
-It retains both 1.0.0 approvals unchanged and adds the reviewed final 1.0.1
-candidate, approved by amendment V1-055 before tagging:
+It retains both 1.0.0 approvals unchanged and adds the 1.0.1 source
+fingerprint, reviewed and approved by amendment V1-055 before tagging:
 
 | Fingerprint | Source | Status |
 |---|---|---|
 | `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3` | the released 1.0.0 source (V1-037) | still approved, so 1.0.0 evidence replays under 1.0.1; no longer the running implementation |
 | `a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642` | the unreleased prerelease producer of the retained archive (V1-037) | unchanged; the archive bytes are unchanged and replay to their stored verdict |
-| `dced01d79e64799a19a75c0957f3684a48249c58ebb27d346336e7420195bcb4` | the reviewed final 1.0.1 candidate source, version metadata included (V1-055) | the running implementation of 1.0.1; approved as a candidate before tagging, which by itself does not establish that a release occurred |
+| `dced01d79e64799a19a75c0957f3684a48249c58ebb27d346336e7420195bcb4` | the 1.0.1 source, version metadata included; reviewed and approved before tagging (V1-055) | the running implementation of 1.0.1; the 1.0.1 release records under `plan/v1/releases/1.0.1/` carry its publication receipts |
 
 The pre-bump hardening tree of 1.0.1 was never a release candidate and is not
 registered; nothing beyond these three fingerprints is approved.

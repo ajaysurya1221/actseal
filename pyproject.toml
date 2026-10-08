@@ -123,6 +123,7 @@ only-include = [
   "plan/v1/tasks/08.md",
   "plan/v1/reports",
   "plan/v1/reviews",
+  "plan/v1/releases",
 ]
 
 [tool.ruff]

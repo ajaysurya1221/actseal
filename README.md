@@ -161,8 +161,8 @@ names the `actseal` modules in each group.
 This is an unedited capture of the three commands above against the
 published 1.0.0 wheel, rendered from the raw cast with the pinned
 authoring toolchain at speed 1; it shows the expected exits 0, 0 and 1. It
-was recorded after publication, so the tagged source and the package page
-on PyPI do not contain it. The recording illustrates the demo; it is not
+was recorded after the v1.0.0 publication and is absent from the immutable
+v1.0.0 tag and that version's PyPI description. The recording illustrates the demo; it is not
 authenticated model evidence.
 
 ## Documentation

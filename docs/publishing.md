@@ -110,6 +110,38 @@ bytes and are never labelled public PyPI receipts.
    receipt. Publishing that draft, the release notes and the genuine demo
    recording are separate, later documentation steps.
 
+## Release records per version
+
+Each release keeps its own receipts and release documents.
+`uv run --frozen python tools/check_release.py receipts` checks the set for
+the version that `pyproject.toml`, `actseal.__version__` and `uv.lock` agree
+on:
+
+| Version | Receipts | Release notes and final report | Launch post |
+|---|---|---|---|
+| 1.0.0 | `plan/v1/receipts/`: `release-receipt.json`, `SHA256SUMS`, `postpublish-receipt.json` | `plan/v1/RELEASE_NOTES.md`, `plan/v1/FINAL_REPORT.md` | `plan/v1/LAUNCH.md`, which must remain a draft |
+| every later version | `plan/v1/releases/<version>/`: the same three files | `plan/v1/releases/<version>/RELEASE_NOTES.md` and `FINAL_REPORT.md` | none; a patch release has no launch post, so the gate requires none |
+
+The 1.0.0 paths are history: they keep their content and are never reused
+for a later version. For a later version, step 1 applies to that version's
+`plan/v1/releases/<version>/RELEASE_NOTES.md`, and the source distribution
+packages `plan/v1/releases/` with the pre-tag notes and final report.
+Named placeholders take the form `<<name>>`, for example
+`<<build.wheel.sha256>>`; the notes end with a "Placeholders filled after
+publication" table that lists each placeholder once with the receipt field
+it is copied from, and the final report carries `<<build.run_id>>`.
+
+After publication, one documentation commit copies each value from its
+receipt into that version's notes and final report, deletes the placeholder
+note and table, and commits the three receipts into the same directory. The
+receipts gate then validates the receipts and checks the documents against
+them; among its checks, it fails while a receipt is missing, while any
+`<<name>>` placeholder remains, when a full SHA-256 in the notes appears in
+no receipt, or when the final report omits the workflow run id. Before
+publication it is expected to fail only because that version's receipt
+files do not exist yet. Publishing the draft GitHub release is the last
+step, after that commit and a passing receipts gate.
+
 ## One-time setup
 
 | PyPI publisher field | Value |

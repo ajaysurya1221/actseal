@@ -500,6 +500,9 @@ passing. None of that is part of this preparation.
   `plan/v1/reviews/14-capture.md`; integration under V1-053. Accepted
   deviations: `--headless` (no TTY), `TERM=dumb` recorded literally, uv's
   `/bin/sh` relocatable launcher.
-- Pending: exact-head hosted Linux regeneration of the committed GIFs and
-  Task 21 README/final-receipt integration. The recording is an illustrative
-  receipt of the public package, not authenticated model evidence.
+- Historical, superseded: at this checkpoint the exact-head hosted Linux
+  regeneration of the committed GIFs and the Task 21 README/final-receipt
+  integration were still pending; their completion is recorded in
+  `plan/v1/reviews/14-hosted.md`, `plan/v1/reviews/21.md` and
+  `plan/v1/reviews/22.md`. The recording is an illustrative receipt of the
+  public package, not authenticated model evidence.

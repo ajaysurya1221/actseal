@@ -653,3 +653,54 @@ These exceptions are accepted because the README prose directly above the hero s
 question, counts, INCONCLUSIVE verdict, boundaries and audit link; the threshold and the risk
 and coverage intervals remain in the image, its accessible description and the linked audit.
 This supersedes the V1-057 closing note's hero acceptance.
+
+## V1-059 — 1.0.1 release preparation (8 October 2026)
+
+Recorded before tagging; every item below is completed before the tag, not after it.
+
+- `CHANGELOG.md`: the entries accumulated under Unreleased since 1.0.0 are moved under a dated
+  `v1.0.1 — 2026-10-08` heading. `CITATION.cff` is synchronised to 1.0.1 and 8 October 2026.
+- README and ADR corrections: the README states that the demo recording is absent from the
+  immutable v1.0.0 tag and that version's PyPI description, and the guard in
+  `tests/docs/test_readme.py` pins that sentence; ADR 0019 scopes its native receipts to 1.0.0,
+  so they do not establish native verification of the 1.0.1 patch, and records the 1.0.1
+  cached-native receipts below.
+- Cached-native receipts for the changed Laya path (ADR 0019): the five
+  `tests/integration/test_laya.py` tests passed against the 1.0.1 source on macOS (arm64,
+  Python 3.12.13) and in the hosted Linux native workflow (run 37719743745, Python 3.12.3).
+  Trees, commands, results and their lanes (executor report, orchestrator re-run, hosted run)
+  are in `plan/v1/reviews/2026-10-08-release-preparation-1.0.1.md`, which the 1.0.1 final
+  report cites instead of asserting results itself. The stale "Pending" checkpoint in
+  `docs/assets/src/recording.md` is marked historical with its completion records.
+- Version-aware receipt paths: `tools/check_release.py` resolves receipt and document paths
+  per version (`receipt_paths`). 1.0.0 keeps `plan/v1/receipts/`, `plan/v1/RELEASE_NOTES.md`,
+  `plan/v1/FINAL_REPORT.md` and `plan/v1/LAUNCH.md`; every later version uses
+  `plan/v1/releases/<version>/` (`release-receipt.json`, `SHA256SUMS`,
+  `postpublish-receipt.json`, `RELEASE_NOTES.md`, `FINAL_REPORT.md`). The launch-post draft
+  check stays a 1.0.0 requirement: a patch release has no launch post. Once the receipts exist,
+  the gate also rejects any unfilled `<<name>>` placeholder in the notes or the final report.
+  Release-gate tests cover the 1.0.0 fixture, a passing 1.0.1 fixture, a 1.0.1 tree carrying
+  only 1.0.0 receipts and a pre-publication 1.0.1 tree.
+- 1.0.1 release notes and final report, written now under `plan/v1/releases/1.0.1/`: the final
+  implementation, scope and inclusion facts, with named placeholders only for the build-time
+  and post-publication receipt values that `docs/publishing.md` permits, each listed once in
+  the notes' "Placeholders filled after publication" table.
+- Source distribution: `plan/v1/releases` is added to the sdist `only-include` list, so the
+  pre-tag notes and report ship in the 1.0.1 sdist; the packaging test compares their bytes.
+- `docs/publishing.md` describes the per-version layout, the post-publication fill and the
+  launch-post scoping.
+
+No file under `src/` changes and no rendered asset changes (`docs/assets/src/recording.md` only
+received the historical-status correction); no schema, no statistical contract and no registry
+file changes; the 1.0.0 receipts and release documents are unchanged.
+
+The tag is created only after this preparation is reviewed and merged and the candidate gate
+passes on the clean release commit. The tag-triggered pipeline then validates the tag, source,
+lock and package version agreement, builds once, verifies on four platforms, regenerates the
+required assets, waits for the human `pypi` environment approval, verifies the public copy in
+a clean container and mirrors a draft release. Until publication the receipts gate fails only
+for the missing 1.0.1 receipt files. After publication: fill the placeholders in
+`plan/v1/releases/1.0.1/RELEASE_NOTES.md` and `FINAL_REPORT.md` from the receipts, commit
+`release-receipt.json`, `SHA256SUMS` and `postpublish-receipt.json` under
+`plan/v1/releases/1.0.1/`, run `uv run --frozen python tools/check_release.py receipts` to a
+pass, then publish the draft GitHub release.

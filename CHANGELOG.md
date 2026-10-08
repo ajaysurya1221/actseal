@@ -1,17 +1,6 @@
 # Changelog
 
-## Unreleased
-
-- Repository automation: weekly Dependabot updates for `uv` and GitHub Actions, CodeQL Python analysis, pull-request dependency review and full-history Gitleaks scanning.
-- `CI / required` aggregate check that passes only when every CI job succeeds; a failed, cancelled or skipped job fails it.
-- Package metadata project URLs for the quickstart documentation, repository, issue tracker and changelog.
-- `CITATION.cff` software citation metadata for the 1.0.0 release.
-- Added the 8 October 2026 Jev audit archive: 959 recorded single-attempt captures across separate calibration and verification cohorts, with an INCONCLUSIVE verification verdict. Collection used benchmark snapshot d3edbab, not the released Actseal 1.0.0 package; results are finite-benchmark, demo-scope evidence.
-- Corrected GitHub README figure selection to use dark or light desktop variants at every viewport width. This supersedes the v1.0.0 statement that the README selects vertical variants below 1280 px. Mobile SVGs remain committed; phone text legibility remains a known limitation.
-- Redrew the README hero as one stacked composition per colour scheme (1600×700) whose smallest type, the step labels, is 14.3 nominal CSS px at a 254 px image width; `social.png` uses the same composition. The workflow and architecture figures remain below the 14 px floor at phone widths.
-- README now opens with the result: the ticket-routing problem, the recorded INCONCLUSIVE Jev audit (580 of 639 verification cases received ACT; 24 disagreed with benchmark labels) with its offline-replay link, the execution and authenticity boundary and links to the design records, schemas, mutation harness and 1.0.0 receipt, then the synthetic quickstart. The hero is redrawn as an evidence card (1600×520): the question Actseal answers beside the audit's recorded numbers, its fixed-benchmark and unreleased-producer scope and the archived producer (d3edbab) its replay requires, which tests compare with the committed audit files; every run is at least 14.1 nominal CSS px at an 838 px image width, but at a 254 px phone width the thesis renders at about 7 px, which supersedes the 1600×700 hero's phone legibility. `social.png` re-flows the same card. The workflow and architecture figures are linked instead of embedded; a maintainer note and the action-gate "before enabling automatic ticket routing" block were added.
-
-## v1.0.1 — unreleased
+## v1.0.1 — 2026-10-08
 
 ### Fixes
 
@@ -21,6 +10,17 @@
 - Require native Laya worker reply sequences to be JSON integers matching
   the pending request. Boolean, floating-point and missing sequences
   invalidate the worker and return `unavailable` with `laya.unavailable:ipc`.
+
+### Repository automation and metadata
+
+- Repository automation: weekly Dependabot updates for `uv` and GitHub Actions, CodeQL Python analysis, pull-request dependency review and full-history Gitleaks scanning.
+- `CI / required` aggregate check that passes only when every CI job succeeds; a failed, cancelled or skipped job fails it.
+- Package metadata project URLs for the quickstart documentation, repository, issue tracker and changelog.
+- `CITATION.cff` software citation metadata, kept in step with the released version.
+
+### Evidence
+
+- Added the 8 October 2026 Jev audit archive: 959 recorded single-attempt captures across separate calibration and verification cohorts, with an INCONCLUSIVE verification verdict. Collection used benchmark snapshot d3edbab, not the released Actseal 1.0.0 package; results are finite-benchmark, demo-scope evidence.
 
 ### Replay compatibility
 
@@ -35,6 +35,8 @@
   raises built-in `TypeError` or `ValueError`, not `ActsealError`.
   This documentation correction changes neither numerical behaviour nor
   results.
+- Corrected GitHub README figure selection to use dark or light desktop variants at every viewport width. This supersedes the v1.0.0 statement that the README selects vertical variants below 1280 px. Mobile SVGs remain committed; phone text legibility remains a known limitation.
+- README now opens with the result: the ticket-routing problem, the recorded INCONCLUSIVE Jev audit (580 of 639 verification cases received ACT; 24 disagreed with benchmark labels) with its offline-replay link, the execution and authenticity boundary and links to the design records, schemas, mutation harness and 1.0.0 receipt, then the synthetic quickstart. The hero is redrawn as an evidence card (1600×520): the question Actseal answers beside the audit's recorded numbers, its fixed-benchmark and unreleased-producer scope and the archived producer (d3edbab) its replay requires, which tests compare with the committed audit files; every run is at least 14.1 nominal CSS px at an 838 px image width, but at a 254 px phone width the thesis renders at about 7 px, a recorded exception (V1-058) to phone legibility. `social.png` re-flows the same card. The workflow and architecture figures are linked instead of embedded; a maintainer note and the action-gate "before enabling automatic ticket routing" block were added.
 
 ## v1.0.0 — 2026-10-07
 
