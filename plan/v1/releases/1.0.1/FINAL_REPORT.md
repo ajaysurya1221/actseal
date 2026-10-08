@@ -2,16 +2,16 @@
 
 This report records the implementation and scope of the 1.0.1 patch, what
 stayed sealed, the gates that run before the tag and what the tagged
-release pipeline records. It is written before the tag; the two values that
-only the tagged pipeline produces appear as named placeholders, listed with
-every other 1.0.1 placeholder in the
-[release notes](RELEASE_NOTES.md#placeholders-filled-after-publication).
+release pipeline records. It was written before the tag; the two values that
+only the tagged pipeline produces, the source commit and the workflow run
+id, were copied after publication from the release receipt
+(`release-receipt.json` in this directory).
 
 | Release field | Value |
 |---|---|
 | Version | 1.0.1, a patch release of the 1.x line; `pyproject.toml`, `actseal.__version__` and the `uv.lock` self entry agree |
-| Tag | annotated `v1.0.1`; `source_commit` `<<build.source_commit>>` |
-| Tagged workflow run | `<<build.run_id>>` (`publish-pypi.yml`; release receipt `workflow_run.id`) |
+| Tag | annotated `v1.0.1`; `source_commit` `758c65df0ae94402328209a33604ac8921678a28` |
+| Tagged workflow run | `37721934891` (`publish-pypi.yml`; release receipt `workflow_run.id`) |
 | Implementation fingerprint | `dced01d79e64799a19a75c0957f3684a48249c58ebb27d346336e7420195bcb4`, the approved final fingerprint of the A2b review; it is the third `actseal-choice-v1` entry of the packaged compatibility registry |
 | Release receipts | `plan/v1/releases/1.0.1/release-receipt.json`, `postpublish-receipt.json` and `SHA256SUMS`, committed after publication |
 | Release notes | [RELEASE_NOTES.md](RELEASE_NOTES.md), packaged in the sdist at the tag |

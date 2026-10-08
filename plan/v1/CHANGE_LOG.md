@@ -704,3 +704,23 @@ for the missing 1.0.1 receipt files. After publication: fill the placeholders in
 `release-receipt.json`, `SHA256SUMS` and `postpublish-receipt.json` under
 `plan/v1/releases/1.0.1/`, run `uv run --frozen python tools/check_release.py receipts` to a
 pass, then publish the draft GitHub release.
+
+### V1-059 closing note (8 October 2026)
+
+Published. The reviewed preparation (head `ba2aed4`) merged to `main` as `758c65d` (PR 61), and
+the annotated tag `v1.0.1` points at that commit. The tag-triggered `publish-pypi.yml` run
+37721934891 (attempt 1) built the wheel (104,868 bytes) and sdist (4,318,825 bytes) once as
+Actions artifact 11526072025, verified those bytes on Linux and macOS with Python 3.12 and 3.13,
+regenerated the required assets, published through Trusted Publishing after the `pypi`
+approval, verified the public copy in a clean container (`actseal 1.0.1`; demo exit 0 with bad
+BLOCK and fixed PASS; fixed replay exit 0; bad replay exit 1; both files match the build) and
+mirrored the identical files to a draft GitHub release; all nine jobs succeeded. The release
+receipt, `SHA256SUMS` and post-publication receipt from that run are committed byte for byte
+under `plan/v1/releases/1.0.1/`; the named placeholders in that directory's release notes and
+final report are filled from them, and the notes' placeholder note and fill table are removed.
+No 1.0.1 recording was made; the README recording remains the 1.0.0 capture. The README's
+engineering strip links the 1.0.1 post-publication receipt, and its guard in
+`tests/docs/test_readme.py` pins the new link.
+`uv run --frozen python tools/check_release.py receipts` passes. The copies inside the tagged
+sdist keep their placeholders; they cannot change. Publishing the draft GitHub release is the
+remaining step.

@@ -1,0 +1,110 @@
+{
+  "artifact": {
+    "digest": "sha256:7fbd7129e1132c067e834d73365a51d6e029e098284567024571b0e973aaccba",
+    "id": "11526072025"
+  },
+  "distributions": [
+    {
+      "filename": "actseal-1.0.1-py3-none-any.whl",
+      "sha256": "c74187b6b1df88befe27a81b34464480fd54ffe2459b7c2fb6e229245130050e",
+      "size": 104868
+    },
+    {
+      "filename": "actseal-1.0.1.tar.gz",
+      "sha256": "4ebb9c21043362591c39867c5679d5c10bfbb64cfff792c6e21b8558aed547e4",
+      "size": 4318825
+    }
+  ],
+  "kind": "actseal-release-receipt",
+  "lock_sha256": "56b0c3e955f1915ed56c61f0431dcde8f1a458826b8018e6477ebbe5724edd62",
+  "note": "Contains no credentials.",
+  "schema_version": 1,
+  "source_commit": "758c65df0ae94402328209a33604ac8921678a28",
+  "tag": "v1.0.1",
+  "verification": {
+    "postpublish": {
+      "checks": {
+        "bad_replay_exit": 1,
+        "demo_bad_status": "BLOCK",
+        "demo_exit": 0,
+        "demo_fixed_status": "PASS",
+        "fixed_replay_exit": 0,
+        "installed_outside_checkout": true,
+        "version_output": "actseal 1.0.1"
+      },
+      "files": [
+        {
+          "declared_sha256": "c74187b6b1df88befe27a81b34464480fd54ffe2459b7c2fb6e229245130050e",
+          "filename": "actseal-1.0.1-py3-none-any.whl",
+          "matches_build": true,
+          "provenance": {
+            "attestations": 1,
+            "present": true,
+            "publishers": [
+              {
+                "environment": "pypi",
+                "kind": "GitHub",
+                "repository": "ajaysurya1221/actseal",
+                "workflow": "publish-pypi.yml"
+              }
+            ],
+            "subject_sha256": "c74187b6b1df88befe27a81b34464480fd54ffe2459b7c2fb6e229245130050e"
+          },
+          "sha256": "c74187b6b1df88befe27a81b34464480fd54ffe2459b7c2fb6e229245130050e",
+          "size": 104868,
+          "url": "https://files.pythonhosted.org/packages/0e/c8/f7bea9a2d9eafeba4b0e2931e776f46cd1a9ae38c5833c3d01006ac05626/actseal-1.0.1-py3-none-any.whl"
+        },
+        {
+          "declared_sha256": "4ebb9c21043362591c39867c5679d5c10bfbb64cfff792c6e21b8558aed547e4",
+          "filename": "actseal-1.0.1.tar.gz",
+          "matches_build": true,
+          "provenance": {
+            "attestations": 1,
+            "present": true,
+            "publishers": [
+              {
+                "environment": "pypi",
+                "kind": "GitHub",
+                "repository": "ajaysurya1221/actseal",
+                "workflow": "publish-pypi.yml"
+              }
+            ],
+            "subject_sha256": "4ebb9c21043362591c39867c5679d5c10bfbb64cfff792c6e21b8558aed547e4"
+          },
+          "sha256": "4ebb9c21043362591c39867c5679d5c10bfbb64cfff792c6e21b8558aed547e4",
+          "size": 4318825,
+          "url": "https://files.pythonhosted.org/packages/e4/19/cea6562b0ccfc2c862e7275e58fdec921b50b35fe3fc3026940d1dabc198/actseal-1.0.1.tar.gz"
+        }
+      ],
+      "index": "https://pypi.org",
+      "note": "Attestation presence, publisher identity and statement subjects were inspected; no independent cryptographic verification is claimed.",
+      "published_metadata": {
+        "classifiers": [
+          "Development Status :: 5 - Production/Stable",
+          "Intended Audience :: Developers",
+          "Operating System :: MacOS",
+          "Operating System :: POSIX :: Linux",
+          "Programming Language :: Python :: 3",
+          "Programming Language :: Python :: 3 :: Only",
+          "Programming Language :: Python :: 3.12",
+          "Programming Language :: Python :: 3.13",
+          "Topic :: Software Development :: Quality Assurance",
+          "Typing :: Typed"
+        ],
+        "name": "actseal",
+        "summary": "Verify frozen categorical decision policies with risk/coverage bounds, provider-fault tests and offline replay.",
+        "version": "1.0.1",
+        "yanked": false
+      }
+    },
+    "verify_matrix": "success"
+  },
+  "version": "1.0.1",
+  "workflow_run": {
+    "build_attempt": "1",
+    "build_url": "https://github.com/ajaysurya1221/actseal/actions/runs/37721934891/attempts/1",
+    "id": "37721934891",
+    "verification_attempt": "1",
+    "verification_url": "https://github.com/ajaysurya1221/actseal/actions/runs/37721934891/attempts/1"
+  }
+}

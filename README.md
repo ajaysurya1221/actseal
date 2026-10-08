@@ -13,7 +13,7 @@ Fixed benchmark; unreleased producer. [Audit and offline replay](https://github.
 Replay checks consistency; it does not authenticate responses or prove label truth.
 
 **Engineering:** [20 ADRs](https://github.com/ajaysurya1221/actseal/tree/main/docs/decisions) · [11 JSON Schemas](https://github.com/ajaysurya1221/actseal/blob/main/docs/schemas/README.md)
-[Mutation harness](https://github.com/ajaysurya1221/actseal/blob/main/tools/check_mutations.py) · [1.0.0 release receipt](https://github.com/ajaysurya1221/actseal/blob/main/plan/v1/receipts/postpublish-receipt.json)
+[Mutation harness](https://github.com/ajaysurya1221/actseal/blob/main/tools/check_mutations.py) · [1.0.1 release receipt](https://github.com/ajaysurya1221/actseal/blob/main/plan/v1/releases/1.0.1/postpublish-receipt.json)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/hero-dark.svg">
