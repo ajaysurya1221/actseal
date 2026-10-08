@@ -722,5 +722,7 @@ No 1.0.1 recording was made; the README recording remains the 1.0.0 capture. The
 engineering strip links the 1.0.1 post-publication receipt, and its guard in
 `tests/docs/test_readme.py` pins the new link.
 `uv run --frozen python tools/check_release.py receipts` passes. The copies inside the tagged
-sdist keep their placeholders; they cannot change. Publishing the draft GitHub release is the
-remaining step.
+sdist keep their placeholders; they cannot change. After the receipts merged to `main` as
+`810bf8c` (PR 62) and the receipts gate passed there, the draft was published as the GitHub
+release `v1.0.1` (release id 406401019) with the filled release notes as its body and its four
+mirrored assets unchanged; nothing remains open for 1.0.1.
