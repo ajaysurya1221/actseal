@@ -10,12 +10,6 @@ The 1.x promises and non-promises stated in the
 still apply: 1.0.1 changes no CLI option, public Python signature, wire
 format, schema or verdict rule.
 
-> Values that only the tagged release pipeline produces are written as named
-> placeholders, for example `<<build.wheel.sha256>>`. Each one is listed once
-> under "Placeholders filled after publication" with the receipt field it is
-> copied from. No hash, size, run id, install result or recording is claimed
-> before its receipt exists.
-
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-dark.svg">
   <img alt="How Actseal works: freeze, run, verify, seal, replay." src="https://raw.githubusercontent.com/ajaysurya1221/actseal/main/docs/assets/how-it-works-light.svg" width="100%">
@@ -134,16 +128,16 @@ Each value below comes from `plan/v1/releases/1.0.1/release-receipt.json`,
 
 | Claim | Receipt |
 |---|---|
-| Source commit and tag | `source_commit` `<<build.source_commit>>`, annotated tag `v1.0.1` |
-| Tagged workflow run | `workflow_run.id` `<<build.run_id>>` (`publish-pypi.yml`); the build and verification URLs are in the release receipt |
-| Wheel | `actseal-1.0.1-py3-none-any.whl`, `<<build.wheel.size>>` bytes, SHA-256 `<<build.wheel.sha256>>` (`distributions`, `SHA256SUMS`) |
-| Sdist | `actseal-1.0.1.tar.gz`, `<<build.sdist.size>>` bytes, SHA-256 `<<build.sdist.sha256>>` (`distributions`, `SHA256SUMS`) |
-| Build-once immutable artifact | Actions artifact id `<<build.artifact.id>>`, digest `<<build.artifact.digest>>` (`artifact`). The four verify-matrix jobs, the publish job and the mirror job download this artifact by id and compare its hashes with the build checksums; the verify-published job compares the official PyPI files with the build checksums; the assets job downloads no distribution. `lock_sha256` is the `uv.lock` digest at the source commit, not a decision lock |
+| Source commit and tag | `source_commit` `758c65df0ae94402328209a33604ac8921678a28`, annotated tag `v1.0.1` |
+| Tagged workflow run | `workflow_run.id` `37721934891` (`publish-pypi.yml`); the build and verification URLs are in the release receipt |
+| Wheel | `actseal-1.0.1-py3-none-any.whl`, `104,868` bytes, SHA-256 `c74187b6b1df88befe27a81b34464480fd54ffe2459b7c2fb6e229245130050e` (`distributions`, `SHA256SUMS`) |
+| Sdist | `actseal-1.0.1.tar.gz`, `4,318,825` bytes, SHA-256 `4ebb9c21043362591c39867c5679d5c10bfbb64cfff792c6e21b8558aed547e4` (`distributions`, `SHA256SUMS`) |
+| Build-once immutable artifact | Actions artifact id `11526072025`, digest `sha256:7fbd7129e1132c067e834d73365a51d6e029e098284567024571b0e973aaccba` (`artifact`). The four verify-matrix jobs, the publish job and the mirror job download this artifact by id and compare its hashes with the build checksums; the verify-published job compares the official PyPI files with the build checksums; the assets job downloads no distribution. `lock_sha256` is the `uv.lock` digest at the source commit, not a decision lock |
 | Four-platform verification and asset regeneration | The publish job runs only after `build`, all four `verify` jobs and `assets` succeed. The release receipt records the verify-matrix result as `verification.verify_matrix`, and the `release-receipt` command accepts no result other than `success` |
-| Trusted Publishing with attestations | `<<post.attestations>>` (post-publication receipt `files[].provenance`). The inspection covers attestation presence, publisher identity and statement subjects; no independent cryptographic verification is claimed |
-| Published metadata on PyPI | `<<post.published_metadata>>` (post-publication receipt `published_metadata`) |
-| Clean-container install from the public index | Index `https://pypi.org`; `installed_outside_checkout` `<<post.installed_outside_checkout>>`; `version_output` `<<post.version_output>>`; `demo_exit` `<<post.demo_exit>>` with `demo_bad_status` `<<post.demo_bad_status>>` and `demo_fixed_status` `<<post.demo_fixed_status>>`; `fixed_replay_exit` `<<post.fixed_replay_exit>>`; `bad_replay_exit` `<<post.bad_replay_exit>>`; downloaded files `matches_build` `<<post.matches_build>>` (post-publication receipt `checks`, `files`) |
-| Demo recording | `<<post.recording>>` |
+| Trusted Publishing with attestations | 1 attestation for the wheel and 1 for the sdist; publisher kind `GitHub`, repository `ajaysurya1221/actseal`, workflow `publish-pypi.yml`, environment `pypi`; each file's `subject_sha256` equals its SHA-256 (post-publication receipt `files[].provenance`). The inspection covers attestation presence, publisher identity and statement subjects; no independent cryptographic verification is claimed |
+| Published metadata on PyPI | `name` `actseal`, `version` `1.0.1`, `yanked` `false`; `classifiers` (10): `Development Status :: 5 - Production/Stable`, `Intended Audience :: Developers`, `Operating System :: MacOS`, `Operating System :: POSIX :: Linux`, `Programming Language :: Python :: 3`, `Programming Language :: Python :: 3 :: Only`, `Programming Language :: Python :: 3.12`, `Programming Language :: Python :: 3.13`, `Topic :: Software Development :: Quality Assurance`, `Typing :: Typed` (post-publication receipt `published_metadata`) |
+| Clean-container install from the public index | Index `https://pypi.org`; `installed_outside_checkout` `true`; `version_output` `actseal 1.0.1`; `demo_exit` `0` with `demo_bad_status` `BLOCK` and `demo_fixed_status` `PASS`; `fixed_replay_exit` `0`; `bad_replay_exit` `1`; downloaded files `matches_build` `true` (post-publication receipt `checks`, `files`) |
+| Demo recording | No 1.0.1 recording was made; the README recording remains the 1.0.0 capture, made from the published 1.0.0 wheel |
 
 ## Pre-publication receipts
 
@@ -176,35 +170,3 @@ These were produced before the tag and do not change with it.
 - The tagged run creates the GitHub release as a draft; publishing it is a
   separate, later documentation step
   ([publishing guide](https://github.com/ajaysurya1221/actseal/blob/main/docs/publishing.md)).
-
-## Placeholders filled after publication
-
-After publication, one documentation commit copies each value below from
-the named receipt into this file and into
-[`FINAL_REPORT.md`](FINAL_REPORT.md), deletes the placeholder note at the
-top and this section, and commits the three receipts beside these files.
-`uv run --frozen python tools/check_release.py receipts` passes only when no
-`<<…>>` placeholder remains. The copies inside the tagged sdist keep their
-placeholders; they cannot change.
-
-| Placeholder | Kind | Copied from | Appears in |
-|---|---|---|---|
-| `<<build.source_commit>>` | build-time | release receipt `source_commit` (40 hex) | notes, report |
-| `<<build.run_id>>` | build-time | release receipt `workflow_run.id` | notes, report |
-| `<<build.wheel.size>>` | build-time | release receipt `distributions[]` `size` for the wheel, with thousands separators | notes |
-| `<<build.wheel.sha256>>` | build-time | release receipt `distributions[]` `sha256` for the wheel (equal to its `SHA256SUMS` line) | notes |
-| `<<build.sdist.size>>` | build-time | release receipt `distributions[]` `size` for the sdist, with thousands separators | notes |
-| `<<build.sdist.sha256>>` | build-time | release receipt `distributions[]` `sha256` for the sdist (equal to its `SHA256SUMS` line) | notes |
-| `<<build.artifact.id>>` | build-time | release receipt `artifact.id` | notes |
-| `<<build.artifact.digest>>` | build-time | release receipt `artifact.digest` (`sha256:` and 64 hex) | notes |
-| `<<post.attestations>>` | post-publication | post-publication receipt `files[].provenance`: attestation count per file, publisher kind, repository, workflow and environment, and whether each `subject_sha256` equals the file's SHA-256 | notes |
-| `<<post.published_metadata>>` | post-publication | post-publication receipt `published_metadata`: name, version, classifiers and `yanked` | notes |
-| `<<post.installed_outside_checkout>>` | post-publication | post-publication receipt `checks.installed_outside_checkout` | notes |
-| `<<post.version_output>>` | post-publication | post-publication receipt `checks.version_output` | notes |
-| `<<post.demo_exit>>` | post-publication | post-publication receipt `checks.demo_exit` | notes |
-| `<<post.demo_bad_status>>` | post-publication | post-publication receipt `checks.demo_bad_status` | notes |
-| `<<post.demo_fixed_status>>` | post-publication | post-publication receipt `checks.demo_fixed_status` | notes |
-| `<<post.fixed_replay_exit>>` | post-publication | post-publication receipt `checks.fixed_replay_exit` | notes |
-| `<<post.bad_replay_exit>>` | post-publication | post-publication receipt `checks.bad_replay_exit` | notes |
-| `<<post.matches_build>>` | post-publication | post-publication receipt `files[].matches_build` for both files | notes |
-| `<<post.recording>>` | post-publication | the post-publication recording record: a capture of the published 1.0.1 wheel with its receipt, or the statement that no 1.0.1 recording was made | notes |

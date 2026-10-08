@@ -64,7 +64,7 @@ OPENING = (
     f"**Engineering:** [20 ADRs]({TREE_PREFIX}docs/decisions) · "
     f"[11 JSON Schemas]({BLOB_PREFIX}docs/schemas/README.md)\n"
     f"[Mutation harness]({BLOB_PREFIX}tools/check_mutations.py) · "
-    f"[1.0.0 release receipt]({BLOB_PREFIX}plan/v1/receipts/postpublish-receipt.json)\n"
+    f"[1.0.1 release receipt]({BLOB_PREFIX}plan/v1/releases/1.0.1/postpublish-receipt.json)\n"
     "\n"
 )
 #: The verbatim start of the Try it section: heading, one line, the commands.
@@ -529,7 +529,7 @@ def test_engineering_strip_counts_match_the_tree() -> None:
     assert len(schemas) == 11
     assert f"[{len(decisions)} ADRs]({TREE_PREFIX}docs/decisions)" in OPENING
     assert f"[{len(schemas)} JSON Schemas]({BLOB_PREFIX}docs/schemas/README.md)" in OPENING
-    for relative in ("tools/check_mutations.py", "plan/v1/receipts/postpublish-receipt.json"):
+    for relative in ("tools/check_mutations.py", "plan/v1/releases/1.0.1/postpublish-receipt.json"):
         assert (ROOT / relative).is_file(), relative
         assert f"({BLOB_PREFIX}{relative})" in OPENING
 
