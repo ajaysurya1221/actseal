@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 from release_support import (
     PUBLISHER,
+    ROOT,
     STABLE,
     build_receipt_document,
     commit_all,
@@ -35,6 +36,7 @@ from release_support import (
     write_release_tree,
     write_sums,
     write_text,
+    write_version_sources,
 )
 
 VERSION = "1.0.0"
@@ -419,23 +421,57 @@ def test_credential_shaped_strings_are_rejected(
 # --------------------------------------------------------------------------- #
 
 
-def write_receipt_tree(root: Path, tool: types.ModuleType) -> dict[str, object]:
-    write_release_tree(root, VERSION)
-    dist = root / "scratch-dist"
-    files = write_fake_distributions(dist, VERSION)
-    write_sums(root / tool.RECEIPT_PATHS["sha256sums"], files)
-    write_json(root / tool.RECEIPT_PATHS["postpublish"], postpublish_document(VERSION, files))
-    receipt = release_receipt_document(VERSION, files)
-    write_json(root / tool.RECEIPT_PATHS["release_receipt"], receipt)
+PATCH = "1.0.1"
+HISTORICAL_PATHS = {
+    "release_receipt": "plan/v1/receipts/release-receipt.json",
+    "sha256sums": "plan/v1/receipts/SHA256SUMS",
+    "postpublish": "plan/v1/receipts/postpublish-receipt.json",
+    "release_notes": "plan/v1/RELEASE_NOTES.md",
+    "final_report": "plan/v1/FINAL_REPORT.md",
+    "launch": "plan/v1/LAUNCH.md",
+}
+PATCH_PATHS = {
+    "release_receipt": "plan/v1/releases/1.0.1/release-receipt.json",
+    "sha256sums": "plan/v1/releases/1.0.1/SHA256SUMS",
+    "postpublish": "plan/v1/releases/1.0.1/postpublish-receipt.json",
+    "release_notes": "plan/v1/releases/1.0.1/RELEASE_NOTES.md",
+    "final_report": "plan/v1/releases/1.0.1/FINAL_REPORT.md",
+}
+PATCH_RECEIPTS = ("release_receipt", "sha256sums", "postpublish")
+
+
+def write_release_documents(
+    root: Path, paths: dict[str, str], version: str, hash_lines: list[str]
+) -> None:
+    """Release notes and final report (plus the 1.0.0 launch draft) for ``version``."""
     notes = [
-        f"# Actseal {VERSION}",
+        f"# Actseal {version}",
         f"![how-it-works]({RAW}/how-it-works-light.svg)",
-        f"https://pypi.org/project/actseal/{VERSION}/",
-        *(f"- `{name}` sha256 `{sha256_hex(files[name].read_bytes())}`" for name in names(VERSION)),
+        f"https://pypi.org/project/actseal/{version}/",
+        *hash_lines,
     ]
-    write_text(root / tool.RECEIPT_PATHS["release_notes"], "\n".join(notes) + "\n")
-    write_text(root / tool.RECEIPT_PATHS["final_report"], "# Final report\n\nWorkflow run 42.\n")
-    write_text(root / tool.RECEIPT_PATHS["launch"], "# Launch\n\nThis post remains a DRAFT.\n")
+    write_text(root / paths["release_notes"], "\n".join(notes) + "\n")
+    write_text(root / paths["final_report"], "# Final report\n\nWorkflow run 42.\n")
+    if "launch" in paths:
+        write_text(root / paths["launch"], "# Launch\n\nThis post remains a DRAFT.\n")
+
+
+def write_receipt_tree(
+    root: Path, tool: types.ModuleType, version: str = VERSION
+) -> dict[str, object]:
+    """A tree whose receipts and documents sit at ``receipt_paths(version)``."""
+    paths = tool.receipt_paths(version)
+    write_release_tree(root, version)
+    dist = root / "scratch-dist"
+    files = write_fake_distributions(dist, version)
+    write_sums(root / paths["sha256sums"], files)
+    write_json(root / paths["postpublish"], postpublish_document(version, files))
+    receipt = release_receipt_document(version, files)
+    write_json(root / paths["release_receipt"], receipt)
+    hash_lines = [
+        f"- `{name}` sha256 `{sha256_hex(files[name].read_bytes())}`" for name in names(version)
+    ]
+    write_release_documents(root, paths, version, hash_lines)
     for path in dist.iterdir():
         path.unlink()
     dist.rmdir()
@@ -453,6 +489,138 @@ def test_receipts_gate_fails_on_an_incomplete_tree(tool: types.ModuleType, tmp_p
 def test_receipts_gate_passes_on_a_complete_fixture(tool: types.ModuleType, tmp_path: Path) -> None:
     write_receipt_tree(tmp_path, tool)
     tool.check_receipts(tmp_path)
+
+
+def test_receipt_paths_keep_1_0_0_history_and_give_later_versions_their_own_directory(
+    tool: types.ModuleType,
+) -> None:
+    assert tool.receipt_paths("1.0.0") == HISTORICAL_PATHS
+    assert tool.receipt_paths(PATCH) == PATCH_PATHS
+    assert "launch" not in tool.receipt_paths(PATCH)  # a patch release has no launch post
+    assert set(tool.receipt_paths("1.1.0").values()) == {
+        path.replace("1.0.1", "1.1.0") for path in PATCH_PATHS.values()
+    }
+    assert tool.receipt_paths("0.1.0") == HISTORICAL_PATHS  # unchanged pre-1.0 resolution
+    with pytest.raises(tool.ReleaseCheckError, match=r"not a plain MAJOR\.MINOR\.PATCH"):
+        tool.receipt_paths("1.0.1/../../x")
+
+
+def test_receipts_gate_passes_on_a_complete_1_0_1_fixture(
+    tool: types.ModuleType, tmp_path: Path
+) -> None:
+    write_receipt_tree(tmp_path, tool, PATCH)
+    tool.check_receipts(tmp_path)
+    assert not (tmp_path / "plan" / "v1" / "receipts").exists()
+    assert not (tmp_path / "plan" / "v1" / "LAUNCH.md").exists()
+
+
+def test_a_1_0_1_tree_carrying_only_1_0_0_receipts_names_the_missing_1_0_1_paths(
+    tool: types.ModuleType, tmp_path: Path
+) -> None:
+    write_receipt_tree(tmp_path, tool, VERSION)
+    write_version_sources(tmp_path, PATCH)
+    commit_all(tmp_path, "bump to 1.0.1 without 1.0.1 receipts")
+    message = failure(tool, tmp_path, "receipts")
+    assert "missing required files" in message
+    for path in PATCH_PATHS.values():
+        assert path in message, path
+    assert "do not auto-promote missing receipts" in message
+    for path in HISTORICAL_PATHS.values():
+        assert (tmp_path / path).is_file(), path  # present, but not accepted for 1.0.1
+
+
+def test_pre_publication_1_0_1_tree_fails_only_on_its_missing_receipts(
+    tool: types.ModuleType, tmp_path: Path
+) -> None:
+    """Notes and report exist with named placeholders; only the receipts are absent."""
+    write_release_tree(tmp_path, PATCH)
+    hash_lines = ["- `actseal-1.0.1-py3-none-any.whl` sha256 `<<build.wheel.sha256>>`"]
+    write_release_documents(tmp_path, PATCH_PATHS, PATCH, hash_lines)
+    report = tmp_path / PATCH_PATHS["final_report"]
+    report.write_text("# Final report\n\nWorkflow run <<build.run_id>>.\n", encoding="utf-8")
+    commit_all(tmp_path, "pre-tag notes")
+    message = failure(tool, tmp_path, "receipts")
+    assert "receipts gate has 3 unmet requirement(s)" in message
+    for key in PATCH_RECEIPTS:
+        assert PATCH_PATHS[key] in message, key
+    for key in ("release_notes", "final_report"):
+        assert PATCH_PATHS[key] not in message, key
+    assert "release notes cannot be checked against missing receipts" in message
+    for absent in ("PyPI link", "how-it-works", "placeholders", "launch"):
+        assert absent not in message, absent
+
+
+@pytest.mark.parametrize("document", ["release_notes", "final_report"])
+def test_unfilled_placeholders_fail_the_final_receipt_gate(
+    tool: types.ModuleType, tmp_path: Path, document: str
+) -> None:
+    write_receipt_tree(tmp_path, tool, PATCH)
+    path = tmp_path / PATCH_PATHS[document]
+    path.write_text(
+        path.read_text(encoding="utf-8") + "Recording: <<post.recording>>.\n", encoding="utf-8"
+    )
+    message = failure(tool, tmp_path, "receipts")
+    assert "keep unfilled placeholders: ['<<post.recording>>']" in message
+
+
+def test_1_0_1_release_notes_and_report_are_cross_checked(
+    tool: types.ModuleType, tmp_path: Path
+) -> None:
+    write_receipt_tree(tmp_path, tool, PATCH)
+    notes = tmp_path / PATCH_PATHS["release_notes"]
+    original = notes.read_text(encoding="utf-8")
+    notes.write_text(original.replace("/1.0.1/", "/1.0.0/"), encoding="utf-8")
+    assert "release notes lack the PyPI link" in failure(tool, tmp_path, "receipts")
+    notes.write_text(original + f"\nAlso `{'9' * 64}`.\n", encoding="utf-8")
+    assert "claim hashes absent from receipts" in failure(tool, tmp_path, "receipts")
+    notes.write_text(original, encoding="utf-8")
+    report = tmp_path / PATCH_PATHS["final_report"]
+    report.write_text("# Final report\n", encoding="utf-8")
+    assert "omits the workflow run id" in failure(tool, tmp_path, "receipts")
+
+
+RELEASES = ROOT / "plan" / "v1" / "releases"
+PLACEHOLDER_SECTION = "## Placeholders filled after publication"
+
+
+def committed_releases() -> list[str]:
+    return sorted(path.name for path in RELEASES.iterdir() if path.is_dir())
+
+
+@pytest.mark.parametrize("version", committed_releases())
+def test_committed_release_documents_name_every_placeholder_once(
+    tool: types.ModuleType, version: str
+) -> None:
+    """Pre-publication notes list each placeholder once; filled notes keep none.
+
+    The gate rejects a full SHA-256 that no receipt holds, so while the
+    receipts are absent the notes may not carry any 64-hex value at all.
+    """
+    paths = tool.receipt_paths(version)
+    assert "launch" not in paths
+    notes = (ROOT / paths["release_notes"]).read_text(encoding="utf-8")
+    report = (ROOT / paths["final_report"]).read_text(encoding="utf-8")
+    assert f"https://pypi.org/project/actseal/{version}/" in notes
+    assert "how-it-works" in notes
+    used = set(tool.PLACEHOLDER_RE.findall(notes)) | set(tool.PLACEHOLDER_RE.findall(report))
+    if not used:
+        assert PLACEHOLDER_SECTION not in notes
+        return
+    assert not (ROOT / paths["release_receipt"]).exists()
+    assert tool.SHA256_HEX_RE.findall(notes) == []
+    assert "<<build.run_id>>" in report  # the gate needs the run id in the report
+    body, section, table = notes.partition(PLACEHOLDER_SECTION)
+    assert section, "placeholders need their fill table"
+    assert "\n## " not in table, "the fill table must be the last section"
+    rows = [line for line in table.splitlines() if line.startswith("| `<<")]
+    listed = [row.split("|")[1].strip().strip("`") for row in rows]
+    assert len(listed) == len(set(listed)), "each placeholder is listed once"
+    assert set(listed) == used
+    assert set(tool.PLACEHOLDER_RE.findall(body)) | set(tool.PLACEHOLDER_RE.findall(report)) == set(
+        listed
+    ), "every listed placeholder is used"
+    for marker in ("PENDING", "DRAFT", "TODO", "TBD", "nreleased"):
+        assert marker not in notes + report, marker
 
 
 RUNS = "https://github.com/ajaysurya1221/actseal/actions/runs"
@@ -497,13 +665,13 @@ def test_release_receipt_identity_and_metadata_are_revalidated_strictly(
     with pytest.raises(tool.ReleaseCheckError) as excinfo:
         tool.validate_release_receipt(document, VERSION, None)
     assert fragment in str(excinfo.value)
-    rewrite(tmp_path / tool.RECEIPT_PATHS["release_receipt"], mutate)
+    rewrite(tmp_path / tool.receipt_paths(VERSION)["release_receipt"], mutate)
     assert fragment in failure(tool, tmp_path, "receipts")
 
 
 def test_release_note_claims_must_map_to_receipts(tool: types.ModuleType, tmp_path: Path) -> None:
     write_receipt_tree(tmp_path, tool)
-    notes = tmp_path / tool.RECEIPT_PATHS["release_notes"]
+    notes = tmp_path / tool.receipt_paths(VERSION)["release_notes"]
     notes.write_text(
         notes.read_text(encoding="utf-8") + f"\nAlso `{'9' * 64}`.\n", encoding="utf-8"
     )
@@ -512,23 +680,23 @@ def test_release_note_claims_must_map_to_receipts(tool: types.ModuleType, tmp_pa
 
 def test_receipt_cross_checks_fail(tool: types.ModuleType, tmp_path: Path) -> None:
     write_receipt_tree(tmp_path, tool)
-    sums = tmp_path / tool.RECEIPT_PATHS["sha256sums"]
+    sums = tmp_path / tool.receipt_paths(VERSION)["sha256sums"]
     original = sums.read_text(encoding="utf-8")
     sums.write_text(original.replace("a", "b", 1), encoding="utf-8")
     assert "SHA256SUMS receipt differs" in failure(tool, tmp_path, "receipts")
     sums.write_text(original, encoding="utf-8")
-    receipt = tmp_path / tool.RECEIPT_PATHS["release_receipt"]
+    receipt = tmp_path / tool.receipt_paths(VERSION)["release_receipt"]
     rewrite(receipt, set_key("verification", "postpublish", "checks", "demo_exit", value=99))
     assert "demo_exit is 99" in failure(tool, tmp_path, "receipts")
     rewrite(receipt, set_key("verification", "postpublish", "checks", "demo_exit", value=0))
     rewrite(receipt, set_key("source_commit", value="not-a-sha"))
     assert "full 40-hex commit" in failure(tool, tmp_path, "receipts")
     rewrite(receipt, set_key("source_commit", value="c" * 40))
-    report = tmp_path / tool.RECEIPT_PATHS["final_report"]
+    report = tmp_path / tool.receipt_paths(VERSION)["final_report"]
     report.write_text("# Final report\n", encoding="utf-8")
     assert "omits the workflow run id" in failure(tool, tmp_path, "receipts")
     report.write_text("# Final report\n\nWorkflow run 42.\n", encoding="utf-8")
-    launch = tmp_path / tool.RECEIPT_PATHS["launch"]
+    launch = tmp_path / tool.receipt_paths(VERSION)["launch"]
     launch.write_text("# Launch\n\nPosted.\n", encoding="utf-8")
     assert "must remain a draft" in failure(tool, tmp_path, "receipts")
 

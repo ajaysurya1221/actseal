@@ -71,7 +71,14 @@ exceed the receipts.
   (177 conformance/provider tests plus five cached-native tests); and the
   Task 19 integration, where the cached-native tests were repeated (six
   tests, no skips) on the 1.0.0 source. These complete the native checks for
-  the changed paths in 1.0.0; the source fingerprint has not changed since.
+  the changed paths in 1.0.0. They are 1.0.0 receipts: they do not establish
+  native verification of the 1.0.1 patch, whose source fingerprint differs.
+  The 1.0.1 patch's changed Laya reply-validation path has its own
+  cached-native receipts, recorded in
+  `plan/v1/reviews/2026-10-08-release-preparation-1.0.1.md`: the five
+  integration tests passed on macOS (arm64, Python 3.12.13) and in the
+  hosted Linux native workflow (run 37719743745, Python 3.12.3) against the
+  1.0.1 source.
 - Authoring platform: the pinned Linux x86_64 agg binary was actually
   executed in hosted CI at PR 18 head `0e32c6c` (runs 37581140052 and
   37581142565, all ten jobs green) with its hash verified before execution;

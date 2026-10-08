@@ -6,7 +6,7 @@ abstract: "Verify frozen categorical decision policies with risk/coverage bounds
 authors:
   - given-names: "Ajay Surya"
     family-names: "Senthilrajan"
-version: "1.0.0"
-date-released: "2026-10-07"
+version: "1.0.1"
+date-released: "2026-10-08"
 license: "Apache-2.0"
 repository-code: "https://github.com/ajaysurya1221/actseal"

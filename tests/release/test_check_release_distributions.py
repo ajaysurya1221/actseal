@@ -292,7 +292,7 @@ def test_sdist_contains_active_v1_documentation_inputs(
         "plan/v1/RELEASE_NOTES.md",
         "plan/v1/tasks/08.md",
     ]
-    for directory in ("plan/v1/reports", "plan/v1/reviews"):
+    for directory in ("plan/v1/reports", "plan/v1/reviews", "plan/v1/releases"):
         documents = sorted((ROOT / directory).rglob("*.md"))
         assert documents, directory
         required.extend(path.relative_to(ROOT).as_posix() for path in documents)
