@@ -690,7 +690,8 @@ Recorded before tagging; every item below is completed before the tag, not after
 - `docs/publishing.md` describes the per-version layout, the post-publication fill and the
   launch-post scoping.
 
-No file under `src/` or `docs/assets/`, no schema, no statistical contract and no registry
+No file under `src/` changes and no rendered asset changes (`docs/assets/src/recording.md` only
+received the historical-status correction); no schema, no statistical contract and no registry
 file changes; the 1.0.0 receipts and release documents are unchanged.
 
 The tag is created only after this preparation is reviewed and merged and the candidate gate
