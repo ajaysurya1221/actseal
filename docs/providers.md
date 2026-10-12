@@ -1,6 +1,6 @@
 # Providers: native Laya reference and normalization
 
-Status: full T30 accepted at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7` and merged as `87d2cd1`, 6 October 2026. Earlier candidate `17ed0875541ecfa6402991dc90e278beb2f4cc01` passed native product tests on macOS and Linux, and [REVIEW T30-03](../plan/reviews/T30-03.md) confirms those adapter/normalization/native-test bytes are unchanged in the accepted task. Historical upstream and product milestone receipts remain distinct below. The [stability manifest](stability.md) is normative for the 1.x product boundary; [CONTRACTS](../plan/CONTRACTS.md) is the historical v0.1 record of the unchanged provider semantics.
+This page covers the stable `laya` provider (native setup, lock, verify and replay, output normalization and offline behavior) and the PROVISIONAL experimental Jev adapter. The [stability manifest](stability.md) is normative for the 1.x product boundary; dated verification receipts are under [Verified Actseal provider milestone](#verified-actseal-provider-milestone).
 
 ## Reference runtime
 
@@ -317,7 +317,7 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --frozen --extra laya pytest -m i
 
 At the same candidate, all four ordinary Linux/macOS Python 3.12/3.13 jobs passed in [push CI](https://github.com/ajaysurya1221/actseal/actions/runs/37439252390) and [PR CI](https://github.com/ajaysurya1221/actseal/actions/runs/37439282488). These jobs do not extend native inference coverage to Python 3.13. Root also independently checked targeted lint, formatting and strict typing; [VERIFICATION](../plan/VERIFICATION.md#product-adapter-milestone--6-october-2026) preserves the receipt provenance.
 
-The recorded times are whole test-suite elapsed times, not latency benchmarks. The milestone verifies the tested native paths without establishing broader hardware support, model accuracy, calibration or deployment reliability. The canonical fault campaign and full task subsequently passed [REVIEW T30-03](../plan/reviews/T30-03.md) at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`, merged as `87d2cd1`; the review preserves the earlier native receipt because its relevant source/test bytes are unchanged. The native CLI receipt above and [release report](../plan/FINAL_REPORT.md) record later integration and publication checks.
+The recorded times are whole test-suite elapsed times, not latency benchmarks. The milestone verifies the tested native paths without establishing broader hardware support, model accuracy, calibration or deployment reliability. The canonical fault campaign and full task subsequently passed [REVIEW T30-03](../plan/reviews/T30-03.md) at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`, merged as `87d2cd1`; the review preserves the earlier native receipt because its relevant source/test bytes are unchanged. The native CLI receipt above and [release report](../plan/FINAL_REPORT.md) record later integration and publication checks. [CONTRACTS](../plan/CONTRACTS.md) is the historical v0.1 record of the unchanged provider semantics.
 
 ## Jev: PROVISIONAL experimental provider, explicit opt-in only
 
@@ -382,9 +382,7 @@ normalized selected-option probability from the returned distribution. Jev's
 preserved as `provider_confidence` evidence only, and provider confidence
 fields cannot be interchanged under a common threshold.
 
-Verification status (as of 7 October 2026): **live collection has not begun
-and no live Jev result is accepted as evidence**; no key has been read and no
-request, journal or spend exists. The chronology of dispatch attempts is in
+Verification status (as of 8 October 2026): **the released adapter has mocked-transport verification evidence; the separate live audit used unreleased benchmark snapshot d3edbab and returned INCONCLUSIVE on a fixed 16-intent Banking77 subset** ([audit and replay instructions](results/jev-audit-2026-10-08/README.md)). The chronology of dispatch attempts is in
 the Task 06 receipts under `plan/v1/`, not here. Every Jev test runs over a
 mocked transport (a stdlib fake
 connection or an injected exchange) with the key read and every socket
