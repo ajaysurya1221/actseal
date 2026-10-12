@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Repository automation: the release workflow pins `actions/upload-artifact` 7.0.2 and `actions/download-artifact` 8.0.2 to verified commits, with the release gate's action allowlist updated to match.
+
 ## v1.0.1 — 2026-10-08
 
 ### Fixes

@@ -27,3 +27,14 @@ Primary references: [PyPI setup](https://docs.pypi.org/trusted-publishers/creati
 [job-scoped OIDC](https://docs.pypi.org/trusted-publishers/using-a-publisher/),
 [PyPA action](https://github.com/pypa/gh-action-pypi-publish/tree/dc37677b2e1c63e2034f94d8a5b11f265b73ba33),
 [Twine metadata](https://pypi.org/pypi/twine/7.0.0/json).
+
+## Addendum — 12 October 2026: artifact action pins
+
+The release workflow adopts upload-artifact 7.0.2
+(`cf430e030ddbb5b0abf93d22962f4752f3646cd9`) and download-artifact 8.0.2
+(`9000827ccba6bdab643e8b6fd33ac0654aef8333`), replacing the 7.0.1 and 8.0.1
+pins in `.github/workflows/publish-pypi.yml` and the `tools/check_release.py`
+action allowlist in one change. Both full commit hashes were verified against
+the upstream `v7.0.2` and `v8.0.2` tags on 12 October 2026. Licences are
+unchanged (MIT). No runtime dependency or `uv.lock` changes. The 6 October
+paragraph above remains the record of that day's check.
