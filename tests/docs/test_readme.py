@@ -180,7 +180,8 @@ SURVIVING_STATEMENTS = (
     "published with the unreleased benchmark producer snapshot identified explicitly",
     (
         "Its offline replay runs with that archived snapshot and exits 2 (INCONCLUSIVE); the "
-        "published 1.0.0 and 1.0.1 packages do not approve this producer in their compatibility registries"
+        "published 1.0.0 and 1.0.1 packages do not approve this producer in their "
+        "compatibility registries"
     ),
 )
 RELATED_REPOSITORIES = (
