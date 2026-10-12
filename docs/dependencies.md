@@ -1,6 +1,6 @@
 # Dependency and model provenance
 
-Verification date: **6 October 2026**. Versions below are explicit sprint pins, not promises that they remain the newest releases. The committed `uv.lock` must record the complete resolved graph and hashes. This document separates a tested native stack from registry/license metadata checks and the product verification recorded in task reports.
+Verification date: **6 October 2026**. Versions below are explicit sprint pins, not promises that they remain the newest releases. The committed `uv.lock` must record the complete resolved graph and hashes. The repository lock resolves Linux and macOS environments below Python 3.15; this resolution boundary does not expand the documented support matrix. This document separates a tested native stack from registry/license metadata checks and the product verification recorded in task reports.
 
 Status on 7 October 2026: the pins, lock and licence findings below are unchanged in the 1.0.0 source (fingerprint `8f316f679b2ed5be4ce19127da87db21511ce4de2ff1450439fcf3c549598ed3`); the runtime core still has no third-party dependency, and the authoring-only asset toolchain is pinned separately in `docs/assets/src/tools.toml` ([ADR 0020](decisions/0020-reproducible-visual-assets.md)). The milestone paragraphs that follow are dated history of how each pin was verified; the 1.0.0 release receipts are in `plan/v1/RELEASE_NOTES.md`.
 
