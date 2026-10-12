@@ -83,7 +83,7 @@ jobs:
         run: uvx --from twine==7.0.0 twine check --strict "$RUNNER_TEMP"/dist/*
       - name: Upload the immutable distributions (wheel and sdist only)
         id: upload
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: distributions-${{ steps.identity.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/dist/
@@ -93,7 +93,7 @@ jobs:
           retention-days: 90
       - name: Upload the build receipt and checksums
         id: upload-metadata
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-metadata-${{ steps.identity.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/release-metadata/
@@ -137,12 +137,12 @@ jobs:
       - name: Repository hooks
         run: uv run --frozen pre-commit run --all-files
       - name: Download the exact built distributions by artifact ID
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.build.outputs.artifact-id }}
           path: ${{ runner.temp }}/dist
       - name: Download the build checksums by artifact ID
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.build.outputs.metadata-artifact-id }}
           path: ${{ runner.temp }}/release-metadata
@@ -200,12 +200,12 @@ jobs:
       id-token: write
     steps:
       - name: Download the exact verified distributions by artifact ID
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.build.outputs.artifact-id }}
           path: dist
       - name: Download the build checksums by artifact ID
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.build.outputs.metadata-artifact-id }}
           path: release-metadata
@@ -246,7 +246,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download the build checksums by artifact ID
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.build.outputs.metadata-artifact-id }}
           path: ${{ runner.temp }}/release-metadata
@@ -263,7 +263,7 @@ jobs:
             --out "$RUNNER_TEMP/postpublish/postpublish-receipt.json"
       - name: Upload the post-publication receipt
         id: upload-receipt
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: postpublish-receipt-${{ needs.build.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/postpublish/
@@ -291,17 +291,17 @@ jobs:
       - name: Install locked development tools
         run: uv sync --frozen --group dev
       - name: Download the exact published distributions by artifact ID
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.build.outputs.artifact-id }}
           path: ${{ runner.temp }}/dist
       - name: Download the build checksums by artifact ID
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.build.outputs.metadata-artifact-id }}
           path: ${{ runner.temp }}/release-metadata
       - name: Download the post-publication receipt by artifact ID
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.verify-published.outputs.receipt-artifact-id }}
           path: ${{ runner.temp }}/postpublish
@@ -333,7 +333,7 @@ jobs:
             --sha256sums "$RUNNER_TEMP/release-metadata/SHA256SUMS" \
             --release-receipt "$RUNNER_TEMP/release-metadata/release-receipt.json"
       - name: Upload the bound release receipt
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-receipt-${{ needs.build.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/release-metadata/release-receipt.json
