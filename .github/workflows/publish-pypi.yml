@@ -83,7 +83,7 @@ jobs:
         run: uvx --from twine==7.0.0 twine check --strict "$RUNNER_TEMP"/dist/*
       - name: Upload the immutable distributions (wheel and sdist only)
         id: upload
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: distributions-${{ steps.identity.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/dist/
@@ -93,7 +93,7 @@ jobs:
           retention-days: 90
       - name: Upload the build receipt and checksums
         id: upload-metadata
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-metadata-${{ steps.identity.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/release-metadata/
@@ -263,7 +263,7 @@ jobs:
             --out "$RUNNER_TEMP/postpublish/postpublish-receipt.json"
       - name: Upload the post-publication receipt
         id: upload-receipt
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: postpublish-receipt-${{ needs.build.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/postpublish/
@@ -333,7 +333,7 @@ jobs:
             --sha256sums "$RUNNER_TEMP/release-metadata/SHA256SUMS" \
             --release-receipt "$RUNNER_TEMP/release-metadata/release-receipt.json"
       - name: Upload the bound release receipt
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-receipt-${{ needs.build.outputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/release-metadata/release-receipt.json
