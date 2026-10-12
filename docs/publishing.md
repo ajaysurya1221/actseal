@@ -22,6 +22,12 @@ on 7 October 2026 after the post-publication documentation was accepted,
 with the same four assets and the accepted notes
 (`plan/v1/receipts/github-publication.json`).
 
+v1.0.1 was published on 8 October 2026 by this workflow from the annotated
+tag `v1.0.1` (`758c65d`) in run 37721934891, after the owner's `pypi`
+approval. Its post-publication and release receipts are under
+`plan/v1/releases/1.0.1/`, with that version's `RELEASE_NOTES.md` and
+`FINAL_REPORT.md` beside them.
+
 ## Two ways to run the workflow
 
 | Trigger | What happens | Uploads? |

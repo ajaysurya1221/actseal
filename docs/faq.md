@@ -150,8 +150,11 @@ registered for the `actseal-choice-v1` engine in the packaged registry.
 Otherwise the result is `ERROR` with reason `integrity.lock`, which is a
 verifier-configuration limit, not a statement that the evidence is invalid.
 The 1.0.0 registry approves exactly two reviewed fingerprints (its own source
-and the prerelease producer of the retained example archive); the
-[versioning policy](versioning.md) lists them and describes approval.
+and the prerelease producer of the retained example archive). The 1.0.1
+registry keeps both and adds the reviewed 1.0.1 source fingerprint, three
+entries in all, so 1.0.0 evidence and the retained archive replay under 1.0.1
+to their stored verdicts; the [versioning policy](versioning.md) lists every
+entry and describes approval.
 
 ## Is PASS a safety or calibration guarantee?
 

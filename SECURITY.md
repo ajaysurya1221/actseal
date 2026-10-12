@@ -7,8 +7,7 @@ Report a vulnerability privately through
 Include the affected commit/version, a minimal reproduction and the observed
 impact. Do not include credentials or private evaluation data. Security fixes
 target current main and the latest 1.x minor release at its latest patch, as
-recorded in the [versioning policy](docs/versioning.md). Until 1.0.0 is
-published, the latest 0.1.x release remains the supported line. The isolated
+recorded in the [versioning policy](docs/versioning.md). The isolated
 pinned `actseal==0.1.0` replay path in the [migration guide](docs/migration.md)
 is a compatibility path for reading historical evidence; it is not a promise
 to maintain a 0.1 security branch indefinitely.
