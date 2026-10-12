@@ -131,7 +131,7 @@ The Jev adapter is PROVISIONAL and requires explicit opt-in:
 The released 1.0.0 adapter's accepted evidence uses mocked transports; the separate audit below used an unreleased benchmark producer.
 
 A preregistered audit of Jev on a fixed 16-intent Banking77 subset returned INCONCLUSIVE: 580/639 verification cases received ACT, with 24 accepted errors. The complete [evidence and offline verification instructions](https://github.com/ajaysurya1221/actseal/blob/main/docs/results/jev-audit-2026-10-08/README.md) are published with the unreleased benchmark producer snapshot identified explicitly.
-Its offline replay runs with that archived snapshot and exits 2 (INCONCLUSIVE); the published 1.0.0 package returns ERROR `integrity.lock` for this bundle because that producer is not in the compatibility registry.
+Its offline replay runs with that archived snapshot and exits 2 (INCONCLUSIVE); the published 1.0.0 and 1.0.1 packages do not approve this producer in their compatibility registries.
 
 Replay never imports a provider, and the packaged demonstration establishes no
 population or model-quality result. The
@@ -174,7 +174,7 @@ authenticated model evidence.
 | [Stability manifest](https://github.com/ajaysurya1221/actseal/blob/main/docs/stability.md), [versioning](https://github.com/ajaysurya1221/actseal/blob/main/docs/versioning.md) and [migration](https://github.com/ajaysurya1221/actseal/blob/main/docs/migration.md) | The 1.x compatibility promise, what may change when, and the 0.1.0 evidence path |
 | [Statistical contract](https://github.com/ajaysurya1221/actseal/blob/main/docs/statistical-contract.md) and [threat model](https://github.com/ajaysurya1221/actseal/blob/main/docs/threat-model.md) | Bounds, verdict rules, sampling assumptions and the authenticity boundary |
 | [Providers](https://github.com/ajaysurya1221/actseal/blob/main/docs/providers.md) and [FAQ](https://github.com/ajaysurya1221/actseal/blob/main/docs/faq.md) | Fixture and optional native Laya setup; the PROVISIONAL experimental Jev cloud adapter behind `--provider jev --experimental-provider` (bring your own key, mocked-transport evidence for released 1.0.0; separate benchmark audit above); answers to "why not PASS" |
-| [Publishing](https://github.com/ajaysurya1221/actseal/blob/main/docs/publishing.md), [CHANGELOG](https://github.com/ajaysurya1221/actseal/blob/main/CHANGELOG.md), [release notes](https://github.com/ajaysurya1221/actseal/blob/main/plan/v1/RELEASE_NOTES.md) and [SECURITY](https://github.com/ajaysurya1221/actseal/blob/main/SECURITY.md) | Release pipeline and receipts, changes per version, the receipt-backed release notes, private vulnerability reporting and support |
+| [Publishing](https://github.com/ajaysurya1221/actseal/blob/main/docs/publishing.md), [CHANGELOG](https://github.com/ajaysurya1221/actseal/blob/main/CHANGELOG.md), [release notes for 1.0.0](https://github.com/ajaysurya1221/actseal/blob/main/plan/v1/RELEASE_NOTES.md) and [1.0.1](https://github.com/ajaysurya1221/actseal/blob/main/plan/v1/releases/1.0.1/RELEASE_NOTES.md), and [SECURITY](https://github.com/ajaysurya1221/actseal/blob/main/SECURITY.md) | Release pipeline and receipts, changes per version, the receipt-backed release notes per version (1.0.0 states the 1.x promise), private vulnerability reporting and support |
 
 ## Related projects
 
