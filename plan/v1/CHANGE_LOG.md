@@ -752,3 +752,36 @@ untested. Static inspection found no prediction/normalization change requiring
 a provider-identity amendment; historical native receipts are not new evidence.
 Exact-head hosted CI remains mandatory before merge and is recorded by the PR.
 This task asserts neither a reproduced Actseal exploit nor security certification.
+
+## V1-061 — CA-bundle dependency readiness (30 October 2026)
+
+After PR78 merged and all 14 original alerts were marked fixed, GitHub's
+refreshed graph surfaced Certifi alert16 and Setuptools alert15. The operator's
+repository-fix authorization covers this follow-up. Before changing the lock,
+Task61 records a one-package upgrade: Certifi 2026.7.22 to 2026.10.19, the
+minimum upstream-recommended patch after restoration of unaffected emSign roots.
+The exact wheel/sdist are non-yanked and hash/size verified; MPL-2.0 remains
+unchanged. The affected CA is absent from the corrected bundle.
+
+Certifi is used by the optional Hub/HTTPX download stack; the dependency-free
+core and offline replay do not need it. A compromised-key/on-path attack is an
+upstream prerequisite, not a reproduced Actseal exploit. Direct model pins,
+provider source, checkpoint hashes and numerical/normalization settings remain
+unchanged; native startup/inference and live TLS compatibility remain untested.
+
+The Setuptools advisory title mentions Windows, but the maintainer's fix also
+covers POSIX absolute namespace paths. Its deprecated non-PEP517
+`setup_requires` / `install_as_egg` sink is absent from this configured
+Hatchling/uv build and product source. That supports a bounded non-actionable
+classification for these paths, not a general platform exemption. Retain the
+alert and this limitation; do not dismiss it or silently upgrade unrelated pins.
+
+Owned paths are the Certifi lock record, this log, Task61 and Review61. Required
+gates are independent review, frozen local validation and exact-head hosted CI.
+No source/test/frozen-file change, model call, release, tag or distribution change.
+
+Task61 local setup/lock/hooks, 4,216 ordinary tests (1 skip, 31 deselected),
+25 packaging tests, build, fixture demo/replay and receipt/docs gates passed.
+The independent integration review accepts the exact one-record lock correction;
+[review 61](reviews/61-certifi-readiness.md) records its evidence and limitations.
+Exact-head hosted checks remain required before the separate follow-up merge.
