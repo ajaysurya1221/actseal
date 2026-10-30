@@ -49,7 +49,7 @@ laya = [
 
 [dependency-groups]
 assets = [
-  "fonttools==4.66.1",
+  "fonttools==4.67.0",
 ]
 dev = [
   "ruff==0.16.10",
