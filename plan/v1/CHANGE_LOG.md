@@ -726,3 +726,29 @@ sdist keep their placeholders; they cannot change. After the receipts merged to 
 `810bf8c` (PR 62) and the receipts gate passed there, the draft was published as the GitHub
 release `v1.0.1` (release id 406401019) with the filled release notes as its body and its four
 mirrored assets unchanged; nothing remains open for 1.0.1.
+
+## V1-060 — dependency readiness maintenance (30 October 2026)
+
+The user authorized the final career/portfolio readiness pass and repository
+fixes. Codex owns this packaging-only task: update locked Virtualenv 21.14.5
+and Filelock 4.0.12 to inspected, non-yanked 21.14.13 and 4.2.1. Fourteen open
+Dependabot alerts were imported. Independent review additionally identified
+GHSA-cx6f-vjhg-g3cc in the initial 21.14.10 proposal, requiring 21.14.13.
+Affected versions are present; project-specific exploitability is unproven.
+The Windows-only Filelock advisory is outside the supported platform contract.
+Filelock also enters the optional native graph, so this is not described as a
+development-only change. Both corrected wheels retain MIT license grants.
+
+Owned paths: `uv.lock`, this planning log, `tasks/60-dependency-readiness.md`
+and `reviews/60-dependency-readiness.md`. No product source, tests, public API,
+frozen policy, native top-level pin, release distribution or tag changes.
+No model calls. The corrected local lock/setup, hooks, ordinary tests (4,216
+passed, 1 skipped, 31 deselected), 25 packaging tests, build, fixture demo/replay
+and receipt gate passed. Independent review accepts the exact corrected lock;
+[review 60](reviews/60-dependency-readiness.md) records evidence and limitations.
+
+Native startup/inference compatibility for this transitive graph remains
+untested. Static inspection found no prediction/normalization change requiring
+a provider-identity amendment; historical native receipts are not new evidence.
+Exact-head hosted CI remains mandatory before merge and is recorded by the PR.
+This task asserts neither a reproduced Actseal exploit nor security certification.
