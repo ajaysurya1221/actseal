@@ -38,13 +38,13 @@ actseal = "actseal.cli:main"
 # Linux requires the official CPU build so no CUDA/NVIDIA/Triton packages resolve;
 # macOS keeps the tested PyPI wheel.
 laya = [
-  "laya==0.3.28",
+  "laya==0.4.15",
   "torch==2.14.1+cpu; sys_platform == 'linux'",
   "torch==2.14.1; sys_platform != 'linux'",
-  "transformers==5.18.0",
-  "huggingface-hub==1.33.0",
+  "transformers==5.21.0",
+  "huggingface-hub==2.3.0",
   "safetensors==0.8.0",
-  "numpy==2.5.3",
+  "numpy==2.5.4",
 ]
 
 [dependency-groups]
