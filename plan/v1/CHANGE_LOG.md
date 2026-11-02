@@ -785,3 +785,18 @@ Task61 local setup/lock/hooks, 4,216 ordinary tests (1 skip, 31 deselected),
 The independent integration review accepts the exact one-record lock correction;
 [review 61](reviews/61-certifi-readiness.md) records its evidence and limitations.
 Exact-head hosted checks remain required before the separate follow-up merge.
+
+## V1-062 — bounded Setuptools lock maintenance (2 November 2026)
+
+The operator authorized repository fixes in the final career-readiness plan.
+Codex owns Task62 as packaging-only maintenance: inspect and update the
+Setuptools 84.0.0 lock record to the advisory's first patched 84.1.0 version.
+The prior Task61 reachability finding remains historical evidence; this
+separate maintenance does not claim the configured Actseal paths were exploited.
+The upstream namespace validation also covers POSIX path forms.
+
+Owned paths are `uv.lock`, this log, Task62 and Review62. Product source,
+tests, native top-level pins, provider identity, public contracts, frozen
+plans and prior release artifacts remain unchanged. No model calls or release.
+Artifact/license review, local frozen checks, independent ACCEPT and
+exact-candidate hosted CI precede merge. Results belong in Review62 and the PR.
