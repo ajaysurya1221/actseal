@@ -1,26 +1,153 @@
-# Actseal 1.x stability manifest
+# Actseal 2.0 stability manifest
 
-Status: normative for every 1.x release, frozen with Task 02 of the v1.0.0 plan
-(plan/v1/PLAN.md, section E; amendment V1-003). This document enumerates the
+Status: normative for 2.0.0 (unreleased), retaining the 1.x surface frozen with
+Task 02 of the v1.0.0 plan (plan/v1/PLAN.md, section E; amendment V1-003),
+with the v2 additions below (plan/v2/CHANGE_LOG.md, V2-003).
+No STABLE name or flag is removed in 2.0. This document enumerates the
 complete public surface. A name that appears here is STABLE unless it is marked
 PROVISIONAL. A name that does not appear here, or begins with an underscore, is
 private. The companion documents are the [versioning policy](versioning.md),
-the [0.1.0 to 1.0.0 migration guide](migration.md) and the published
+the [migration guide](migration.md) and the published
 [wire schemas](schemas/README.md). Exact record field semantics remain in
 [CONTRACTS](../plan/CONTRACTS.md).
 
+### 2.0 provider additions
+
+The approved v2 packet adds `recorded` and PROVISIONAL `decision-api` to the
+closed provider set. Lock schema 2, bundle schema 2, receipt schema 1 and
+`actseal-choice-v1` remain unchanged (V2-003). Historical fixture, Laya and
+Jev normalization and synthetic fault bytes are unchanged. The 1.x inventory
+below is retained as the historical baseline; this section amends it for v2.
+
+`recorded` requires `--responses PATH --model NAME --revision REV`; it is
+offline and rejects the experimental flag. `decision-api` requires
+`--experimental-provider --endpoint URL --model NAME --revision REV`, accepts
+`--api-key-env NAME`, and rejects `--responses` and `--offline`. These four
+new value options are accepted on `lock`, `verify`, `calibrate` and `qualify`; `--model` and
+`--revision` apply only to the two new providers, and `--endpoint` and
+`--api-key-env` only to `decision-api`. Existing options keep their behavior.
+
+`ChoiceAnswer.probabilities` may now be exactly empty or contain 2..16
+entries; one entry is invalid. A full map retains the existing validation.
+For `recorded`, `selected_probability` is the raw finite score in [0, 1],
+without renormalization; an optional full map must agree exactly with that
+score at the selected label. No probability map is invented. The published
+decision-record and fault-result schemas admit the empty array explicitly.
+
+All six synthetic fault checks remain mandatory. Recorded captures carry
+`recorded: provider faults not tested`, and assessed recorded verdicts add
+`scope.recorded_provider_faults_not_tested`; the CLI maps this reason to the
+same advisory text in replay's existing `notes`. This marks the upstream
+coverage limitation without changing status, counts, bounds or receipt fields.
+The exported assessment constant is `REASON_RECORDED_FAULT_SCOPE`.
+The pure normalization module exports `RECORDING_WARNING` with the warning text.
+See [providers](providers.md#recorded-predictions-v2) for the input formats.
+
+### 2.0 selection and qualification additions
+
+The opt-in `plan`, `calibrate`, `qualify`, `replay-selection` and
+`demo --qualify` interfaces add selection before the existing verification
+flow. The original command behavior and receipts, lock schema 2, seven-file
+bundle schema 2 and engine `actseal-choice-v1` remain unchanged. The provider
+options above also apply to `calibrate` and `qualify`.
+
+`plan` takes risk/coverage limits, alpha, expected risk/coverage and optional
+target pass probability (default `0.8`). It writes nothing and collects no
+response. It returns 0 for a reachable scheduled sample size and 2 for
+`planning.not_reachable` through 10,000. `calibrate` and `qualify` take the
+contract, both splits, provider options and new output directory; optional
+selection settings are `--grid`, `--target-pass-probability` and
+`--selection-tail` (default `0.05`). The default grid is
+`0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0`; a user grid has 1..32 strictly
+increasing values in `(0, 1]`. The input TOML threshold is ignored during
+selection; the plan omits it and the derived contract carries the selected
+value. Calibration and verification IDs and exact state text are disjoint.
+
+The `calibration/` sidecar contains exactly `selection_plan.json`,
+`calibration.jsonl`, `records.jsonl`, `selection.json` and `manifest.json`.
+The strict plan is written and hashed before any calibration capture. It
+fixes the non-threshold contract, grid, target, selection tail, `n_verify`,
+both input hashes, model identity, producer implementation fingerprint and
+replay engine name (`actseal-choice-v1`). The
+manifest inventories the four data files with sizes and SHA-256s. Plan and
+manifest seals hash their canonical object with only `sha256` omitted.
+
+When no threshold qualifies, calibration exits 2 with
+`calibration.no_threshold`, writes no derived contract and never collects
+verification responses. Otherwise `contract.toml` is written; `qualify`
+also produces the ordinary `lock.json`, `evidence/` and `qualification.json`.
+The receipt links the raw calibration manifest file SHA-256, the lock
+self-seal and the unchanged verdict. `qualify` returns that verdict's code.
+Successful calibration and selection replay use `SELECTED`, not a
+verification verdict; PASS comes only from the ordinary verifier.
+`replay-selection DIRECTORY` recomputes the grid and selection offline,
+without importing an adapter. Counts, reason and chosen threshold match
+exactly; predicted probabilities allow absolute tolerance `1e-10` and
+relative tolerance `1e-9`. Invalid evidence exits 3. These formats do not
+authenticate captures or establish execution chronology.
+Selection replay uses the same compatibility rule as verification bundles:
+the recorded engine must be supported, and the producer fingerprint must
+either equal the running fingerprint or both fingerprints must be registered
+for that engine. New calibration collection still requires the exact running
+fingerprint; the existing verification-bundle compatibility rules are unchanged.
+
+Every new JSON document and CLI receipt has `schema_version: 1`, with its
+own published [schema](schemas/README.md#qualification-sidecar-v2-opt-in).
+The five-file sidecar reuses the evidence writer's exclusive-publication and
+byte-budget helpers; its total ceiling is 128 MiB, JSONL rows are at most
+1 MiB, and calibration has at most 10,000 cases. The sidecar is separate
+from the existing schema-2 evidence directory. The plan is written in a
+sibling staging directory before capture; successful calibration output is
+published atomically and failed staging is removed.
+
+The `actseal.qualification` entry points are `calibrate_run`, `qualify_run`
+and `replay_selection`; result records are `CalibrationRun` and
+`QualificationRun`. `DEFAULT_GRID` records the default threshold tuple.
+Their signatures and fields are in the
+[Python guide](python-api.md#v2-selection-and-qualification).
+`demo --qualify` uses packaged synthetic data and permits omitted `--out`,
+printing a retained temporary destination. Default `demo` still requires
+`--out` and preserves its original BLOCK/PASS behavior.
+
+### 2.0 report and Action additions
+
+`report DIRECTORY --out OUTDIR [--attestation-ref TEXT] [--json]` is a
+separate opt-in presentation command. It accepts an ordinary bundle or a
+complete qualification root, delegates offline replay to the existing engine,
+and validates the calibration selection and receipt links when present.
+Invalid inputs exit 3 before publication. A valid diagnostic ERROR is
+renderable and remains ERROR; rendering success exits 0 for every verdict.
+No provider is imported or called. Existing command semantics are unchanged.
+
+Exactly `report.html`, `report.md` and `badge.json` are published to a new
+directory outside the evidence directories. These are deterministic
+presentation outputs, not additional statistical evidence. The JSON badge
+has the shields endpoint fields `schemaVersion`, `label`, `message`, `color`.
+The report command's schema-1 JSON receipt contains `command`, `exit_code`,
+`ok`, `status`, `out` and `schema_version`; errors use the ordinary error
+fields. No existing receipt schema is extended. See the
+[CLI reference](cli.md#static-reports-v2-unreleased).
+
+`actseal.report` contains presentation code only and is excluded from the
+implementation fingerprint by its existing explicit filename rule. It never
+recomputes a verdict or selects a threshold. Reports default to
+`checksummed, not attested`; `--attestation-ref` is a caller-supplied claim,
+and Actseal verifies no signature. The composite [GitHub Action](github-action.md)
+runs the selected command, attempts reporting, uploads evidence when requested,
+and preserves the command's exit code. Its hosted self-test is not yet verified.
+
 ## What STABLE means
 
-STABLE means **compatible throughout 1.x**: the name exists, accepts the
+STABLE means **compatible throughout the current major series**: the name exists, accepts the
 documented inputs with the documented meanings, returns the documented shape,
 and raises or returns the documented failure class. A minor release may add
 commands, constants, or optional arguments whose defaults preserve existing
 behaviour. It may not add fields to an existing strict schema version
 (lock 2, manifest 2, receipt 1, registry 1) or to the default CLI receipt
 shapes: the published schemas reject unknown fields, so the shapes they
-describe are frozen for 1.x. Additional formats or semantics arrive only as a
+describe are frozen throughout 2.x. Additional formats or semantics arrive only as a
 separately versioned, explicitly opt-in interface that preserves every
-existing stable surface. Removal or an incompatible change waits for 2.0 under
+existing stable surface. Removal or an incompatible change waits for a later major under
 the [versioning policy](versioning.md); see
 [ADR 0015](decisions/0015-v1-stability-and-replay-compatibility.md).
 
@@ -48,13 +175,17 @@ explicit experimental CLI flag and may change in any release.
 
 ## Command line
 
-The console script `actseal` and `python -m actseal` are STABLE. Commands are
-exactly `lock`, `verify`, `replay` and `demo`. Every command accepts `--json`.
+The console script `actseal` and `python -m actseal` are STABLE. The original
+commands `lock`, `verify`, `replay` and `demo` are retained, alongside `plan`,
+`calibrate`, `qualify`, `replay-selection` and `report` above. Every command accepts `--json`.
 Abbreviated long options are rejected by the root parser and by every
 subcommand (`--ou` is never `--out`). `--version` is a root-only option
 (`actseal --version`; `actseal COMMAND --version` is a usage error, `ERROR` 3).
 `-h`/`--help` is accepted at the root and at every command. Both remain text
 output.
+
+The table below records the retained 1.x command baseline; the 2.0 provider
+options and qualification/report additions are specified above.
 
 | Command | Required | Optional |
 |---|---|---|
@@ -159,8 +290,14 @@ Canonical encoding (UTF-8, `ensure_ascii=False`, sorted keys, compact
 separators, no NaN/Infinity, no terminal newline; wire files add one LF per
 object) and the fingerprint algorithm (canonical sorted map of installed
 `actseal/**/*.py` paths to source hashes, excluding caches, never executing
-source) are STABLE. The fingerprint is an implementation identity, not a
-signature. `actseal.__version__` is the installed package version string.
+source) were STABLE through 1.x. **plan/v2 M2** narrowed the algorithm: it now
+also excludes a small, explicit, documented top-level list
+(`actseal.serialization.EXCLUDED_FINGERPRINT_FILES` — `__init__.py`,
+`__main__.py`, `cli.py`, `report.py`) that holds no decision or
+replay semantics, so a version bump or a CLI-only edit no longer changes it; a
+same-named file inside a subpackage, and any other or new file, is still
+hashed. The fingerprint is an implementation identity, not a signature.
+`actseal.__version__` is the installed package version string.
 
 ### Contract and locking (`actseal.contract`, `actseal.locking`)
 
@@ -282,9 +419,13 @@ the implementation fingerprint (which hashes only `*.py`). Entries are added
 only by review with archived-evidence regression tests; the 1.0.0 registry
 shipped exactly two reviewed entries for `actseal-choice-v1` (the 1.0.0 source
 itself and the unreleased prerelease producer of the retained
-`examples/action_gate` archive). The 1.0.1 registry retains both approvals and
-adds the reviewed 1.0.1 source fingerprint, three entries in all; every entry
-is listed with its provenance in the
+`examples/action_gate` archive). The 1.0.1 registry retained both approvals and
+added the reviewed 1.0.1 source fingerprint, three entries in all, each
+computed under the pre-M2 (every-`*.py`) fingerprint algorithm. plan/v2 M2
+narrowed that algorithm (see above) and added two more entries so replay keeps
+working: the producer of the retained `docs/results/jev-audit-2026-10-08`
+archive, and the resulting running fingerprint of this tree — five entries in
+all; every entry is listed with its provenance in the
 [versioning policy](versioning.md#registry-approval-process). Dual
 registration, exact-source collection and the schema and engine rules above
 are unchanged. The registry is trusted verifier configuration, not proof that
@@ -295,7 +436,11 @@ evidence is authentic.
 ```python
 ModelFactory = Callable[[], DecisionModel]
 
-def open_model(provider: str, *, responses: Path | None, offline: bool) -> DecisionModel: ...
+def open_model(
+    provider: str, *, responses: Path | None, offline: bool,
+    model: str | None = None, revision: str | None = None,
+    endpoint: str | None = None, api_key_env: str | None = None,
+) -> DecisionModel: ...
 def write_lock(lock: PlanLock, destination: Path) -> Path: ...
 def collect(
     model: DecisionModel, lock: PlanLock, cases: tuple[Case, ...]
@@ -404,7 +549,8 @@ amendment.
 
 ## Frozen semantics
 
-These behaviours are STABLE for 1.x and change only at 2.0:
+These behaviours are preserved from 1.x and STABLE in 2.0, except for the
+explicit fingerprint exclusion-list change described above:
 
 - **Policy precedence**: fallback flag -> ESCALATE; `unknown_choice` failure ->
   DENY; other provider failure -> ESCALATE; choice outside allowed labels ->
@@ -442,12 +588,14 @@ Schema-1 locks and manifests belong to actseal 0.1.0 and are rejected with
 
 | Engine | Releases | Status |
 |---|---|---|
-| `actseal-choice-v1` | 1.0.0 and later 1.x | STABLE |
+| `actseal-choice-v1` | 1.0.0, later 1.x and 2.0.0 | STABLE |
 
-Within 1.x, evidence produced by an earlier 1.x release replays only when both
+In 2.0, evidence produced by a different registered 1.x or 2.0 implementation replays only when both
 that release's source fingerprint and the running release's source fingerprint
 are registered for the engine. Replay of 0.1.0 evidence uses an isolated pinned
-`actseal==0.1.0` installation.
+`actseal==0.1.0` installation. The retained Jev audit replays directly with
+the packaged registry; it remains a recorded INCONCLUSIVE result from an
+unreleased benchmark producer, not a new 2.0 model measurement.
 
 A new engine may arrive in a minor release only as an explicitly selected
 option; `actseal-choice-v1`, its semantics and its default behaviour are

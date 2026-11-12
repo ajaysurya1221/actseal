@@ -3,8 +3,13 @@
 A lock records two different facts about the code that produced it:
 
 * ``implementation_sha256`` is **producer provenance**: the fingerprint of every
-  installed ``actseal/**/*.py`` source file at collection time
-  (:func:`actseal.serialization.implementation_fingerprint`).
+  installed ``actseal/**/*.py`` source file at collection time, except the small,
+  explicit, documented exclusion list
+  (:data:`actseal.serialization.EXCLUDED_FINGERPRINT_FILES`: the top-level
+  ``__init__.py``, ``__main__.py``, ``cli.py`` and ``report.py``) that holds no
+  decision or replay semantics
+  (:func:`actseal.serialization.implementation_fingerprint`). A new file, and a
+  same-named file inside a subpackage, is always hashed.
 * ``replay_engine_version`` names the **replay semantics** the evidence was
   produced under. The initial and only supported engine is
   ``actseal-choice-v1``: canonical encoding, policy precedence, normalizer

@@ -42,7 +42,7 @@
         "runtime"
       ],
       "properties": {
-        "provider": { "enum": ["fixture", "laya", "jev"] },
+        "provider": { "enum": ["fixture", "laya", "jev", "recorded", "decision-api"] },
         "model": { "$ref": "#/$defs/NonEmpty" },
         "revision": { "$ref": "#/$defs/NonEmpty" },
         "artifact_hashes": {
@@ -105,7 +105,7 @@
         "choice": { "$ref": "#/$defs/NonEmpty" },
         "probabilities": {
           "type": "array",
-          "minItems": 2,
+          "anyOf": [{ "maxItems": 0 }, { "minItems": 2 }],
           "maxItems": 16,
           "items": {
             "type": "array",

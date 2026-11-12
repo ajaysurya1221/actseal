@@ -39,16 +39,49 @@ inference service.
 published on PyPI. To run one specific release, add `--from` with an exact
 pin, for example `uvx --python 3.12 --from "actseal==1.0.0" actseal demo
 --out ./actseal-demo`; the replay commands then take the same `--from`. The
-commands, exit codes and JSON receipt shapes above are stable for every 1.x
-release under the [stability manifest](stability.md), and security fixes
-target the latest 1.x minor at its latest patch under the
+commands, exit codes and JSON receipt shapes above are retained from 1.x in
+2.0 under the [stability manifest](stability.md), and security fixes
+target the latest 2.x minor at its latest patch under the
 [versioning policy](versioning.md). Evidence written by actseal 0.1.0 is not
-converted by 1.x; the [migration guide](migration.md) describes the isolated
+converted by 1.x or 2.0; the [migration guide](migration.md) describes the isolated
 pinned replay path. Measured installation and demo timings are recorded in
 each release's report, not here, and are measurements rather than
 performance promises.
 
-## What the demo writes
+## Select a threshold and verify it (v2 checkout)
+
+From a checkout containing the v2 commands, run the packaged, model-free
+qualification demonstration. These commands use the checkout rather than a
+published package:
+
+```bash
+uv run --frozen python -m actseal demo --qualify --out ./actseal-qualified-demo
+uv run --frozen python -m actseal replay-selection ./actseal-qualified-demo/calibration
+uv run --frozen python -m actseal replay ./actseal-qualified-demo/evidence
+```
+
+All three commands exit 0 for the authored synthetic example. The first
+records the selection plan before collecting 64 calibration responses,
+selects threshold `0.95` from the fixed default grid, then verifies on 100
+separate synthetic cases. The example's limits are maximum risk `0.2`,
+minimum coverage `0.5` and alpha `0.05`. The result is computed by the existing
+verification engine; it is illustrative evidence, not model performance.
+
+The new output directory contains `calibration/` with the five sidecar files,
+the selected `contract.toml`, `lock.json`, the ordinary seven-file `evidence/`
+bundle and `qualification.json` linking the calibration manifest, lock and
+verdict. `demo --qualify` also works without `--out`; it prints the new
+temporary destination and leaves the evidence there for replay.
+
+For your own labelled splits, use `qualify` with the contract and provider
+arguments in the [CLI reference](cli.md#calibrate-and-qualify). Set the grid and
+limits before calibration. Calibration and verification IDs must be disjoint;
+duplicate state text across the splits is also rejected. If no threshold
+qualifies, the command exits 2 with `calibration.no_threshold`, retains the
+calibration evidence and collects no verification responses. Selection alone
+is not a verification PASS.
+
+## What the original demo writes
 
 | Path under `actseal-demo/` | Contents |
 |---|---|

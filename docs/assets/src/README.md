@@ -145,9 +145,9 @@ three lines, and a one-sentence subline) sits beside a card that states one
 recorded run, the preregistered live Jev audit: 639 verification cases at
 threshold 0.80, ACT 580/639 with 24 errors, the scope line "Fixed benchmark;
 unreleased producer", risk [0.0250, 0.0639] against the 0.05 limit, coverage
-[0.879, 0.932], verdict INCONCLUSIVE (exit 2) with "replay requires archived
-producer d3edbab" (the published 1.0.0 package returns ERROR `integrity.lock`
-for this bundle), and the path of the published audit. Every number comes from
+[0.879, 0.932], verdict INCONCLUSIVE (exit 2) with "replay with packaged
+registry" (the archived producer is registered; no pinned snapshot is needed),
+and the path of the published audit. Every number comes from
 `docs/results/jev-audit-2026-10-08/` (`evidence/verdict.json`,
 `audit_receipt.json`, `inputs/preregistration.json`) and `tests/visual/test_hero.py`
 compares the card with those files. Only the pinned JetBrains Mono Regular and
@@ -204,27 +204,32 @@ boxes in three rows) and `architecture-mobile-light.svg` /
 derived from the measured content). Each box names the `actseal` modules that
 implement it, so every node maps to a file under `src/actseal`: Contracts /
 locks (`contract`, `records`, `errors`, `serialization`, `locking`,
-`compatibility`); CLI / typed API (`cli`, `runner`, `__init__`, `__main__`,
-`demo_data`); Providers (`adapters.base`, `adapters.fixture`, and inside a
+`compatibility`); CLI / typed API (`cli`, `runner`, `qualification`, `report`,
+`__init__`, `__main__`, `demo_data`); Providers (`adapters.base`,
+`adapters.fixture`, `adapters.recorded`, and inside a
 dashed live-inference boundary `adapters.laya` and the PROVISIONAL
-`experimental.providers.jev`); Normalization / policy (`normalization`,
-`policy`); Assessment / statistics / faults (`assessment`, `stats`, `faults`);
+`experimental.providers.jev` and `experimental.providers.decision_api`);
+Normalization / policy (`normalization`, `policy`); Assessment / statistics /
+faults (`assessment`, `stats`, `faults`, `selection`);
 Evidence (`evidence`); Replay (`replay`). The only source files not drawn are
 the three package markers. Nine arrows carry `data-source`/`data-target`
 attributes: CLI → contracts and CLI → providers → normalization → assessment →
 evidence → replay for collection; contracts → assessment for the six synthetic
 faults, which need no provider; and replay → contracts and replay → assessment
 for offline recomputation. No arrow joins replay and providers. The fixture
-adapter sits outside the live boundary because it reads a recorded file; Jev
-is labelled `PROVISIONAL opt-in` and nothing in the figure or its description
+and recorded adapters sit outside the live boundary because they read files;
+Jev and decision-API share the label `PROVISIONAL opt-in` and nothing in the figure or its description
 says the cloud service was exercised. The figure is a component diagram, not
 an authenticity or enforcement claim.
 
 The palette, font stack and width model are the how-it-works figure's,
 imported unchanged. Desktop headings are 32 units bold and labels 27 (14.1 px
 at the measured 838 px README image width); mobile headings 44 and labels 40
-(14.1 px at the narrowest measured 254 px width). Headings and module runs
-wrap on their separators, notes and arrow labels wrap on word boundaries; a
+(14.1 px at the narrowest measured 254 px width). Desktop column widths are
+371, 253, 580 and 280 units so the provider paths fit without reducing text;
+the evidence box spans the CLI and provider columns. Headings and module runs
+wrap on their separators; overlong module paths wrap at dots, retaining every
+character. Notes and arrow labels wrap on word boundaries; a
 word that would not fit its column, or a desktop layout taller than 980
 units, makes the renderer raise instead of shrinking anything.
 

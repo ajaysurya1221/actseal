@@ -1,9 +1,13 @@
 """Packaged authored inputs for ``actseal demo`` (ADR 0013).
 
-The eight resource files beside this marker are byte-identical to the copies
+The eight historical resource files in ``RESOURCE_FILES`` are byte-identical to the copies
 under ``examples/support_triage`` and are authored synthetic data with
 ``evidence_scope = "demo"``. They are inputs only: the demo generates locks and
 evidence from them at run time through the real product pipeline.
+
+The separate ``qualify.toml`` and three ``qualify_*.jsonl`` resources are
+authored synthetic inputs for the opt-in ``actseal demo --qualify`` workflow.
+Its calibration and verification sets are disjoint.
 """
 
 from __future__ import annotations

@@ -319,6 +319,70 @@ At the same candidate, all four ordinary Linux/macOS Python 3.12/3.13 jobs passe
 
 The recorded times are whole test-suite elapsed times, not latency benchmarks. The milestone verifies the tested native paths without establishing broader hardware support, model accuracy, calibration or deployment reliability. The canonical fault campaign and full task subsequently passed [REVIEW T30-03](../plan/reviews/T30-03.md) at `8b1efd6314b5b65ecb51f292a5bc767ff8b93ed7`, merged as `87d2cd1`; the review preserves the earlier native receipt because its relevant source/test bytes are unchanged. The native CLI receipt above and [release report](../plan/FINAL_REPORT.md) record later integration and publication checks. [CONTRACTS](../plan/CONTRACTS.md) is the historical v0.1 record of the unchanged provider semantics.
 
+## Recorded predictions (v2)
+
+`--provider recorded --responses predictions.jsonl --model NAME --revision REV`
+on `lock` and `verify` reads predictions without calling a model. Both identity
+strings are required user claims; the identity additionally binds the SHA-256
+of the exact predictions file. `--offline` is accepted. The experimental flag,
+endpoint and API-key options are rejected.
+
+Each LF-delimited JSONL row has exactly `case_id`, `choice`, `score`, and
+optionally `probabilities`:
+
+```json
+{"case_id":"case-001","choice":"allow","score":0.9}
+{"case_id":"case-002","choice":"allow","score":0.9,"probabilities":{"allow":0.9,"deny":0.1}}
+{"case_id":"case-003","failure_code":"timeout"}
+```
+
+The failure form accepts an existing Actseal failure code. Unknown row fields
+and duplicate case IDs are rejected. Answer captures retain `type: "choice"`,
+the supplied choice and score, and the optional supplied map as JSON data;
+replay normalizes that captured body without importing the adapter. The
+normalizer rejects missing, boolean, nonnumeric, nonfinite or out-of-range
+scores; it never repairs a body into an answer. Unknown labels use the existing
+unknown-choice DENY path. If supplied, the map must contain exactly the question
+labels, each finite and within [0, 1], with total mass within `1e-12` of 1 and
+the selected entry exactly equal to the score. Gating always uses the raw score,
+never a renormalized value or diagnostic confidence. A score-only answer has an
+empty probability tuple; no map is fabricated.
+
+Every capture carries **`recorded: provider faults not tested`**. All six
+canonical synthetic fault checks still run locally through normalization and
+policy, using recorded-shaped bodies. They test Actseal's handling of captured
+faults, not the upstream model's transport or fault behavior. Assessment adds
+`scope.recorded_provider_faults_not_tested`, surfaced in replay's existing
+`notes` field as the same warning. Status, counts and bounds are preserved.
+Predictions and identity strings are supplied evidence, not authenticated model
+execution or proof that labels were withheld.
+
+## Configurable decision API (v2, PROVISIONAL)
+
+Use `--provider decision-api --experimental-provider --endpoint URL --model NAME
+--revision REV [--api-key-env NAME]` on `lock` and `verify`. Python callers use
+`actseal.experimental.providers.decision_api.DecisionAPIModel` with keyword
+arguments `endpoint`, `model`, `revision`, optional `api_key_env=None`, and
+`offline=False`. Endpoint, model and revision are locked identity inputs;
+the endpoint occupies `ModelIdentity.runtime["endpoint"]`. The revision is a
+required user claim, not a server attestation.
+
+Endpoints accept HTTPS, or HTTP only for literal `localhost`, `127.0.0.1` or
+`[::1]` (with optional port). Userinfo, query strings, fragments, whitespace
+and non-ASCII URL text are rejected. Supply the full endpoint path. An API key
+is optional; `--api-key-env` names an environment variable, never a key. If the
+option is supplied, that variable must contain a valid nonempty key. If absent,
+the adapter represents the key as `None`, sends no Authorization header and
+does not read a key variable. No key is required for loopback.
+
+The adapter reuses Jev's transport, wire format, size limits, single attempt,
+timeout and status mappings, credential-echo guard, and no-redirect/no-retry
+behavior. Normalization applies the existing Jev envelope and distribution
+rules, matching the response model to the locked model for this profile only.
+Jev keeps its fixed endpoint and model behavior. `--responses` and `--offline`
+are rejected. This interface is PROVISIONAL; no live-server compatibility or
+upstream fault coverage is established by mocked transport tests.
+
 ## Jev: PROVISIONAL experimental provider, explicit opt-in only
 
 No proprietary provider is required in 1.x: the stable providers are `fixture`

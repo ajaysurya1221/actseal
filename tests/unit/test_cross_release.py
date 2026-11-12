@@ -1,14 +1,17 @@
 """Cross-release replay against evidence produced by a genuinely different source tree.
 
 A second copy of the ``actseal`` package is written under the pytest temporary
-directory with only its ``__version__`` string changed, which is exactly the
-release-bump situation the v1.0 compatibility model exists for. Its
-implementation fingerprint therefore differs from the running tree's. Evidence
-is produced by running the real CLI inside that copy in a child interpreter, and
-then replayed by the running tree (and vice versa) under every registry
-condition. No fingerprint is monkeypatched: only the registry a verifier trusts
-is varied, in-process through the loader's path and in the child through the
-packaged registry file of the copied tree.
+directory, with its ``__version__`` string changed (plan/v2 M2: a version-only
+edit no longer moves the fingerprint, since ``__init__.py`` is one of
+``EXCLUDED_FINGERPRINT_FILES``; see ``test_version_only_bump_leaves_the_running_
+fingerprint_unchanged`` below) and, to actually simulate a different reviewed
+source tree, a trailing comment appended to a hashed, non-excluded file
+(``errors.py``). Its implementation fingerprint therefore differs from the
+running tree's. Evidence is produced by running the real CLI inside that copy
+in a child interpreter, and then replayed by the running tree (and vice versa)
+under every registry condition. No fingerprint is monkeypatched: only the
+registry a verifier trusts is varied, in-process through the loader's path and
+in the child through the packaged registry file of the copied tree.
 """
 
 from __future__ import annotations
@@ -144,7 +147,13 @@ def verify_argv(lock: Path, out: Path) -> list[str]:
 
 @pytest.fixture(scope="module")
 def other_tree(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """A copy of the package whose only source change is the version string."""
+    """A copy of the package with its version string changed and a genuine source edit.
+
+    The version-string edit alone (plan/v2 M2) no longer changes the fingerprint,
+    since ``__init__.py`` is excluded; the comment appended to ``errors.py`` (not
+    excluded, and without effect on any behaviour) is what actually makes this a
+    different reviewed source tree for the purposes of this module.
+    """
     root = tmp_path_factory.mktemp("other-release")
     shutil.copytree(PACKAGE, root / "actseal", ignore=shutil.ignore_patterns("__pycache__"))
     init = root / "actseal" / "__init__.py"
@@ -152,6 +161,11 @@ def other_tree(tmp_path_factory: pytest.TempPathFactory) -> Path:
     assert len(VERSION_LINE.findall(text)) == 1
     init.write_text(
         VERSION_LINE.sub('__version__ = "0.0.0+cross-release-test"', text), encoding="utf-8"
+    )
+    errors_py = root / "actseal" / "errors.py"
+    errors_py.write_text(
+        errors_py.read_text(encoding="utf-8") + "\n# cross-release test marker\n",
+        encoding="utf-8",
     )
     return root
 
@@ -194,6 +208,28 @@ def point_registry_at(
 # --------------------------------------------------------------------------- #
 # Fingerprints
 # --------------------------------------------------------------------------- #
+
+
+def test_version_only_bump_leaves_the_running_fingerprint_unchanged(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """plan/v2 M2: a version bump (or any edit confined to ``EXCLUDED_FINGERPRINT_FILES``)
+
+    no longer breaks replay of older evidence, because it no longer moves the
+    fingerprint. This is the narrowing's motivating fix, checked end to end
+    through the real CLI in a child interpreter, not just over ``_fingerprint_tree``.
+    """
+    root = tmp_path_factory.mktemp("version-only-release")
+    shutil.copytree(PACKAGE, root / "actseal", ignore=shutil.ignore_patterns("__pycache__"))
+    init = root / "actseal" / "__init__.py"
+    text = init.read_text(encoding="utf-8")
+    assert len(VERSION_LINE.findall(text)) == 1
+    init.write_text(
+        VERSION_LINE.sub('__version__ = "0.0.0+version-only-test"', text), encoding="utf-8"
+    )
+    report = run_in_tree(root, [])
+    assert report["version"] == "0.0.0+version-only-test"
+    assert report["fingerprint"] == implementation_fingerprint()
 
 
 def test_version_bump_changes_the_fingerprint_but_the_registry_does_not(

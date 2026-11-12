@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "actseal"
-version = "1.0.1"
+version = "2.0.0"
 description = "Verify frozen categorical decision policies with risk/coverage bounds, provider-fault tests and offline replay."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -82,6 +82,7 @@ packages = ["src/actseal"]
 
 [tool.hatch.build.targets.sdist]
 only-include = [
+  "action.yml",
   "src/actseal",
   "tests",
   "tools/check_release.py",

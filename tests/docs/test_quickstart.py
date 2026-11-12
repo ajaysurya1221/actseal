@@ -9,6 +9,7 @@ of the promised behaviour, not a PyPI publication receipt (Tasks 20/14).
 from __future__ import annotations
 
 import json
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -104,3 +105,24 @@ def test_candidate_package_matches_the_documented_exits_and_outputs(task_tmpdir:
             assert (task_tmpdir / "actseal-demo" / name).exists(), name
     code, exists = _run(["demo", "--out", "./actseal-demo"], task_tmpdir)
     assert (code, exists["error"]) == (3, "destination already exists")
+
+
+def test_qualification_quickstart_commands_execute(task_tmpdir: Path) -> None:
+    """Execute the v2 checkout commands with the current interpreter, offline."""
+    blocks = fences(QUICKSTART, "bash")
+    block = next(text for text in blocks if "demo --qualify" in text)
+    lines = [line for line in block.strip().splitlines() if line and not line.startswith("#")]
+    assert len(lines) == 3
+    documents: list[dict[str, object]] = []
+    for line in lines:
+        argv = shlex.split(line)
+        assert argv[:6] == ["uv", "run", "--frozen", "python", "-m", "actseal"]
+        code, document = _run(argv[6:], task_tmpdir)
+        assert code == 0
+        documents.append(document)
+    assert [document["command"] for document in documents] == ["demo", "replay-selection", "replay"]
+    assert documents[0]["mode"] == "qualify"
+    assert documents[0]["demo_only"] is True
+    assert documents[0]["selection"] == documents[1]["selection"]
+    assert documents[0]["lock_sha256"] == documents[2]["lock_sha256"]
+    assert documents[2]["status"] == "PASS"

@@ -42,7 +42,7 @@ from actseal.serialization import (
     to_data,
 )
 
-__version__ = "1.0.1"
+__version__ = "2.0.0"
 
 __all__ = [
     "Action",

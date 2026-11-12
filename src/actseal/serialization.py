@@ -562,18 +562,46 @@ def from_data(record_type: type[T], value: object) -> T:
 # --------------------------------------------------------------------------- #
 
 
-def _fingerprint_tree(package_dir: Path, package_name: str) -> str:
-    """Hash every ``*.py`` under ``package_dir`` by relative path, without importing."""
+#: Top-level package files that hold no decision or replay semantics, so editing
+#: them cannot change what a lock or bundle means: ``__init__.py`` (version
+#: metadata and re-exports only), ``__main__.py`` (delegates to ``cli.main``),
+#: ``cli.py`` (argument parsing and output formatting; delegates every decision
+#: to :mod:`actseal.runner` and :mod:`actseal.replay`) and a future
+#: ``report.py`` (reserved for CLI report formatting, same rationale as
+#: ``cli.py``). Matched only at the top level of the package: a same-named file
+#: in a subpackage is still hashed. Every other ``*.py`` file, including new
+#: ones, is hashed by default (fail closed).
+EXCLUDED_FINGERPRINT_FILES: Final[frozenset[str]] = frozenset(
+    {"__init__.py", "__main__.py", "cli.py", "report.py"}
+)
+
+
+def _fingerprint_tree(
+    package_dir: Path, package_name: str, *, excluded_top_level: frozenset[str] = frozenset()
+) -> str:
+    """Hash every ``*.py`` under ``package_dir`` by relative path, without importing.
+
+    ``excluded_top_level`` names files skipped only when they sit directly in
+    ``package_dir`` (``relative.parts == (name,)``); a file of the same name in
+    a subpackage is still hashed.
+    """
     entries: dict[str, object] = {}
     for file in sorted(package_dir.rglob("*.py")):
         relative = file.relative_to(package_dir)
         if "__pycache__" in relative.parts or not file.is_file():
+            continue
+        if len(relative.parts) == 1 and relative.parts[0] in excluded_top_level:
             continue
         entries[f"{package_name}/{relative.as_posix()}"] = sha256_bytes(file.read_bytes())
     return sha256_bytes(canonical_json(entries))
 
 
 def implementation_fingerprint() -> str:
-    """Identity of the installed actseal sources: a hash over sorted path -> source hash."""
+    """Identity of the installed actseal sources: a hash over sorted path -> source hash.
+
+    Excludes :data:`EXCLUDED_FINGERPRINT_FILES` at the top level of the
+    package: none of them can change decision or replay semantics. Every other
+    ``*.py`` file, including a new one, is hashed (fail closed).
+    """
     package_dir = Path(__file__).resolve().parent
-    return _fingerprint_tree(package_dir, "actseal")
+    return _fingerprint_tree(package_dir, "actseal", excluded_top_level=EXCLUDED_FINGERPRINT_FILES)

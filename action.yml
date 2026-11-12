@@ -1,0 +1,218 @@
+name: Actseal
+description: Replayable risk and coverage evidence for categorical decision policies
+inputs:
+  mode:
+    description: Actseal command (qualify, verify, or replay)
+    required: true
+  args:
+    description: Command arguments, split as quoted words without shell expansion
+    required: true
+  version:
+    description: Exact Actseal release to install from PyPI
+    default: '2.0.0'
+  python-version:
+    description: Python version used for the isolated environment
+    default: '3.13'
+  report:
+    description: Render HTML, Markdown, and badge output and append the job summary
+    default: 'true'
+  upload-evidence:
+    description: Upload the command receipt, evidence files, and any rendered report
+    default: 'true'
+  source:
+    description: Install from pypi or explicitly from this action checkout
+    default: pypi
+outputs:
+  verdict:
+    description: PASS, BLOCK, INCONCLUSIVE, or ERROR
+    value: ${{ steps.execute.outputs.verdict }}
+  exit-code:
+    description: Actseal command exit code (0, 1, 2, or 3)
+    value: ${{ steps.execute.outputs.exit-code }}
+  evidence-path:
+    description: Absolute command output or replay directory, empty if unavailable
+    value: ${{ steps.execute.outputs.evidence-path }}
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      with:
+        version: '0.12.5'
+        python-version: ${{ inputs.python-version }}
+        activate-environment: true
+        venv-path: ${{ runner.temp }}/actseal-${{ github.action }}
+        no-project: true
+        enable-cache: false
+    - name: Install Actseal
+      shell: bash
+      env:
+        ACTSEAL_VERSION: ${{ inputs.version }}
+        ACTSEAL_SOURCE: ${{ inputs.source }}
+      run: |
+        python - <<'PY'
+        import os
+        import re
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        source = os.environ["ACTSEAL_SOURCE"]
+        version = os.environ["ACTSEAL_VERSION"]
+        if source == "pypi":
+            if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:(?:a|b|rc)[0-9]+)?", version):
+                raise SystemExit("Actseal version must be an exact release number")
+            package = "actseal==" + version
+        elif source == "checkout":
+            package = str(Path(os.environ["GITHUB_ACTION_PATH"]).resolve())
+        else:
+            raise SystemExit("Actseal source must be pypi or checkout")
+        subprocess.run(
+            ["uv", "pip", "install", "--python", sys.executable, "--no-deps",
+             "--index-url", "https://pypi.org/simple", package],
+            check=True,
+        )
+        PY
+    - name: Run Actseal
+      id: execute
+      shell: bash
+      env:
+        ACTSEAL_MODE: ${{ inputs.mode }}
+        ACTSEAL_ARGS: ${{ inputs.args }}
+        ACTSEAL_REPORT: ${{ inputs.report }}
+        ACTSEAL_UPLOAD: ${{ inputs.upload-evidence }}
+      run: |
+        python - <<'PY'
+        import json
+        import os
+        import shlex
+        import shutil
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+
+        statuses = {0: "PASS", 1: "BLOCK", 2: "INCONCLUSIVE", 3: "ERROR"}
+        artifact = Path(tempfile.mkdtemp(prefix="actseal-artifact-", dir=os.environ["RUNNER_TEMP"]))
+        code, status, evidence = 3, "ERROR", ""
+        receipt = {"status": "ERROR", "exit_code": 3, "error": "action.invalid_input"}
+        try:
+            mode = os.environ["ACTSEAL_MODE"]
+            raw_args = os.environ["ACTSEAL_ARGS"]
+            if mode not in ("qualify", "verify", "replay") or any(c in raw_args for c in "\r\n\0"):
+                raise ValueError("action.invalid_input")
+            if any(os.environ[name] not in ("true", "false")
+                   for name in ("ACTSEAL_REPORT", "ACTSEAL_UPLOAD")):
+                raise ValueError("action.invalid_input")
+            args = shlex.split(raw_args)
+            completed = subprocess.run(
+                [sys.executable, "-I", "-m", "actseal", mode, *args, "--json"],
+                capture_output=True, text=True, check=False,
+            )
+            value = json.loads(completed.stdout)
+            if (type(value) is not dict or completed.returncode not in statuses
+                    or type(value.get("exit_code")) is not int
+                    or value["exit_code"] != completed.returncode
+                    or value.get("schema_version") != 1 or value.get("command") != mode
+                    or value.get("status") != statuses[completed.returncode]):
+                raise ValueError("action.invalid_receipt")
+            code, status, receipt = completed.returncode, value["status"], value
+            path = value.get("bundle" if mode == "replay" else "out")
+            if path is None and mode != "replay":
+                # Setup failure may still have produced a partial calibration directory.
+                for index, argument in enumerate(args):
+                    if argument == "--out" and index + 1 < len(args):
+                        path = args[index + 1]
+                    elif argument.startswith("--out="):
+                        path = argument.split("=", 1)[1]
+            if path is not None:
+                if not isinstance(path, str) or not path or any(c in path for c in "\r\n\0"):
+                    raise ValueError("action.invalid_evidence_path")
+                evidence = str(Path(path).absolute())
+        except (OSError, ValueError, TypeError):
+            code, status, evidence = 3, "ERROR", ""
+            receipt = {"status": "ERROR", "exit_code": 3, "error": "action.invalid_input_or_receipt"}
+
+        # Publish the primary result before artifact I/O so staging cannot replace it.
+        with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+            output.write(f"exit-code={code}\nverdict={status}\nevidence-path={evidence}\n")
+            output.write(f"artifact-path={artifact}\nartifact-name={artifact.name}\n")
+        # Never recursively upload an arbitrary caller directory or follow a symlink.
+        # Keep partial diagnostic evidence while excluding unrelated workspace files.
+        try:
+            (artifact / "receipt.json").write_text(json.dumps(receipt, sort_keys=True) + "\n", encoding="utf-8")
+            if evidence:
+                source = Path(evidence)
+                bundle_files = ("lock.json", "calibration.jsonl", "verification.jsonl", "records.jsonl",
+                                "faults.jsonl", "verdict.json", "manifest.json")
+                sidecar_files = ("selection_plan.json", "calibration.jsonl", "records.jsonl",
+                                 "selection.json", "manifest.json")
+                groups = [("", bundle_files)]
+                if mode == "qualify":
+                    groups = [("", ("lock.json", "contract.toml", "qualification.json")),
+                              ("evidence", bundle_files), ("calibration", sidecar_files)]
+                if source.is_dir() and not source.is_symlink():
+                    for relative, names in groups:
+                        origin = source / relative
+                        if origin.is_symlink():
+                            continue
+                        for name in names:
+                            path = origin / name
+                            if path.is_file() and not path.is_symlink():
+                                destination = artifact / "evidence" / relative / name
+                                destination.parent.mkdir(parents=True, exist_ok=True)
+                                shutil.copyfile(path, destination)
+        except OSError:
+            print("::warning::Actseal evidence staging failed; artifact may be incomplete; original command exit preserved")
+        print(f"Actseal command: {status} (exit {code})")
+        PY
+    - name: Render report
+      id: report
+      if: ${{ always() && inputs.report == 'true' && steps.execute.outputs.artifact-path != '' }}
+      shell: bash
+      env:
+        ACTSEAL_EVIDENCE_PATH: ${{ steps.execute.outputs.evidence-path }}
+        ACTSEAL_ARTIFACT_PATH: ${{ steps.execute.outputs.artifact-path }}
+      run: |
+        python - <<'PY'
+        import os
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        evidence = os.environ["ACTSEAL_EVIDENCE_PATH"]
+        output = Path(os.environ["ACTSEAL_ARTIFACT_PATH"]) / "report"
+        code = 3
+        if evidence:
+            result = subprocess.run(
+                [sys.executable, "-I", "-m", "actseal", "report", evidence, "--out", str(output)],
+                capture_output=True, text=True, check=False,
+            )
+            code = result.returncode
+        with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as summary:
+            if code == 0 and (output / "report.md").is_file():
+                summary.write((output / "report.md").read_text(encoding="utf-8") + "\n")
+            else:
+                code = 3
+                summary.write("## Report unavailable\n\nOffline report generation failed; inspect the command receipt and retained evidence.\n")
+                print("::warning::Actseal report generation failed; the original command exit is preserved")
+        with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as result:
+            result.write(f"report-exit-code={code}\n")
+        PY
+    - name: Upload evidence
+      if: ${{ always() && inputs.upload-evidence == 'true' && steps.execute.outputs.artifact-path != '' }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ${{ steps.execute.outputs.artifact-name }}
+        path: ${{ steps.execute.outputs.artifact-path }}
+        if-no-files-found: error
+    - name: Return verdict
+      if: ${{ always() }}
+      shell: bash
+      env:
+        ACTSEAL_EXIT_CODE: ${{ steps.execute.outputs.exit-code }}
+      run: |
+        case "$ACTSEAL_EXIT_CODE" in
+          0|1|2|3) exit "$ACTSEAL_EXIT_CODE" ;;
+          *) exit 3 ;;
+        esac

@@ -1,7 +1,7 @@
 """Published wire schemas (docs/schemas) agree with the frozen records and version constants.
 
-No JSON Schema validator is a runtime or development dependency, so these
-tests check the parts that matter for freezing: every schema file is strict
+JSON Schema validation is a development-only dependency. These tests check
+the parts that matter for freezing: every schema file is strict
 JSON with draft 2020-12 metadata, every `required`/`properties` set equals the
 corresponding record's field set, every version `const` equals the exported
 constant, and real documents written by the product have exactly the key sets
@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 from test_evidence import make_bundle
 
 from actseal.cli import RECEIPT_SCHEMA_VERSION, main
@@ -66,6 +67,15 @@ RELEASE_FILES = (
     "build-receipt.schema.json",
     "postpublish-receipt.schema.json",
     "release-receipt.schema.json",
+)
+
+# Separately versioned, opt-in M5 formats; the schema-2 bundle stays unchanged.
+QUALIFICATION_FILES = (
+    "selection-plan.schema.json",
+    "selection.schema.json",
+    "calibration-manifest.schema.json",
+    "qualification.schema.json",
+    "qualification-cli-receipt.schema.json",
 )
 
 
@@ -120,10 +130,10 @@ def test_schema_files_are_strict_draft_2020_12_documents(name: str) -> None:
 
 def test_schema_readme_lists_every_file() -> None:
     readme = (SCHEMAS / "README.md").read_text(encoding="utf-8")
-    for name in (*FILES, *RELEASE_FILES):
+    for name in (*FILES, *RELEASE_FILES, *QUALIFICATION_FILES):
         assert f"[{name}]({name})" in readme, name
     assert sorted(path.name for path in SCHEMAS.iterdir()) == sorted(
-        [*FILES, *RELEASE_FILES, "README.md"]
+        [*FILES, *RELEASE_FILES, *QUALIFICATION_FILES, "README.md"]
     )
 
 
@@ -174,6 +184,36 @@ def test_record_schemas_match_the_record_fields() -> None:
     verdict = load("verdict.schema.json")
     check_object(verdict, fields(Verdict))
     check_object(defs(verdict, "Interval"), fields(Interval))
+
+
+@pytest.mark.parametrize("name", ["decision-record.schema.json", "fault-result.schema.json"])
+def test_answer_schema_accepts_empty_or_full_probability_maps_never_singletons(name: str) -> None:
+    schema = load(name)
+    validator = Draft202012Validator({"$ref": "#/$defs/ChoiceAnswer", "$defs": schema["$defs"]})
+    answer: dict[str, object] = {
+        "kind": "answer",
+        "choice": "allow",
+        "probabilities": [],
+        "selected_probability": 0.9,
+        "provider_confidence": None,
+        "warnings": [],
+        "fallback_used": False,
+    }
+    assert validator.is_valid(answer)
+    answer["probabilities"] = [["allow", 0.9]]
+    assert not validator.is_valid(answer)
+    answer["probabilities"] = [["allow", 0.9], ["deny", 0.1]]
+    assert validator.is_valid(answer)
+    answer["probabilities"] = [[str(index), 1 / 17] for index in range(17)]
+    assert not validator.is_valid(answer)
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["captured-outcome.schema.json", "decision-record.schema.json", "fault-result.schema.json"],
+)
+def test_every_capture_schema_admits_exactly_the_registered_provider_names(name: str) -> None:
+    assert strings(prop(defs(load(name), "ModelIdentity"), "provider")["enum"]) == set(PROVIDERS)
 
 
 def test_registry_schema_matches_the_loader_rules() -> None:

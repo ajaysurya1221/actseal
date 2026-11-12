@@ -13,7 +13,17 @@ from docs.conftest import DOCS, fences, table_rows
 
 CLI_DOC = DOCS / "cli.md"
 PACKAGED_INPUTS = Path(__file__).resolve().parents[2] / "src" / "actseal" / "demo_data"
-COMMANDS = ("lock", "verify", "replay", "demo")
+COMMANDS = (
+    "lock",
+    "verify",
+    "replay",
+    "demo",
+    "plan",
+    "calibrate",
+    "qualify",
+    "replay-selection",
+    "report",
+)
 VERDICT_FIELDS = {
     "status",
     "reasons",
@@ -222,7 +232,7 @@ def test_documented_experimental_flag_restrictions_match_the_cli(
     text = CLI_DOC.read_text(encoding="utf-8")
     rows = {row[0].strip("`"): row for row in table_rows(text, "Command")}
     for command in ("lock", "verify"):
-        assert "{fixture,laya,jev}" in rows[command][1], command
+        assert "{fixture,laya,recorded,jev,decision-api}" in rows[command][1], command
         assert "--experimental-provider" in rows[command][2], command
         assert "PROVISIONAL" in rows[command][2], command
     for command in ("replay", "demo", "root"):
@@ -230,7 +240,7 @@ def test_documented_experimental_flag_restrictions_match_the_cli(
     prose = re.sub(r"\s+", " ", text)
     for phrase in (
         "`--provider jev --experimental-provider`",
-        "stable** provider choices are `fixture` and `laya`",
+        "stable** provider choices are `fixture`, `laya` and (in v2) `recorded`",
         "Without the flag the command is a usage error",
         "`replay` and `demo` do not accept `--experimental-provider`",
         "`jev` with `--offline` is a setup error",

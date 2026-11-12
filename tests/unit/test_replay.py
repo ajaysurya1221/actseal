@@ -35,13 +35,16 @@ from test_evidence import (
     nested,
     read_files,
     record_for,
+    record_from_capture,
     records_for,
+    request_for,
     rewrite,
     rows_bytes,
     rows_of,
     verification_jsonl,
 )
 
+from actseal.adapters.recorded import RecordedModel
 from actseal.assessment import (
     REASON_CONTRACT_SATISFIED,
     REASON_EVIDENCE_INSUFFICIENT,
@@ -891,7 +894,8 @@ import socket
 import sys
 
 BLOCKED = (
-    "actseal.adapters", "laya", "torch", "transformers", "huggingface_hub", "safetensors",
+    "actseal.adapters", "actseal.experimental.providers", "laya", "torch", "transformers",
+    "huggingface_hub", "safetensors",
     "numpy", "scipy", "pickle", "shelve", "marshal_io", "subprocess", "multiprocessing",
     "urllib.request", "urllib.error", "http", "ssl", "importlib.metadata", "runpy",
     "code", "codeop", "ctypes.util", "ctypes.macholib",
@@ -992,9 +996,50 @@ def _run_isolated(out: Path, marker: Path) -> Mapping[str, object]:
     return report
 
 
-def test_replay_in_a_subprocess_with_providers_and_network_denied(tmp_path: Path) -> None:
+def _recorded_payload_bundle(tmp_path: Path, marker: Path) -> EvidenceBundle:
+    original = _payload_bundle(tmp_path, marker)
+    rows: list[dict[str, object]] = [
+        {"case_id": case.case_id, "choice": case.expected_label, "score": 0.95}
+        for case in original.lock.verification_cases
+    ]
+    rows[1]["score"] = True
+    rows[2]["score"] = f"__import__('os'); {marker}"
+    responses = tmp_path / "recorded.jsonl"
+    responses.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    model = RecordedModel(responses, model="external-choice", revision="recorded-isolation")
+    try:
+        lock = make_lock(
+            identity=model.identity(),
+            calibration=original.calibration_jsonl,
+            verification=original.verification_jsonl,
+        )
+        records = tuple(
+            record_from_capture(lock, case, model.decide(request_for(lock, case), timeout_s=30.0))
+            for case in lock.verification_cases
+        )
+        bundle = make_bundle(
+            lock,
+            records,
+            calibration=original.calibration_jsonl,
+            verification=original.verification_jsonl,
+        )
+    finally:
+        model.close()
+    assert bundle.verdict.status == "INCONCLUSIVE"
+    assert (bundle.verdict.total, bundle.verdict.accepted) == (6, 4)
+    return bundle
+
+
+@pytest.mark.parametrize("provider", ["fixture", "recorded"])
+def test_replay_in_a_subprocess_with_providers_and_network_denied(
+    tmp_path: Path, provider: str
+) -> None:
     marker = tmp_path / "pwned.marker"
-    bundle = _payload_bundle(tmp_path, marker)
+    bundle = (
+        _payload_bundle(tmp_path, marker)
+        if provider == "fixture"
+        else _recorded_payload_bundle(tmp_path, marker)
+    )
     out = write_bundle(bundle, tmp_path / "run")
     report = _run_isolated(out, marker)
     assert report["status"] == "INCONCLUSIVE"
@@ -1028,6 +1073,7 @@ def test_replay_module_imports_no_adapter_or_native_module() -> None:
     script = (
         "import sys\n"
         "import actseal.replay\n"
+        "import actseal.qualification\n"
         "loaded = sorted(name for name in sys.modules if name.split('.')[0] in "
         "('laya', 'torch', 'transformers', 'huggingface_hub', 'safetensors', 'numpy', 'scipy', "
         "'pickle', 'subprocess', 'multiprocessing') "

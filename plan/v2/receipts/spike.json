@@ -1,0 +1,748 @@
+{
+  "task": "M0",
+  "schema_version": 1,
+  "created_utc": "2026-11-12T21:14:09.138747+00:00",
+  "result": "resource_blocked; source research and local data-only probes completed",
+  "review_status": "executor report; orchestrator review pending; no independent ACCEPT",
+  "repository_head_observed": "d66879f4701a81112453cf587416a43d47d2b993",
+  "checkout_note": "Shared checkout contained other agents changes before and during task. Snapshot hashes identify probe source; no claim that HEAD alone represents tested source.",
+  "scratch_directory": "/private/tmp/actseal-m0-eUYpXc",
+  "owned_outputs": [
+    "plan/v2/receipts/spike.json",
+    "plan/v2/reports/M0.md"
+  ],
+  "resource_rules": {
+    "hardware": "Apple M5 Pro, 24 GB per task packet; sysctl verification denied",
+    "minimum_free_memory_bytes": 10000000000,
+    "per_model_download_cap_bytes": 20000000000,
+    "total_download_cap_bytes": 60000000000,
+    "model_and_server_bytes_downloaded": 0,
+    "dataset_bytes_downloaded": 0,
+    "spike_models_loaded": 0,
+    "inference_requests": 0,
+    "ollama_commands_or_requests": 0,
+    "new_servers_started": 0,
+    "credentials_read": false,
+    "commits_created": 0,
+    "priority_request": 10,
+    "observed_metadata_process_nice": 0,
+    "priority_gate_passed": false
+  },
+  "memory_checks": [
+    {
+      "source": "initial vm_stat",
+      "page_size_bytes": 16384,
+      "free_pages": 32020,
+      "free_bytes": 524615680,
+      "free_plus_inactive_plus_speculative_bytes": 3716546560,
+      "load_allowed": false
+    },
+    {
+      "command": "/usr/bin/vm_stat",
+      "exit_code": 0,
+      "page_size_bytes": 16384,
+      "pages": {
+        "Pages free": 33276,
+        "Pages active": 198284,
+        "Pages inactive": 181656,
+        "Pages speculative": 14891,
+        "Pages throttled": 0,
+        "Pages wired down": 462272,
+        "Pages purgeable": 113,
+        "\"Translation faults\"": 152009008,
+        "Pages copy-on-write": 6386008,
+        "Pages zero filled": 129391866,
+        "Pages reactivated": 13115089,
+        "Pages purged": 1498159,
+        "File-backed pages": 166304,
+        "Anonymous pages": 228527,
+        "Pages stored in compressor": 699159,
+        "Pages occupied by compressor": 623772,
+        "Decompressions": 28925926,
+        "Compressions": 36630555,
+        "Pageins": 8563203,
+        "Pageouts": 3872,
+        "Swapins": 2905272,
+        "Swapouts": 7203805,
+        "Pages tagged": 104485,
+        "Pages tagged resident": 75135,
+        "Pages tagged compressed": 29350,
+        "Pages tag-storage": 49152,
+        "Pages tag-storage holding tags": 3919,
+        "Pages tag-storage free": 218,
+        "Pages tag-storage non-tag pageable": 44873,
+        "Pages tag-storage non-tag wired": 93,
+        "Bytes of compressed tags": 4480256,
+        "Tagged compressions": 499189,
+        "Tagged decompressions": 443688
+      },
+      "free_bytes": 545193984,
+      "free_plus_inactive_plus_speculative_bytes": 3765420032,
+      "minimum_free_bytes": 10000000000,
+      "load_allowed": false
+    },
+    {
+      "source": "final /usr/bin/vm_stat (exit 0)",
+      "page_size_bytes": 16384,
+      "free_pages": 82743,
+      "free_bytes": 1355661312,
+      "free_plus_inactive_plus_speculative_bytes": 4390158336,
+      "load_allowed": false
+    }
+  ],
+  "denied_operations": [
+    {
+      "command": "/usr/sbin/sysctl hw.memsize",
+      "message": "sysctl: sysctl fmt -1 1024 1: Operation not permitted",
+      "exit_code": null,
+      "exit_note": "Individual exit not captured in initial multi-command shell; enclosing shell exited 0. Not rerun.",
+      "retried": false,
+      "bypassed": false
+    },
+    {
+      "command": "/usr/bin/nice -n 10 /Users/ajay/Developer/actseal/.venv/bin/python -I -B /private/tmp/actseal-m0-eUYpXc/preflight.py",
+      "message": "nice: setpriority: Operation not permitted",
+      "exit_code": 0,
+      "exit_note": "nice continued the read-only metadata/hash script at priority 0; script recorded actual priority. No inference ran. No priority retry or workaround.",
+      "retried": false,
+      "bypassed": false
+    }
+  ],
+  "models": [
+    {
+      "id": "convaiinnovations/laya-typed-decisions",
+      "name": "Laya typed decisions (pinned native CPU)",
+      "source_url": "https://huggingface.co/convaiinnovations/laya-typed-decisions",
+      "licence": "Apache-2.0",
+      "licence_url": "https://huggingface.co/convaiinnovations/laya-typed-decisions",
+      "status": "skipped",
+      "status_scope": "local inference execution",
+      "reason": "Skipped before model load: free memory below 10 GB and nice setpriority denied. Denial was not retried or bypassed.",
+      "download": {
+        "estimated_bytes": null,
+        "exact_bytes": 846195716,
+        "downloaded_bytes_this_spike": 0,
+        "size_basis": "Five already-cached pinned files statted and SHA-256 verified; no download",
+        "weight_file_bytes": 842609220
+      },
+      "loads_in_24_gb": null,
+      "load_attempts": 0,
+      "throughput_cases_per_minute": null,
+      "peak_memory_bytes": null,
+      "determinism": {
+        "requested_identical_requests": 20,
+        "completed_requests": 0,
+        "byte_identical": null,
+        "reason": "Skipped before model load: free memory below 10 GB and nice setpriority denied. Denial was not retried or bypassed."
+      },
+      "jev_compatibility": {
+        "live_tested": false,
+        "request_body_sent": false,
+        "normalizer_accepted_live_response": null,
+        "reason": "Native Laya adapter is the intended route; Jev serving not tested."
+      },
+      "revision": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+      "artifact_verification": [
+        {
+          "path": "encoder/config.json",
+          "expected_sha256": "5268d24ad3b77c8151de5dcb0762ba4391619aad9ab0bda33e36fb083cfeae6d",
+          "exists": true,
+          "bytes": 2084,
+          "sha256": "5268d24ad3b77c8151de5dcb0762ba4391619aad9ab0bda33e36fb083cfeae6d",
+          "matches": true
+        },
+        {
+          "path": "model.safetensors",
+          "expected_sha256": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+          "exists": true,
+          "bytes": 842609220,
+          "sha256": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+          "matches": true
+        },
+        {
+          "path": "rl_agent_config.json",
+          "expected_sha256": "ebf0cd524d92342a6be5e48e9fca3d7c2babfb5a56ccd79d2171ef5d8c7f7be8",
+          "exists": true,
+          "bytes": 847,
+          "sha256": "ebf0cd524d92342a6be5e48e9fca3d7c2babfb5a56ccd79d2171ef5d8c7f7be8",
+          "matches": true
+        },
+        {
+          "path": "tokenizer/tokenizer.json",
+          "expected_sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+          "exists": true,
+          "bytes": 3583228,
+          "sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+          "matches": true
+        },
+        {
+          "path": "tokenizer/tokenizer_config.json",
+          "expected_sha256": "08d4cf3ac4dca381759441b85b91a6d40e688471dcd33d15d6649eb0a9a854d1",
+          "exists": true,
+          "bytes": 337,
+          "sha256": "08d4cf3ac4dca381759441b85b91a6d40e688471dcd33d15d6649eb0a9a854d1",
+          "matches": true
+        }
+      ],
+      "installed_native_packages": {
+        "laya": null,
+        "torch": null,
+        "transformers": null,
+        "huggingface_hub": null,
+        "safetensors": null,
+        "numpy": null
+      },
+      "native_stack": {
+        "laya": "0.3.28",
+        "torch": "2.14.1",
+        "transformers": "5.18.0",
+        "huggingface_hub": "1.33.0",
+        "safetensors": "0.8.0",
+        "numpy": "2.5.3",
+        "device": "cpu",
+        "dtype": "float32",
+        "threads": 4,
+        "backend": "eager",
+        "compile": false,
+        "fast": false,
+        "command_status": "uv run --frozen --extra laya inference command not attempted because load/priority gates failed; native extra absent from inspected repository .venv"
+      },
+      "licence_notes": "Current publisher card declares Apache-2.0; pinned card URL was inaccessible through web tool, so pinned licence text was not freshly verified. Code licence separately verified.",
+      "code_licence_url": "https://github.com/NandhaKishorM/laya/blob/main/LICENSE",
+      "limitations": [
+        "Specialist checkpoint; general routing quality is unmeasured.",
+        "Historical native receipts are not current runtime evidence and were not used for throughput or memory figures."
+      ]
+    },
+    {
+      "id": "StrandsAgents/strands-decider-2B-qwen3.5-v1-2610",
+      "name": "Strands Decider 2B",
+      "source_url": "https://huggingface.co/StrandsAgents/strands-decider-2B-qwen3.5-v1-2610",
+      "licence": "Apache-2.0",
+      "licence_url": "https://huggingface.co/StrandsAgents/strands-decider-2B-qwen3.5-v1-2610/blob/main/LICENSE.md",
+      "status": "skipped",
+      "status_scope": "local inference execution",
+      "reason": "Skipped before model load: free memory below 10 GB and nice setpriority denied. Denial was not retried or bypassed.",
+      "download": {
+        "estimated_bytes": 4805000000,
+        "exact_bytes": null,
+        "downloaded_bytes_this_spike": 0,
+        "size_basis": "Rounded publisher Hugging Face file-tree display; runtime packages excluded",
+        "components": [
+          {
+            "id": "StrandsAgents/strands-decider-2B-qwen3.5-v1-2610",
+            "estimated_bytes": 235000000,
+            "source_url": "https://huggingface.co/StrandsAgents/strands-decider-2B-qwen3.5-v1-2610/tree/main"
+          },
+          {
+            "id": "Qwen/Qwen3.5-2B-Base",
+            "estimated_bytes": 4570000000,
+            "source_url": "https://huggingface.co/Qwen/Qwen3.5-2B-Base/tree/main"
+          }
+        ]
+      },
+      "loads_in_24_gb": null,
+      "load_attempts": 0,
+      "throughput_cases_per_minute": null,
+      "peak_memory_bytes": null,
+      "determinism": {
+        "requested_identical_requests": 20,
+        "completed_requests": 0,
+        "byte_identical": null,
+        "reason": "Skipped before model load: free memory below 10 GB and nice setpriority denied. Denial was not retried or bypassed.",
+        "source_warning": "Variable latency_ms prevents assuming byte identity of full HTTP response; no repeat-request experiment performed."
+      },
+      "jev_compatibility": {
+        "live_tested": false,
+        "request_body_sent": false,
+        "normalizer_accepted_live_response": null,
+        "source_assessment": "Server returns checkpoint model name and adds latency_ms. Current frozen Jev normalizer rejects the model identity and exact envelope. Synthetic checks reproduce rejection; no live response was obtained.",
+        "source_url": "https://raw.githubusercontent.com/strands-labs/strands-decider/main/src/strands_decider/server.py",
+        "documentation_url": "https://raw.githubusercontent.com/strands-labs/strands-decider/main/docs/inference.md"
+      },
+      "limitations": [
+        "235 MB is the adapter only; base weights are also required.",
+        "Apple MPS/MLX support is documented, not measured here.",
+        "Base model licence and all transitive runtime licences require exact-revision verification before use; no weights downloaded."
+      ]
+    },
+    {
+      "id": "Cloudflare/clef-flash",
+      "name": "Clef Flash 9B",
+      "source_url": "https://huggingface.co/Cloudflare/clef-flash",
+      "licence": "Apache-2.0",
+      "licence_url": "https://huggingface.co/Cloudflare/clef-flash/raw/main/README.md",
+      "status": "skipped",
+      "status_scope": "local inference execution",
+      "reason": "Skipped before model load: free memory below 10 GB and nice setpriority denied. Denial was not retried or bypassed.",
+      "download": {
+        "estimated_bytes": 19100000000,
+        "exact_bytes": null,
+        "downloaded_bytes_this_spike": 0,
+        "size_basis": "Rounded publisher Hugging Face file-tree display; runtime packages excluded",
+        "size_source_url": "https://huggingface.co/Cloudflare/clef-flash/tree/main"
+      },
+      "loads_in_24_gb": null,
+      "load_attempts": 0,
+      "throughput_cases_per_minute": null,
+      "peak_memory_bytes": null,
+      "determinism": {
+        "requested_identical_requests": 20,
+        "completed_requests": 0,
+        "byte_identical": null,
+        "reason": "Skipped before model load: free memory below 10 GB and nice setpriority denied. Denial was not retried or bypassed."
+      },
+      "jev_compatibility": {
+        "live_tested": false,
+        "request_body_sent": false,
+        "normalizer_accepted_live_response": null,
+        "source_assessment": "Ollaya documents Clef Flash support; request uses fixed Jev model alias while server returns actual checkpoint identity. Unchanged request/normalizer not proven compatible."
+      },
+      "limitations": [
+        "The 9B candidate is Clef Flash, not Clef 27B.",
+        "19.1 GB is rounded repository metadata; exact bounded manifest must precede any future download.",
+        "Vendor CUDA/H200 examples do not establish Apple compatibility or 24 GB fit."
+      ]
+    },
+    {
+      "id": "Cloudflare/clef",
+      "name": "Clef 27B",
+      "source_url": "https://huggingface.co/Cloudflare/clef",
+      "licence": "Apache-2.0",
+      "licence_url": "https://huggingface.co/Cloudflare/clef/blob/main/LICENSE",
+      "status": "skipped",
+      "status_scope": "local inference execution",
+      "reason": "Skipped: publisher tree displays 55 GB, exceeding 20 GB/model download cap. Also blocked by memory and priority gates.",
+      "download": {
+        "estimated_bytes": 55000000000,
+        "exact_bytes": null,
+        "downloaded_bytes_this_spike": 0,
+        "size_basis": "Rounded publisher Hugging Face file-tree display; runtime packages excluded",
+        "size_source_url": "https://huggingface.co/Cloudflare/clef/tree/main"
+      },
+      "loads_in_24_gb": null,
+      "load_attempts": 0,
+      "throughput_cases_per_minute": null,
+      "peak_memory_bytes": null,
+      "determinism": {
+        "requested_identical_requests": 20,
+        "completed_requests": 0,
+        "byte_identical": null,
+        "reason": "Skipped before model load: free memory below 10 GB and nice setpriority denied. Denial was not retried or bypassed."
+      },
+      "jev_compatibility": {
+        "live_tested": false,
+        "request_body_sent": false,
+        "normalizer_accepted_live_response": null
+      }
+    }
+  ],
+  "servers": [
+    {
+      "id": "ollaya",
+      "source_url": "https://github.com/ollaya-dev/ollaya",
+      "licence": "Apache-2.0",
+      "licence_url": "https://raw.githubusercontent.com/ollaya-dev/ollaya/main/LICENSE",
+      "status": "skipped",
+      "reason": "Skipped before model load: free memory below 10 GB and nice setpriority denied. Denial was not retried or bypassed.",
+      "source_assessment": "Documents Apple support and Clef Flash; distinct server, never invoked. Canonical checkpoint response model differs from required Jev marker; default Jev aliases are not installed models.",
+      "wire_spec_url": "https://raw.githubusercontent.com/ollaya-dev/ollaya/main/docs/api.md"
+    },
+    {
+      "id": "strands-decider-server",
+      "source_url": "https://github.com/strands-labs/strands-decider",
+      "status": "skipped",
+      "reason": "Skipped before model load: free memory below 10 GB and nice setpriority denied. Denial was not retried or bypassed.",
+      "endpoint_documented": "/v1/systemone",
+      "live_endpoint_verified": false
+    }
+  ],
+  "datasets": [
+    {
+      "id": "snips-custom-intents-7",
+      "source_url": "https://github.com/sonos/nlu-benchmark/tree/master/2017-06-custom-intent-engines",
+      "licence": "CC0-1.0",
+      "licence_url": "https://github.com/sonos/nlu-benchmark/blob/master/LICENSE",
+      "label_count": 7,
+      "labels": [
+        "SearchCreativeWork",
+        "GetWeather",
+        "BookRestaurant",
+        "PlayMusic",
+        "AddToPlaylist",
+        "RateBook",
+        "SearchScreeningEvent"
+      ],
+      "labelled_examples_exact": null,
+      "labelled_examples_lower_bound": 14000,
+      "count_basis": "Publisher states more than 2000 crowdsourced queries per intent; no local recount.",
+      "count_evidence_url": "https://raw.githubusercontent.com/sonos/nlu-benchmark/master/2017-06-custom-intent-engines/README.md",
+      "caveats": [
+        "Concatenate annotated chunks without slot markup; freeze transformation before capture.",
+        "Common 14484 split count not independently verified.",
+        "Retain requested Coucke et al. 2018 citation."
+      ],
+      "status": "skipped",
+      "status_scope": "local ingestion and model execution",
+      "reason": "Metadata qualifies; no local dataset download, ingestion or inference performed in this resource-blocked spike.",
+      "metadata_qualified": true,
+      "redistribution_permitted_by_declared_licence": true,
+      "revision": null,
+      "local_count_verified": false,
+      "local_content_hash": null
+    },
+    {
+      "id": "bitext-customer-support-category-11",
+      "source_url": "https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset",
+      "licence": "CDLA-Sharing-1.0",
+      "licence_url": "https://cdla.dev/sharing-1-0/",
+      "licence_declaration_url": "https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/blob/main/README.md",
+      "label_count": 11,
+      "labels": [
+        "ACCOUNT",
+        "CANCELLATION_FEE",
+        "CONTACT",
+        "DELIVERY",
+        "FEEDBACK",
+        "INVOICE",
+        "NEWSLETTER",
+        "ORDER",
+        "PAYMENT",
+        "REFUND",
+        "SHIPPING_ADDRESS"
+      ],
+      "labelled_examples": 26872,
+      "count_basis": "Publisher card and hosted dataset viewer; no local recount.",
+      "input_field": "instruction",
+      "target_field": "category",
+      "download_size_publisher": "19.2 MB",
+      "caveats": [
+        "Use existing 11 categories, not the 27 intents. README says 10 categories but viewer reports 11; locally recount before sealing.",
+        "Category roster supported by publisher commit 9bea5faf42b8732ca8c347a80f0b5777486a18e1; current dataset revision not pinned.",
+        "Synthetic/template-expanded data; not independent organic customer traffic.",
+        "Redistribution must retain credit, licence and change notices under CDLA-Sharing-1.0.",
+        "Exclude response and intent columns from model inputs."
+      ],
+      "status": "skipped",
+      "status_scope": "local ingestion and model execution",
+      "reason": "Metadata qualifies; no local dataset download, ingestion or inference performed in this resource-blocked spike.",
+      "metadata_qualified": true,
+      "redistribution_permitted_by_declared_licence": true,
+      "revision": null,
+      "local_count_verified": false,
+      "local_content_hash": null
+    },
+    {
+      "id": "clinc150-domain-routing-10",
+      "source_url": "https://github.com/clinc/oos-eval",
+      "licence": "CC-BY-3.0",
+      "licence_url": "https://raw.githubusercontent.com/clinc/oos-eval/master/LICENSE",
+      "label_count": 10,
+      "labels": [
+        "banking",
+        "credit_cards",
+        "kitchen_and_dining",
+        "home",
+        "auto_and_commute",
+        "travel",
+        "utility",
+        "work",
+        "small_talk",
+        "meta"
+      ],
+      "labelled_examples": 22500,
+      "split_counts": {
+        "train": 15000,
+        "validation": 3000,
+        "test": 4500
+      },
+      "count_basis": "150 intents times publisher-stated 100 train, 20 validation, 30 test; no local recount.",
+      "count_evidence_url": "https://raw.githubusercontent.com/clinc/oos-eval/master/README.md",
+      "label_mapping_url": "https://raw.githubusercontent.com/clinc/oos-eval/master/data/domains.json",
+      "caveats": [
+        "Derived 10-domain task, not the original 150-intent benchmark.",
+        "Use publisher mapping and exclude all out-of-scope rows; freeze both before capture.",
+        "Redistribution requires attribution, licence reference and identification of modifications."
+      ],
+      "status": "skipped",
+      "status_scope": "local ingestion and model execution",
+      "reason": "Metadata qualifies; no local dataset download, ingestion or inference performed in this resource-blocked spike.",
+      "metadata_qualified": true,
+      "redistribution_permitted_by_declared_licence": true,
+      "revision": null,
+      "local_count_verified": false,
+      "local_content_hash": null
+    }
+  ],
+  "local_preflight": {
+    "timestamp_utc": "2026-11-12T21:10:07.764257+00:00",
+    "nice": 0,
+    "python": "3.12.13 (main, Jun 23 2026, 15:44:24) [Clang 22.1.3 ]",
+    "memory": {
+      "command": "/usr/bin/vm_stat",
+      "exit_code": 0,
+      "page_size_bytes": 16384,
+      "pages": {
+        "Pages free": 33276,
+        "Pages active": 198284,
+        "Pages inactive": 181656,
+        "Pages speculative": 14891,
+        "Pages throttled": 0,
+        "Pages wired down": 462272,
+        "Pages purgeable": 113,
+        "\"Translation faults\"": 152009008,
+        "Pages copy-on-write": 6386008,
+        "Pages zero filled": 129391866,
+        "Pages reactivated": 13115089,
+        "Pages purged": 1498159,
+        "File-backed pages": 166304,
+        "Anonymous pages": 228527,
+        "Pages stored in compressor": 699159,
+        "Pages occupied by compressor": 623772,
+        "Decompressions": 28925926,
+        "Compressions": 36630555,
+        "Pageins": 8563203,
+        "Pageouts": 3872,
+        "Swapins": 2905272,
+        "Swapouts": 7203805,
+        "Pages tagged": 104485,
+        "Pages tagged resident": 75135,
+        "Pages tagged compressed": 29350,
+        "Pages tag-storage": 49152,
+        "Pages tag-storage holding tags": 3919,
+        "Pages tag-storage free": 218,
+        "Pages tag-storage non-tag pageable": 44873,
+        "Pages tag-storage non-tag wired": 93,
+        "Bytes of compressed tags": 4480256,
+        "Tagged compressions": 499189,
+        "Tagged decompressions": 443688
+      },
+      "free_bytes": 545193984,
+      "free_plus_inactive_plus_speculative_bytes": 3765420032,
+      "minimum_free_bytes": 10000000000,
+      "load_allowed": false
+    },
+    "installed_versions": {
+      "laya": null,
+      "torch": null,
+      "transformers": null,
+      "huggingface_hub": null,
+      "safetensors": null,
+      "numpy": null
+    },
+    "laya": {
+      "model_id": "convaiinnovations/laya-typed-decisions",
+      "revision": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+      "cache": "/Users/ajay/.cache/huggingface/hub/models--convaiinnovations--laya-typed-decisions/snapshots/e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+      "artifacts": [
+        {
+          "path": "encoder/config.json",
+          "expected_sha256": "5268d24ad3b77c8151de5dcb0762ba4391619aad9ab0bda33e36fb083cfeae6d",
+          "exists": true,
+          "bytes": 2084,
+          "sha256": "5268d24ad3b77c8151de5dcb0762ba4391619aad9ab0bda33e36fb083cfeae6d",
+          "matches": true
+        },
+        {
+          "path": "model.safetensors",
+          "expected_sha256": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+          "exists": true,
+          "bytes": 842609220,
+          "sha256": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+          "matches": true
+        },
+        {
+          "path": "rl_agent_config.json",
+          "expected_sha256": "ebf0cd524d92342a6be5e48e9fca3d7c2babfb5a56ccd79d2171ef5d8c7f7be8",
+          "exists": true,
+          "bytes": 847,
+          "sha256": "ebf0cd524d92342a6be5e48e9fca3d7c2babfb5a56ccd79d2171ef5d8c7f7be8",
+          "matches": true
+        },
+        {
+          "path": "tokenizer/tokenizer.json",
+          "expected_sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+          "exists": true,
+          "bytes": 3583228,
+          "sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+          "matches": true
+        },
+        {
+          "path": "tokenizer/tokenizer_config.json",
+          "expected_sha256": "08d4cf3ac4dca381759441b85b91a6d40e688471dcd33d15d6649eb0a9a854d1",
+          "exists": true,
+          "bytes": 337,
+          "sha256": "08d4cf3ac4dca381759441b85b91a6d40e688471dcd33d15d6649eb0a9a854d1",
+          "matches": true
+        }
+      ]
+    },
+    "source_sha256": {
+      "pyproject.toml": "b706101b69687116100c6a135fa63a2577734f3c835ba747dd4f75258272df6a",
+      "uv.lock": "2a9e96569f2d9b1b05969a39abc0f5e16709df93d9a2c770ccca562a6f0a08f1",
+      "src/actseal/adapters/laya.py": "051bbaf8a994c55263722b57b49d8119972e8962f64e46e30e2ba70ef9ccc604",
+      "src/actseal/normalization.py": "cc86d019b78544eb52b15d75d29d619d9a062441254a1e6b9748be6222f18445",
+      "src/actseal/experimental/providers/jev.py": "3d4eef1891915e373133495b4f9a994ea5d797f597f39d44baff9891b2dd27a2",
+      "plan/v2/tasks/M0.md": "39d502dd45e3efa235aba28aa854284a682943bc4cbfcf0b8e004c63e23ccca9"
+    }
+  },
+  "wire_probe": {
+    "evidence_scope": "synthetic shape probes only, not model responses or live endpoint compatibility",
+    "request_utf8": "{\"state\":\"I was charged twice. Please refund the duplicate payment.\",\"model\":\"jev-1.13.0\",\"questions\":{\"department\":{\"type\":\"choice\",\"instructions\":\"Which department should handle this support request?\",\"criteria\":{\"billing\":\"Charges and refunds\",\"technical\":\"Software errors\",\"other\":\"Other requests\"}}}}",
+    "request_sha256": "bb15b635c9c1b3ddc3a41fe586f713ca0db342ab24b677f3dcc0af8938c2e800",
+    "results": [
+      {
+        "name": "synthetic_control",
+        "accepted": true,
+        "outcome": {
+          "choice": "billing",
+          "probabilities": [
+            [
+              "billing",
+              0.75
+            ],
+            [
+              "technical",
+              0.125
+            ],
+            [
+              "other",
+              0.125
+            ]
+          ],
+          "selected_probability": 0.75,
+          "provider_confidence": 0.75,
+          "warnings": [],
+          "fallback_used": false
+        }
+      },
+      {
+        "name": "synthetic_actual_model",
+        "accepted": false,
+        "outcome": {
+          "code": "identity_mismatch",
+          "warnings": [
+            "normalize.answering_model"
+          ],
+          "fallback_used": false
+        }
+      },
+      {
+        "name": "synthetic_extra_latency",
+        "accepted": false,
+        "outcome": {
+          "code": "malformed_response",
+          "warnings": [
+            "normalize.envelope_keys"
+          ],
+          "fallback_used": false
+        }
+      }
+    ],
+    "model_calls": 0,
+    "http_requests": 0
+  },
+  "source_snapshot_sha256": {
+    "actseal/assessment.py": "ee1f9ff2a027c62a73e59f4fd8040145196c5ce3280988fa66577bd2685a4fd2",
+    "actseal/compatibility.py": "fe219455e5b753a549b594d22525230b0cd953caabb6100b1cbf3180638b8f1c",
+    "actseal/runner.py": "21248ab4ac30b47bc864ebb3a23fe14f63ca9d05512acde299865370c9f305f1",
+    "actseal/records.py": "0b7e8cb1aab52dc796416fd858e2d39f9f3a41fabd527a4388cb3cb6e85b9818",
+    "actseal/policy.py": "5c60ebf17d1fc80e1dda58010f31504012f846318c7e79f467e2a7f18f1be8f4",
+    "actseal/__init__.py": "3dc78185b16039ab3a2ec4134afd31691a1480b9363eb0de799d5c5ff472ac37",
+    "actseal/replay.py": "c3a55cd56f56034e3f53d1b31b33902d003246630e6a6d9a33885dda8f5f7faa",
+    "actseal/cli.py": "2fbf61afae481f9cb40579d864326dfa8e0cf20b54cb8fb8f5143e3cc215e417",
+    "actseal/locking.py": "02b0757d88c7236b2c53a34dc785ffc6ddd668f6e99bed818586946d42d6dcb5",
+    "actseal/stats.py": "9bba80d70a19722766c18970b26338d89f1216237f9c80ece96d88dfb875ea5c",
+    "actseal/errors.py": "6a218305116162c830ce741fd9bc8026b1bdb6fd7a85c1b87d9ca00930befd46",
+    "actseal/normalization.py": "cc86d019b78544eb52b15d75d29d619d9a062441254a1e6b9748be6222f18445",
+    "actseal/contract.py": "fa5109192777398015fb02bb861f5ae38059f9358fc810a1fdb703e9f1057c6d",
+    "actseal/evidence.py": "ddc59f0351fc8bc1cd4f6ae1232c332df63f31af1542da3cd9d906303a450b2b",
+    "actseal/__main__.py": "f01b90584eba920f017e6399867d94876d7cac7ad11af76e58c89684331d964a",
+    "actseal/serialization.py": "c5e80ccf2ea1a33f0c741ea763a68bf89b43e3cb102924607e7f8fbcda3324ec",
+    "actseal/faults.py": "678d09499931b89957c422a8c2dac43ec41720200c4a71ea295731e5d08ee3ae",
+    "actseal/experimental/__init__.py": "bf1eeac7e5a0322e74dc06a6b2c30ccad075d8dee364438d46485f206f91ac66",
+    "actseal/demo_data/__init__.py": "f485aa1ee2f7499512bd07156ca737f7411bcbb2352c83ea3a0d9b0ade7c7199",
+    "actseal/adapters/fixture.py": "a8c8827cb29876bea680b761d00a606ab7054356556fa055155250a28cef6592",
+    "actseal/adapters/__init__.py": "4f77296849051f8c12f3d5c8de79f52dfeb87d3412ac17ddd7c6f9e70379507a",
+    "actseal/adapters/laya.py": "051bbaf8a994c55263722b57b49d8119972e8962f64e46e30e2ba70ef9ccc604",
+    "actseal/adapters/base.py": "b92741766f02d981466ffca8a64b768657397caac5da5134e22c10c0c017c269",
+    "actseal/experimental/providers/jev.py": "3d4eef1891915e373133495b4f9a994ea5d797f597f39d44baff9891b2dd27a2",
+    "actseal/experimental/providers/__init__.py": "279804f9ae6655d7b32a547feec1d15f2f3397f8b637c0e6e3e678561f3039fe"
+  },
+  "recommended_roster": {
+    "locally_verified_models": [],
+    "conditional_next_models": [
+      "convaiinnovations/laya-typed-decisions",
+      "StrandsAgents/strands-decider-2B-qwen3.5-v1-2610"
+    ],
+    "reserve_model": "Cloudflare/clef-flash",
+    "excluded_model": "Cloudflare/clef",
+    "datasets": [
+      "snips-custom-intents-7",
+      "bitext-customer-support-category-11",
+      "clinc150-domain-routing-10"
+    ],
+    "qualification": "Source-qualified candidates only. No model may be described as proven to run from this spike.",
+    "plan_gate": "Fewer than two distinct models verified. No multi-model comparison claim; PLAN fallback to Laya across versions remains conditional on fresh permitted runtime checks, not established here."
+  },
+  "comparison_time": {
+    "status": "unverified; illustrative planning scenarios only",
+    "models": 2,
+    "datasets": 3,
+    "cases_per_cell": 1500,
+    "total_cases": 9000,
+    "formula_minutes": "4500 / laya_cases_per_minute + 4500 / strands_cases_per_minute",
+    "measured_estimate_minutes": null,
+    "scenarios": [
+      {
+        "assumed_cases_per_minute_each": 60,
+        "hours": 2.5
+      },
+      {
+        "assumed_cases_per_minute_each": 10,
+        "hours": 15
+      },
+      {
+        "assumed_cases_per_minute_each": 1,
+        "hours": 150
+      }
+    ],
+    "excludes": [
+      "Downloads and environment setup",
+      "Model startup",
+      "Warmup and 20-repeat determinism checks",
+      "Provider fault probes, normalization, evidence IO and replay"
+    ],
+    "optional_third_model_total_cases": 13500
+  },
+  "tool_limitations": [
+    "HF model_search returned Tool model_search not found; not retried.",
+    "Two initial independent HF dataset_search queries returned INVALID_ARGUMENT: disabled by server configuration; neither retried.",
+    "Public web primary sources were used for research only, not as a route to denied local operations.",
+    "Pinned Laya card URL inaccessible via web; current card and code licence available.",
+    "GitHub/HF commit API lookups were inaccessible through web; dataset full revisions remain unverified.",
+    "Initial guessed convaiinnovations/laya GitHub URL returned 404; authoritative card links NandhaKishorM/laya.",
+    "rg docs/adr returned missing directory; actual ADRs found under docs/decisions."
+  ],
+  "spend": {
+    "paid_model_api_requests": 0,
+    "model_download_bytes": 0,
+    "runtime_download_bytes": 0,
+    "codex_and_subagent_actual_billed_cost": null,
+    "billing_receipts_available": false,
+    "note": "No paid inference API or credential used. Agent/tool billed usage unknown; no dollar estimate invented."
+  },
+  "verification_limits": [
+    "Native runtime invocation, peak memory, throughput and all 20-repeat experiments skipped.",
+    "No real Jev-compatible local endpoint response captured; shape probe is synthetic.",
+    "External model repository sizes are rounded, except local pinned Laya artifacts.",
+    "Dataset row bytes, counts, revisions, duplicate removal, leakage checks and fresh seeded splits not locally verified.",
+    "No product/source tests, standing milestone suite or hosted CI run: only M0 outputs changed by this executor; concurrent product work not claimed accepted."
+  ],
+  "output_validation": {
+    "status": "passed",
+    "command": ".venv/bin/python -I -B /private/tmp/actseal-m0-eUYpXc/validate_outputs.py",
+    "exit_code": 0,
+    "scope": "JSON integrity, required per-model/dataset fields, skipped execution semantics, cached artifact hashes, source snapshot consistency, synthetic rejection outcomes and time arithmetic. No product runtime validation."
+  }
+}

@@ -149,6 +149,35 @@ identity only: even with a trusted lock, a coherent same-lock response rewrite
 is undetectable, and replay cannot prove that inference occurred or that the
 labels are true. The [threat model](threat-model.md) states these limits.
 
+## Calibration selects; verification assesses
+
+The opt-in v2 `qualify` workflow chooses a threshold from a grid fixed before
+calibration responses are collected. It writes a selection plan containing
+the contract fields other than threshold, the grid, selection settings, split
+hashes, verification size and identities. Calibration and verification cases
+must have disjoint IDs and no identical state text across splits.
+
+The selector sees only calibration outcomes and labels. At each threshold it
+counts accepted cases and errors, plugs conservative risk and coverage
+estimates into a predicted verification pass probability, and selects the
+qualifying threshold accepting the most calibration cases. Ties choose the
+higher threshold. The default grid is `0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0`;
+the target probability is `0.8` and the selection tail is `0.05`.
+
+Those counts and predictions describe calibration. A selected threshold is
+not a verification PASS. The existing `verify` independently assesses the
+selected policy on the held-out verification split; its bounds, fault checks,
+denominator and verdict rules stay unchanged. If no threshold qualifies,
+`calibration.no_threshold` ends selection with exit 2 before any verification
+response is collected.
+
+`replay-selection` checks the separate five-file calibration directory and
+recomputes the selection without importing an adapter. The ordinary
+verification bundle remains seven files. `qualification.json` links the
+calibration manifest and lock hashes with the verdict. Hashes and replay do
+not authenticate responses or prove when the plan was written; a coherent
+rewrite of all files and hashes remains possible.
+
 ## One attempt, no retries to PASS
 
 The statistical guarantee is stated over one prespecified attempt. Do not

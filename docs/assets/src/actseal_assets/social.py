@@ -122,7 +122,7 @@ CANVAS = hero.Canvas(
         ),
         hero.Setting(
             "card-verdict",
-            ("VERDICT: INCONCLUSIVE (exit 2)", "→ replay requires archived", "producer d3edbab"),
+            ("VERDICT: INCONCLUSIVE (exit 2)", "→ replay with packaged", "registry"),
             28,
             37,
             gap=20,

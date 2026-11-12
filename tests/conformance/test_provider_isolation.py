@@ -71,9 +71,11 @@ import actseal.adapters
 import actseal.adapters.base
 import actseal.adapters.fixture
 import actseal.adapters.laya
+import actseal.adapters.recorded
 import actseal.experimental
 import actseal.experimental.providers
 import actseal.experimental.providers.jev
+import actseal.experimental.providers.decision_api
 from pathlib import Path
 from actseal.adapters.fixture import FixtureModel
 from actseal.adapters.laya import LayaModel
@@ -129,7 +131,9 @@ print(json.dumps({
     "actseal_file": actseal.__file__,
     "laya_file": actseal.adapters.laya.__file__,
     "fixture_file": actseal.adapters.fixture.__file__,
+    "recorded_file": actseal.adapters.recorded.__file__,
     "jev_file": actseal.experimental.providers.jev.__file__,
+    "decision_api_file": actseal.experimental.providers.decision_api.__file__,
     "loaded": loaded,
     "spawn_blocked": spawn_blocked,
     "socket_blocked": socket_blocked,
@@ -163,10 +167,17 @@ def test_adapters_import_without_transport_worker_or_native_stack(tmp_path: Path
     assert Path(report["laya_file"]).resolve() == ACTSEAL_SOURCE_ROOT / "adapters" / "laya.py"
     assert Path(report["fixture_file"]).resolve() == ACTSEAL_SOURCE_ROOT / "adapters" / "fixture.py"
     assert (
+        Path(report["recorded_file"]).resolve() == ACTSEAL_SOURCE_ROOT / "adapters" / "recorded.py"
+    )
+    assert (
         Path(report["jev_file"]).resolve()
         == ACTSEAL_SOURCE_ROOT / "experimental" / "providers" / "jev.py"
     )
     assert report["loaded"] == []
+    assert (
+        Path(report["decision_api_file"]).resolve()
+        == ACTSEAL_SOURCE_ROOT / "experimental" / "providers" / "decision_api.py"
+    )
     assert report["jev_offline"] == "ProviderSetupError:offline"  # no key read, no socket
     assert report["jev_online"] == "Blocked:key read"  # the key is read before any socket
     assert report["spawn_blocked"] is True, "the process blocker must be live"

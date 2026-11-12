@@ -1,0 +1,88 @@
+name: Actseal action self-test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Replay the committed PASS bundle
+        id: actseal
+        uses: ./
+        with:
+          source: checkout
+          mode: replay
+          args: examples/action_gate/recorded/a5fe090202f7/evidence
+      - name: Check action outputs
+        env:
+          VERDICT: ${{ steps.actseal.outputs.verdict }}
+          EXIT_CODE: ${{ steps.actseal.outputs.exit-code }}
+          EVIDENCE: ${{ steps.actseal.outputs.evidence-path }}
+        run: |
+          test "$VERDICT" = PASS
+          test "$EXIT_CODE" = 0
+          test -f "$EVIDENCE/manifest.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          reports = list(Path(os.environ["RUNNER_TEMP"]).glob("actseal-artifact-*/report"))
+          assert len(reports) == 1, "expected one rendered report"
+          report = reports[0]
+          assert {p.name for p in report.iterdir()} == {"report.html", "report.md", "badge.json"}
+          assert all(p.is_file() and p.stat().st_size for p in report.iterdir())
+          assert json.loads((report / "badge.json").read_text())["message"].startswith("PASS")
+          PY
+
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Qualify the packaged synthetic demo
+        id: actseal
+        uses: ./
+        with:
+          source: checkout
+          mode: qualify
+          args: >-
+            --contract src/actseal/demo_data/qualify.toml
+            --calibration src/actseal/demo_data/qualify_calibration.jsonl
+            --verification src/actseal/demo_data/qualify_verification.jsonl
+            --provider fixture
+            --responses src/actseal/demo_data/qualify_responses.jsonl
+            --offline --out action-qualification
+      - name: Check action outputs
+        env:
+          VERDICT: ${{ steps.actseal.outputs.verdict }}
+          EXIT_CODE: ${{ steps.actseal.outputs.exit-code }}
+          EVIDENCE: ${{ steps.actseal.outputs.evidence-path }}
+        run: |
+          test "$VERDICT" = PASS
+          test "$EXIT_CODE" = 0
+          test -f "$EVIDENCE/qualification.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          reports = list(Path(os.environ["RUNNER_TEMP"]).glob("actseal-artifact-*/report"))
+          assert len(reports) == 1, "expected one rendered report"
+          report = reports[0]
+          assert {p.name for p in report.iterdir()} == {"report.html", "report.md", "badge.json"}
+          assert all(p.is_file() and p.stat().st_size for p in report.iterdir())
+          assert json.loads((report / "badge.json").read_text())["message"].startswith("PASS")
+          PY

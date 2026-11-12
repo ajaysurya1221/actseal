@@ -44,7 +44,7 @@ CARD = {
     "card-headline": "ACT 580/639   errors 24",
     "card-scope": "Fixed benchmark; unreleased producer",
     "card-bounds": "risk [0.0250, 0.0639] vs limit 0.05 · coverage [0.879, 0.932]",
-    "card-verdict": "VERDICT: INCONCLUSIVE (exit 2) → replay requires archived producer d3edbab",
+    "card-verdict": "VERDICT: INCONCLUSIVE (exit 2) → replay with packaged registry",
     "card-footer": "docs/results/jev-audit-2026-10-08 · neither PASS nor BLOCK is claimed",
 }
 COLUMN_KEYS = ("eyebrow", "thesis", "subline")
@@ -165,13 +165,19 @@ def test_card_numbers_match_the_committed_audit(kit: ModuleType) -> None:
     ) == hero.CARD_BOUNDS
     assert hero.CARD_VERDICT.startswith(f"VERDICT: {status} (exit {EXIT_CODES[status]}) → ")
     assert hero.CARD_FOOTER.startswith(f"docs/results/{AUDIT.name} · ")
-    # The replay restriction and the scope come from the audit README: the
-    # producer is the unreleased snapshot, and 1.0.0 cannot replay the bundle.
+    # Preserve the historical producer and scope while checking the packaged
+    # registry now admits the archive's producer for its recorded replay engine.
     audit_readme = (AUDIT / "README.md").read_text(encoding="utf-8")
     snapshot = re.search(r"unreleased benchmark snapshot\s+`([0-9a-f]{40})`", audit_readme)
     assert snapshot is not None
-    assert hero.CARD_VERDICT.endswith(f"→ replay requires archived producer {snapshot[1][:7]}")
-    assert "ERROR `integrity.lock`" in audit_readme
+    assert snapshot[1] == "d3edbab2dfbd44a0e9e272e1671143517832e3b4"
+    lock = _json(AUDIT / "evidence" / "lock.json")
+    registry = _json(ROOT / "src" / "actseal" / "compatibility_registry.json")
+    assert (
+        registry["implementations"][lock["implementation_sha256"]] == lock["replay_engine_version"]
+    )
+    assert hero.CARD_VERDICT.endswith("→ replay with packaged registry")
+    assert "with no pinned snapshot needed" in " ".join(audit_readme.split())
     assert hero.CARD_SCOPE == "Fixed benchmark; unreleased producer"
     assert status == "INCONCLUSIVE"
     assert "neither PASS nor BLOCK is claimed" in hero.CARD_FOOTER
@@ -226,9 +232,9 @@ def test_highlights_are_split_into_spans_across_line_breaks(kit: ModuleType) -> 
     ]
     assert [(s.text, s.role, s.bold) for s in mobile[1]] == [
         ("(exit 2)", "amber", True),
-        (" → replay requires", "card_text", False),
+        (" → replay with", "card_text", False),
     ]
-    assert [(s.text, s.role) for s in mobile[2]] == [("archived producer d3edbab", "card_text")]
+    assert [(s.text, s.role) for s in mobile[2]] == [("packaged registry", "card_text")]
     headline = hero.line_spans(hero.copy_for("card-headline"), (CARD["card-headline"],))
     assert [(s.text, s.role, s.bold) for s in headline[0]] == [
         ("ACT ", "card_text", True),

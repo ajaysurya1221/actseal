@@ -938,8 +938,14 @@ def test_open_model_routes_jev_to_the_experimental_adapter_never_to_laya(
     assert isinstance(open_model("jev", responses=None, offline=True), FakeJev)
     assert jev_constructed == [{"offline": False}, {"offline": True}]
     assert laya_constructed == []
-    assert sorted(runner_module._EXPERIMENTAL_PROVIDERS) == ["jev"]
-    assert sorted(runner_module._REGISTERED_PROVIDERS) == ["fixture", "jev", "laya"]
+    assert sorted(runner_module._EXPERIMENTAL_PROVIDERS) == ["decision-api", "jev"]
+    assert sorted(runner_module._REGISTERED_PROVIDERS) == [
+        "decision-api",
+        "fixture",
+        "jev",
+        "laya",
+        "recorded",
+    ]
     assert runner_module._REGISTERED_PROVIDERS <= PROVIDERS
 
 
@@ -1297,7 +1303,13 @@ def test_demo_resources_follow_the_prespecified_rules() -> None:
 
 def test_packaged_and_example_resources_are_byte_identical() -> None:
     shipped = [p.name for p in PACKAGED.iterdir() if p.is_file() and p.name != "__init__.py"]
-    assert sorted(shipped) == sorted(RESOURCE_NAMES)
+    qualification_resources = (
+        "qualify.toml",
+        "qualify_calibration.jsonl",
+        "qualify_verification.jsonl",
+        "qualify_responses.jsonl",
+    )
+    assert sorted(shipped) == sorted((*RESOURCE_NAMES, *qualification_resources))
     for name in RESOURCE_NAMES:
         assert (PACKAGED / name).read_bytes() == (EXAMPLES / name).read_bytes(), name
 

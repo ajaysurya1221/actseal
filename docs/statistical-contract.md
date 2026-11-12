@@ -50,3 +50,45 @@ No automatic restart, retry, replacement sample, post-failure resealing or delet
 The intended guarantee is unconditional over one prespecified attempt. Requiring completion only removes outcomes from the fixed-sample PASS event; it does not justify confidence statements conditioned on completion. These intervals provide no bound on persistent-process uptime or run-completion probability. Never discard failed attempts and retry until PASS; retain the attempted-run history. Hashes cannot prove that history is honest.
 
 Baseline comparisons, sequential looks, slices, grouped guarantees, threshold sweeps and certified fallback chains are outside v1. Each would require a separately specified sampling rule and error budget.
+
+## v2 calibration and planning (separate from verification)
+
+The opt-in v2 selector searches only a prespecified calibration grid. Its plan
+is written and hashed before collecting calibration responses and fixes the
+non-threshold contract fields, grid, selection tail, target pass probability,
+verification size, input hashes and identities. The selector never receives
+verification outcomes or labels. Cross-split shared IDs and identical state
+text are rejected; these checks do not establish statistical independence.
+
+For each grid point, calibration accepted/error counts yield a Clopper–Pearson
+upper risk plug-in and lower coverage plug-in at `selection_tail` (default
+`0.05`). The predicted pass probability models `A ~ Bin(n_verify, coverage)`
+and `E | A ~ Bin(A, risk)` under the unchanged verification rule. Selection
+chooses the candidate accepting the most calibration cases among those
+reaching `target_pass_probability` (default `0.8`), breaking ties toward the
+higher threshold. The fixed default grid is `0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0`.
+User grids have 1..32 strictly increasing values in `(0, 1]`; they are never
+derived from observed scores. Calibration curves and predictions are
+descriptive planning aids, not additional evidence for PASS.
+
+Conditional on calibration and the selected threshold, verification uses
+independent IID outcomes from the declared population under the fixed policy
+and one prespecified attempt. Under those assumptions, the chance of PASS
+when true accepted-action risk exceeds `max_risk` is at most `alpha/4`;
+the corresponding chance when true coverage is below `min_coverage` is also
+at most `alpha/4`. Any deterministic selector preserves these verification
+statements when the verification split remains independent. Selection adds
+no tail allocation and does not alter engine `actseal-choice-v1`.
+
+`plan` scans the existing selector's sample-size schedule: every size through
+200, steps of 5 through 500, steps of 25 through 2,000, then steps of 100
+through 10,000. It reports the first scheduled size reaching the target at the
+supplied expected risk and coverage, or no reachable scheduled size. This is
+a design-point calculation, not a promise of an observed result or a global
+minimum over the skipped integers. It collects no responses and writes no files.
+
+Selection replay compares counts and the chosen threshold exactly. Predicted
+probabilities allow absolute difference `1e-10` or relative difference `1e-9`
+because `math.lgamma` can round differently across platforms. A changed
+selected threshold is always an error, even when a prediction is within that
+tolerance.

@@ -69,6 +69,7 @@ __all__ = [
     "REASON_FAULT_PREFIX",
     "REASON_INTEGRITY_PREFIX",
     "REASON_NO_ACCEPTED_CASES",
+    "REASON_RECORDED_FAULT_SCOPE",
     "REASON_RISK_EXCEEDS_LIMIT",
     "REASON_WORKER_INVALIDATED",
     "TAIL_DIVISOR",
@@ -81,6 +82,7 @@ REASON_EVIDENCE_INSUFFICIENT: Final = "evidence.insufficient"
 REASON_NO_ACCEPTED_CASES: Final = "risk.no_accepted_cases"
 REASON_CONTRACT_SATISFIED: Final = "contract.satisfied"
 REASON_WORKER_INVALIDATED: Final = "infrastructure.worker_invalidated"
+REASON_RECORDED_FAULT_SCOPE: Final = "scope.recorded_provider_faults_not_tested"
 REASON_FAULT_PREFIX: Final = "fault."
 REASON_INTEGRITY_PREFIX: Final = "integrity."
 
@@ -268,6 +270,8 @@ def assess(
         status = "BLOCK"
         reasons.discard(REASON_CONTRACT_SATISFIED)
         reasons |= violations
+    if lock.model_identity.provider == "recorded":
+        reasons.add(REASON_RECORDED_FAULT_SCOPE)
     return Verdict(
         status,
         tuple(sorted(reasons)),

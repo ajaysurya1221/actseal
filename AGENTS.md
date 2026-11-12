@@ -19,6 +19,13 @@ provider-fault tests and offline replay. It is not an OS sandbox or proof of lab
   unavailable. Normal tool permissions, hooks and user settings stay in force;
   elapsed time, a denial or an unanswered request never grants a broader or
   permanent override.
+- **v2 (from 2026-11-13):** the human assigned v2 roles directly
+  (`plan/v2/CHANGE_LOG.md` V2-001, V2-001a): Claude Code (`claude-fable-5-2`)
+  orchestrates and reviews; Codex (Astra 6) executes and co-plans. For v2 the
+  active state is `plan/v2/STATE.md` and the plan is `plan/v2/PLAN.md` as amended
+  by the v2 change log. Executors edit only their task's files and write a
+  REPORT; the orchestrator's review is not an independent third-party ACCEPT. A tag, a PyPI publish and any public post
+  still need the human's explicit approval. All other rules below still apply.
 - Read the active state before editing: `plan/v1/STATE.md`, your exact
   `plan/v1/tasks/<id>.md`, `plan/v1/CHANGE_LOG.md`, `plan/CONTRACTS.md`,
   `docs/stability.md` and the task's relevant ADRs. The v0.1.0 records under

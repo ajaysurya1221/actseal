@@ -231,6 +231,7 @@ EXPORTS: dict[str, tuple[ModuleType, set[str]]] = {
             "LAYA_MASS_TOLERANCE_PER_OPTION",
             "LAYA_MODEL_MARKER",
             "NORMALIZER_VERSION",
+            "RECORDING_WARNING",
             "laya_mass_tolerance",
             "normalize",
             "request_sha256",
@@ -246,6 +247,7 @@ EXPORTS: dict[str, tuple[ModuleType, set[str]]] = {
             "REASON_FAULT_PREFIX",
             "REASON_INTEGRITY_PREFIX",
             "REASON_NO_ACCEPTED_CASES",
+            "REASON_RECORDED_FAULT_SCOPE",
             "REASON_RISK_EXCEEDS_LIMIT",
             "REASON_WORKER_INVALIDATED",
             "TAIL_DIVISOR",
@@ -406,7 +408,9 @@ SIGNATURES: dict[str, str] = {
     ),
     "replay.replay": "(bundle: 'Path', *, expected_lock_sha256: 'str | None' = None) -> 'Verdict'",
     "runner.open_model": (
-        "(provider: 'str', *, responses: 'Path | None', offline: 'bool') -> 'DecisionModel'"
+        "(provider: 'str', *, responses: 'Path | None', offline: 'bool', "
+        "model: 'str | None' = None, revision: 'str | None' = None, "
+        "endpoint: 'str | None' = None, api_key_env: 'str | None' = None) -> 'DecisionModel'"
     ),
     "runner.write_lock": "(lock: 'PlanLock', destination: 'Path') -> 'Path'",
     "runner.collect": (
@@ -470,6 +474,10 @@ CLI_OPTIONS: dict[str, set[str]] = {
         "--responses",
         "--offline",
         "--experimental-provider",
+        "--model",
+        "--revision",
+        "--endpoint",
+        "--api-key-env",
         "--out",
         "--json",
     },
@@ -481,12 +489,33 @@ CLI_OPTIONS: dict[str, set[str]] = {
         "--responses",
         "--offline",
         "--experimental-provider",
+        "--model",
+        "--revision",
+        "--endpoint",
+        "--api-key-env",
         "--out",
         "--json",
     },
     "replay": {"--expected-lock-sha256", "--json"},
-    "demo": {"--out", "--json"},
+    "demo": {"--out", "--json", "--qualify"},
+    "plan": {
+        "--max-risk",
+        "--min-coverage",
+        "--alpha",
+        "--expected-risk",
+        "--expected-coverage",
+        "--target-pass-probability",
+        "--json",
+    },
+    "replay-selection": {"--json"},
+    "report": {"--out", "--attestation-ref", "--json"},
 }
+for _command in ("calibrate", "qualify"):
+    CLI_OPTIONS[_command] = CLI_OPTIONS["lock"] | {
+        "--grid",
+        "--target-pass-probability",
+        "--selection-tail",
+    }
 
 
 def _resolve(dotted: str) -> object:
@@ -636,8 +665,8 @@ def test_schema_and_limit_constants() -> None:
         "unavailable",
     }
     # Admitted serialized providers: the stable CLI choices plus the experimental
-    # Jev identity (V1-011/V1-021). The CLI still offers only fixture and laya.
-    assert set(records_module.PROVIDERS) == {"fixture", "laya", "jev"}
+    # v2 M4 adds recorded predictions and the configurable experimental API.
+    assert set(records_module.PROVIDERS) == {"fixture", "laya", "jev", "recorded", "decision-api"}
     assert serialization_module.MAX_JSON_BYTES == 128 * 1024 * 1024
     assert serialization_module.MAX_JSON_DEPTH == 32
     assert contract_module.MAX_ROW_BYTES == 1024 * 1024
@@ -661,6 +690,10 @@ def test_reason_and_layout_constants() -> None:
     assert assessment_module.REASON_NO_ACCEPTED_CASES == "risk.no_accepted_cases"
     assert assessment_module.REASON_CONTRACT_SATISFIED == "contract.satisfied"
     assert assessment_module.REASON_WORKER_INVALIDATED == "infrastructure.worker_invalidated"
+    assert (
+        assessment_module.REASON_RECORDED_FAULT_SCOPE == "scope.recorded_provider_faults_not_tested"
+    )
+    assert normalization_module.RECORDING_WARNING == "recorded: provider faults not tested"
     assert assessment_module.REASON_FAULT_PREFIX == "fault."
     assert assessment_module.REASON_INTEGRITY_PREFIX == "integrity."
     assert assessment_module.TAIL_DIVISOR == 4
@@ -786,9 +819,9 @@ def test_cli_commands_and_options_are_exactly_the_inventory(
     root = _help(["--help"], capsys)
     assert root.startswith("usage: actseal")
     assert _options(root) == {"--help", "--version"}
-    for command in ("lock", "verify", "replay", "demo"):
+    for command in CLI_OPTIONS:
         assert f"\n    {command} " in root
-    assert not re.search(r"\n    (?!lock |verify |replay |demo )[a-z]+ ", root)
+    assert set(re.findall(r"\n    ([a-z-]+) ", root)) == set(CLI_OPTIONS)
     for command, options in CLI_OPTIONS.items():
         text = _help([command, "--help"], capsys)
         assert text.startswith(f"usage: actseal {command}")

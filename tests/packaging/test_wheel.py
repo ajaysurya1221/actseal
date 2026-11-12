@@ -251,6 +251,15 @@ def test_wheel_ships_every_demo_asset_byte_identically(venv: Path) -> None:
     assert installed.is_dir()
     for name in RESOURCE_NAMES:
         assert (installed / name).read_bytes() == (EXAMPLES / name).read_bytes(), name
+    for name in (
+        "qualify.toml",
+        "qualify_calibration.jsonl",
+        "qualify_verification.jsonl",
+        "qualify_responses.jsonl",
+    ):
+        assert (installed / name).read_bytes() == (
+            ROOT / "src" / "actseal" / "demo_data" / name
+        ).read_bytes(), name
     assert (installed / "__init__.py").is_file()
 
 

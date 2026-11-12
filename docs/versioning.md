@@ -1,8 +1,13 @@
 # Actseal versioning policy
 
-Status: normative for 1.x, frozen with Task 02 of the v1.0.0 plan. The
+Status: normative for 2.0.0 (unreleased), preserving the 1.x baseline frozen
+with Task 02 of the v1.0.0 plan and the amendments in plan/v2/CHANGE_LOG.md. The
 [stability manifest](stability.md) lists what the promises below apply to; the
-[migration guide](migration.md) records the one deliberate break set at 1.0.0.
+[migration guide](migration.md) records the historical 1.0.0 changes and the
+2.0 additions. Version 2.0 removes no STABLE name or flag, retains lock and
+bundle schema 2 and engine `actseal-choice-v1`, and narrows the fingerprint
+as described below. Score-only recorded answers may carry empty probabilities;
+existing full probability maps and historical provider normalization remain.
 
 ## Semantic versions
 
@@ -12,32 +17,33 @@ Actseal follows `MAJOR.MINOR.PATCH`.
 |---|---|
 | Bug fixes that preserve every STABLE behaviour; reviewed compatibility registry entries approving an exact reviewed source fingerprint (a released tree, the reviewed final candidate of the release that ships the entry, or the named reviewed prerelease producer of retained schema-2 evidence) for an existing engine | patch |
 | New commands, new constants, new optional arguments or flags whose defaults preserve existing behaviour; a new replay engine that must be explicitly selected; a separately versioned, explicitly opt-in interface for an additional format or semantics | minor |
-| Adding a field to an existing strict schema version or to a default CLI receipt shape, removal of a STABLE name or flag, an incompatible change to a STABLE behaviour or schema, a new required constructor field | 2.0 only |
+| Adding a field to an existing strict schema version or to a default CLI receipt shape, removal of a STABLE name or flag, an incompatible change to a STABLE behaviour or schema, a new required constructor field | major, subject to the deprecation rule below |
 
-Stable 1.x schemas and semantics remain supported throughout 1.x. The
+Stable schemas and semantics remain supported throughout their major series. The
 published schemas reject unknown fields, so an existing schema version (lock
 2, manifest 2, receipt 1, registry 1) and the default CLI receipt shapes never
-gain fields within 1.x; a new field is a new schema version or a new opt-in
+gain fields within 2.x; a new field is a new schema version or a new opt-in
 interface, and every existing stable surface keeps working unchanged. A
 STABLE surface is deprecated before it is removed: the deprecation is
 documented in the changelog and the stability manifest, remains in place for
 at least one minor release **and** at least 90 days, and the removal happens
-only in 2.0. [ADR 0015](decisions/0015-v1-stability-and-replay-compatibility.md)
-records these decisions.
+only in a later major release. No eligible deprecation is removed in 2.0.
+[ADR 0015](decisions/0015-v1-stability-and-replay-compatibility.md) records the
+original 1.x policy.
 
 PROVISIONAL surfaces (`actseal.experimental`, explicit experimental CLI flags)
 carry no compatibility promise and may change in any release.
 
 ## Security support
 
-Security fixes target the latest 1.x minor at its latest patch. Legacy 0.1.0
+Security fixes target the latest 2.x minor at its latest patch. Legacy 0.1.0
 replay availability (an isolated pinned `actseal==0.1.0` installation, see the
 [migration guide](migration.md)) is a compatibility path for reading historical
 evidence; it is not a promise to maintain a 0.1 security branch indefinitely.
 
 ## Version constants
 
-| Document | Constant | 1.0.0 value | Who reads it |
+| Document | Constant | 2.0.0 value (unchanged from 1.0.0) | Who reads it |
 |---|---|---|---|
 | Contract TOML | `actseal.records.CONTRACT_SCHEMA_VERSION` (alias `SCHEMA_VERSION`) | 1 | `parse_contract`, `Contract` |
 | Lock document | `actseal.records.LOCK_SCHEMA_VERSION` | 2 | `PlanLock`, `parse_lock` |
@@ -55,10 +61,16 @@ contained records carry no separate version field.
 A lock records two different facts:
 
 - `implementation_sha256` is **producer provenance**: the fingerprint of every
-  installed `actseal/**/*.py` source file at collection time. Any source change,
-  including a version bump, changes it.
+  installed `actseal/**/*.py` source file at collection time, except the small,
+  explicit, documented exclusion list (plan/v2 M2:
+  `actseal.serialization.EXCLUDED_FINGERPRINT_FILES` — the top-level
+  `__init__.py`, `__main__.py`, `cli.py` and `report.py`), none of
+  which can change decision or replay semantics. A version bump confined to
+  `__init__.py` therefore no longer changes it; changes to hashed source files,
+  including new files outside the exclusion list, do. A same-named file inside
+  a subpackage is always hashed.
 - `replay_engine_version` names the **replay semantics** the evidence was
-  produced under (`actseal-choice-v1` for 1.x: canonical encoding, policy
+  produced under (`actseal-choice-v1` for 1.x and 2.0: canonical encoding, policy
   precedence, normalizer behaviour, the six canonical faults and the
   Clopper-Pearson assessment).
 
@@ -110,7 +122,7 @@ archived-evidence regression test that justified the second entry, not a
 special case consulted at replay time. The second entry does not approve
 other prerelease trees, any hash range, or evidence from any other producer,
 and it does not claim that a release occurred at that source. Any later
-change to the packaged Python sources changes the running fingerprint: an
+change to the hashed packaged Python sources changes the running fingerprint: an
 earlier entry remains approved for replay, but it no longer identifies the
 running source, so the changed source needs its own fingerprint and review
 before evidence from other producers replays under it. The exact-source path
@@ -127,9 +139,25 @@ fingerprint, reviewed and approved by amendment V1-055 before tagging:
 | `dced01d79e64799a19a75c0957f3684a48249c58ebb27d346336e7420195bcb4` | the 1.0.1 source, version metadata included; reviewed and approved before tagging (V1-055) | the running implementation of 1.0.1; the 1.0.1 release records under `plan/v1/releases/1.0.1/` carry its publication receipts |
 
 The pre-bump hardening tree of 1.0.1 was never a release candidate and is not
-registered; nothing beyond these three fingerprints is approved.
+registered; nothing beyond these three fingerprints is approved under the
+pre-M2 (every-`*.py`) fingerprint algorithm.
 
-Because every source change, including a patch release, changes the
+**plan/v2 M2** (2026-11-13, no Codex review implied; see `plan/v2/STATE.md` —
+this is not an ACCEPT) narrowed the fingerprint algorithm to the exclusion
+list above, which changes every fingerprint value, including the running one,
+and added two more entries so the running source and the retained
+`docs/results/jev-audit-2026-10-08/evidence` archive both keep replaying:
+
+| Fingerprint | Source | Status |
+|---|---|---|
+| `167038cb709ff839f26a21ef55cc63ebd988d797ac56e82d0227ecad1a08eb7c` | producer of the retained `docs/results/jev-audit-2026-10-08/evidence` archive: unreleased benchmark snapshot `d3edbab2dfbd44a0e9e272e1671143517832e3b4` (see that directory's README) | registered so the archive keeps replaying to its recorded INCONCLUSIVE verdict; a golden replay test checks this |
+| `6335296062e227ebe523cba4047469dc70d6e91f002cc990e8146f68c76a4ac5` | the 2.0.0 candidate source under the narrowed fingerprint | the running implementation of the 2.0.0 candidate; registered so the retained archives replay to their stored verdicts under it |
+
+The three pre-M2 entries (`8f316f679b2…`, `a5fe090202f…`, `dced01d79e6…`) stay
+registered unchanged, computed under the pre-M2 algorithm, so 1.0.0 and 1.0.1
+evidence keeps replaying; they are not recomputed under the M2 algorithm.
+
+When a hashed source change, including one in a patch release, changes the
 fingerprint, a reviewed entry approving an exact released fingerprint, or the
 exact reviewed final candidate of that patch release, for an existing engine
 may ship in a patch release. Approval is always explicit and per fingerprint;
