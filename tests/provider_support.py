@@ -4,8 +4,8 @@ Three test trees use this module:
 
 * ``tests/unit/test_providers.py`` imports the fixture rows and the fake worker;
 * ``tests/conformance`` runs the shared behavioural checks below against every
-  provider profile (recorded fixture, the fake-worker Laya double and the
-  experimental Jev adapter over a stdlib fake connection);
+  provider profile (fixture, recorded predictions, the fake-worker Laya double
+  and experimental Jev/decision-api adapters over stdlib fake connections);
 * ``tests/integration/test_laya.py`` applies the same close-lifecycle check to
   the real pinned model.
 
@@ -34,8 +34,10 @@ import pytest
 from actseal.adapters.base import DecisionModel
 from actseal.adapters.fixture import FixtureModel
 from actseal.adapters.laya import ADAPTER_VERSION, ARTIFACT_HASHES, MODEL_ID, REVISION, LayaModel
+from actseal.adapters.recorded import RecordedModel
 from actseal.errors import SchemaError
 from actseal.experimental.providers import jev as jev_module
+from actseal.experimental.providers.decision_api import DecisionAPIModel
 from actseal.experimental.providers.jev import JevModel
 from actseal.normalization import NORMALIZER_VERSION, normalize, request_sha256
 from actseal.records import (
@@ -286,6 +288,16 @@ class ProviderProfile(Protocol):
     def name(self) -> str: ...
 
     @property
+    def diagnostic_confidence(self) -> float | None: ...
+
+    @property
+    def accepts_warnings(self) -> bool: ...
+
+    def malformed_body(self, raw: str, index: int) -> str:
+        """A malformed answer representable in this provider's capture format."""
+        ...
+
+    @property
     def after_close(self) -> Lifecycle:
         """What ``decide`` returns after ``close``: a body, or ``unavailable``."""
         ...
@@ -368,7 +380,16 @@ def _inner_answer_text(question: ChoiceQuestion, *, newline: str) -> str:
 IGNORED_ANSWER_FIELDS: Final[tuple[str, ...]] = ("action", "answer_confidence")
 
 
-class FixtureProfile:
+class _ProfileDefaults:
+    diagnostic_confidence: float | None = 0.25
+    accepts_warnings = True
+
+    def malformed_body(self, raw: str, index: int) -> str:
+        del index
+        return raw
+
+
+class FixtureProfile(_ProfileDefaults):
     """Recorded-response adapter: no transport, close is a no-op, bodies are verbatim."""
 
     name = "fixture"
@@ -434,7 +455,56 @@ class FixtureProfile:
         return None
 
 
-class FakeLayaProfile:
+class RecordedProfile(FixtureProfile):
+    """Public prediction rows: explicit score, strict fields and no diagnostics."""
+
+    name = "recorded"
+    load_warnings = ("recorded: provider faults not tested",)
+    evidence_only_fields: tuple[str, ...] = ()
+    diagnostic_confidence = None
+    accepts_warnings = False
+
+    def _write(self, rows: list[object]) -> DecisionModel:
+        self._count += 1
+        path = self._directory / f"recorded-{self._count}.jsonl"
+        predictions: list[object] = []
+        for row in rows:
+            assert isinstance(row, dict)
+            assert row["warnings"] == []
+            if row["failure_code"] is not None:
+                predictions.append({"case_id": row["case_id"], "failure_code": row["failure_code"]})
+            else:
+                body = json.loads(row["body_json"])
+                assert body.pop("type") == "choice"
+                predictions.append({"case_id": row["case_id"], **body})
+        write_rows(path, predictions)
+        return RecordedModel(path, model="external-choice", revision="test-revision")
+
+    def preserved(self, raw: str) -> str:
+        return canonical_json(strict_json_loads(raw)).decode("utf-8")
+
+    def valid_raw_body(self, question: ChoiceQuestion) -> str:
+        return json.dumps({"type": "choice", "choice": question.labels[0], "score": 0.5})
+
+    def malformed_body(self, raw: str, index: int) -> str:
+        del raw
+        scores: tuple[object, ...] = (None, True, "0.5", -0.1, 1.1, [], {})
+        return json.dumps({"type": "choice", "choice": "billing", "score": scores[index]})
+
+    def requests_sent(self, model: DecisionModel) -> int:
+        assert isinstance(model, RecordedModel)
+        return 0
+
+    def worker_alive(self, model: DecisionModel) -> bool | None:
+        assert isinstance(model, RecordedModel)
+        return None
+
+    def worker_pid(self, model: DecisionModel) -> int | None:
+        assert isinstance(model, RecordedModel)
+        return None
+
+
+class FakeLayaProfile(_ProfileDefaults):
     """Laya adapter over the fake worker: one resident child, close releases it."""
 
     name = "laya-fake"
@@ -548,7 +618,7 @@ class _JevFakeConnect:
         return _JevFakeConnection(script, self.log)
 
 
-class JevProfile:
+class JevProfile(_ProfileDefaults):
     """Experimental Jev adapter over a fake connection: no socket, no worker, no key read.
 
     Successful bodies travel through the adapter's real HTTPS exchange and
@@ -565,6 +635,13 @@ class JevProfile:
     load_warnings: tuple[str, ...] = ()
     #: Validated for shape only; their values never reach the outcome.
     evidence_only_fields = ("usage", "input_tokens", "output_tokens")
+    response_model = "jev-1.13.0"
+
+    def _make_model(self, exchange: jev_module._Exchange) -> DecisionModel:
+        return JevModel._with_exchange(exchange)
+
+    def _make_exchange(self, connect: _JevFakeConnect) -> jev_module._HttpsExchange:
+        return jev_module._HttpsExchange(JEV_MOCK_KEY, connect)
 
     def open(
         self,
@@ -578,28 +655,26 @@ class JevProfile:
         if (body is None) == (failure is None):
             raise ValueError("exactly one of body/failure is required")
         if body is not None:
-            inner = jev_module._HttpsExchange(
-                JEV_MOCK_KEY, _JevFakeConnect([(200, body.encode("utf-8"))])
-            )
+            inner = self._make_exchange(_JevFakeConnect([(200, body.encode("utf-8"))]))
 
             def exchange(payload: bytes, timeout: float) -> jev_module._Reply:
                 reply = inner(payload, timeout)
                 return jev_module._Reply(reply.body, reply.failure, (*reply.warnings, *warnings))
 
-            return JevModel._with_exchange(exchange)
+            return self._make_model(exchange)
         assert failure is not None
 
         def scripted(payload: bytes, timeout: float) -> jev_module._Reply:
             del payload, timeout
             return jev_module._Reply(None, failure, warnings)
 
-        return JevModel._with_exchange(scripted)
+        return self._make_model(scripted)
 
     def open_timing_out(self, question: ChoiceQuestion) -> tuple[DecisionModel, float]:
         connect = _JevFakeConnect(
             [(JEV_TIMEOUT, b""), (200, self.valid_raw_body(question).encode("utf-8"))]
         )
-        return JevModel._with_exchange(jev_module._HttpsExchange(JEV_MOCK_KEY, connect)), 5.0
+        return self._make_model(self._make_exchange(connect)), 5.0
 
     def preserved(self, raw: str) -> str:
         return raw
@@ -613,7 +688,8 @@ class JevProfile:
         )
         return (
             '{ "usage" : {"input_tokens": 59, "output_tokens": 0},  '
-            f'"answers" : {{ "{question.question_id}" : {inner} }}, "model":"jev-1.13.0" }}'
+            f'"answers" : {{ "{question.question_id}" : {inner} }}, '
+            f'"model":"{self.response_model}" }}'
         )
 
     def requests_sent(self, model: DecisionModel) -> int:
@@ -629,7 +705,46 @@ class JevProfile:
         return None
 
 
-PROFILE_NAMES: Final[tuple[str, ...]] = ("fixture", "laya-fake", "jev-fake")
+class DecisionAPIProfile(JevProfile):
+    """Configurable model over the same fake exchange, with no key or network."""
+
+    name = "decision-api-fake"
+    response_model = "local-choice-v2"
+
+    def _make_model(self, exchange: jev_module._Exchange) -> DecisionModel:
+        model = DecisionAPIModel(
+            endpoint="http://localhost/decide",
+            model=self.response_model,
+            revision="test-revision",
+        )
+        model._configure(exchange, model.identity())
+        return model
+
+    def _make_exchange(self, connect: _JevFakeConnect) -> jev_module._HttpsExchange:
+        return jev_module._HttpsExchange(
+            None, connect, path="/decide", warning_prefix="decision-api"
+        )
+
+    def requests_sent(self, model: DecisionModel) -> int:
+        assert isinstance(model, DecisionAPIModel)
+        return model._attempts
+
+    def worker_alive(self, model: DecisionModel) -> bool | None:
+        assert isinstance(model, DecisionAPIModel)
+        return not model._closed
+
+    def worker_pid(self, model: DecisionModel) -> int | None:
+        assert isinstance(model, DecisionAPIModel)
+        return None
+
+
+PROFILE_NAMES: Final[tuple[str, ...]] = (
+    "fixture",
+    "laya-fake",
+    "jev-fake",
+    "recorded",
+    "decision-api-fake",
+)
 
 
 def build_profile(name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ProviderProfile:
@@ -639,6 +754,10 @@ def build_profile(name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
         return FakeLayaProfile(write_fake_worker(tmp_path, monkeypatch), monkeypatch)
     if name == "jev-fake":
         return JevProfile()
+    if name == "recorded":
+        return RecordedProfile(tmp_path)
+    if name == "decision-api-fake":
+        return DecisionAPIProfile()
     raise ValueError(f"unknown provider profile: {name}")
 
 
@@ -826,13 +945,17 @@ def check_body_preserved(
 
 
 def check_valid_body_normalizes(
-    capture: CapturedOutcome, question: ChoiceQuestion, identity: ModelIdentity
+    capture: CapturedOutcome,
+    question: ChoiceQuestion,
+    identity: ModelIdentity,
+    *,
+    diagnostic_confidence: float | None = 0.25,
 ) -> ChoiceAnswer:
     outcome = normalize(capture, question, identity)
     assert isinstance(outcome, ChoiceAnswer), outcome
     assert outcome.choice == question.labels[0]
     assert outcome.selected_probability == 0.5
-    assert outcome.provider_confidence == 0.25  # optional native field survived capture
+    assert outcome.provider_confidence == diagnostic_confidence
     assert outcome.fallback_used is False
     return outcome
 

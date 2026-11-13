@@ -97,7 +97,8 @@ MASS_TOLERANCE: Final = 1e-12
 #: the stable CLI choices; ``jev`` is the PROVISIONAL experimental cloud adapter
 #: (plan/v1/CHANGE_LOG.md V1-011) and is admitted here so its evidence can be
 #: recorded, normalized and replayed. Admission is not runner/CLI registration.
-PROVIDERS: Final[frozenset[str]] = frozenset({"fixture", "laya", "jev"})
+#: v2 also admits score-only ``recorded`` and experimental ``decision-api``.
+PROVIDERS: Final[frozenset[str]] = frozenset({"fixture", "laya", "jev", "recorded", "decision-api"})
 
 _R = TypeVar("_R")
 
@@ -268,7 +269,7 @@ def _hash_map(field: str, value: object) -> tuple[tuple[str, str], ...]:
 
 
 def _probabilities(field: str, value: object) -> tuple[tuple[str, float], ...]:
-    """Validate ordered ``((label, probability), ...)`` pairs with unique labels."""
+    """Validate an empty score-only map or 2..16 ordered unique probability pairs."""
     pairs: list[tuple[str, float]] = []
     for index, item in enumerate(_sequence(field, value)):
         label, probability = _pair(f"{field}[{index}]", item)
@@ -278,8 +279,10 @@ def _probabilities(field: str, value: object) -> tuple[tuple[str, float], ...]:
                 _float(f"{field}[{index}].probability", probability, minimum=0.0, maximum=1.0),
             )
         )
+    if not pairs:
+        return ()
     if not MIN_OPTIONS <= len(pairs) <= MAX_OPTIONS:
-        raise _fail(field, f"must contain {MIN_OPTIONS}..{MAX_OPTIONS} entries")
+        raise _fail(field, f"must be empty or contain {MIN_OPTIONS}..{MAX_OPTIONS} entries")
     labels = [label for label, _ in pairs]
     if len(set(labels)) != len(labels):
         raise _fail(field, "labels must be unique")
@@ -432,9 +435,9 @@ class ChoiceAnswer:
             "selected_probability", self.selected_probability, minimum=0.0, maximum=1.0
         )
         by_label = dict(probabilities)
-        if choice not in by_label:
+        if probabilities and choice not in by_label:
             raise _fail("choice", "must be one of the probability labels")
-        if by_label[choice] != selected:
+        if probabilities and by_label[choice] != selected:
             raise _fail("selected_probability", "must equal the probability of choice")
         _set(self, "choice", choice)
         _set(self, "probabilities", probabilities)

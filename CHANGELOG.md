@@ -1,9 +1,70 @@
 # Changelog
 
-## Unreleased
+## v2.0.0 — unreleased
 
-- Repository automation: the release workflow pins `actions/upload-artifact` 7.0.2 and `actions/download-artifact` 8.0.2 to verified commits, with the release gate's action allowlist updated to match.
-- Repository automation: the repository lock now resolves only Linux and macOS below Python 3.15 (`[tool.uv] environments`); no locked package version, source, URL, hash or size changed, and the documented support matrix is unchanged.
+### What is new
+
+- `plan` estimates verification sample sizes; `calibrate` selects a threshold
+  from a pre-registered grid; `qualify` combines calibration with separate
+  verification cases. `replay-selection` checks the five-file calibration
+  sidecar offline. The qualification receipt links calibration and verification
+  evidence. `demo --qualify` supplies a synthetic first run.
+- `report DIRECTORY --out OUTDIR` renders replayed evidence as deterministic
+  HTML, Markdown and badge JSON. A PASS headline states the stored lower
+  coverage bound at the locked risk limit; other verdicts make no automation
+  claim. Reports validate qualification links and retain the full stored
+  verdict. Attestation references are caller assertions; Actseal verifies no
+  signature.
+- The `recorded` provider accepts predictions from any model with a required
+  model/revision and file-hash identity. Raw scores gate unchanged. All six
+  local synthetic checks remain, with `recorded: provider faults not tested`.
+  The PROVISIONAL `decision-api` provider reuses Jev transport with a locked
+  endpoint/model/revision and an explicit experimental flag.
+- A composite GitHub Action runs qualification, verification or replay,
+  retains reports and evidence, and preserves verdict exit codes. Its default
+  package version is 2.0.0; use `source: checkout` until that version is
+  published. Architecture figures include the new modules; the Jev evidence
+  card retains its historical producer scope and recorded result.
+- Repository automation pins `actions/upload-artifact` 7.0.2 and
+  `actions/download-artifact` 8.0.2 with the matching release allowlist. The
+  repository lock resolves only Linux/macOS below Python 3.15; dependency
+  versions, sources, URLs, hashes and sizes are unchanged. Only Actseal's own
+  package version changes for this release.
+
+### Compatibility
+
+- Lock schema 2, seven-file bundle schema 2 and engine `actseal-choice-v1`
+  remain unchanged. Selection uses a separately versioned, opt-in sidecar.
+  No STABLE name or flag was removed: `lock`, `verify`, `replay`, ordinary
+  `demo`, fixture, native Laya, existing receipt shapes and exit codes remain.
+  Jev remains PROVISIONAL and requires explicit opt-in.
+- The implementation fingerprint now excludes only the top-level
+  `__init__.py`, `__main__.py`, `cli.py` and `report.py`; every other packaged
+  Python file, including new files and subpackage namesakes, remains hashed.
+  Presentation and version-only changes no longer require a kernel identity
+  change. New collection still requires an exact-source lock, and foreign
+  evidence replay still requires both fingerprints registered for its engine.
+- The archived Jev audit replays directly with the packaged registry to its
+  stored INCONCLUSIVE verdict: 580 ACT decisions among 639 verification
+  cases, with 24 label disagreements. Its producer remains unreleased snapshot
+  `d3edbab`; it is finite-benchmark evidence, not a 2.0.0 model measurement.
+- `ChoiceAnswer.probabilities` may be empty for score-only recorded answers,
+  or contain 2..16 entries as before; singleton maps remain invalid. Consumers
+  must handle an empty map. Supplied recorded maps must match the selected
+  raw score exactly and are never renormalized. Historical fixture, Laya and
+  Jev normalization is unchanged. See [migration](docs/migration.md) and
+  [stability](docs/stability.md).
+
+### Known limits
+
+- The GitHub Action has local script tests but has not been exercised on
+  hosted runners. Installation, hosted summaries/uploads and attestation
+  remain unverified for this release.
+- No live `decision-api` server has been verified; its transport evidence is
+  mocked. Recorded predictions do not test upstream provider faults or prove
+  label truth, sampling history or deployment performance.
+- Model comparison is not part of this release. No independent third-party
+  ACCEPT, hosted v2 CI result, tag or publication is claimed by this entry.
 
 ## v1.0.1 — 2026-10-08
 

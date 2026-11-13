@@ -1,0 +1,21 @@
+schema_version = 1
+name = "synthetic-qualification"
+evidence_scope = "demo"
+population = "Authored synthetic qualification cases; labels and responses are supplied demonstration data, with no population or deployment claim"
+
+[question]
+question_id = "synthetic-route"
+instructions = "Choose the authored route for this synthetic example."
+options = [
+  {label = "accept", description = "Authored automatic route"},
+  {label = "review", description = "Authored review route"},
+]
+
+[policy]
+allowed_labels = ["accept"]
+threshold = 0.5
+
+[risk]
+max_risk = 0.2
+min_coverage = 0.5
+alpha = 0.05

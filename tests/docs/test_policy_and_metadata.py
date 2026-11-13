@@ -5,11 +5,13 @@ from __future__ import annotations
 import importlib
 import re
 import ssl  # noqa: F401 - loaded before the offline fixture patches socket.socket
+import tomllib
 from importlib.metadata import distribution
 from pathlib import Path
 
 import pytest
 
+import actseal
 import actseal.cli as cli_module
 from actseal.records import PROVIDERS
 from docs.conftest import DOCS, ROOT
@@ -41,6 +43,20 @@ def test_core_metadata_has_no_windows_classifier_and_no_core_dependency() -> Non
     assert metadata["Requires-Python"] == ">=3.12"
 
 
+def test_release_version_sources_and_action_default_agree() -> None:
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+    lock = tomllib.loads((ROOT / "uv.lock").read_text())
+    own_packages = [entry for entry in lock["package"] if entry["name"] == "actseal"]
+    assert len(own_packages) == 1
+    assert project["version"] == own_packages[0]["version"] == actseal.__version__ == "2.0.0"
+    assert "Development Status :: 5 - Production/Stable" in project["classifiers"]
+    citation = (ROOT / "CITATION.cff").read_text()
+    assert re.search(r'^version: "2\.0\.0"$', citation, re.M)
+    action = (ROOT / "action.yml").read_text()
+    assert re.search(r"^  version:\n    description: [^\n]+\n    default: '2\.0\.0'$", action, re.M)
+    assert "## v2.0.0 — unreleased" in (ROOT / "CHANGELOG.md").read_text()
+
+
 @pytest.mark.parametrize(
     "document",
     ["docs/quickstart.md", "docs/providers.md", "docs/faq.md", "CONTRIBUTING.md", "AGENTS.md"],
@@ -64,9 +80,9 @@ def test_providers_doc_distinguishes_stable_providers_from_provisional_jev() -> 
     live-verified provider: the only Jev evidence in this source is mocked
     transport coverage, and final inclusion remains a separate review.
     """
-    assert set(PROVIDERS) == {"fixture", "laya", "jev"}
-    assert cli_module._PROVIDERS == ("fixture", "laya")
-    assert cli_module._EXPERIMENTAL_PROVIDERS == ("jev",)
+    assert set(PROVIDERS) == {"fixture", "laya", "recorded", "jev", "decision-api"}
+    assert cli_module._PROVIDERS == ("fixture", "laya", "recorded")
+    assert cli_module._EXPERIMENTAL_PROVIDERS == ("jev", "decision-api")
     module = importlib.import_module("actseal.experimental.providers.jev")
     assert module.API_KEY_ENV == "JEV_API_KEY"
     text = _prose(DOCS / "providers.md")
@@ -115,7 +131,7 @@ def test_providers_doc_distinguishes_stable_providers_from_provisional_jev() -> 
 def test_security_policy_support_rule_and_reportability_are_preserved() -> None:
     text = _prose(SECURITY)
     assert "https://github.com/ajaysurya1221/actseal/security/advisories/new" in text
-    assert "latest 1.x minor release at its latest patch" in text
+    assert "latest 2.x minor release at its latest patch" in text
     assert "not a promise to maintain a 0.1 security branch" in text
     assert "latest v0.1.x release" not in text
     for phrase in (

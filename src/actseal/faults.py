@@ -12,8 +12,8 @@ Canonical shape:
 * request ``case_id`` is the scenario id, ``state`` is the literal
   ``Actseal deterministic fault campaign.`` and ``question`` is the locked
   question; the capture hash is the canonical request hash;
-* every capture has ``warnings=()`` and ``fallback_used=False`` and starts
-  from ``lock.model_identity``;
+* every capture has ``fallback_used=False`` and starts from ``lock.model_identity``;
+  warnings are empty except for the recorded-provider scope warning;
 * ``timeout``/``rate_limit`` carry no body and ``failure_code=kind``;
   ``malformed_response`` carries the literal body ``{``;
 * the other three carry a canonical JSON answer with only ``type``,
@@ -31,6 +31,9 @@ Canonical shape:
   is 0.0, and is wrapped in ``{model: jev-1.13.0, answers, usage:
   {input_tokens: 0, output_tokens: 0}}``. That confidence proves the vendor
   score is not the ACT gate. Zero usage is synthetic fault data, not inference.
+  ``decision-api`` uses the same envelope with the locked model name. The
+  ``recorded`` profile adds the selected raw ``score`` and carries the explicit
+  warning that upstream provider faults were not tested. All six checks remain.
 
 This module imports no adapter, transport, assessment or replay code.
 """
@@ -41,7 +44,13 @@ from dataclasses import replace
 from typing import Final
 
 from actseal.errors import SchemaError
-from actseal.normalization import _JEV_MODEL, LAYA_MODEL_MARKER, normalize, request_sha256
+from actseal.normalization import (
+    _JEV_MODEL,
+    LAYA_MODEL_MARKER,
+    RECORDING_WARNING,
+    normalize,
+    request_sha256,
+)
 from actseal.policy import evaluate
 from actseal.records import (
     CapturedOutcome,
@@ -105,13 +114,17 @@ def _canonical_body(lock: PlanLock, kind: str) -> tuple[str, ModelIdentity]:
             "answers": {lock.contract.question.question_id: answer},
             "usage": dict(_ZERO_USAGE),
         }
-    elif lock.model_identity.provider == "jev":
+    elif lock.model_identity.provider in {"jev", "decision-api"}:
         answer["confidence"] = _JEV_ONE_HOT_CONFIDENCE
         body = {
-            "model": _JEV_MODEL,
+            "model": (
+                _JEV_MODEL if lock.model_identity.provider == "jev" else lock.model_identity.model
+            ),
             "answers": {lock.contract.question.question_id: answer},
             "usage": dict(_JEV_ZERO_USAGE),
         }
+    elif lock.model_identity.provider == "recorded":
+        answer["score"] = probabilities[selected]
     return canonical_json(body).decode("utf-8"), identity
 
 
@@ -124,15 +137,18 @@ def fault_capture(lock: PlanLock, spec: FaultSpec) -> tuple[DecisionRequest, Cap
     kind = spec.kind
     request = DecisionRequest(spec.scenario_id, FAULT_STATE, lock.contract.question)
     digest = request_sha256(request)
+    warnings = (RECORDING_WARNING,) if lock.model_identity.provider == "recorded" else ()
     if kind in _TRANSPORT_KINDS:
-        capture = CapturedOutcome(digest, lock.model_identity, None, kind, (), fallback_used=False)
+        capture = CapturedOutcome(
+            digest, lock.model_identity, None, kind, warnings, fallback_used=False
+        )
     elif kind == "malformed_response":
         capture = CapturedOutcome(
-            digest, lock.model_identity, _MALFORMED_BODY, None, (), fallback_used=False
+            digest, lock.model_identity, _MALFORMED_BODY, None, warnings, fallback_used=False
         )
     elif kind in _ANSWER_KINDS:
         body, identity = _canonical_body(lock, kind)
-        capture = CapturedOutcome(digest, identity, body, None, (), fallback_used=False)
+        capture = CapturedOutcome(digest, identity, body, None, warnings, fallback_used=False)
     else:
         raise SchemaError("spec.kind: unsupported fault kind")
     return request, capture

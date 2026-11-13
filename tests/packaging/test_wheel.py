@@ -251,6 +251,15 @@ def test_wheel_ships_every_demo_asset_byte_identically(venv: Path) -> None:
     assert installed.is_dir()
     for name in RESOURCE_NAMES:
         assert (installed / name).read_bytes() == (EXAMPLES / name).read_bytes(), name
+    for name in (
+        "qualify.toml",
+        "qualify_calibration.jsonl",
+        "qualify_verification.jsonl",
+        "qualify_responses.jsonl",
+    ):
+        assert (installed / name).read_bytes() == (
+            ROOT / "src" / "actseal" / "demo_data" / name
+        ).read_bytes(), name
     assert (installed / "__init__.py").is_file()
 
 
@@ -296,14 +305,14 @@ def test_wheel_ships_the_reviewed_registry_byte_identically(venv: Path, outside:
     assert installed.read_bytes() == REGISTRY.read_bytes()
     document = json.loads(installed.read_text(encoding="utf-8"))
     assert document["schema_version"] == 1
-    assert len(document["implementations"]) == 3
+    assert len(document["implementations"]) == 5
     script = (
         "from actseal.compatibility import load_registry as l; "
         "from actseal.serialization import implementation_fingerprint as f; "
         "r = l(); print(r.engine_for(f()), len(r.implementations))"
     )
     result = run([str(python(venv)), "-c", script], cwd=outside)
-    assert result.stdout.strip() == "actseal-choice-v1 3"
+    assert result.stdout.strip() == "actseal-choice-v1 5"
 
 
 def test_sdist_ships_the_reviewed_registry_byte_identically(sdist: Path) -> None:

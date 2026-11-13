@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:selection-plan:1",
+  "title": "Actseal selection plan (schema 1)",
+  "description": "Written and self-sealed before calibration captures. The contract omits only the selected threshold. Python additionally validates ordered grid values, cross-split separation, hashes, canonical bytes and implementation identity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract",
+    "grid",
+    "target_pass_probability",
+    "selection_tail",
+    "n_verify",
+    "calibration_sha256",
+    "verification_sha256",
+    "model_identity",
+    "implementation_sha256",
+    "replay_engine_version",
+    "sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "contract": {
+      "$ref": "#/$defs/Contract"
+    },
+    "grid": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1
+      }
+    },
+    "target_pass_probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "selection_tail": {
+      "type": "number",
+      "minimum": 2.5e-7,
+      "exclusiveMaximum": 0.5
+    },
+    "n_verify": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "calibration_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "verification_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "model_identity": {
+      "$ref": "#/$defs/ModelIdentity"
+    },
+    "implementation_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "replay_engine_version": {
+      "const": "actseal-choice-v1"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "Sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "NonEmpty": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "description"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "description": {
+          "$ref": "#/$defs/NonEmpty"
+        }
+      }
+    },
+    "ChoiceQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "question_id",
+        "instructions",
+        "options"
+      ],
+      "properties": {
+        "question_id": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "instructions": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/Option"
+          }
+        }
+      }
+    },
+    "LockedPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "known_labels",
+        "allowed_labels"
+      ],
+      "properties": {
+        "known_labels": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/NonEmpty"
+          }
+        },
+        "allowed_labels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/NonEmpty"
+          }
+        }
+      }
+    },
+    "GateLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_risk",
+        "min_coverage",
+        "alpha"
+      ],
+      "properties": {
+        "max_risk": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "min_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "alpha": {
+          "type": "number",
+          "minimum": 0.000001,
+          "exclusiveMaximum": 1
+        }
+      }
+    },
+    "Contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "name",
+        "question",
+        "policy",
+        "limits",
+        "evidence_scope",
+        "population"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "name": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "question": {
+          "$ref": "#/$defs/ChoiceQuestion"
+        },
+        "policy": {
+          "$ref": "#/$defs/LockedPolicy"
+        },
+        "limits": {
+          "$ref": "#/$defs/GateLimits"
+        },
+        "evidence_scope": {
+          "enum": [
+            "demo",
+            "iid"
+          ]
+        },
+        "population": {
+          "$ref": "#/$defs/NonEmpty"
+        }
+      }
+    },
+    "ModelIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "model",
+        "revision",
+        "artifact_hashes",
+        "adapter_version",
+        "normalizer_version",
+        "runtime"
+      ],
+      "properties": {
+        "provider": {
+          "enum": [
+            "fixture",
+            "laya",
+            "jev",
+            "recorded",
+            "decision-api"
+          ]
+        },
+        "model": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "revision": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "artifact_hashes": {
+          "type": "object",
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Sha256"
+          }
+        },
+        "adapter_version": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "normalizer_version": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "runtime": {
+          "type": "object",
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/NonEmpty"
+          }
+        }
+      }
+    },
+    "Case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "state",
+        "expected_label"
+      ],
+      "properties": {
+        "case_id": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "state": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "expected_label": {
+          "$ref": "#/$defs/NonEmpty"
+        }
+      }
+    },
+    "CaseRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "sha256"
+      ],
+      "properties": {
+        "case_id": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "FaultSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "kind",
+        "expected_action"
+      ],
+      "properties": {
+        "scenario_id": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "kind": {
+          "$ref": "#/$defs/NonEmpty"
+        },
+        "expected_action": {
+          "enum": [
+            "ACT",
+            "ABSTAIN",
+            "ESCALATE",
+            "DENY"
+          ]
+        }
+      }
+    }
+  }
+}

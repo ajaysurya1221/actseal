@@ -3,8 +3,8 @@
 The [stability manifest](stability.md) is the exhaustive, normative inventory
 of the public Python surface: every record field, constant and signature. This
 guide groups that surface by task and shows small runnable examples. The
-examples use only names that exist in 1.x; there are no convenience wrappers
-beyond the ones listed here.
+original examples use names that exist in 1.x. The separate v2 section below
+documents the opt-in selection and qualification entry points.
 
 The runtime core imports only the standard library. Importing `actseal` never
 imports an optional model stack, and `actseal.replay` works with the Laya
@@ -71,7 +71,7 @@ Each row names the exact module path. These signatures are frozen for 1.x;
 | `actseal.serialization.to_data` | `(record: object) -> dict[str, object]` |
 | `actseal.serialization.from_data` | `(record_type: type[T], value: object) -> T` |
 | `actseal.serialization.implementation_fingerprint` | `() -> str` |
-| `actseal.runner.open_model` | `(provider: str, *, responses: Path \| None, offline: bool) -> DecisionModel` |
+| `actseal.runner.open_model` | `(provider: str, *, responses: Path \| None, offline: bool, model: str \| None = None, revision: str \| None = None, endpoint: str \| None = None, api_key_env: str \| None = None) -> DecisionModel` |
 | `actseal.runner.write_lock` | `(lock: PlanLock, destination: Path) -> Path` |
 | `actseal.runner.collect` | `(model: DecisionModel, lock: PlanLock, cases: tuple[Case, ...]) -> tuple[DecisionRecord, ...]` |
 | `actseal.runner.lock_run` | `(contract_path: Path, calibration_path: Path, verification_path: Path, destination: Path, *, model_factory: ModelFactory) -> PlanLock` |
@@ -89,6 +89,68 @@ Each row names the exact module path. These signatures are frozen for 1.x;
 any public record type. `ModelFactory` is `Callable[[], DecisionModel]`.
 `DemoRun` exposes the properties `verdict` and `as_expected`; `DemoResult`
 exposes `succeeded`; `ChoiceQuestion` exposes `labels`.
+
+## v2 selection and qualification
+
+`actseal.selection` contains the pure planning functions `plan_sample_size`,
+`pass_probability` and `select_threshold`, and the immutable
+`CalibrationCase`, `GridPoint` and `SelectionResult` records. They import no
+provider. Numerical argument errors use `TypeError` or `ValueError`.
+`select_threshold` is a planning calculation; only the ordinary verification
+verdict can establish PASS on held-out evidence.
+
+`actseal.qualification` composes those functions with the existing collection,
+locking and verification authorities. Its entry points are:
+
+```text
+calibrate_run(contract_path: Path, calibration_path: Path,
+              verification_path: Path, destination: Path, *,
+              model_factory: ModelFactory,
+              grid: Sequence[float] = DEFAULT_GRID,
+              target_pass_probability: float = 0.8,
+              selection_tail: float = DEFAULT_SELECTION_TAIL) -> CalibrationRun
+qualify_run(contract_path: Path, calibration_path: Path,
+            verification_path: Path, destination: Path, *,
+            provider: str, model_factory: ModelFactory,
+            grid: Sequence[float] = DEFAULT_GRID,
+            target_pass_probability: float = 0.8,
+            selection_tail: float = DEFAULT_SELECTION_TAIL) -> QualificationRun
+replay_selection(directory: Path) -> SelectionResult
+```
+
+`DEFAULT_GRID` is `(0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0)` and
+`DEFAULT_SELECTION_TAIL` is `0.05` from `actseal.selection`. Choose the grid
+before calibration, never from its scores. Both run entry points require a
+new output directory with an existing parent. All providers work through the
+same `ModelFactory`; use unchanged provider configuration and, for fixture
+or recorded predictions, one response file covering both splits.
+
+`CalibrationRun` exposes `destination`, `selection`, `manifest_sha256` and
+`contract_path`. The manifest digest hashes the entire file including LF;
+`contract_path` is `None` when selection finds no threshold. Its `selection`
+is a `SelectionResult` with `threshold`, `reason` and ordered `points`; every
+point has `threshold`, `accepted`, `errors` and
+`predicted_pass_probability`. The five-file evidence directory is
+`destination / "calibration"`.
+
+`QualificationRun` exposes `destination`, `calibration`, `lock`, `bundle`
+and `receipt_path`, plus `lock_path` and `bundle_path` properties. The lock,
+bundle, receipt and their paths are `None` when no threshold qualifies.
+Otherwise the existing `verify_run` produces `bundle.verdict`; selection
+adds no statistic to that verdict. The linking receipt is
+`destination / "qualification.json"`.
+
+Selection replay accepts the calibration directory, re-normalizes records and
+recomputes every point without importing an adapter. The plan's engine must
+be supported; its producer fingerprint must equal the running implementation
+or both fingerprints must be registered for that engine. New calibration
+collection requires the exact running fingerprint. Verification-bundle
+cross-release replay rules remain unchanged. Bad shapes raise
+`SchemaError`, inconsistent hashes or semantics raise `IntegrityError`, and
+filesystem failures propagate as `OSError`. The chosen threshold and counts
+must match exactly; probabilities use absolute tolerance `1e-10` and
+relative tolerance `1e-9`. A coherent rewrite of all evidence remains
+possible: these APIs do not authenticate responses or execution chronology.
 
 ## Examples
 

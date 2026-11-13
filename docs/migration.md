@@ -1,6 +1,63 @@
-# Migrating from actseal 0.1.0 to 1.0.0
+# Migrating to Actseal 2.0
 
-Status: normative, frozen with Task 02 of the v1.0.0 plan. Read with the
+## From 1.x to 2.0.0 (unreleased)
+
+Version 2.0.0 retains lock schema 2, seven-file bundle schema 2 and engine
+`actseal-choice-v1`. No STABLE name or flag is removed: existing `lock`,
+`verify`, `replay` and ordinary `demo` invocations, receipt shapes and exit
+codes remain. Fixture, native Laya and the PROVISIONAL Jev provider remain.
+The pre-existing statistical verdict and six-fault rules are unchanged.
+
+`plan`, `calibrate`, `qualify`, `replay-selection`, `report` and
+`demo --qualify` are additions. Selection is pre-registered and uses calibration
+cases; the verdict comes from separate verification cases. Calibration has a
+separately versioned, five-file sidecar linked by the qualification receipt;
+it is not an extra file inside an existing evidence bundle. No existing
+evidence is converted or resealed. Reports display stored values and their
+readable numbers do not replace the full-precision evidence.
+
+The implementation fingerprint excludes only the top-level `__init__.py`,
+`__main__.py`, `cli.py` and `report.py`. Every other packaged Python file
+remains hashed, including new files and subpackage namesakes. New collection
+requires a fresh lock from the exact running implementation. Replay accepts
+the exact fingerprint or two fingerprints registered for the recorded engine.
+The archived Jev audit now replays directly with the packaged registry to its
+stored INCONCLUSIVE verdict; the archived producer is no longer needed to run
+that replay. Its historical producer and finite-benchmark scope are unchanged.
+
+### Provider and answer changes
+
+Version 2.0.0 adds the `recorded` profile and PROVISIONAL `decision-api` profile.
+Existing fixture, Laya and Jev bodies keep their historical normalization;
+previous full probability maps decode unchanged. Cross-release replay still
+requires both producer and running fingerprints to be registered for the engine.
+
+`ChoiceAnswer.probabilities` can now be empty for score-only recorded answers,
+or contain 2..16 entries as before; a singleton remains invalid. Update consumers
+that assume a distribution is always present. The selected probability holds
+the exact raw recorded score. With a full map, the selected entry must equal
+that score exactly; no recorded probability or score is renormalized.
+Both decision-record and fault-result JSON Schemas reflect this extension;
+all identity schemas admit the two new provider names without new fields.
+
+Use `--provider recorded --responses FILE --model NAME --revision REV`, or
+`--provider decision-api --experimental-provider --endpoint URL --model NAME
+--revision REV [--api-key-env NAME]`. The latter locks the endpoint in the
+existing runtime map. Recorded runs retain all six local synthetic checks,
+carry `recorded: provider faults not tested`, and surface that warning through
+replay's existing `notes` field. The associated verdict reason is
+`scope.recorded_provider_faults_not_tested`; statistical status and bounds are
+unchanged. See [providers](providers.md#recorded-predictions-v2).
+
+No live decision-API server or hosted GitHub Action run has been verified for
+this release. Model comparison is not included. The Action defaults to
+`version: '2.0.0'`; until publication, use the explicit `source: checkout`
+installation described in the [Action guide](github-action.md).
+
+## Historical migration: 0.1.0 to 1.0.0
+
+The sections below record the original 1.0.0 migration, frozen with Task 02
+of the v1.0.0 plan. Read them with the 2.0 changes above, the
 [stability manifest](stability.md) and the [versioning policy](versioning.md).
 
 ## Summary

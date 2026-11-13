@@ -29,6 +29,7 @@ from actseal.records import (
     Verdict,
 )
 from actseal.serialization import (
+    EXCLUDED_FINGERPRINT_FILES,
     MAX_JSON_BYTES,
     MAX_JSON_DEPTH,
     _exceeds_byte_limit,
@@ -942,14 +943,18 @@ def test_implementation_fingerprint_matches_independent_computation() -> None:
     for file in package_dir.rglob("*.py"):
         if "__pycache__" in file.parts:
             continue
-        key = "actseal/" + file.relative_to(package_dir).as_posix()
+        relative = file.relative_to(package_dir)
+        if len(relative.parts) == 1 and relative.parts[0] in EXCLUDED_FINGERPRINT_FILES:
+            continue
+        key = "actseal/" + relative.as_posix()
         entries[key] = hashlib.sha256(file.read_bytes()).hexdigest()
     assert set(entries) >= {
-        "actseal/__init__.py",
         "actseal/errors.py",
         "actseal/records.py",
         "actseal/serialization.py",
     }
+    assert "actseal/__init__.py" not in entries
+    assert "actseal/cli.py" not in entries
     text = json.dumps(entries, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     assert implementation_fingerprint() == hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -969,8 +974,12 @@ def test_implementation_fingerprint_is_stable_across_roots_and_ignores_noise(
 
     copy_a = copy_sources(tmp_path / "site-packages-a")
     copy_b = copy_sources(tmp_path / "another" / "deeper" / "root")
-    assert _fingerprint_tree(copy_a, "actseal") == expected
-    assert _fingerprint_tree(copy_b, "actseal") == expected
+
+    def fingerprint(root: Path) -> str:
+        return _fingerprint_tree(root, "actseal", excluded_top_level=EXCLUDED_FINGERPRINT_FILES)
+
+    assert fingerprint(copy_a) == expected
+    assert fingerprint(copy_b) == expected
 
     (copy_b / "__pycache__").mkdir()
     (copy_b / "__pycache__" / "records.cpython-312.pyc").write_bytes(b"\x00compiled")
@@ -978,13 +987,72 @@ def test_implementation_fingerprint_is_stable_across_roots_and_ignores_noise(
     (copy_b / "notes.txt").write_text("not source\n")
     (copy_b / "data.json").write_text("{}\n")
     (copy_b / "py.typed").write_text("marker changed\n")
-    assert _fingerprint_tree(copy_b, "actseal") == expected
+    assert fingerprint(copy_b) == expected
 
     (copy_b / "records.py").write_bytes((copy_b / "records.py").read_bytes() + b"\n# changed\n")
-    assert _fingerprint_tree(copy_b, "actseal") != expected
+    assert fingerprint(copy_b) != expected
 
     (copy_a / "extra.py").write_text("")
-    assert _fingerprint_tree(copy_a, "actseal") != expected
+    assert fingerprint(copy_a) != expected
+
+
+def test_fingerprint_tree_excludes_only_top_level_named_files(tmp_path: Path) -> None:
+    """Editing an excluded top-level file leaves the digest unchanged; everything
+
+    else -- any other existing file, a new file, and a same-named file inside a
+    subpackage -- changes it. ``EXCLUDED_FINGERPRINT_FILES`` holds no decision or
+    replay semantics: version metadata/re-exports, the console entry point and
+    CLI argument parsing/output formatting.
+    """
+    root = tmp_path / "actseal"
+    root.mkdir()
+    (root / "__init__.py").write_text("__version__ = '0'\n")
+    (root / "__main__.py").write_text("pass\n")
+    (root / "cli.py").write_text("pass\n")
+    (root / "errors.py").write_text("class ActsealError(Exception): pass\n")
+    (root / "sub").mkdir()
+    (root / "sub" / "__init__.py").write_text("")
+    (root / "sub" / "cli.py").write_text("pass\n")
+
+    baseline = _fingerprint_tree(root, "actseal", excluded_top_level=EXCLUDED_FINGERPRINT_FILES)
+
+    for excluded_name in ("__init__.py", "__main__.py", "cli.py"):
+        (root / excluded_name).write_text(f"# edited {excluded_name}\n")
+        assert (
+            _fingerprint_tree(root, "actseal", excluded_top_level=EXCLUDED_FINGERPRINT_FILES)
+            == baseline
+        ), excluded_name
+
+    # report.py does not exist yet; it is excluded by name once it does, too.
+    (root / "report.py").write_text("pass\n")
+    assert (
+        _fingerprint_tree(root, "actseal", excluded_top_level=EXCLUDED_FINGERPRINT_FILES)
+        == baseline
+    )
+    (root / "report.py").unlink()
+
+    # A same-named file in a subpackage is not top level, so it is still hashed.
+    (root / "sub" / "cli.py").write_text("# edited\n")
+    assert (
+        _fingerprint_tree(root, "actseal", excluded_top_level=EXCLUDED_FINGERPRINT_FILES)
+        != baseline
+    )
+    (root / "sub" / "cli.py").write_text("pass\n")
+
+    # Editing a non-excluded existing file changes the digest.
+    (root / "errors.py").write_text("class ActsealError(Exception): pass\n# edited\n")
+    assert (
+        _fingerprint_tree(root, "actseal", excluded_top_level=EXCLUDED_FINGERPRINT_FILES)
+        != baseline
+    )
+    (root / "errors.py").write_text("class ActsealError(Exception): pass\n")
+
+    # Adding any other new top-level file changes the digest.
+    (root / "new_module.py").write_text("pass\n")
+    assert (
+        _fingerprint_tree(root, "actseal", excluded_top_level=EXCLUDED_FINGERPRINT_FILES)
+        != baseline
+    )
 
 
 def test_implementation_fingerprint_does_not_execute_sources(tmp_path: Path) -> None:
@@ -1018,8 +1086,8 @@ def test_package_import_and_serialization_do_not_import_optional_stack() -> None
         "actseal.implementation_fingerprint()\n"
         f"loaded = sorted(m for m in sys.modules if m.split('.')[0] in {OPTIONAL_MODULES!r})\n"
         "assert loaded == [], loaded\n"
-        # The 1.0.1 release candidate (amendment V1-055).
-        "assert actseal.__version__ == '1.0.1', actseal.__version__\n"
+        # The 2.0.0 release candidate.
+        "assert actseal.__version__ == '2.0.0', actseal.__version__\n"
         "print('ok')\n"
     )
     result = subprocess.run(  # noqa: S603 - fixed interpreter and literal script, no user input

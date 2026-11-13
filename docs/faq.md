@@ -112,20 +112,23 @@ exits 1, as expected.
 
 ## Can I use my own provider?
 
-The current stable providers are `fixture` (recorded responses) and `laya`
-(the optional pinned native CPU adapter). In the v1.0 scope
-`ModelIdentity.provider` accepts those two plus `jev`, the PROVISIONAL
+The current stable providers are `fixture` (authored response bodies),
+`recorded` (predictions from any model) and `laya` (the optional pinned native
+CPU adapter). In the v1.0 scope
+`ModelIdentity.provider` accepts `fixture`, `laya` and `jev`, the PROVISIONAL
 experimental cloud adapter that `lock` and `verify` accept only as
 `--provider jev --experimental-provider` (bring your own `JEV_API_KEY`; no
 offline mode; may change or be removed in any release; its live behaviour has
-not been verified, only mocked transports). A provider of your own cannot be
-sealed into a lock through the runner today. A later 1.x release may add a
-provider as an additive, explicitly selected option; see
-[providers](providers.md).
+not been verified, only mocked transports). Version 2.0 adds `recorded` and
+PROVISIONAL `decision-api`. Use `recorded` for your own predictions, with a
+model/revision and file-hash identity; it does not test upstream provider
+faults. `decision-api` requires `--experimental-provider` and a locked
+endpoint/model/revision. No live decision-API server has been verified for
+this release; see [providers](providers.md).
 
 ## Does Actseal run on Windows?
 
-No. Windows is unsupported in v1. Exclusive bundle publication uses macOS and
+No. Windows is unsupported in 2.0. Exclusive bundle publication uses macOS and
 Linux filesystem operations, and no Windows classifier or partial-support
 claim is made. The native receipts also do not establish Intel Mac, Linux ARM,
 musl or GPU support.
@@ -136,14 +139,14 @@ No. The runtime core depends only on the Python standard library (Python 3.12
 or 3.13). The optional `laya` extra installs the pinned native stack; replay
 never imports it.
 
-## Can 1.0 replay evidence from 0.1.0?
+## Can 2.0 replay evidence from 0.1.0?
 
 No, and it does not convert it. Schema-1 locks and bundles are rejected with
 `integrity.legacy_schema` and guidance to replay them under an isolated pinned
 `actseal==0.1.0`. The [migration guide](migration.md) explains why a reseal
 would not be the original evidence.
 
-## Will a later 1.x release replay my 1.0 evidence?
+## Will 2.0 replay my 1.x evidence?
 
 Only when both the producing and the running source fingerprints are
 registered for the `actseal-choice-v1` engine in the packaged registry.
@@ -153,8 +156,10 @@ The 1.0.0 registry approves exactly two reviewed fingerprints (its own source
 and the prerelease producer of the retained example archive). The 1.0.1
 registry keeps both and adds the reviewed 1.0.1 source fingerprint, three
 entries in all, so 1.0.0 evidence and the retained archive replay under 1.0.1
-to their stored verdicts; the [versioning policy](versioning.md) lists every
-entry and describes approval.
+to their stored verdicts. Version 2.0 retains those registrations and adds the
+archived Jev audit producer and the running candidate. That audit now replays
+directly with the packaged registry to its stored INCONCLUSIVE verdict. The
+[versioning policy](versioning.md) lists every entry and describes approval.
 
 ## Is PASS a safety or calibration guarantee?
 

@@ -96,10 +96,27 @@ FINAL_CANDIDATE = "dced01d79e64799a19a75c0957f3684a48249c58ebb27d346336e7420195b
 #: 0.1.0 version string (not the released 0.1.0 implementation; its evidence is
 #: schema 2, not legacy schema 1).
 ORIGINAL_EXAMPLE_PRODUCER = "a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d0ace2e7641642"
+# v2 foundations M2 (plan/v2): the fingerprint algorithm was narrowed to exclude
+# EXCLUDED_FINGERPRINT_FILES (actseal.serialization). That changes every fingerprint
+# value, including the running one, so two more entries are registered: the audit
+# producer below (so the retained jev-audit evidence keeps replaying) and the
+# resulting running fingerprint of this tree. No independent review/ACCEPT is implied
+# for v2 (AGENTS.md); more kernel changes are expected to land after this task, and the
+# running fingerprint is re-registered again once they do (see the task REPORT).
+#: Producer of docs/results/jev-audit-2026-10-08/evidence: unreleased benchmark
+#: snapshot d3edbab2dfbd44a0e9e272e1671143517832e3b4 (see that directory's README).
+JEV_AUDIT_PRODUCER = "167038cb709ff839f26a21ef55cc63ebd988d797ac56e82d0227ecad1a08eb7c"
+#: Running fingerprint of this tree after the M2 narrowing change and the later
+#: move of the report command's qualification-linkage checks into the
+#: fingerprinted ``actseal.qualification`` module. Any further packaged Python
+#: edit changes this value.
+V2_M2_RUNNING_SOURCE = "1c579ef18c4aada29bc7b0fc2d9b319e13cb30c973ec50484bfa025ccd233b42"
 APPROVED = {
     RELEASE_1_0_0: CURRENT_ENGINE,
     ORIGINAL_EXAMPLE_PRODUCER: CURRENT_ENGINE,
     FINAL_CANDIDATE: CURRENT_ENGINE,
+    JEV_AUDIT_PRODUCER: CURRENT_ENGINE,
+    V2_M2_RUNNING_SOURCE: CURRENT_ENGINE,
 }
 #: The retained archive (Task 07 source 277d8e2), bytes preserved as produced.
 ARCHIVE = ROOT / "examples" / "action_gate" / "recorded" / "a5fe090202f7"
@@ -281,9 +298,11 @@ def test_new_locks_record_schema_2_and_the_current_engine() -> None:
         validate_lock(replace(lock, replay_engine_version="actseal-choice-v2"))
 
 
-def test_packaged_registry_holds_exactly_the_three_approved_entries() -> None:
-    """V1-037 and V1-055: the 1.0.0 source, the original example producer and the
-    1.0.1 final candidate, nothing else (in particular no pre-bump candidate)."""
+def test_packaged_registry_holds_exactly_the_five_approved_entries() -> None:
+    """V1-037 and V1-055 (the 1.0.0 source, the original example producer and the
+    1.0.1 final candidate) plus the v2 M2 additions (the jev-audit producer and the
+    running fingerprint after the fingerprint-narrowing change), nothing else (in
+    particular no pre-bump candidate)."""
     path = PACKAGE / REGISTRY_FILE
     text = path.read_text(encoding="utf-8")
     document = json.loads(text)
@@ -292,6 +311,8 @@ def test_packaged_registry_holds_exactly_the_three_approved_entries() -> None:
     assert loaded == CompatibilityRegistry(
         1,
         (
+            (JEV_AUDIT_PRODUCER, CURRENT_ENGINE),
+            (V2_M2_RUNNING_SOURCE, CURRENT_ENGINE),
             (RELEASE_1_0_0, CURRENT_ENGINE),
             (ORIGINAL_EXAMPLE_PRODUCER, CURRENT_ENGINE),
             (FINAL_CANDIDATE, CURRENT_ENGINE),
@@ -300,6 +321,8 @@ def test_packaged_registry_holds_exactly_the_three_approved_entries() -> None:
     assert loaded.engine_for(RELEASE_1_0_0) == CURRENT_ENGINE
     assert loaded.engine_for(ORIGINAL_EXAMPLE_PRODUCER) == CURRENT_ENGINE
     assert loaded.engine_for(FINAL_CANDIDATE) == CURRENT_ENGINE
+    assert loaded.engine_for(JEV_AUDIT_PRODUCER) == CURRENT_ENGINE
+    assert loaded.engine_for(V2_M2_RUNNING_SOURCE) == CURRENT_ENGINE
     assert loaded.engine_for(FOREIGN) is None
     # The pre-bump hardening tree was never a release candidate and is not approved.
     pre_bump = "7599c87c3e7c71c27d6d00046c1a7e770457ae2c5e368f2f1cc68cdce7e64f9a"
@@ -308,9 +331,15 @@ def test_packaged_registry_holds_exactly_the_three_approved_entries() -> None:
     assert text.endswith("}\n")
 
 
-def test_running_source_is_the_approved_final_candidate() -> None:
-    """The approval binds the exact packaged Python bytes: any edit needs a new review."""
-    assert implementation_fingerprint() == FINAL_CANDIDATE
+def test_running_source_is_the_approved_v2_m2_fingerprint() -> None:
+    """The approval binds the exact packaged (non-excluded) Python bytes: any edit to a
+
+    non-excluded file needs a new fingerprint and review. The 1.0.1 ``FINAL_CANDIDATE``
+    no longer identifies the running source: it was computed under the pre-M2 algorithm
+    that hashed every ``*.py`` file, and it remains registered only so 1.0.1 evidence
+    keeps replaying.
+    """
+    assert implementation_fingerprint() == V2_M2_RUNNING_SOURCE != FINAL_CANDIDATE
     assert load_registry().engine_for(implementation_fingerprint()) == CURRENT_ENGINE
 
 

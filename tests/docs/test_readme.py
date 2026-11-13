@@ -1,16 +1,10 @@
-"""README composition and image validation.
+"""README v2 composition, executable commands and image validation.
 
-The opening order and copy follow the result-first editorial amendment
-(plan/v1/CHANGE_LOG.md V1-058), which superseded the 2026-10-08 hero-first
-opening: the title, the tagline, the ticket-router problem, the recorded Jev
-audit with its audit link, the execution and authenticity boundary and the
-engineering strip come first, verbatim; then the evidence-card hero, the
-badges, the three commands, a selected excerpt of real demo output, the exit
-sentence and three links. The application example with its real-world-use
-block, the workflow summary, result reading, guarantees and limits, the
-architecture summary, the recording, the documentation table, related
-projects and the development notes follow. The how-it-works and architecture
-figures are linked, not embedded.
+The release-preparation brief puts the synthetic qualification demo, recorded
+predictions, sample-size planner and Action before the recorded Jev result.
+Historical evidence retains its numbers, provenance and limits. Commands are
+extracted from the README and executed with the checked-out interpreter;
+these tests do not claim PyPI installation or hosted Action execution.
 
 Every image in README.md, including each ``<source srcset>`` and ``<img src>``
 inside ``<picture>`` markup, must be an absolute same-repository URL that maps
@@ -24,6 +18,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import subprocess
 import sys
 from html.parser import HTMLParser
@@ -44,39 +39,20 @@ BADGES = (
     re.compile(r"^https://img\.shields\.io/"),
     re.compile(rf"^https://github\.com/{re.escape(REPO)}/actions/workflows/[^/]+/badge\.svg$"),
 )
-#: The verbatim opening, title through the engineering strip (V1-058).
+#: The v2 brief's one-sentence opening.
 OPENING = (
     "# Actseal\n"
     "\n"
-    "**Test a model's action policy. Replay the evidence.**\n"
+    "Actseal tells you how much of a categorical decision a model can make alone at your "
+    "error limit, with evidence anyone can replay offline.\n"
     "\n"
-    "A ticket router needs rules for when to act, abstain, escalate or deny.\n"
-    "Actseal measures accepted-action errors and coverage under a frozen policy.\n"
-    "\n"
-    "**Recorded Jev audit: INCONCLUSIVE.**\n"
-    "580 of 639 verification cases received ACT; 24 disagreed with benchmark labels.\n"
-    "Fixed benchmark; unreleased producer. "
-    f"[Audit and offline replay]({BLOB_PREFIX}docs/results/jev-audit-2026-10-08/README.md)\n"
-    "\n"
-    "**Boundary:** the application owns execution.\n"
-    "Replay checks consistency; it does not authenticate responses or prove label truth.\n"
-    "\n"
+)
+ENGINEERING = (
     f"**Engineering:** [20 ADRs]({TREE_PREFIX}docs/decisions) · "
-    f"[11 JSON Schemas]({BLOB_PREFIX}docs/schemas/README.md)\n"
+    f"[16 JSON Schemas]({BLOB_PREFIX}docs/schemas/README.md)\n"
     f"[Mutation harness]({BLOB_PREFIX}tools/check_mutations.py) · "
     f"[1.0.1 release receipt]({BLOB_PREFIX}plan/v1/releases/1.0.1/postpublish-receipt.json)\n"
     "\n"
-)
-#: The verbatim start of the Try it section: heading, one line, the commands.
-TRY_IT = (
-    "## Try it\n"
-    "\n"
-    "Synthetic demo. macOS/Linux + uv; use a new `./actseal-demo` directory.\n"
-    "```bash\n"
-    "uvx --python 3.12 actseal demo --out ./actseal-demo\n"
-    "uvx --offline --python 3.12 actseal replay ./actseal-demo/fixed/evidence\n"
-    "uvx --offline --python 3.12 actseal replay ./actseal-demo/bad/evidence\n"
-    "```\n"
 )
 #: The release gate (tools/check_release.py docs) still requires these two;
 #: they now lead the How it works section.
@@ -93,8 +69,8 @@ HERO_ALT = (
     "errors among accepted actions, seal the evidence, replay it with no model call. "
     "Preregistered live audit, 639 verification cases, threshold 0.80: ACT 580 of 639, "
     "24 errors; fixed benchmark, unreleased producer; risk [0.0250, 0.0639] against a "
-    "limit of 0.05; coverage [0.879, 0.932]; verdict INCONCLUSIVE (exit 2); replay requires "
-    "archived producer d3edbab. Source: docs/results/jev-audit-2026-10-08. Neither PASS nor "
+    "limit of 0.05; coverage [0.879, 0.932]; verdict INCONCLUSIVE (exit 2); replay with "
+    "packaged registry. Source: docs/results/jev-audit-2026-10-08. Neither PASS nor "
     "BLOCK is claimed."
 )
 EXCERPT_INTRO = "Expected result from synthetic fixtures, showing selected output:"
@@ -107,10 +83,8 @@ OPENING_LINKS = (
     f"[Read the limits]({BLOB_PREFIX}docs/threat-model.md) · "
     f"[Quickstart]({BLOB_PREFIX}docs/quickstart.md)"
 )
-#: The opening (title through the three links) must fit in this many lines.
-#: It grew from 40 when the recorded audit, boundary and engineering lines
-#: moved above the hero (V1-058).
-OPENING_LINES = 48
+#: The synthetic qualification command must appear on the first screen.
+OPENING_LINES = 25
 #: The real-world-use block, verbatim, as a quotation in "Use it in an application".
 REAL_WORLD = (
     "> **[Before enabling automatic ticket routing]"
@@ -147,11 +121,11 @@ SURVIVING_STATEMENTS = (
     "Windows is unsupported.",
     (
         "The Jev adapter is PROVISIONAL and requires explicit opt-in: "
-        "`--provider jev --experimental-provider`. It has no 1.x compatibility promise."
+        "`--provider jev --experimental-provider`. It has no stable compatibility promise."
     ),
     (
         "The released 1.0.0 adapter's accepted evidence uses mocked transports; the "
-        "separate audit below used an unreleased benchmark producer."
+        "historical audit used an unreleased benchmark producer."
     ),
     "Replay never imports a provider",
     "the packaged demonstration establishes no population or model-quality result",
@@ -179,7 +153,7 @@ SURVIVING_STATEMENTS = (
     ),
     "published with the unreleased benchmark producer snapshot identified explicitly",
     (
-        "Its offline replay runs with that archived snapshot and exits 2 (INCONCLUSIVE); the "
+        "Its offline replay runs with the packaged registry and exits 2 (INCONCLUSIVE); the "
         "published 1.0.0 and 1.0.1 packages do not approve this producer in their "
         "compatibility registries"
     ),
@@ -191,11 +165,17 @@ RELATED_REPOSITORIES = (
     "https://github.com/ajaysurya1221/evalopt-graph",
 )
 QUICKSTART = [
+    "uv run --frozen actseal demo --qualify --out ./actseal-qualified-demo",
+    "uv run --frozen actseal report ./actseal-qualified-demo --out ./actseal-report",
+    "uv run --frozen actseal replay-selection ./actseal-qualified-demo/calibration",
+    "uv run --frozen actseal replay ./actseal-qualified-demo/evidence",
+]
+LEGACY_QUICKSTART = [
     "uvx --python 3.12 actseal demo --out ./actseal-demo",
     "uvx --offline --python 3.12 actseal replay ./actseal-demo/fixed/evidence",
     "uvx --offline --python 3.12 actseal replay ./actseal-demo/bad/evidence",
 ]
-GUARANTEES = [
+CHECKS = [
     "Complete scheduled-case and required fault evidence is checked.",
     "PASS requires the frozen risk/coverage bounds and fault rules to pass.",
     "Supported evidence is recomputed offline without calling a model.",
@@ -460,35 +440,226 @@ def _run_actseal(arguments: list[str], cwd: Path) -> subprocess.CompletedProcess
     )
 
 
-def test_opening_is_verbatim_and_result_first() -> None:
-    """Title, tagline, problem, recorded audit, boundary and engineering strip open the file."""
+def _bash_commands() -> list[str]:
+    return [
+        line.strip()
+        for block in fences(README, "bash")
+        for line in block.replace("\\\n", " ").splitlines()
+        if line.strip()
+    ]
+
+
+def _documented_arguments(command: str) -> list[str]:
+    """Replace only the environment launcher; preserve every documented CLI flag."""
+    words = shlex.split(command)
+    if words[:4] == ["uv", "run", "--frozen", "actseal"]:
+        return words[4:]
+    if words[:4] == ["uvx", "--python", "3.12", "actseal"]:
+        return words[4:]
+    assert words[:5] == ["uvx", "--offline", "--python", "3.12", "actseal"], command
+    return words[5:]
+
+
+def _run_documented(
+    command: str, cwd: Path, *, json_output: bool = False
+) -> subprocess.CompletedProcess[str]:
+    arguments = _documented_arguments(command)
+    if json_output and "--json" not in arguments:
+        arguments.append("--json")
+    return _run_actseal(arguments, cwd)
+
+
+def _recorded_inputs(directory: Path) -> None:
+    """Supply complete synthetic splits containing every verbatim JSONL example row."""
+    packaged = ROOT / "src" / "actseal" / "demo_data"
+    (directory / "contract.toml").write_bytes((packaged / "qualify.toml").read_bytes())
+    blocks = fences(README, "jsonl")
+    assert len(blocks) == 1
+    shown = [json.loads(line) for line in blocks[0].splitlines() if line]
+    assert len(shown) == 3
+    assert all(set(row) == {"case_id", "choice", "score"} for row in shown)
+    overrides = {row["case_id"]: row for row in shown}
+    predictions: list[dict[str, object]] = []
+    for split, prefix, count in (("calibration", "cal", 64), ("verification", "verify", 100)):
+        cases: list[dict[str, str]] = []
+        for number in range(1, count + 1):
+            case_id = f"{prefix}-{number:03d}"
+            prediction = overrides.get(
+                case_id, {"case_id": case_id, "choice": "accept", "score": 0.95}
+            )
+            predictions.append(prediction)
+            cases.append(
+                {
+                    "case_id": case_id,
+                    "state": f"Synthetic README {split} case {number}.",
+                    "expected_label": str(prediction["choice"]),
+                }
+            )
+        (directory / f"{split}.jsonl").write_text(
+            "".join(json.dumps(row) + "\n" for row in cases), encoding="utf-8"
+        )
+    assert all(row in predictions for row in shown)
+    (directory / "predictions.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in predictions), encoding="utf-8"
+    )
+
+
+def test_all_readme_shell_commands_have_executable_coverage() -> None:
+    """Fail on any added command until its execution path is assigned below."""
+    commands = _bash_commands()
+    assert len(commands) == 10
+    assert [_documented_arguments(command)[0] for command in commands] == [
+        "demo",
+        "report",
+        "replay-selection",
+        "replay",
+        "qualify",
+        "plan",
+        "replay",
+        "demo",
+        "replay",
+        "replay",
+    ]
+    inline = re.findall(r"`(uv(?:x)? [^`\n]+)`", _text())
+    assert inline == ["uv run --frozen python examples/action_gate/run.py --check"]
+
+
+def test_synthetic_qualification_quickstart_executes(task_tmpdir: Path) -> None:
+    commands = _bash_commands()[:4]
+    assert commands == QUICKSTART
+    receipts = []
+    for command in commands:
+        process = _run_documented(command, task_tmpdir, json_output=True)
+        assert process.returncode == 0, (command, process.stdout, process.stderr)
+        receipts.append(json.loads(process.stdout))
+    assert receipts[0]["status"] == "PASS"
+    assert receipts[0]["selection"]["threshold"] == 0.95
+    assert receipts[2]["status"] == "SELECTED"
+    assert receipts[3]["status"] == "PASS"
+    for name in ("report.html", "report.md", "badge.json"):
+        assert (task_tmpdir / "actseal-report" / name).is_file()
+
+
+def test_recorded_qualify_command_and_jsonl_execute(task_tmpdir: Path) -> None:
+    _recorded_inputs(task_tmpdir)
+    process = _run_documented(_bash_commands()[4], task_tmpdir, json_output=True)
+    assert process.returncode == 0, (process.stdout, process.stderr)
+    receipt = json.loads(process.stdout)
+    assert receipt["status"] == "PASS"
+    assert receipt["verdict"]["total"] == 100
+    lock = json.loads((task_tmpdir / "qualification" / "lock.json").read_text())
+    assert lock["model_identity"]["provider"] == "recorded"
+    assert lock["model_identity"]["model"] == "my-model"
+    assert lock["model_identity"]["revision"] == "my-revision"
+    assert "recorded: provider faults not tested" in (process.stdout + process.stderr)
+
+
+def test_readme_planner_command_collects_nothing(task_tmpdir: Path) -> None:
+    process = _run_documented(_bash_commands()[5], task_tmpdir, json_output=True)
+    assert process.returncode == 0, (process.stdout, process.stderr)
+    receipt = json.loads(process.stdout)
+    assert receipt["status"] == "PLANNED"
+    assert receipt["verification_cases"] > 0
+    assert list(task_tmpdir.iterdir()) == []
+
+
+def test_readme_audit_replay_uses_packaged_registry() -> None:
+    process = _run_documented(_bash_commands()[6], ROOT, json_output=True)
+    assert process.returncode == 2, (process.stdout, process.stderr)
+    receipt = json.loads(process.stdout)
+    verdict = json.loads((AUDIT / "evidence" / "verdict.json").read_text())
+    assert receipt["status"] == verdict["status"] == "INCONCLUSIVE"
+    for key in ("total", "accepted", "errors", "risk", "coverage"):
+        assert receipt[key] == verdict[key]
+
+
+def test_readme_action_arguments_execute_locally(task_tmpdir: Path) -> None:
+    """Exercise the literal YAML argv; this is not a hosted runner claim."""
+    _recorded_inputs(task_tmpdir)
+    blocks = fences(README, "yaml")
+    assert len(blocks) == 1
+    block = blocks[0]
+    assert "source: checkout" in block
+    mode = re.search(r"^\s+mode: (\S+)\s*$", block, re.MULTILINE)
+    assert mode is not None
+    folded = re.search(r"^\s+args: >-\n(?P<lines>(?: +[^\n]+\n)+)", block, re.MULTILINE)
+    assert folded is not None
+    arguments = shlex.split(" ".join(line.strip() for line in folded["lines"].splitlines()))
+    process = _run_actseal([mode[1], *arguments, "--json"], task_tmpdir)
+    assert process.returncode == 0, (process.stdout, process.stderr)
+    assert json.loads(process.stdout)["status"] == "PASS"
+    assert (task_tmpdir / "ci-qualification" / "evidence" / "verdict.json").is_file()
+
+
+def test_readme_application_example_command_executes() -> None:
+    command = re.findall(r"`(uv run --frozen python [^`\n]+)`", _text())
+    assert len(command) == 1
+    words = shlex.split(command[0])
+    process = subprocess.run(  # noqa: S603 - documented local script, fixed interpreter
+        [sys.executable, *words[4:]],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
+    )
+    assert process.returncode == 0, (process.stdout, process.stderr)
+
+
+def test_v2_pass_scope_and_provider_limits_are_explicit() -> None:
+    section = re.sub(r"\s+", " ", _section("What a PASS means / does not mean"))
+    for phrase in (
+        "Selection is pre-registered",
+        "separate verification cases",
+        "alpha/4",
+        "recorded predictions do not test provider faults",
+        "label truth",
+        "deployment",
+    ):
+        assert phrase in section
+    providers = _section("Works with")
+    for provider in ("fixture", "recorded", "laya", "jev", "decision-api"):
+        assert f"| `{provider}` |" in providers
+    assert "any model" in providers
+    assert "optional extra" in providers
+    assert providers.count("PROVISIONAL") == 2
+    assert "No live decision-api server was verified in this release" in providers
+    for word in ("guaranteed", "certified", "safe", "best"):
+        assert re.search(rf"\b{word}\b", _text(), re.IGNORECASE) is None
+
+
+def test_opening_is_verbatim_and_qualification_first() -> None:
+    """The brief's sentence and a runnable synthetic command lead the v2 README."""
     text = _text()
     assert text.startswith(OPENING)
-    assert TRY_IT in text
     assert text.count(OPENING) == 1
-    # Nothing is drawn before the recorded result; the hero follows the strip.
-    assert "<picture>" not in OPENING
-    assert text.index("<picture>") == len(OPENING)
+    assert text.count(ENGINEERING) == 1
+    assert QUICKSTART[0] in text.splitlines()[:OPENING_LINES]
+    assert "synthetic" in _section("60-second quickstart (synthetic)").lower()
+    assert "2.0.0 is unreleased" in text
 
 
-def test_opening_puts_the_result_hero_commands_and_excerpt_before_any_explanation() -> None:
-    """Opening copy, hero, badges, commands, excerpt and links, then everything else."""
+def test_opening_orders_demo_recorded_planner_action_then_scoped_evidence() -> None:
+    """The requested learning path precedes the historical audit and reference sections."""
     text = _text()
     audit = text.index("**Recorded Jev audit: INCONCLUSIVE.**")
-    boundary = text.index("**Boundary:**")
     engineering = text.index("**Engineering:**")
     hero = text.index("hero-light.svg")
     badges = [m.start() for m in re.finditer(r"\[!\[", text)]
-    try_it = text.index("\n## Try it\n")
+    try_it = text.index("\n## 60-second quickstart (synthetic)\n")
     quickstart = text.index(QUICKSTART[0])
-    excerpt = text.index("```text")
     links = text.index(OPENING_LINKS)
+    recorded = text.index("\n## Bring your own predictions\n")
+    planner = text.index("\n## Plan before collecting cases\n")
+    action = text.index("\n## GitHub Action\n")
+    meaning = text.index("\n## What a PASS means / does not mean\n")
+    providers = text.index("\n## Works with\n")
     application = text.index("\n## Use it in an application\n")
     real_world = text.index(REAL_WORLD)
     workflow = text.index("\n## How it works\n")
     result = text.index("\n## Read a result\n")
-    guarantees_and_limits = text.index("\n## Guarantees and limits\n")
-    guarantees = text.index("**Guarantees**")
+    evidence_and_limits = text.index("\n## Evidence and limits\n")
+    checks = text.index("**Checks**")
     limits = text.index("**Limits**")
     architecture = text.index("\n## Architecture\n")
     demo = text.index(DEMO_FILES[0])
@@ -498,27 +669,31 @@ def test_opening_puts_the_result_hero_commands_and_excerpt_before_any_explanatio
     disclosure = text.index(DISCLOSURE)
     contributing = text.index("Contributions: [CONTRIBUTING]")
     assert len(badges) == 4
-    assert audit < boundary < engineering < hero < badges[0] < badges[3] < try_it
-    assert try_it < quickstart < excerpt < links
-    assert links < application < real_world < workflow < result < guarantees_and_limits
-    assert guarantees_and_limits < guarantees < limits < architecture < demo < table
+    assert engineering < badges[0] < badges[3] < try_it < quickstart < links
+    assert links < recorded < planner < action < meaning < providers < audit < hero
+    assert hero < application < real_world < workflow < result < evidence_and_limits
+    assert evidence_and_limits < checks < limits < architecture < demo < table
     assert table < related < development < disclosure < contributing
-    # Only the hero is drawn before the commands, the excerpt and the links.
-    assert text[:links].count("<picture>") == 1
-    # The whole opening, through the three links, fits in the first 48 lines.
-    assert OPENING_LINKS in text.splitlines()[:OPENING_LINES]
+    assert "<picture>" not in text[:quickstart]
 
 
-def test_opening_audit_lines_match_the_committed_verdict() -> None:
-    """The recorded result in the opening is the committed verdict's, word for word."""
+def test_recorded_audit_lines_match_the_committed_verdict() -> None:
+    """The real-data result retains the committed verdict's counts and provenance."""
     verdict = json.loads((AUDIT / "evidence" / "verdict.json").read_text(encoding="utf-8"))
     assert verdict["status"] == "INCONCLUSIVE"
-    opening = OPENING
+    opening = _section("Recorded real-data example")
     assert f"**Recorded Jev audit: {verdict['status']}.**" in opening
     assert (
         f"{verdict['accepted']} of {verdict['total']} verification cases received ACT; "
         f"{verdict['errors']} disagreed with benchmark labels."
     ) in opening
+    for interval in ("risk", "coverage"):
+        values = verdict[interval]
+        assert f"[{values['lower']}, {values['upper']}]" in opening
+    assert "Fixed benchmark; unreleased producer" in opening
+    assert "unreleased producer `d3edbab`" in opening
+    assert "Its offline replay runs with that archived snapshot" not in _text()
+    assert "replay requires archived producer" not in _text()
     assert (AUDIT / "README.md").is_file()
 
 
@@ -527,12 +702,12 @@ def test_engineering_strip_counts_match_the_tree() -> None:
     decisions = sorted((ROOT / "docs" / "decisions").glob("[0-9][0-9][0-9][0-9]-*.md"))
     schemas = sorted((ROOT / "docs" / "schemas").glob("*.schema.json"))
     assert len(decisions) == 20
-    assert len(schemas) == 11
-    assert f"[{len(decisions)} ADRs]({TREE_PREFIX}docs/decisions)" in OPENING
-    assert f"[{len(schemas)} JSON Schemas]({BLOB_PREFIX}docs/schemas/README.md)" in OPENING
+    assert len(schemas) == 16
+    assert f"[{len(decisions)} ADRs]({TREE_PREFIX}docs/decisions)" in ENGINEERING
+    assert f"[{len(schemas)} JSON Schemas]({BLOB_PREFIX}docs/schemas/README.md)" in ENGINEERING
     for relative in ("tools/check_mutations.py", "plan/v1/releases/1.0.1/postpublish-receipt.json"):
         assert (ROOT / relative).is_file(), relative
-        assert f"({BLOB_PREFIX}{relative})" in OPENING
+        assert f"({BLOB_PREFIX}{relative})" in ENGINEERING
 
 
 def test_opening_links_promote_the_application_example() -> None:
@@ -571,7 +746,8 @@ def test_excerpt_is_selected_output_of_the_retained_recording() -> None:
         "[fixed] expected PASS, observed PASS, replay PASS (match)",
         "result: success",
     ]
-    assert text.index(EXCERPT_INTRO) < text.index("```text") < text.index(OPENING_LINKS)
+    assert text.index("## Watch the recorded demo") < text.index(EXCERPT_INTRO)
+    assert text.index(EXCERPT_INTRO) < text.index("```text")
     assert "selected output" in EXCERPT_INTRO  # the excerpt is labelled as a selection
     assert _appear_in_order(_cast_output_lines(), excerpt)
 
@@ -582,12 +758,15 @@ def test_excerpt_and_exit_summary_match_executable_demo_behaviour(task_tmpdir: P
     This runs the three command shapes through ``python -m actseal`` from the
     locked environment, not the PyPI release the ``uvx`` commands resolve.
     """
-    demo = _run_actseal(["demo", "--out", "./actseal-demo"], task_tmpdir)
+    commands = _bash_commands()
+    for command in LEGACY_QUICKSTART:
+        assert command in commands
+    demo = _run_documented(LEGACY_QUICKSTART[0], task_tmpdir)
     assert demo.returncode == 0, demo.stderr
     assert _appear_in_order(demo.stdout.splitlines(), _excerpt())
     observed: dict[str, object] = {"demo": demo.returncode}
-    for run in ("fixed", "bad"):
-        replay = _run_actseal(["replay", f"./actseal-demo/{run}/evidence", "--json"], task_tmpdir)
+    for run, command in zip(("fixed", "bad"), LEGACY_QUICKSTART[1:], strict=True):
+        replay = _run_documented(command, task_tmpdir, json_output=True)
         receipt = json.loads(replay.stdout)
         assert receipt["exit_code"] == replay.returncode
         observed[run] = replay.returncode
@@ -612,9 +791,10 @@ def test_hero_alt_describes_the_evidence_card_and_the_prose_carries_the_limits()
         assert "Does this frozen action policy meet its declared risk and coverage limits?" in svg
         for number in ("580", "639", "24", "[0.0250, 0.0639]", "[0.879, 0.932]", "INCONCLUSIVE"):
             assert number in svg, (name, number)
-        # The standalone card carries the scope and the replay restriction.
+        # The standalone card retains provenance and names the packaged replay path.
         assert "Fixed benchmark; unreleased producer" in svg, name
-        assert "replay requires archived producer d3edbab" in svg, name
+        assert "replay with packaged registry" in svg, name
+        assert "replay requires archived producer d3edbab" not in svg, name
         assert "replays offline from the sealed bundle" not in svg, name
         assert "Test model-chosen actions" not in svg, name
         assert "Caption" not in svg, name
@@ -659,10 +839,10 @@ def test_development_section_explains_the_mutation_harness_and_discloses_assista
         assert absent not in section, absent
 
 
-def test_quickstart_guarantees_and_limits_are_verbatim() -> None:
+def test_quickstart_checks_and_limits_are_verbatim() -> None:
     text = _text()
     assert fences(README, "bash")[0].strip().splitlines() == QUICKSTART
-    for line in GUARANTEES + LIMITS:
+    for line in CHECKS + LIMITS:
         assert f"- {line}" in text, line
     assert "exits 1" in text
     assert "Windows is unsupported" in text

@@ -215,12 +215,12 @@ def test_help_lists_exactly_the_frozen_commands(run: Run) -> None:
         assert option in lock_help
     assert "--offline" in lock_help
     assert "--experimental-provider" in lock_help
-    assert "{fixture,laya,jev}" in lock_help
+    assert "{fixture,laya,recorded,jev,decision-api}" in lock_help
     assert "--out" in lock_help
     assert "--json" in lock_help
     _, verify_help, _ = run(["verify", "--help"])
     assert "--experimental-provider" in verify_help
-    assert "{fixture,laya,jev}" in verify_help
+    assert "{fixture,laya,recorded,jev,decision-api}" in verify_help
     _, replay_help, _ = run(["replay", "--help"])
     assert "--expected-lock-sha256" in replay_help
     assert "--provider" not in replay_help
@@ -234,9 +234,9 @@ def test_version_exits_0(run: Run) -> None:
     code, out, err = run(["--version"])
     assert code == 0
     assert err == ""
-    # The 1.0.1 release candidate (amendment V1-055); the printed version is
+    # The 2.0.0 release candidate; the printed version is
     # always the installed package's own version string.
-    assert actseal.__version__ == "1.0.1"
+    assert actseal.__version__ == "2.0.0"
     assert out == f"actseal {actseal.__version__}\n"
 
 
@@ -358,7 +358,11 @@ def test_usage_errors_never_echo_argv_values(
     [
         (
             [SENTINEL],
-            "usage: argument COMMAND: invalid choice (choose from lock, verify, replay, demo)",
+            (
+                "usage: argument COMMAND: invalid choice "
+                "(choose from lock, verify, replay, demo, plan, calibrate, "
+                "qualify, replay-selection, report)"
+            ),
         ),
         ([f"--{SENTINEL}"], "usage: the following arguments are required: COMMAND"),
         (
@@ -398,23 +402,27 @@ def test_invalid_provider_choice_lists_only_accepted_choices(
     code, out, _ = run([*argv, "--json"])
     assert code == 3
     assert one_json(out)["error"] == (
-        "usage: argument --provider: invalid choice (choose from fixture, laya, jev)"
+        "usage: argument --provider: invalid choice "
+        "(choose from fixture, laya, recorded, jev, decision-api)"
     )
     code, _, err = run(argv)
     assert code == 3
     assert err == (
         "actseal lock: error: usage: argument --provider: invalid choice "
-        "(choose from fixture, laya, jev)\n"
+        "(choose from fixture, laya, recorded, jev, decision-api)\n"
     )
 
 
 def test_bounded_usage_message_rewrites_every_shape() -> None:
     rewrite = cli_module._bounded_usage_message
     assert rewrite(f"argument --provider: invalid choice: '{SENTINEL}' (choose from 'a')") == (
-        "argument --provider: invalid choice (choose from fixture, laya, jev)"
+        "argument --provider: invalid choice "
+        "(choose from fixture, laya, recorded, jev, decision-api)"
     )
     assert rewrite(f"argument COMMAND: invalid choice: '{SENTINEL}: x' (choose from 'a')") == (
-        "argument COMMAND: invalid choice (choose from lock, verify, replay, demo)"
+        "argument COMMAND: invalid choice "
+        "(choose from lock, verify, replay, demo, plan, calibrate, qualify, "
+        "replay-selection, report)"
     )
     assert rewrite(f"argument --other: invalid choice: '{SENTINEL}'") == (
         "argument --other: invalid choice"

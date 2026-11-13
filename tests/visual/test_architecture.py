@@ -36,15 +36,17 @@ GROUP_KEYS = (
 #: the actual sources under ``src/actseal`` (docs/architecture.md boundaries).
 EXPECTED_MAPPING = {
     "contracts": {"contract", "records", "errors", "serialization", "locking", "compatibility"},
-    "cli": {"cli", "runner", "__init__", "__main__", "demo_data"},
+    "cli": {"cli", "runner", "qualification", "report", "__init__", "__main__", "demo_data"},
     "providers": {
         "adapters.base",
         "adapters.fixture",
+        "adapters.recorded",
         "adapters.laya",
         "experimental.providers.jev",
+        "experimental.providers.decision_api",
     },
     "normalization": {"normalization", "policy"},
-    "assessment": {"assessment", "stats", "faults"},
+    "assessment": {"assessment", "stats", "faults", "selection"},
     "evidence": {"evidence"},
     "replay": {"replay"},
 }
@@ -67,7 +69,11 @@ EXPECTED_LABELS = {
     ("replay", "assessment"): "recompute",
 }
 LIVE_LABEL = "live inference"
-LIVE_MODULES = ("adapters.laya", "experimental.providers.jev")
+LIVE_MODULES = (
+    "adapters.laya",
+    "experimental.providers.jev",
+    "experimental.providers.decision_api",
+)
 #: Source files that are package markers only; every module they contain is drawn.
 PACKAGE_MARKERS = {"adapters", "experimental", "experimental.providers"}
 # Words that would suggest response authentication, proof of inference,
@@ -169,14 +175,20 @@ def _points(element: ET.Element) -> list[tuple[float, float]]:
 
 
 def _module_names(group: ET.Element, arch: ModuleType) -> list[str]:
-    """Module names drawn in ``group``: accent-coloured body lines split on the separator."""
+    """Read visible module names, joining only explicit trailing-dot continuations."""
     names: list[str] = []
+    pending = ""
     for text in group.iter(f"{SVG_NS}text"):
         if text.get("font-weight") == "bold" or _text(text) == LIVE_LABEL:
             continue
         if text.get("fill") not in {arch.LIGHT.accent, arch.DARK.accent}:
             continue
-        names.extend(part.strip() for part in _text(text).split("·"))
+        for part in _text(text).split("·"):
+            pending += part.strip()
+            if not pending.endswith("."):
+                names.append(pending)
+                pending = ""
+    assert not pending, f"unfinished module name: {pending}"
     return names
 
 
@@ -319,8 +331,8 @@ def test_modules_sit_in_their_approved_groups(
 
 
 @pytest.mark.parametrize("name", ALL)
-def test_live_boundary_encloses_only_the_laya_and_jev_adapters(
-    rendered: dict[str, bytes], name: str
+def test_live_boundary_encloses_only_the_live_adapters(
+    arch: ModuleType, rendered: dict[str, bytes], name: str
 ) -> None:
     root = _tree(rendered[name])
     boundaries = [g for g in root.iter(f"{SVG_NS}g") if g.get("id", "").startswith("live-boundary")]
@@ -334,8 +346,7 @@ def test_live_boundary_encloses_only_the_laya_and_jev_adapters(
     assert rect.get("fill") == "none"
     inside_labels = [_text(t) for t in boundary.iter(f"{SVG_NS}text")]
     assert inside_labels[-1] == LIVE_LABEL
-    drawn_inside = [part.strip() for label in inside_labels[:-1] for part in label.split("·")]
-    assert drawn_inside == list(LIVE_MODULES)
+    assert _module_names(boundary, arch) == list(LIVE_MODULES)
     # Everything inside the dashed rectangle geometrically is a live-inference node.
     bx, by, bright, bbottom = _rect(boundary)
     for text in providers.iter(f"{SVG_NS}text"):
@@ -343,15 +354,16 @@ def test_live_boundary_encloses_only_the_laya_and_jev_adapters(
         size = float(text.get("font-size", "0"))
         inside = bx <= x <= bright and by <= y - size <= bbottom and y <= bbottom
         assert inside == (_text(text) in {*inside_labels}), _text(text)
-    # The fixture adapter and the fault generator are outside any boundary.
+    # Both file adapters and the fault generator are outside any boundary.
     outside = [_text(t) for t in root.iter(f"{SVG_NS}text") if t not in list(boundary.iter())]
     assert any("adapters.fixture" in label for label in outside)
+    assert any("adapters.recorded" in label for label in outside)
     assert not any(module in label for label in outside for module in LIVE_MODULES)
     assert any("faults" in label for label in outside)
     # The experimental status of Jev is legible in the same box, outside the dashed area.
     notes = [_text(t) for t in providers.iter(f"{SVG_NS}text")]
     joined_notes = " ".join(notes)
-    assert "jev: PROVISIONAL opt-in" in joined_notes
+    assert "jev / decision-api: PROVISIONAL opt-in" in joined_notes
     assert "fixture: recorded file" in joined_notes
     assert "laya: pinned checkpoint" in joined_notes
     assert "live model" not in " ".join(_texts(root)).lower()
@@ -562,7 +574,7 @@ def test_no_authentication_enforcement_or_jev_language(
     # The live names may share a line or wrap; the note may wrap on mobile.
     names = [part.strip() for label in jev_labels for part in label.split("·")]
     assert "experimental.providers.jev" in names
-    assert any(label.startswith("jev: PROVISIONAL") for label in jev_labels)
+    assert "jev / decision-api: PROVISIONAL opt-in" in " ".join(_texts(root))
     assert all("jev" in label.split(":")[0] or "providers.jev" in label for label in jev_labels)
     assert "provisional" in (desc.text or "").lower()
     assert "explicit opt-in" in (desc.text or "").lower()
@@ -580,10 +592,11 @@ def test_description_names_every_group_module_and_limit(
             assert module in text, module
     for phrase in (
         "Seven groups",
-        "encloses the Laya and Jev adapters",
+        "encloses the Laya, Jev and decision-API adapters",
         "fixture adapter reads a recorded file",
         "Fixture and Laya are the stable providers",
         "Jev is an experimental cloud adapter selected only by explicit opt-in",
+        "decision-API adapter is also PROVISIONAL",
         "no claim here that its service was exercised",
         "six fault scenarios are synthetic",
         "no model call",
@@ -638,12 +651,13 @@ def test_desktop_and_mobile_carry_the_same_content(
         names = {m for key in GROUP_KEYS for m in _module_names(_group(root, key), arch)}
         edge_elements = {t for e in _edges(root) for t in e.iter(f"{SVG_NS}text")}
         edge_labels = {" ".join(_text(t) for t in e.findall(f"{SVG_NS}text")) for e in _edges(root)}
-        # Headings, module runs, notes and labels wrap differently per canvas,
-        # so phrases are compared word by word after splitting on separators.
+        # Module paths are already compared in full above, including wrapped dots.
+        # Headings and notes wrap differently, so compare their words as well.
         phrases = {
             word
             for text in root.iter(f"{SVG_NS}text")
             if text not in edge_elements
+            if text.get("fill") not in {arch.LIGHT.accent, arch.DARK.accent}
             for part in re.split(r"[·/]", _text(text))
             for word in part.split()
         }
@@ -685,6 +699,19 @@ def test_width_model_and_wrapping(arch: ModuleType) -> None:
         "recomputes decisions, then the",
         "verdict",
     ]
+
+
+@pytest.mark.parametrize(("size", "width"), [(27, 347), (40, 608)])
+def test_long_module_paths_wrap_only_at_dots_without_losing_text(
+    arch: ModuleType, size: int, width: int
+) -> None:
+    name = "experimental.providers.decision_api"
+    lines = arch.wrap_modules((name,), size, width)
+    assert lines == ["experimental.providers.", "decision_api"]
+    assert "".join(lines) == name
+    assert all(arch.text_width(line, size) <= width for line in lines)
+    with pytest.raises(ValueError, match="does not fit"):
+        arch.wrap_modules(("experimental." + "x" * 100,), size, width)
 
 
 def test_oversized_content_fails_instead_of_shrinking(

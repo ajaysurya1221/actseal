@@ -56,7 +56,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, cast
 
 from actseal.assessment import assess
 from actseal.compatibility import require_exact_implementation
@@ -116,11 +116,11 @@ _LF: Final = b"\n"
 #: PROVISIONAL providers (docs/stability.md): constructed only on explicit
 #: selection, imported lazily from ``actseal.experimental`` and outside the
 #: 1.x stability promise.
-_EXPERIMENTAL_PROVIDERS: Final[frozenset[str]] = frozenset({"jev"})
+_EXPERIMENTAL_PROVIDERS: Final[frozenset[str]] = frozenset({"jev", "decision-api"})
 #: Providers this runner can construct, each through its own explicit branch of
 #: :func:`open_model`. Must stay a subset of ``records.PROVIDERS``: an admitted
 #: provider without a branch here is rejected instead of falling through to Laya.
-_REGISTERED_PROVIDERS: Final[frozenset[str]] = frozenset({"fixture", "laya"}) | (
+_REGISTERED_PROVIDERS: Final[frozenset[str]] = frozenset({"fixture", "laya", "recorded"}) | (
     _EXPERIMENTAL_PROVIDERS
 )
 
@@ -132,14 +132,25 @@ ModelFactory = Callable[[], "DecisionModel"]
 # --------------------------------------------------------------------------- #
 
 
-def open_model(provider: str, *, responses: Path | None, offline: bool) -> DecisionModel:
+def open_model(
+    provider: str,
+    *,
+    responses: Path | None,
+    offline: bool,
+    model: str | None = None,
+    revision: str | None = None,
+    endpoint: str | None = None,
+    api_key_env: str | None = None,
+) -> DecisionModel:
     """Build the requested provider; adapters are imported only inside their branch.
 
-    ``fixture`` requires ``responses``; ``laya`` and the PROVISIONAL ``jev``
-    reject it. Selecting ``"jev"`` explicitly is the Python opt-in for the
-    experimental adapter; it is imported only in that branch, and
-    ``offline=True`` is rejected by its constructor before any environment
-    read or request. Every argument check precedes every adapter import.
+    ``fixture`` and ``recorded`` require ``responses``. The latter additionally
+    requires user-supplied ``model`` and ``revision``. Other providers reject
+    ``responses``. Explicitly selecting ``jev`` or ``decision-api`` is the
+    Python experimental opt-in; both reject offline before environment reads.
+    ``decision-api`` requires endpoint/model/revision and accepts an optional
+    API-key environment name. Provider option checks precede adapter imports;
+    adapters validate their detailed setup before any environment or network use.
     """
     if provider not in PROVIDERS:
         raise SchemaError("provider: unsupported value")
@@ -148,6 +159,21 @@ def open_model(provider: str, *, responses: Path | None, offline: bool) -> Decis
         # fail before importing or constructing any adapter. Never route an
         # unregistered provider to Laya.
         raise SchemaError("provider: admitted for records but not registered with the runner")
+    if provider in {"recorded", "decision-api"}:
+        if not isinstance(model, str) or not model.strip():
+            raise SchemaError("model: required for the selected provider")
+        if not isinstance(revision, str) or not revision.strip():
+            raise SchemaError("revision: required for the selected provider")
+    elif model is not None or revision is not None:
+        raise SchemaError("model/revision: not accepted by the selected provider")
+    if provider != "decision-api" and (endpoint is not None or api_key_env is not None):
+        raise SchemaError("endpoint/api_key_env: only accepted by the decision-api provider")
+    if provider == "recorded":
+        if responses is None:
+            raise SchemaError("responses: required for the recorded provider")
+        from actseal.adapters.recorded import RecordedModel  # noqa: PLC0415 - adapter branch only
+
+        return RecordedModel(responses, model=cast(str, model), revision=cast(str, revision))
     if provider == "fixture":
         if responses is None:
             raise SchemaError("responses: required for the fixture provider")
@@ -170,6 +196,20 @@ def open_model(provider: str, *, responses: Path | None, offline: bool) -> Decis
         )
 
         return JevModel(offline=offline)
+    if provider == "decision-api":
+        if not isinstance(endpoint, str) or not endpoint.strip():
+            raise SchemaError("endpoint: required for the decision-api provider")
+        from actseal.experimental.providers.decision_api import (  # noqa: PLC0415 - lazy adapter
+            DecisionAPIModel,
+        )
+
+        return DecisionAPIModel(
+            endpoint=endpoint,
+            model=cast(str, model),
+            revision=cast(str, revision),
+            api_key_env=api_key_env,
+            offline=offline,
+        )
     # Unreachable while _REGISTERED_PROVIDERS matches the branches above; kept so
     # a future registration without a branch fails instead of building Laya.
     raise SchemaError("provider: registered without a construction branch")

@@ -69,9 +69,11 @@ TAIL_CHARS = 2000
 
 ASSESSMENT = "src/actseal/assessment.py"
 POLICY = "src/actseal/policy.py"
+SELECTION = "src/actseal/selection.py"
 T_ASSESSMENT = "tests/unit/test_assessment.py"
 T_POLICY = "tests/unit/test_policy.py"
 T_GATE = "tests/properties/test_gate_properties.py"
+T_SELECTION = "tests/unit/test_selection.py"
 
 
 @dataclass(frozen=True)
@@ -188,6 +190,65 @@ MUTANTS: tuple[Mutant, ...] = (
         "        return _error(lock, failures)\n",
         (f"{T_GATE}::test_integrity_failure_outranks_a_reproducible_fault_violation",),
         (f"{T_GATE}::test_integrity_failure_outranks_a_reproducible_fault_violation",),
+    ),
+    Mutant(
+        "M09",
+        "selection target comparison: predicted_pass_probability >= target -> < target "
+        "(qualification inverted)",
+        SELECTION,
+        "        if point.predicted_pass_probability >= target and (\n",
+        "        if point.predicted_pass_probability < target and (\n",
+        (
+            f"{T_SELECTION}::test_no_grid_point_reaching_the_target_selects_nothing",
+            (
+                f"{T_SELECTION}::"
+                "test_the_most_accepting_grid_point_that_reaches_the_target_is_selected"
+            ),
+        ),
+        (
+            f"{T_SELECTION}::test_no_grid_point_reaching_the_target_selects_nothing",
+            (
+                f"{T_SELECTION}::"
+                "test_the_most_accepting_grid_point_that_reaches_the_target_is_selected"
+            ),
+        ),
+    ),
+    Mutant(
+        "M10",
+        "selection tie rule: most-accepting qualifying grid point -> least-accepting "
+        "(accepted >= -> <=)",
+        SELECTION,
+        "            chosen is None or point.accepted >= chosen.accepted\n",
+        "            chosen is None or point.accepted <= chosen.accepted\n",
+        (f"{T_SELECTION}::test_the_most_accepting_of_two_qualifying_points_is_preferred",),
+        (f"{T_SELECTION}::test_the_most_accepting_of_two_qualifying_points_is_preferred",),
+    ),
+    Mutant(
+        "M11",
+        "minimum-accepted search bound: low = 1 -> 0 (ACT = 0 can satisfy the coverage floor)",
+        SELECTION,
+        "    low = 1\n    high = total\n",
+        "    low = 0\n    high = total\n",
+        (f"{T_SELECTION}::test_a_zero_act_count_never_passes_even_without_a_coverage_floor",),
+        (f"{T_SELECTION}::test_a_zero_act_count_never_passes_even_without_a_coverage_floor",),
+    ),
+    Mutant(
+        "M12",
+        "calibration.no_threshold branch dropped: nothing qualifying still selects the "
+        "first grid point",
+        SELECTION,
+        "    if chosen is None:\n"
+        "        return SelectionResult(None, REASON_NO_THRESHOLD, tuple(points))\n",
+        "    if chosen is None:\n"
+        "        return SelectionResult(points[0].threshold, REASON_SELECTED, tuple(points))\n",
+        (
+            f"{T_SELECTION}::test_no_grid_point_reaching_the_target_selects_nothing",
+            f"{T_SELECTION}::test_an_empty_calibration_split_selects_nothing",
+        ),
+        (
+            f"{T_SELECTION}::test_no_grid_point_reaching_the_target_selects_nothing",
+            f"{T_SELECTION}::test_an_empty_calibration_split_selects_nothing",
+        ),
     ),
 )
 

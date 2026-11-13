@@ -42,6 +42,11 @@ diagnostic ``provider_confidence`` and never gates an action.
 
 Warnings are bounded codes (``normalize.<check>``) appended after the capture's
 own warnings. They never echo body text.
+
+The v2 ``recorded`` profile instead accepts ``{type, choice, score}`` with an
+optional full probability map. The raw score gates unchanged, with no
+renormalization or fabricated probabilities. The ``decision-api`` profile uses
+the Jev shape and diagnostics but checks the locked model name.
 """
 
 from __future__ import annotations
@@ -68,12 +73,14 @@ __all__ = [
     "LAYA_MASS_TOLERANCE_PER_OPTION",
     "LAYA_MODEL_MARKER",
     "NORMALIZER_VERSION",
+    "RECORDING_WARNING",
     "laya_mass_tolerance",
     "normalize",
     "request_sha256",
 ]
 
 NORMALIZER_VERSION: Final = "1"
+RECORDING_WARNING: Final = "recorded: provider faults not tested"
 FIXTURE_MASS_TOLERANCE: Final = 1e-12
 LAYA_MASS_TOLERANCE_PER_OPTION: Final = 0.00005
 LAYA_MODEL_MARKER: Final = "laya-rl-agent"
@@ -217,7 +224,9 @@ def _laya_inner_answer(body: object, question_id: str) -> object:
 # --------------------------------------------------------------------------- #
 
 
-def _jev_inner_answer(body: object, question_id: str) -> object:
+def _jev_inner_answer(
+    body: object, question_id: str, *, expected_model: str = _JEV_MODEL
+) -> object:
     """Validate the frozen Jev response shape, then the answering model, then extract."""
     envelope = _mapping(body, "body_type")
     if set(envelope) != _ENVELOPE_KEYS:
@@ -233,7 +242,7 @@ def _jev_inner_answer(body: object, question_id: str) -> object:
         raise _malformed("usage.keys")
     for name in sorted(_JEV_USAGE_KEYS):
         _count(usage[name], f"usage.{name}")
-    if model != _JEV_MODEL:
+    if model != expected_model:
         # A well-formed response from a different answering model: the vendor's
         # version claim does not match the locked target. Never repaired.
         raise _RejectedError("identity_mismatch", "normalize.answering_model")
@@ -287,6 +296,38 @@ def _answer(
     return choice, probabilities, confidence, total != 1.0
 
 
+def _recorded_answer(
+    body: object, question: ChoiceQuestion, warnings: tuple[str, ...], *, fallback_used: bool
+) -> ChoiceAnswer:
+    """Keep a supplied score and optional probability map exactly as recorded."""
+    answer = _mapping(body, "body_type")
+    required = {"type", "choice", "score"}
+    if not required <= set(answer) <= required | {"probabilities"}:
+        raise _malformed("answer_keys")
+    if answer["type"] != "choice":
+        raise _malformed("type")
+    score = _unit_interval(answer["score"], "score")
+    choice = answer["choice"]
+    if type(choice) is not str:
+        raise _malformed("choice_type")
+    if choice not in question.labels:
+        raise _RejectedError("unknown_choice", "normalize.unknown_choice")
+    probabilities: tuple[tuple[str, float], ...] = ()
+    if "probabilities" in answer:
+        raw = _mapping(answer["probabilities"], "probabilities_type")
+        if set(raw) != set(question.labels):
+            raise _malformed("probabilities_keys")
+        probabilities = tuple(
+            (label, _unit_interval(raw[label], "probability_value")) for label in question.labels
+        )
+        total = math.fsum(value for _, value in probabilities)
+        if abs(total - 1.0) > FIXTURE_MASS_TOLERANCE:
+            raise _malformed("probability_sum")
+        if score != dict(probabilities)[choice]:
+            raise _malformed("score_mismatch")
+    return ChoiceAnswer(choice, probabilities, score, None, warnings, fallback_used)
+
+
 # --------------------------------------------------------------------------- #
 # Public entry point
 # --------------------------------------------------------------------------- #
@@ -318,13 +359,20 @@ def normalize(
             body = strict_json_loads(body_text)
         except SchemaError:
             raise _malformed("invalid_json") from None
+        if expected_identity.provider == "recorded":
+            return _recorded_answer(body, question, warnings, fallback_used=fallback_used)
         if expected_identity.provider == "laya":
             inner = _laya_inner_answer(body, question.question_id)
             choice, probabilities, confidence, renormalized = _answer(
                 inner, question, laya_mass_tolerance(len(question.options))
             )
-        elif expected_identity.provider == "jev":
-            inner = _jev_inner_answer(body, question.question_id)
+        elif expected_identity.provider in {"jev", "decision-api"}:
+            expected_model = (
+                capture.identity.model
+                if expected_identity.provider == "decision-api"
+                else _JEV_MODEL
+            )
+            inner = _jev_inner_answer(body, question.question_id, expected_model=expected_model)
             choice, probabilities, confidence, renormalized = _answer(
                 inner,
                 question,

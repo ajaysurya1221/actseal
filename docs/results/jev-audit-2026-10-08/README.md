@@ -237,14 +237,22 @@ PYTHONPATH="$snapshot/src" "$audit_python" -B \
 Expected: **exit 0**, `source_verified: true`, findings `[]`. These commands
 reconstruct stored evidence; they do not repeat live collection.
 
-Replaying `evidence/` with the published Actseal 1.0.0 package instead of
-the snapshot returns ERROR `integrity.lock` (exit 3): this producer
-fingerprint is not in the compatibility registry. No registry entry is
-added for this publication. A future cross-release entry needs a separate
-exact-producer/verifier compatibility review and archived-evidence regression
-tests, as [ADR 0015](../../decisions/0015-v1-stability-and-replay-compatibility.md)
-requires. Generic bundle replay would still not check the journal, receipt
-and sidecar; only the snapshot's `run.py --check-receipts` does.
+At publication, replaying `evidence/` with the then-published Actseal 1.0.0 or
+1.0.1 package instead of the snapshot returned ERROR `integrity.lock`
+(exit 3): this producer fingerprint was not in the compatibility registry, and
+no registry entry was added for the 1.0.0/1.0.1 publications. **plan/v2 M2**
+(see `plan/v2/STATE.md`; this is not an independently reviewed ACCEPT) added a
+registry entry for this producer fingerprint
+(`167038cb709ff839f26a21ef55cc63ebd988d797ac56e82d0227ecad1a08eb7c`) for
+`actseal-choice-v1`, following the same dual-registration rule plus an
+archived-evidence regression test (`tests/examples/test_jev_audit_replay.py`),
+as [ADR 0015](../../decisions/0015-v1-stability-and-replay-compatibility.md)
+requires. From a v2 (post-M2) checkout, `actseal replay evidence/` therefore
+reconstructs this archive's recorded INCONCLUSIVE verdict directly, with no
+pinned snapshot needed; the command above remains the way to reconstruct it
+with the exact original producer. Generic bundle replay still does not check
+the journal, receipt and sidecar; only the snapshot's `run.py --check-receipts`
+does.
 
 ## Package contents
 

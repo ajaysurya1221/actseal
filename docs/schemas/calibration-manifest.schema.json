@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:calibration-manifest:1",
+  "title": "Actseal calibration manifest (schema 1)",
+  "description": "Exactly four data files plus this manifest form the five-file sidecar. The self-seal hashes the canonical document without sha256; the qualification receipt separately hashes the complete manifest file including LF.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "files",
+    "sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selection_plan.json",
+        "calibration.jsonl",
+        "records.jsonl",
+        "selection.json"
+      ],
+      "properties": {
+        "selection_plan.json": {
+          "$ref": "#/$defs/Entry"
+        },
+        "calibration.jsonl": {
+          "$ref": "#/$defs/Entry"
+        },
+        "records.jsonl": {
+          "$ref": "#/$defs/Entry"
+        },
+        "selection.json": {
+          "$ref": "#/$defs/Entry"
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "Entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "size",
+        "sha256"
+      ],
+      "properties": {
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 134217728
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

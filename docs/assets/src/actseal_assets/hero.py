@@ -4,7 +4,7 @@ The composition is an evidence card. The left column carries an eyebrow
 (``actseal`` and its category), the thesis question in bold and a one-sentence
 subline; the card on the right states one real recorded run, the
 preregistered live Jev audit, with its scope, its verdict and exit code, and
-the archived producer its replay requires. Nothing on the
+its replay with the packaged registry. Nothing on the
 canvas is decorative: no wordmark banner, padlock, shield, checkmark, badge
 or other security symbol.
 
@@ -24,9 +24,9 @@ Every number on the card is copied from committed files under
 - the CLI's exit-code table (``actseal.cli.EXIT_CODES``): INCONCLUSIVE is
   exit 2, which the audit README's offline replay command reports;
 - ``README.md`` of the audit: the producer is the unreleased benchmark
-  snapshot ``d3edbab2dfbd44a0e9e272e1671143517832e3b4``, so replay requires
-  that archived producer (the published 1.0.0 package returns ERROR
-  ``integrity.lock`` for this bundle), and the benchmark is a fixed subset.
+  snapshot ``d3edbab2dfbd44a0e9e272e1671143517832e3b4`` and the benchmark is a
+  fixed subset; the packaged registry now admits that producer for replay,
+  with no pinned snapshot needed.
 
 Every visible string is converted to path data with the pinned JetBrains Mono
 files through ``outline.outline_text``; the committed files contain no
@@ -91,7 +91,7 @@ CARD_LABEL = "PREREGISTERED LIVE AUDIT · 639 VERIFICATION CASES · THRESHOLD 0.
 CARD_HEADLINE = "ACT 580/639   errors 24"
 CARD_SCOPE = "Fixed benchmark; unreleased producer"
 CARD_BOUNDS = "risk [0.0250, 0.0639] vs limit 0.05 · coverage [0.879, 0.932]"
-CARD_VERDICT = "VERDICT: INCONCLUSIVE (exit 2) → replay requires archived producer d3edbab"
+CARD_VERDICT = "VERDICT: INCONCLUSIVE (exit 2) → replay with packaged registry"
 CARD_FOOTER = "docs/results/jev-audit-2026-10-08 · neither PASS nor BLOCK is claimed"
 
 TITLE = "Actseal: does this frozen action policy meet its declared risk and coverage limits?"
@@ -446,7 +446,7 @@ DESKTOP = Canvas(
         ),
         Setting(
             "card-verdict",
-            ("VERDICT: INCONCLUSIVE (exit 2) →", "replay requires archived producer d3edbab"),
+            ("VERDICT: INCONCLUSIVE (exit 2) →", "replay with packaged registry"),
             27,
             34,
             gap=12,
@@ -525,7 +525,7 @@ MOBILE = Canvas(
         ),
         Setting(
             "card-verdict",
-            ("VERDICT: INCONCLUSIVE", "(exit 2) → replay requires", "archived producer d3edbab"),
+            ("VERDICT: INCONCLUSIVE", "(exit 2) → replay with", "packaged registry"),
             40,
             52,
             gap=20,

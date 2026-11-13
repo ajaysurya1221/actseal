@@ -2,12 +2,11 @@
 
 Each group box lists the ``actseal`` modules that implement it, so a reader
 can open the package and find every node. The providers drawn are the ones in
-the package: the stable recorded fixture adapter, the stable pinned native
-Laya adapter and the PROVISIONAL ``experimental.providers.jev`` cloud adapter,
-which is selected only by explicit opt-in and carries no stability promise. A
-dashed boundary encloses the Laya and Jev nodes, because those are the only
-places live inference happens: the fixture adapter reads a recorded file and
-the fault campaign is a pure generator, so neither sits inside the boundary.
+the package: the fixture and recorded file adapters, the pinned native Laya
+adapter and the PROVISIONAL ``experimental.providers.jev`` and
+``experimental.providers.decision_api`` adapters. A dashed boundary encloses
+the Laya, Jev and decision-API nodes, where live inference happens: the file
+adapters and the pure fault generator stay outside the boundary.
 Nothing here states that the Jev service was exercised; the figure is a
 component diagram of the source, not evidence that any provider answered.
 
@@ -96,19 +95,23 @@ GROUPS: tuple[Group, ...] = (
     Group(
         "cli",
         ("CLI", "typed API"),
-        ("cli", "runner", "__init__", "__main__", "demo_data"),
-        ("lock, verify, replay, demo",),
+        ("cli", "runner", "qualification", "report", "__init__", "__main__", "demo_data"),
+        ("orchestration", "presentation"),
     ),
     Group(
         "providers",
         ("Providers",),
-        ("adapters.base", "adapters.fixture"),
+        ("adapters.base", "adapters.fixture", "adapters.recorded"),
         (
             "fixture: recorded file",
             "laya: pinned checkpoint",
-            "jev: PROVISIONAL opt-in",
+            "jev / decision-api: PROVISIONAL opt-in",
         ),
-        live=("adapters.laya", "experimental.providers.jev"),
+        live=(
+            "adapters.laya",
+            "experimental.providers.jev",
+            "experimental.providers.decision_api",
+        ),
     ),
     Group(
         "normalization",
@@ -119,7 +122,7 @@ GROUPS: tuple[Group, ...] = (
     Group(
         "assessment",
         ("Assessment", "statistics", "faults"),
-        ("assessment", "stats", "faults"),
+        ("assessment", "stats", "faults", "selection"),
         ("6 synthetic faults; no model call", "recomputes decisions, then the verdict"),
     ),
     Group(
@@ -153,17 +156,19 @@ DESC = (
     "Seven groups, each listing the actseal modules that implement it. "
     "Contracts and locks: contract, records, errors, serialization, locking and "
     "compatibility parse, seal and validate the lock with no model call. "
-    "CLI and typed API: cli, runner, __init__, __main__ and demo_data drive the "
-    "lock, verify, replay and demo commands. Providers: adapters.base, "
-    "adapters.fixture, adapters.laya and the PROVISIONAL "
-    "experimental.providers.jev; the dashed live-inference boundary encloses "
-    "the Laya and Jev adapters, because the fixture adapter reads a recorded "
-    "file. Fixture and Laya are the stable providers; Jev is an experimental "
+    "CLI and typed API: cli, runner, qualification, report, __init__, __main__ "
+    "and demo_data drive orchestration and presentation. Providers: adapters.base, "
+    "adapters.fixture, adapters.recorded, adapters.laya and the PROVISIONAL "
+    "experimental.providers.jev and experimental.providers.decision_api; the "
+    "dashed live-inference boundary encloses the Laya, Jev and decision-API adapters; "
+    "the fixture adapter reads a recorded file, as does the recorded adapter. "
+    "Fixture and Laya are the stable providers; Jev is an experimental "
     "cloud adapter selected only by explicit opt-in, with no stability promise "
-    "and no claim here that its service was exercised. Normalization and "
+    "and no claim here that its service was exercised. The decision-API adapter "
+    "is also PROVISIONAL. Normalization and "
     "policy: normalization and policy are "
     "pure functions that turn one raw capture into one decision. Assessment, "
-    "statistics and faults: assessment, stats and faults; the six fault "
+    "statistics and faults: assessment, stats, faults and selection; the six fault "
     "scenarios are synthetic, generated from the lock with no model call, and "
     "assessment recomputes every decision before the verdict. Evidence: "
     "evidence writes the seven-file bounded data-only bundle atomically. "
@@ -234,7 +239,8 @@ ARROW_CLEARANCE = 4
 
 DESKTOP_MARGIN = 16
 DESKTOP_COLUMN_GAP = 28
-DESKTOP_COLUMNS = 4
+# Give the provider paths room without reducing type size or increasing the canvas.
+DESKTOP_COLUMN_WIDTHS = (371, 253, 580, 280)
 DESKTOP_TOP = 24
 DESKTOP_ROW_GAPS = (80, 60)
 #: Desktop placement. Row 0 is the collection path with the CLI between the
@@ -245,7 +251,7 @@ DESKTOP_ROW_GAPS = (80, 60)
 DESKTOP_ROWS: tuple[tuple[tuple[str, int, int], ...], ...] = (
     (("contracts", 0, 1), ("cli", 1, 1), ("providers", 2, 1), ("normalization", 3, 1)),
     (("assessment", 1, 3),),
-    (("replay", 0, 1), ("evidence", 1, 1)),
+    (("replay", 0, 1), ("evidence", 1, 2)),
 )
 #: Fractions of a box width at which vertical arrow segments attach.
 LEFT_LANE = 0.2
@@ -302,6 +308,25 @@ def wrap(
     return lines
 
 
+def wrap_modules(names: tuple[str, ...], size: float, max_width: float) -> list[str]:
+    """Wrap long module paths at dots, retaining every character at the same size."""
+    lines: list[str] = []
+    whole: list[str] = []
+    for name in names:
+        if text_width(name, size) <= max_width:
+            whole.append(name)
+            continue
+        if whole:
+            lines.extend(wrap(tuple(whole), size, max_width, separator=NAME_SEPARATOR))
+            whole = []
+        parts = name.split(".")
+        fragments = (*(f"{part}." for part in parts[:-1]), parts[-1])
+        lines.extend(wrap(fragments, size, max_width, separator=""))
+    if whole:
+        lines.extend(wrap(tuple(whole), size, max_width, separator=NAME_SEPARATOR))
+    return lines
+
+
 @dataclass(frozen=True, slots=True)
 class Layout:
     """Measured content of one group box: every baseline relative to the box top."""
@@ -326,7 +351,7 @@ def layout(group: Group, metrics: Metrics, inner: float) -> Layout:
     divider = y - metrics.heading_line + metrics.divider_gap
     y = divider + metrics.body_gap + metrics.body
     names: list[tuple[str, int]] = []
-    for text in wrap(group.modules, metrics.body, inner, separator=NAME_SEPARATOR):
+    for text in wrap_modules(group.modules, metrics.body, inner):
         names.append((text, y))
         y += metrics.line
     live: list[tuple[str, int]] = []
@@ -334,7 +359,7 @@ def layout(group: Group, metrics: Metrics, inner: float) -> Layout:
     if group.live:
         y += metrics.boundary_pad
         top = y - metrics.body - metrics.boundary_inset
-        for text in wrap(group.live, metrics.body, inner, separator=NAME_SEPARATOR):
+        for text in wrap_modules(group.live, metrics.body, inner):
             live.append((text, y))
             y += metrics.line
         _require_fit(LIVE_LABEL, metrics.body, inner - 2 * metrics.boundary_inset)
@@ -523,19 +548,19 @@ def _label(
 
 def _desktop_boxes() -> dict[str, Box]:
     metrics = DESKTOP
-    column = (
-        DESKTOP_WIDTH - 2 * DESKTOP_MARGIN - (DESKTOP_COLUMNS - 1) * DESKTOP_COLUMN_GAP
-    ) / DESKTOP_COLUMNS
     boxes: dict[str, Box] = {}
     y: float = DESKTOP_TOP
     for index, row in enumerate(DESKTOP_ROWS):
-        widths = {key: span * column + (span - 1) * DESKTOP_COLUMN_GAP for key, _, span in row}
+        widths = {
+            key: sum(DESKTOP_COLUMN_WIDTHS[start : start + span]) + (span - 1) * DESKTOP_COLUMN_GAP
+            for key, start, span in row
+        }
         height = max(
             layout(_group_by_key(key), metrics, width - 2 * metrics.pad).height
             for key, width in widths.items()
         )
         for key, start, _ in row:
-            x = DESKTOP_MARGIN + start * (column + DESKTOP_COLUMN_GAP)
+            x = DESKTOP_MARGIN + sum(DESKTOP_COLUMN_WIDTHS[:start]) + start * DESKTOP_COLUMN_GAP
             boxes[key] = Box(x, y, widths[key], height)
         y += height
         if index < len(DESKTOP_ROW_GAPS):

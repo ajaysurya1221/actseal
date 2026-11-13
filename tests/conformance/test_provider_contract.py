@@ -1,11 +1,12 @@
 """Shared provider conformance: every provider profile passes exactly the same cases.
 
 The ``profile`` fixture is parametrized over every name in ``PROFILE_NAMES``
-(the recorded fixture adapter, the Laya adapter over its fake worker and the
-experimental Jev adapter over a fake connection). No case skips, xfails or
+(fixture, recorded predictions, Laya over its fake worker and experimental
+Jev/decision-api adapters over fake connections). No case skips, xfails or
 branches a provider out of a check. Provider-specific facts (whether ``close``
 releases a worker, whether body text is verbatim or canonical, what follows a
-timeout, which body fields are evidence-only) are declared by the profile and
+timeout, which body fields are evidence-only, supported warnings and diagnostic
+confidence) are declared by the profile and
 asserted. The checks themselves live in ``tests/provider_support.py`` and are
 the same functions the negative doubles in ``test_provider_doubles.py`` must
 fail.
@@ -85,8 +86,8 @@ def opened(model: DecisionModel) -> Iterator[DecisionModel]:
         model.close()
 
 
-def test_profiles_cover_fixture_laya_and_experimental_jev() -> None:
-    assert PROFILE_NAMES == ("fixture", "laya-fake", "jev-fake")
+def test_profiles_cover_every_provider() -> None:
+    assert PROFILE_NAMES == ("fixture", "laya-fake", "jev-fake", "recorded", "decision-api-fake")
 
 
 def test_protocol_shape_and_identity_are_stable(
@@ -138,9 +139,10 @@ def test_every_failure_code_is_a_typed_capture(
     profile: ProviderProfile, question: ChoiceQuestion, code: str
 ) -> None:
     request = DecisionRequest("v-001", "s", question)
-    with opened(profile.open(failure=code, warnings=("w.detail",))) as model:
+    warnings = ("w.detail",) if profile.accepts_warnings else ()
+    with opened(profile.open(failure=code, warnings=warnings)) as model:
         identity = model.identity()
-        capture = check_typed_failure(model, request, code, (*profile.load_warnings, "w.detail"))
+        capture = check_typed_failure(model, request, code, (*profile.load_warnings, *warnings))
         check_identity_mismatch_precedes_body(capture, question, identity)
 
 
@@ -168,10 +170,11 @@ def test_timeout_capture_and_documented_aftermath(
         )
 
 
-@pytest.mark.parametrize("raw", MALFORMED_BODIES)
+@pytest.mark.parametrize(("index", "raw"), list(enumerate(MALFORMED_BODIES)))
 def test_malformed_body_is_captured_then_rejected_by_normalization(
-    profile: ProviderProfile, question: ChoiceQuestion, raw: str
+    profile: ProviderProfile, question: ChoiceQuestion, index: int, raw: str
 ) -> None:
+    raw = profile.malformed_body(raw, index)
     request = DecisionRequest("v-001", "s", question)
     with opened(profile.open(body=raw)) as model:
         identity = model.identity()
@@ -191,17 +194,19 @@ def test_raw_body_is_preserved_without_repair_and_normalizes(
 ) -> None:
     raw = profile.valid_raw_body(question)
     request = DecisionRequest("v-001", "s", question)
-    with opened(profile.open(body=raw, warnings=("w.a", "w.b", "w.a"))) as model:
+    warnings = ("w.a", "w.b", "w.a") if profile.accepts_warnings else ()
+    with opened(profile.open(body=raw, warnings=warnings)) as model:
         identity = model.identity()
-        expected_warnings = (*profile.load_warnings, "w.a", "w.b", "w.a")
+        expected_warnings = (*profile.load_warnings, *warnings)
         capture = check_body_preserved(
             model, request, raw, profile.preserved(raw), expected_warnings
         )
         assert capture.body_json is not None
-        assert profile.evidence_only_fields  # every profile declares evidence-only content
         for name in profile.evidence_only_fields:
             assert f'"{name}"' in capture.body_json  # fields normalization ignores stay evidence
-        answer = check_valid_body_normalizes(capture, question, identity)
+        answer = check_valid_body_normalizes(
+            capture, question, identity, diagnostic_confidence=profile.diagnostic_confidence
+        )
         assert answer.warnings == expected_warnings
         check_identity_mismatch_precedes_body(capture, question, identity)
         assert capture == capture_or_fail(model, request, 5.0)

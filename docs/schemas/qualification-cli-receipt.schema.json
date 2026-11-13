@@ -1,0 +1,771 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:actseal:schema:qualification-cli-receipt:1",
+  "title": "Actseal opt-in qualification CLI receipts (schema 1)",
+  "description": "New command receipts and the explicitly selected demo --qualify variant. Existing lock, verify, replay and default demo receipts retain cli-receipt.schema.json unchanged. Selection success is SELECTED; only the held-out verification verdict supplies PASS.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/PlanReceipt"
+    },
+    {
+      "$ref": "#/$defs/CalibrateReceipt"
+    },
+    {
+      "$ref": "#/$defs/QualifyReceipt"
+    },
+    {
+      "$ref": "#/$defs/ReplaySelectionReceipt"
+    },
+    {
+      "$ref": "#/$defs/QualifyDemoReceipt"
+    },
+    {
+      "$ref": "#/$defs/ErrorReceipt"
+    }
+  ],
+  "$defs": {
+    "Sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Status": {
+      "enum": [
+        "PASS",
+        "BLOCK",
+        "INCONCLUSIVE",
+        "ERROR"
+      ]
+    },
+    "ExitCode": {
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "Interval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lower",
+        "upper"
+      ],
+      "properties": {
+        "lower": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "upper": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "Counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "Faults": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action",
+          "expected_action"
+        ],
+        "properties": {
+          "action": {
+            "enum": [
+              "ACT",
+              "ABSTAIN",
+              "ESCALATE",
+              "DENY"
+            ]
+          },
+          "expected_action": {
+            "enum": [
+              "ACT",
+              "ABSTAIN",
+              "ESCALATE",
+              "DENY"
+            ]
+          }
+        }
+      }
+    },
+    "VerdictFields": {
+      "type": "object",
+      "required": [
+        "status",
+        "reasons",
+        "total",
+        "accepted",
+        "errors",
+        "risk",
+        "coverage",
+        "evidence_scope",
+        "lock_sha256"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/Status"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "accepted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "errors": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "risk": {
+          "$ref": "#/$defs/Interval"
+        },
+        "coverage": {
+          "$ref": "#/$defs/Interval"
+        },
+        "evidence_scope": {
+          "enum": [
+            "demo",
+            "iid"
+          ]
+        },
+        "lock_sha256": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "BundlePayload": {
+      "description": "Verdict fields plus failure/warning counts and fault actions for one evidence bundle; shared by the verify receipt and each nested demo run. Command-level fields (exit_code, ok, out) are NOT part of it.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/VerdictFields"
+        },
+        {
+          "type": "object",
+          "required": [
+            "failures",
+            "warnings",
+            "faults"
+          ],
+          "properties": {
+            "failures": {
+              "$ref": "#/$defs/Counts"
+            },
+            "warnings": {
+              "$ref": "#/$defs/Counts"
+            },
+            "faults": {
+              "$ref": "#/$defs/Faults"
+            }
+          }
+        }
+      ]
+    },
+    "Selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "threshold",
+        "reason",
+        "points"
+      ],
+      "properties": {
+        "threshold": {
+          "oneOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "enum": [
+            "selected",
+            "calibration.no_threshold"
+          ]
+        },
+        "points": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "threshold",
+              "accepted",
+              "errors",
+              "predicted_pass_probability"
+            ],
+            "properties": {
+              "threshold": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1
+              },
+              "accepted": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "errors": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "predicted_pass_probability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "reason": {
+                "const": "selected"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "threshold": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "threshold": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "PlanReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "command",
+        "exit_code",
+        "ok",
+        "status",
+        "verification_cases",
+        "max_verification_cases",
+        "target_pass_probability",
+        "assumptions",
+        "reason"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "command": {
+          "const": "plan"
+        },
+        "exit_code": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "PLANNED",
+            "INCONCLUSIVE"
+          ]
+        },
+        "verification_cases": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_verification_cases": {
+          "const": 10000
+        },
+        "target_pass_probability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "assumptions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "max_risk",
+            "min_coverage",
+            "alpha",
+            "expected_risk",
+            "expected_coverage"
+          ],
+          "properties": {
+            "max_risk": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "min_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "alpha": {
+              "type": "number",
+              "minimum": 0.000001,
+              "exclusiveMaximum": 1
+            },
+            "expected_risk": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "expected_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "reason": {
+          "enum": [
+            "planning.reachable",
+            "planning.not_reachable"
+          ]
+        }
+      }
+    },
+    "CalibrateReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "command",
+        "exit_code",
+        "ok",
+        "status",
+        "out",
+        "calibration",
+        "contract",
+        "calibration_manifest_sha256",
+        "selection"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "command": {
+          "const": "calibrate"
+        },
+        "exit_code": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "SELECTED",
+            "INCONCLUSIVE"
+          ]
+        },
+        "out": {
+          "type": "string"
+        },
+        "calibration": {
+          "type": "string"
+        },
+        "contract": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "calibration_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "selection": {
+          "$ref": "#/$defs/Selection"
+        }
+      }
+    },
+    "QualifyReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "command",
+        "exit_code",
+        "ok",
+        "status",
+        "out",
+        "calibration",
+        "contract",
+        "calibration_manifest_sha256",
+        "selection",
+        "lock_sha256",
+        "evidence",
+        "qualification",
+        "verdict"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "command": {
+          "const": "qualify"
+        },
+        "exit_code": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "BLOCK",
+            "INCONCLUSIVE",
+            "ERROR"
+          ]
+        },
+        "out": {
+          "type": "string"
+        },
+        "calibration": {
+          "type": "string"
+        },
+        "contract": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "calibration_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "selection": {
+          "$ref": "#/$defs/Selection"
+        },
+        "lock_sha256": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "qualification": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "verdict": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/BundlePayload"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ReplaySelectionReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "command",
+        "exit_code",
+        "ok",
+        "status",
+        "out",
+        "selection"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "command": {
+          "const": "replay-selection"
+        },
+        "exit_code": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "SELECTED",
+            "INCONCLUSIVE"
+          ]
+        },
+        "out": {
+          "type": "string"
+        },
+        "selection": {
+          "$ref": "#/$defs/Selection"
+        }
+      }
+    },
+    "QualifyDemoReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "command",
+        "exit_code",
+        "ok",
+        "status",
+        "out",
+        "calibration",
+        "contract",
+        "calibration_manifest_sha256",
+        "selection",
+        "lock_sha256",
+        "evidence",
+        "qualification",
+        "verdict",
+        "mode",
+        "demo_only",
+        "evidence_scope",
+        "note"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "command": {
+          "const": "demo"
+        },
+        "exit_code": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "BLOCK",
+            "INCONCLUSIVE",
+            "ERROR"
+          ]
+        },
+        "out": {
+          "type": "string"
+        },
+        "calibration": {
+          "type": "string"
+        },
+        "contract": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "calibration_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "selection": {
+          "$ref": "#/$defs/Selection"
+        },
+        "lock_sha256": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "qualification": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "verdict": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/BundlePayload"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mode": {
+          "const": "qualify"
+        },
+        "demo_only": {
+          "const": true
+        },
+        "evidence_scope": {
+          "const": "demo"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "ErrorReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "command",
+        "exit_code",
+        "ok",
+        "status",
+        "error"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "command": {
+          "enum": [
+            "plan",
+            "calibrate",
+            "qualify",
+            "replay-selection",
+            "demo"
+          ]
+        },
+        "exit_code": {
+          "const": 3
+        },
+        "ok": {
+          "const": false
+        },
+        "status": {
+          "const": "ERROR"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

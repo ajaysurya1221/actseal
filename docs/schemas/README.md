@@ -1,10 +1,11 @@
 # Actseal wire schemas
 
-JSON Schema (draft 2020-12) documents for the frozen 1.x wire formats listed in
+JSON Schema (draft 2020-12) documents for the frozen 1.x wire formats and the
+separately versioned v2 qualification sidecar listed in
 the [stability manifest](../stability.md). They are documentation of the shapes
 that `actseal` writes and accepts. The Python validators in `actseal.records`,
 `actseal.serialization`, `actseal.evidence`, `actseal.cli` and
-`actseal.compatibility` are authoritative and strictly **stricter**: they also
+`actseal.compatibility` and `actseal.qualification` are authoritative and strictly **stricter**: they also
 enforce the canonical byte form (sorted keys, compact separators, one terminal
 LF per document or row, no NaN or Infinity, nesting at most 32, byte ceilings)
 and the cross-field invariants listed per schema below, which JSON Schema
@@ -19,11 +20,43 @@ rejected by Actseal; a document Actseal accepts always validates here.
 | [decision-record.schema.json](decision-record.schema.json) | one row of `records.jsonl` (`DecisionRecord`) | bundle schema | 2 |
 | [fault-result.schema.json](fault-result.schema.json) | one row of `faults.jsonl` (`FaultResult`) | bundle schema | 2 |
 | [verdict.schema.json](verdict.schema.json) | `verdict.json` (`Verdict`) | bundle schema | 2 |
-| [cli-receipt.schema.json](cli-receipt.schema.json) | every `--json` receipt variant | `cli.RECEIPT_SCHEMA_VERSION` | 1 |
+| [cli-receipt.schema.json](cli-receipt.schema.json) | existing `lock`, `verify`, `replay` and default `demo` receipts | `cli.RECEIPT_SCHEMA_VERSION` | 1 |
 | [compatibility-registry.schema.json](compatibility-registry.schema.json) | `src/actseal/compatibility_registry.json` | `compatibility.REGISTRY_SCHEMA_VERSION` | 1 |
 
 The contract TOML (schema 1) is not JSON and is specified in
 [CONTRACTS](../../plan/CONTRACTS.md) section 3.
+
+## Qualification sidecar (v2, opt-in)
+
+These formats leave lock schema 2, the seven-file bundle schema 2 and engine
+`actseal-choice-v1` unchanged. Each new JSON document carries `schema_version: 1`.
+
+| File | Describes |
+|---|---|
+| [selection-plan.schema.json](selection-plan.schema.json) | `selection_plan.json`: contract without threshold, fixed grid, selection settings, split hashes, verification size and identities |
+| [selection.schema.json](selection.schema.json) | `selection.json`: every grid point's counts and predicted pass probability, selected threshold or reason |
+| [calibration-manifest.schema.json](calibration-manifest.schema.json) | `manifest.json`: the exact four data files of the five-file calibration directory |
+| [qualification.schema.json](qualification.schema.json) | `qualification.json`: calibration manifest file hash, verification lock self-seal and unchanged verdict |
+| [qualification-cli-receipt.schema.json](qualification-cli-receipt.schema.json) | New command receipts and the explicit `demo --qualify` receipt |
+
+The selection plan and calibration manifest each seal the canonical JSON
+document with only their own `sha256` field omitted. A qualification receipt's
+`calibration_manifest_sha256` instead hashes the complete manifest file,
+including its terminal LF; `lock_sha256` is the ordinary verification lock's
+self-seal. The calibration manifest inventories exactly `selection_plan.json`,
+`calibration.jsonl`, `records.jsonl` and `selection.json`. Case and record
+encoding reuses the existing formats. All five files together are limited to
+128 MiB; record rows retain the 1 MiB and 10,000-row ceilings.
+
+Python additionally validates strictly increasing grid values, exact hashes,
+record/request/identity consistency, policy eligibility and recomputed
+selection. Collection requires the exact running implementation fingerprint.
+Replay requires a supported engine and either the exact fingerprint or both
+producer and running fingerprints registered for that engine.
+Counts, reason and selected threshold match exactly; predicted
+probabilities use absolute tolerance `1e-10` and relative tolerance `1e-9` for
+cross-platform `math.lgamma` rounding. These checks establish consistency,
+not response authentication or proof that a plan existed before collection.
 
 ## Release receipts (release tooling, not the package)
 
@@ -103,13 +136,21 @@ shape is `malformed_response`. The vendor `confidence` is diagnostic only.
 
 **DecisionRecord / FaultResult.** `outcome` and `decision` must equal a fresh
 re-normalization of `capture` against the locked identity and a fresh policy
-evaluation. `ChoiceAnswer.selected_probability` equals the probability recorded
+evaluation. In v2, `ChoiceAnswer.probabilities` is exactly empty for a score-only
+recorded answer, or contains 2..16 entries (never one). The gating value is the
+raw recorded score without renormalization. With a full map,
+`ChoiceAnswer.selected_probability` equals the probability recorded
 for `choice`; probability labels are unique, follow the question option order
 and sum to 1 within 1e-12; `decision.fallback_used` equals
 `outcome.fallback_used`; an answer outcome requires a captured `body_json`.
 Records appear once per locked verification case in lock order; faults once
 per locked scenario in lock order, with `request`/`capture` equal to the
 canonical generator.
+
+The v2 provider enum additionally admits `recorded` and `decision-api` in
+locks, captures and CLI identities. The configurable endpoint is stored in the
+existing runtime map. No record field or schema version is added. Existing
+fixture, Laya and Jev bodies keep their historical normalization and fault bytes.
 
 **Verdict.** `reasons` are sorted. `accepted <= total`, `errors <= accepted`,
 `lower <= upper` in each interval. `ERROR` requires zero counts and `[0, 1]`

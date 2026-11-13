@@ -147,18 +147,18 @@ _STATUS_FAILURES: Final[Mapping[int, str]] = {
 # --------------------------------------------------------------------------- #
 
 
-def request_body(request: DecisionRequest) -> bytes:
+def request_body(request: DecisionRequest, *, model: str = MODEL) -> bytes:
     """The exact HTTP body for ``request``: ``{state, model, questions}`` in that order.
 
     ``criteria`` keeps the locked option order; keys are never sorted. Only the
-    state, the fixed model and the question definition are sent.
+    state, the configured model and the question definition are sent.
     """
     if not isinstance(request, DecisionRequest):
         raise SchemaError("request: must be DecisionRequest")
     question = request.question
     payload: dict[str, object] = {
         "state": request.state,
-        "model": MODEL,
+        "model": model,
         "questions": {
             question.question_id: {
                 "type": "choice",
@@ -225,11 +225,11 @@ def _default_connect(timeout: float) -> _Connection:
     )
 
 
-def _status_failure(status: int) -> tuple[str, tuple[str, ...]]:
+def _status_failure(status: int, prefix: str = "jev") -> tuple[str, tuple[str, ...]]:
     code = _STATUS_FAILURES.get(status)
     if code is None:
         code = "unavailable" if status in _SERVER_ERROR_RANGE else "provider_error"
-    return code, (f"jev.http:{status}",)
+    return code, (f"{prefix}.http:{status}",)
 
 
 class _HttpsExchange:
@@ -240,36 +240,52 @@ class _HttpsExchange:
     into any reply, warning or exception.
     """
 
-    def __init__(self, api_key: str, connect: _Connect) -> None:
+    def __init__(
+        self,
+        api_key: str | None,
+        connect: _Connect,
+        *,
+        path: str = ENDPOINT_PATH,
+        warning_prefix: str = "jev",
+    ) -> None:
         self._key = api_key
-        self._headers: Mapping[str, str] = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        }
+        headers: dict[str, str] = {}
+        if api_key is not None:
+            headers["Authorization"] = f"Bearer {api_key}"
+        headers.update(
+            {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            }
+        )
+        self._headers: Mapping[str, str] = headers
         self._connect = connect
+        self._path = path
+        self._prefix = warning_prefix
 
     def __call__(self, payload: bytes, timeout: float) -> _Reply:
         try:
             data = self._post(payload, timeout)
         except _StatusError as exc:
-            code, warnings = _status_failure(exc.status)
+            code, warnings = _status_failure(exc.status, self._prefix)
             return _Reply(None, code, warnings)
         except _IncompleteBodyError:
-            return _Reply(None, "unavailable", ("jev.transport:incomplete_body",))
+            return _Reply(None, "unavailable", (f"{self._prefix}.transport:incomplete_body",))
         except TimeoutError:
             return _Reply(None, "timeout", ())
         except (OSError, http.client.HTTPException) as exc:
-            return _Reply(None, "unavailable", (f"jev.transport:{type(exc).__name__}",))
+            return _Reply(None, "unavailable", (f"{self._prefix}.transport:{type(exc).__name__}",))
         except Exception as exc:  # a failure is data, never an exception (CONTRACTS section 4)
-            return _Reply(None, "provider_error", (f"jev.exception:{type(exc).__name__}",))
-        return _decode_success(data, self._key)
+            return _Reply(
+                None, "provider_error", (f"{self._prefix}.exception:{type(exc).__name__}",)
+            )
+        return _decode_success(data, self._key, self._prefix)
 
     def _post(self, payload: bytes, timeout: float) -> bytes:
         """One request on a fresh connection; the connection is closed on every path."""
         connection = self._connect(timeout)
         try:
-            connection.request("POST", ENDPOINT_PATH, payload, self._headers)
+            connection.request("POST", self._path, payload, self._headers)
             response = connection.getresponse()
             if response.status != _SUCCESS_STATUS:
                 raise _StatusError(response.status)
@@ -346,17 +362,17 @@ def _echoes_credential(text: str, key: str) -> bool:
     return key in candidate
 
 
-def _decode_success(data: bytes, key: str) -> _Reply:
+def _decode_success(data: bytes, key: str | None, prefix: str = "jev") -> _Reply:
     """Bound, decode and credential-check a complete 200 body; otherwise keep it verbatim."""
     if len(data) > MAX_RESPONSE_BYTES:
-        return _Reply(None, "malformed_response", ("jev.body_oversized",))
+        return _Reply(None, "malformed_response", (f"{prefix}.body_oversized",))
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError:
-        return _Reply(None, "malformed_response", ("jev.body_not_utf8",))
-    if _echoes_credential(text, key):
+        return _Reply(None, "malformed_response", (f"{prefix}.body_not_utf8",))
+    if key is not None and _echoes_credential(text, key):
         # An unsafe provider response is failure data: never captured, never repaired.
-        return _Reply(None, "malformed_response", ("jev.credential_echo",))
+        return _Reply(None, "malformed_response", (f"{prefix}.credential_echo",))
     return _Reply(text, None, ())
 
 
@@ -365,18 +381,18 @@ def _decode_success(data: bytes, key: str) -> _Reply:
 # --------------------------------------------------------------------------- #
 
 
-def _api_key_from_environment() -> str:
-    """Read ``JEV_API_KEY`` and validate its shape; the value is never echoed."""
-    value = os.environ.get(API_KEY_ENV)
+def _api_key_from_environment(name: str = API_KEY_ENV) -> str:
+    """Read the named API key and validate its shape; the value is never echoed."""
+    value = os.environ.get(name)
     if value is None or not value:
-        raise ProviderSetupError(f"{API_KEY_ENV}: environment variable is not set")
+        raise ProviderSetupError(f"{name}: environment variable is not set")
     if (
         len(value) > _MAX_KEY_CHARS
         or not value.isascii()
         or not value.isprintable()
         or any(character.isspace() for character in value)
     ):
-        raise ProviderSetupError(f"{API_KEY_ENV}: must be a printable ASCII token without spaces")
+        raise ProviderSetupError(f"{name}: must be a printable ASCII token without spaces")
     return value
 
 
@@ -395,38 +411,14 @@ def _runtime() -> tuple[tuple[str, str], ...]:
 # --------------------------------------------------------------------------- #
 
 
-class JevModel:
-    """Pinned ``jev-1.13.0`` over the fixed vendor endpoint; one attempt per request."""
+class _DecisionModel:
+    """Shared single-attempt capture lifecycle for Jev-compatible transports."""
 
-    def __init__(self, *, offline: bool = False) -> None:
-        if offline:
-            # PLAN E: offline setup is rejected without a request. Checked before the
-            # environment is read or any transport object exists.
-            raise ProviderSetupError(
-                "offline: the experimental Jev adapter has no offline mode; no request was made"
-            )
-        self._configure(_HttpsExchange(_api_key_from_environment(), _default_connect))
-
-    @classmethod
-    def _with_exchange(cls, exchange: _Exchange) -> JevModel:
-        """Test seam: a model over an injected exchange; reads no environment variable."""
-        model = cls.__new__(cls)
-        model._configure(exchange)
-        return model
-
-    def _configure(self, exchange: _Exchange) -> None:
+    def _configure(self, exchange: _Exchange, identity: ModelIdentity) -> None:
         self._exchange: _Exchange | None = exchange
         self._closed = False
         self._attempts = 0
-        self._identity = ModelIdentity(
-            "jev",
-            MODEL,
-            REVISION,
-            (),
-            ADAPTER_VERSION,
-            NORMALIZER_VERSION,
-            _runtime(),
-        )
+        self._identity = identity
 
     def identity(self) -> ModelIdentity:
         return self._identity
@@ -438,8 +430,10 @@ class JevModel:
         digest = request_sha256(request)
         exchange = self._exchange
         if exchange is None:
-            return self._failure(digest, "unavailable", ("jev.unavailable:closed",))
-        payload = request_body(request)
+            return self._failure(
+                digest, "unavailable", (f"{self._identity.provider}.unavailable:closed",)
+            )
+        payload = request_body(request, model=self._identity.model)
         self._attempts += 1
         reply = exchange(payload, timeout)
         if reply.failure is not None:
@@ -455,3 +449,30 @@ class JevModel:
         """Drop the transport; later calls are ``unavailable``. Safe to repeat."""
         self._exchange = None
         self._closed = True
+
+
+class JevModel(_DecisionModel):
+    """Pinned ``jev-1.13.0`` over the fixed vendor endpoint; one attempt per request."""
+
+    def __init__(self, *, offline: bool = False) -> None:
+        if offline:
+            # PLAN E: offline setup is rejected before any environment access.
+            raise ProviderSetupError(
+                "offline: the experimental Jev adapter has no offline mode; no request was made"
+            )
+        self._configure_jev(_HttpsExchange(_api_key_from_environment(), _default_connect))
+
+    def _configure_jev(self, exchange: _Exchange) -> None:
+        self._configure(
+            exchange,
+            ModelIdentity(
+                "jev", MODEL, REVISION, (), ADAPTER_VERSION, NORMALIZER_VERSION, _runtime()
+            ),
+        )
+
+    @classmethod
+    def _with_exchange(cls, exchange: _Exchange) -> JevModel:
+        """Test seam: a model over an injected exchange; reads no environment variable."""
+        model = cls.__new__(cls)
+        model._configure_jev(exchange)
+        return model
