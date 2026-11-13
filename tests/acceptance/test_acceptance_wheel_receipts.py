@@ -299,6 +299,9 @@ def documented_commands() -> list[tuple[Path, str, list[str]]]:
         for raw in document.read_text(encoding="utf-8").splitlines():
             if raw.startswith("```"):
                 inside = not inside
+                if buffered:  # a command never continues into another fenced block
+                    commands.append((document, buffered[0], buffered[1:]))
+                    buffered = []
                 continue
             if not inside:
                 continue
@@ -324,7 +327,17 @@ def test_documented_command_shapes_match_the_installed_cli(
         tokens = " ".join([first, *continuation]).split()
         tokens = tokens[tokens.index("actseal") + 1 :]  # ignore any `uv run ...` prefix
         subcommand = tokens[0]
-        assert subcommand in {"lock", "verify", "replay", "demo"}, (document, first)
+        assert subcommand in {
+            "lock",
+            "verify",
+            "replay",
+            "demo",
+            "plan",
+            "calibrate",
+            "qualify",
+            "replay-selection",
+            "report",
+        }, (document, first)
         seen_demo = seen_demo or subcommand == "demo"
         if subcommand not in helps:
             result = run_cli((str(installed.console),), [subcommand, "--help"], cwd=outside)
