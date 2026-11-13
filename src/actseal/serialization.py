@@ -565,12 +565,15 @@ def from_data(record_type: type[T], value: object) -> T:
 #: Top-level package files that hold no decision or replay semantics, so editing
 #: them cannot change what a lock or bundle means: ``__init__.py`` (version
 #: metadata and re-exports only), ``__main__.py`` (delegates to ``cli.main``),
-#: ``cli.py`` (argument parsing and output formatting; delegates every decision
-#: to :mod:`actseal.runner` and :mod:`actseal.replay`) and a future
-#: ``report.py`` (reserved for CLI report formatting, same rationale as
-#: ``cli.py``). Matched only at the top level of the package: a same-named file
-#: in a subpackage is still hashed. Every other ``*.py`` file, including new
-#: ones, is hashed by default (fail closed).
+#: ``cli.py`` (argument parsing, dispatch and output formatting; every
+#: integrity check and decision is delegated to :mod:`actseal.runner`,
+#: :mod:`actseal.replay` and :mod:`actseal.qualification`) and ``report.py``
+#: (deterministic HTML/Markdown/badge rendering of an already validated
+#: :class:`actseal.report.ReportData`; it never evaluates a policy, selects a
+#: threshold, computes a bound or issues a verdict). Matched only at the top
+#: level of the package: a same-named file in a subpackage is still hashed.
+#: Every other ``*.py`` file, including new ones, is hashed by default
+#: (fail closed).
 EXCLUDED_FINGERPRINT_FILES: Final[frozenset[str]] = frozenset(
     {"__init__.py", "__main__.py", "cli.py", "report.py"}
 )

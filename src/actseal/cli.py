@@ -53,7 +53,7 @@ from typing import TYPE_CHECKING, Final
 from actseal import __version__
 from actseal.assessment import REASON_RECORDED_FAULT_SCOPE
 from actseal.compatibility import LEGACY_GUIDANCE
-from actseal.errors import ActsealError, IntegrityError, SchemaError
+from actseal.errors import ActsealError
 from actseal.normalization import RECORDING_WARNING
 from actseal.records import (
     DecisionRecord,
@@ -790,106 +790,25 @@ def _run_qualification_demo(args: argparse.Namespace, output: _Output) -> int:
     return output.report(payload, [f"demo: {_QUALIFICATION_DEMO_NOTE}", *lines], notes)
 
 
-def _report_document(path: Path, limit: int) -> bytes:
-    """Bounded regular-file reads for the qualification links outside the bundle."""
-    import stat  # noqa: PLC0415 - report only
-
-    from actseal.evidence import _read_exact  # noqa: PLC0415 - report only
-
-    info = path.lstat()
-    if not stat.S_ISREG(info.st_mode) or not 1 <= info.st_size <= limit:
-        raise SchemaError("report: expected a bounded nonempty regular file")
-    return _read_exact(path, "report input", info.st_size)
-
-
 def _load_report_data(directory: Path, destination: Path) -> ReportData:
-    """Delegate replay to its existing stages; only join already validated artifacts.
+    """Build the report command's display input from already validated evidence.
 
-    The public replay facade turns invalid input into an ERROR verdict. Using
-    its stages preserves the distinction between a replayed diagnostic ERROR
-    and evidence that failed replay, without copying any decision logic.
+    All replay and qualification-linkage checks live in
+    :func:`actseal.qualification.load_qualification_evidence`; this only
+    reshapes its result into :class:`ReportData` for presentation.
     """
-    from dataclasses import replace  # noqa: PLC0415 - report only
-
-    from actseal.evidence import read_bundle_files  # noqa: PLC0415 - report only
-    from actseal.qualification import (  # noqa: PLC0415 - report only
-        _decode_plan,
-        _json_document,
-        _object,
-        _read_sidecar,
-        replay_selection,
-    )
-    from actseal.replay import (  # noqa: PLC0415 - reuse the existing replay implementation
-        _check_identity,
-        _decode_evidence,
-        _decode_lock,
-        _InvalidEvidenceError,
-        _reassess,
-    )
+    from actseal.qualification import load_qualification_evidence  # noqa: PLC0415 - report only
     from actseal.report import ReportData  # noqa: PLC0415 - presentation only
-    from actseal.serialization import canonical_json, sha256_bytes, to_data  # noqa: PLC0415
 
-    qualified = any(
-        os.path.lexists(directory / name)
-        for name in ("calibration", "evidence", "qualification.json")
-    )
-    bundle_path = directory / "evidence" if qualified else directory
-    protected = [bundle_path, directory / "calibration"] if qualified else [bundle_path]
-    if any(destination.resolve().is_relative_to(path.resolve()) for path in protected):
-        raise SchemaError("report: output must be outside the evidence directories")
-    files = read_bundle_files(bundle_path)
-    try:
-        lock = _decode_lock(files["lock.json"])
-        _check_identity(lock, files, None)
-        records, faults, stored = _decode_evidence(lock, files)
-        verdict = _reassess(lock, records, faults, stored)
-    except _InvalidEvidenceError:
-        raise IntegrityError("report: evidence does not replay") from None
-    manifest_sha256 = sha256_bytes(files["manifest.json"])
-    if not qualified:
-        return ReportData(lock, verdict, manifest_sha256)
-
-    sidecar = _read_sidecar(directory / "calibration")
-    plan = _decode_plan(sidecar["selection_plan.json"])
-    selection = replay_selection(directory / "calibration")
-    if _read_sidecar(directory / "calibration") != sidecar:
-        raise IntegrityError("report: calibration changed during replay")
-    calibration_manifest_sha256 = sha256_bytes(sidecar["manifest.json"])
-    receipt = _object(
-        _json_document(_report_document(directory / "qualification.json", 1024 * 1024)),
-        {"schema_version", "calibration_manifest_sha256", "lock_sha256", "verdict"},
-        "qualification",
-    )
-    if (
-        type(receipt["schema_version"]) is not int
-        or receipt["schema_version"] != 1
-        or receipt["calibration_manifest_sha256"] != calibration_manifest_sha256
-        or receipt["lock_sha256"] != lock.sha256
-        or canonical_json(receipt["verdict"]) != canonical_json(to_data(verdict))
-        or _report_document(directory / "lock.json", 32 * 1024 * 1024) != files["lock.json"]
-    ):
-        raise IntegrityError("report: qualification receipt or lock does not match evidence")
-    if (
-        selection.threshold != lock.contract.policy.threshold
-        or plan.contract
-        != replace(lock.contract, policy=replace(lock.contract.policy, threshold=1.0))
-        or plan.model_identity != lock.model_identity
-        or plan.calibration_sha256 != lock.calibration_sha256
-        or plan.verification_sha256 != lock.verification_sha256
-        or plan.n_verify != len(lock.verification_cases)
-        or plan.implementation_sha256 != lock.implementation_sha256
-        or plan.replay_engine_version != lock.replay_engine_version
-        or sidecar["calibration.jsonl"] != files["calibration.jsonl"]
-    ):
-        raise IntegrityError("report: selection plan does not match verification lock")
+    evidence = load_qualification_evidence(directory, destination)
     return ReportData(
-        lock,
-        verdict,
-        manifest_sha256,
-        selection,
-        plan.document(),
-        len(lock.calibration_inventory),
-        calibration_manifest_sha256,
+        evidence.lock,
+        evidence.verdict,
+        evidence.manifest_sha256,
+        evidence.selection,
+        evidence.selection_plan,
+        evidence.calibration_total,
+        evidence.calibration_manifest_sha256,
     )
 
 

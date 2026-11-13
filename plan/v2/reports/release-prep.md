@@ -51,8 +51,11 @@ work in all other dirty/untracked files is preserved. A before/after source-byte
 snapshot shows only top-level `__init__.py` and `report.py` changed among all
 packaged Python files. Every hashed kernel file, the packaged registry and
 `tests/unit/test_compatibility.py` match the entry snapshot exactly. No packaged
-Python file was added or deleted. The running fingerprint remains
-`6335296062e227ebe523cba4047469dc70d6e91f002cc990e8146f68c76a4ac5`.
+Python file was added or deleted. The running fingerprint at the time of this
+report was the then-registered 2.0.0 candidate value, later superseded by
+`1c579ef18c4aada29bc7b0fc2d9b319e13cb30c973ec50484bfa025ccd233b42` after a
+review finding moved report-command integrity logic into the fingerprinted
+`actseal.qualification` module.
 `tests/examples/test_run.py` and its `APPROVED_REGISTRY` were not edited.
 
 ## Implementation details

@@ -151,7 +151,7 @@ and added two more entries so the running source and the retained
 | Fingerprint | Source | Status |
 |---|---|---|
 | `167038cb709ff839f26a21ef55cc63ebd988d797ac56e82d0227ecad1a08eb7c` | producer of the retained `docs/results/jev-audit-2026-10-08/evidence` archive: unreleased benchmark snapshot `d3edbab2dfbd44a0e9e272e1671143517832e3b4` (see that directory's README) | registered so the archive keeps replaying to its recorded INCONCLUSIVE verdict; a golden replay test checks this |
-| `6335296062e227ebe523cba4047469dc70d6e91f002cc990e8146f68c76a4ac5` | the 2.0.0 candidate source under the narrowed fingerprint | the running implementation of the 2.0.0 candidate; registered so the retained archives replay to their stored verdicts under it |
+| `1c579ef18c4aada29bc7b0fc2d9b319e13cb30c973ec50484bfa025ccd233b42` | the 2.0.0 candidate source, after moving the report command's qualification-linkage checks into `actseal.qualification` | the running implementation of the 2.0.0 candidate; registered so the retained archives replay to their stored verdicts under it |
 
 The three pre-M2 entries (`8f316f679b2…`, `a5fe090202f…`, `dced01d79e6…`) stay
 registered unchanged, computed under the pre-M2 algorithm, so 1.0.0 and 1.0.1

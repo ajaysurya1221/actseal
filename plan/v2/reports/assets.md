@@ -109,9 +109,11 @@ preservation of the existing geometry checks; it is not an independent ACCEPT.
    limitation.
 3. The packaged registry contains archived producer
    `167038cb709ff839f26a21ef55cc63ebd988d797ac56e82d0227ecad1a08eb7c` for
-   `actseal-choice-v1`, but the current running fingerprint
-   `6335296062e227ebe523cba4047469dc70d6e91f002cc990e8146f68c76a4ac5`
-   is absent. Direct replay therefore returns `ERROR integrity.lock`, not the
+   `actseal-choice-v1`, but at the time of this report the then-current running
+   fingerprint (later superseded, after a review finding moved report-command
+   integrity logic into the fingerprinted `actseal.qualification` module, by
+   `1c579ef18c4aada29bc7b0fc2d9b319e13cb30c973ec50484bfa025ccd233b42`)
+   was absent. Direct replay therefore returns `ERROR integrity.lock`, not the
    recorded INCONCLUSIVE yet. Final source registration/review belongs to the
    orchestrator's source/registry lane. No registry or evidence was modified.
 

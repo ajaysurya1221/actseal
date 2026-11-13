@@ -15,7 +15,7 @@ import re
 import shutil
 import stat
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
@@ -33,6 +33,7 @@ from actseal.evidence import (
     _read_exact,
     _write_file,
     decode_rows,
+    read_bundle_files,
 )
 from actseal.normalization import normalize, request_sha256
 from actseal.policy import evaluate
@@ -46,6 +47,14 @@ from actseal.records import (
     EvidenceBundle,
     ModelIdentity,
     PlanLock,
+    Verdict,
+)
+from actseal.replay import (
+    _check_identity,
+    _decode_evidence,
+    _decode_lock,
+    _InvalidEvidenceError,
+    _reassess,
 )
 from actseal.selection import (
     DEFAULT_SELECTION_TAIL,
@@ -69,8 +78,10 @@ if TYPE_CHECKING:
 __all__ = [
     "DEFAULT_GRID",
     "CalibrationRun",
+    "QualificationEvidence",
     "QualificationRun",
     "calibrate_run",
+    "load_qualification_evidence",
     "qualify_run",
     "replay_selection",
 ]
@@ -657,3 +668,109 @@ def qualify_run(
     }
     _write_file(receipt_path, _encoded_document(receipt, _Budget(MAX_BUNDLE_BYTES)))
     return QualificationRun(destination, calibration, lock, bundle, receipt_path)
+
+
+_QUALIFICATION_RECEIPT_KEYS: Final = frozenset(
+    {"schema_version", "calibration_manifest_sha256", "lock_sha256", "verdict"}
+)
+
+
+@dataclass(frozen=True)
+class QualificationEvidence:
+    """Replayed evidence for one report root; the extra fields exist only for a
+    qualification root (one with a ``calibration`` sidecar, ``evidence`` bundle
+    and ``qualification.json`` receipt), never for a plain verification bundle.
+    """
+
+    lock: PlanLock
+    verdict: Verdict
+    manifest_sha256: str
+    selection: SelectionResult | None = None
+    selection_plan: Mapping[str, object] | None = None
+    calibration_total: int | None = None
+    calibration_manifest_sha256: str | None = None
+
+
+def _bounded_file(path: Path, limit: int) -> bytes:
+    """Bounded regular-file read for a report link that sits outside the bundle."""
+    info = path.lstat()
+    if not stat.S_ISREG(info.st_mode) or not 1 <= info.st_size <= limit:
+        raise SchemaError("report: expected a bounded nonempty regular file")
+    return _read_exact(path, "report input", info.st_size)
+
+
+def load_qualification_evidence(directory: Path, destination: Path) -> QualificationEvidence:
+    """Replay a report root's evidence, and its qualification linkage if it has one.
+
+    ``directory`` is either a plain verification bundle or a qualification root
+    (calibration sidecar, evidence bundle and a ``qualification.json`` receipt).
+    Delegates replay to the existing stages instead of copying any decision
+    logic: the public replay facade turns invalid input into an ERROR verdict,
+    and using its stages preserves the distinction between a replayed
+    diagnostic ERROR and evidence that failed replay. ``destination`` is the
+    report command's intended output path; it must sit outside every evidence
+    directory this reads, so a build cannot route a report write to silently
+    overwrite the evidence it just replayed.
+    """
+    qualified = any(
+        os.path.lexists(directory / name)
+        for name in ("calibration", "evidence", "qualification.json")
+    )
+    bundle_path = directory / "evidence" if qualified else directory
+    protected = [bundle_path, directory / "calibration"] if qualified else [bundle_path]
+    if any(destination.resolve().is_relative_to(path.resolve()) for path in protected):
+        raise SchemaError("report: output must be outside the evidence directories")
+    files = read_bundle_files(bundle_path)
+    try:
+        lock = _decode_lock(files["lock.json"])
+        _check_identity(lock, files, None)
+        records, faults, stored = _decode_evidence(lock, files)
+        verdict = _reassess(lock, records, faults, stored)
+    except _InvalidEvidenceError:
+        raise IntegrityError("report: evidence does not replay") from None
+    manifest_sha256 = sha256_bytes(files["manifest.json"])
+    if not qualified:
+        return QualificationEvidence(lock, verdict, manifest_sha256)
+
+    sidecar = _read_sidecar(directory / "calibration")
+    plan = _decode_plan(sidecar["selection_plan.json"])
+    selection = replay_selection(directory / "calibration")
+    if _read_sidecar(directory / "calibration") != sidecar:
+        raise IntegrityError("report: calibration changed during replay")
+    calibration_manifest_sha256 = sha256_bytes(sidecar["manifest.json"])
+    receipt = _object(
+        _json_document(_bounded_file(directory / "qualification.json", 1024 * 1024)),
+        _QUALIFICATION_RECEIPT_KEYS,
+        "qualification",
+    )
+    if (
+        type(receipt["schema_version"]) is not int
+        or receipt["schema_version"] != 1
+        or receipt["calibration_manifest_sha256"] != calibration_manifest_sha256
+        or receipt["lock_sha256"] != lock.sha256
+        or canonical_json(receipt["verdict"]) != canonical_json(to_data(verdict))
+        or _bounded_file(directory / "lock.json", 32 * 1024 * 1024) != files["lock.json"]
+    ):
+        raise IntegrityError("report: qualification receipt or lock does not match evidence")
+    if (
+        selection.threshold != lock.contract.policy.threshold
+        or plan.contract
+        != replace(lock.contract, policy=replace(lock.contract.policy, threshold=1.0))
+        or plan.model_identity != lock.model_identity
+        or plan.calibration_sha256 != lock.calibration_sha256
+        or plan.verification_sha256 != lock.verification_sha256
+        or plan.n_verify != len(lock.verification_cases)
+        or plan.implementation_sha256 != lock.implementation_sha256
+        or plan.replay_engine_version != lock.replay_engine_version
+        or sidecar["calibration.jsonl"] != files["calibration.jsonl"]
+    ):
+        raise IntegrityError("report: selection plan does not match verification lock")
+    return QualificationEvidence(
+        lock,
+        verdict,
+        manifest_sha256,
+        selection,
+        plan.document(),
+        len(lock.calibration_inventory),
+        calibration_manifest_sha256,
+    )

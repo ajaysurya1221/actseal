@@ -106,9 +106,11 @@ ORIGINAL_EXAMPLE_PRODUCER = "a5fe090202f75b07510407937a86ae35a7653a75eab3f4daa2d
 #: Producer of docs/results/jev-audit-2026-10-08/evidence: unreleased benchmark
 #: snapshot d3edbab2dfbd44a0e9e272e1671143517832e3b4 (see that directory's README).
 JEV_AUDIT_PRODUCER = "167038cb709ff839f26a21ef55cc63ebd988d797ac56e82d0227ecad1a08eb7c"
-#: Running fingerprint of this tree after the M2 narrowing change. Any further
-#: packaged Python edit changes this value.
-V2_M2_RUNNING_SOURCE = "6335296062e227ebe523cba4047469dc70d6e91f002cc990e8146f68c76a4ac5"
+#: Running fingerprint of this tree after the M2 narrowing change and the later
+#: move of the report command's qualification-linkage checks into the
+#: fingerprinted ``actseal.qualification`` module. Any further packaged Python
+#: edit changes this value.
+V2_M2_RUNNING_SOURCE = "1c579ef18c4aada29bc7b0fc2d9b319e13cb30c973ec50484bfa025ccd233b42"
 APPROVED = {
     RELEASE_1_0_0: CURRENT_ENGINE,
     ORIGINAL_EXAMPLE_PRODUCER: CURRENT_ENGINE,

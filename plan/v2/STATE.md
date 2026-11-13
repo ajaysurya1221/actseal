@@ -28,7 +28,11 @@ third-party review has been performed; nothing here is an ACCEPT.
 - `uv run --frozen python tools/check_mutations.py`: 8 killed, 0 survived.
 - `actseal replay docs/results/jev-audit-2026-10-08/evidence`: exit 2,
   INCONCLUSIVE, 580/639 accepted, 24 errors, matching the stored verdict.
-- Running fingerprint `6335296062e2…` is registered for `actseal-choice-v1`.
+- Running fingerprint `1c579ef18c4a…` is registered for `actseal-choice-v1`
+  (replaces the earlier candidate value: a review finding that `cli.py`'s
+  `_load_report_data` held real qualification-linkage integrity logic outside
+  the fingerprint was fixed by moving it into
+  `actseal.qualification.load_qualification_evidence`).
 
 ## Hosted checks (push runs on commit `29f25de`)
 
