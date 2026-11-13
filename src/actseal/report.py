@@ -91,11 +91,27 @@ def _number(value: float) -> str:
     return f"{value:.4f}".rstrip("0").rstrip(".")
 
 
+_PERCENT_NOISE = 1e-9  # float error from scaling a share by 100, far below any locked digit
+
+
+def _exact(value: float) -> str:
+    """A locked parameter, never rounded: four decimals only when that is exact."""
+    text = _number(value)
+    return text if float(text) == value else repr(value)
+
+
+def _percent(share: float) -> str:
+    """A locked share as a percentage, one decimal only when that is exact."""
+    scaled = share * 100
+    text = f"{scaled:.1f}"
+    return text if abs(float(text) - scaled) < _PERCENT_NOISE else f"{scaled:.10g}"
+
+
 def _headline(data: ReportData) -> str:
     limits = data.lock.contract.limits
     context = (
-        f"At a risk limit of {limits.max_risk * 100:.1f}% "
-        f"({(1 - limits.alpha) * 100:.1f}% confidence), "
+        f"At a risk limit of {_percent(limits.max_risk)}% "
+        f"({_percent(1 - limits.alpha)}% confidence), "
     )
     if data.verdict.status == "PASS":
         return (
@@ -135,11 +151,11 @@ def _markdown_table(headers: Sequence[str], rows: Sequence[Sequence[str]]) -> st
 
 
 def _selection_rows(data: ReportData) -> list[tuple[str, ...]]:
-    if data.selection is None or data.calibration_total is None:
+    if data.selection is None or not data.calibration_total:
         return []
     return [
         (
-            _number(point.threshold),
+            _exact(point.threshold),
             str(point.accepted),
             str(point.errors),
             _number(point.predicted_pass_probability),
@@ -151,7 +167,7 @@ def _selection_rows(data: ReportData) -> list[tuple[str, ...]]:
 
 
 def _chart_points(data: ReportData) -> list[tuple[float, float, float]]:
-    if data.selection is None or data.calibration_total is None:
+    if data.selection is None or not data.calibration_total:
         return []
     return [
         (point.threshold, point.accepted / data.calibration_total, point.errors / point.accepted)
@@ -204,7 +220,7 @@ def _svg_chart(data: ReportData) -> str:
         parts.append(
             f'<circle class="point" cx="{70 + 610 * coverage:.2f}" '
             f'cy="{260 - 220 * risk:.2f}" r="5"><title>'
-            f"Threshold {_number(threshold)}; coverage {_number(coverage)}; risk {_number(risk)}"
+            f"Threshold {_exact(threshold)}; coverage {_number(coverage)}; risk {_number(risk)}"
             "</title></circle>"
         )
     parts.append("</svg>")
@@ -304,10 +320,10 @@ def _documents(data: ReportData, attestation_ref: str | None) -> dict[str, bytes
         "Verification limits",
         ("Measure", "Value"),
         (
-            ("Risk limit", _number(limits.max_risk)),
-            ("Confidence (1 - alpha)", f"{(1 - limits.alpha) * 100:.1f}%"),
-            ("Alpha", _number(limits.alpha)),
-            ("Minimum coverage", _number(limits.min_coverage)),
+            ("Risk limit", _exact(limits.max_risk)),
+            ("Confidence (1 - alpha)", f"{_percent(1 - limits.alpha)}%"),
+            ("Alpha", _exact(limits.alpha)),
+            ("Minimum coverage", _exact(limits.min_coverage)),
         ),
     )
     table(
@@ -333,11 +349,11 @@ def _documents(data: ReportData, attestation_ref: str | None) -> dict[str, bytes
             "Threshold selection",
             ("Measure", "Stored value"),
             (
-                ("Selected threshold", _number(selected) if selected is not None else "none"),
+                ("Selected threshold", _exact(selected) if selected is not None else "none"),
                 ("Selection reason", data.selection.reason),
-                ("Prespecified grid", ", ".join(_number(value) for value in grid)),
-                ("Target pass probability", _number(cast(float, plan["target_pass_probability"]))),
-                ("Selection tail", _number(cast(float, plan["selection_tail"]))),
+                ("Prespecified grid", ", ".join(_exact(value) for value in grid)),
+                ("Target pass probability", _exact(cast(float, plan["target_pass_probability"]))),
+                ("Selection tail", _exact(cast(float, plan["selection_tail"]))),
                 ("Calibration cases", str(data.calibration_total)),
                 ("Planned verification cases", str(plan["n_verify"])),
                 (
@@ -370,7 +386,7 @@ def _documents(data: ReportData, attestation_ref: str | None) -> dict[str, bytes
         table(
             "Threshold",
             ("Measure", "Stored value"),
-            (("Prespecified threshold", _number(data.lock.contract.policy.threshold)),),
+            (("Prespecified threshold", _exact(data.lock.contract.policy.threshold)),),
         )
     table("Model identity", ("Field", "Value"), _identity_rows(data))
     html_parts.append("<h2>Provider scope</h2>")
@@ -406,7 +422,7 @@ def _documents(data: ReportData, attestation_ref: str | None) -> dict[str, bytes
         "label": "Actseal",
         "message": (
             f"PASS · ≥{verdict.coverage.lower * 100:.1f}% alone "
-            f"@ ≤{limits.max_risk * 100:.1f}% risk"
+            f"@ ≤{_percent(limits.max_risk)}% risk"
             if verdict.status == "PASS"
             else verdict.status
         ),

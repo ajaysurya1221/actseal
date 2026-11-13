@@ -422,6 +422,24 @@ def test_the_most_accepting_grid_point_that_reaches_the_target_is_selected() -> 
     assert predicted[2] >= 0.8 or predicted[1] > predicted[2]
 
 
+def test_the_most_accepting_of_two_qualifying_points_is_preferred() -> None:
+    """When multiple grid points reach the target, the one accepting more wins.
+
+    At ``max_risk=0.4`` both the bottom and middle bands clear the target, with
+    120 and 80 accepted respectively: the selector must pick the larger
+    acceptance (0.3), not settle for the smaller one just because it also
+    qualifies.
+    """
+    result = select(max_risk=0.4)
+    assert result.reason == REASON_SELECTED
+    predicted = {point.threshold: point.predicted_pass_probability for point in result.points}
+    assert predicted[0.3] >= 0.8
+    assert predicted[0.6] >= 0.8
+    accepted = {point.threshold: point.accepted for point in result.points}
+    assert accepted[0.3] > accepted[0.6]
+    assert result.threshold == 0.3
+
+
 def test_a_tie_on_accepted_cases_goes_to_the_higher_threshold() -> None:
     result = select(grid=(0.65, 0.75), target_pass_probability=0.5)
     accepted = {point.accepted for point in result.points}
