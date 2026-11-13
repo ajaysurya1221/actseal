@@ -30,11 +30,18 @@ third-party review has been performed; nothing here is an ACCEPT.
   INCONCLUSIVE, 580/639 accepted, 24 errors, matching the stored verdict.
 - Running fingerprint `6335296062e2…` is registered for `actseal-choice-v1`.
 
+## Hosted checks (push runs on commit `29f25de`)
+
+- `CI`: success on ubuntu and macOS, Python 3.12 and 3.13, including the
+  clean-wheel packaging step. The first run on `0f3687e` failed that step on
+  two stale tests; `29f25de` fixed the tests, with no product change.
+- `Actseal action self-test`: success for `replay` and `qualify` on hosted
+  runners.
+- Pull request: ajaysurya1221/actseal#82, opened by the maintainer.
+
 ## Not verified
 
-- Hosted CI on any v2 commit, Linux, and Python 3.12.
-- Integration and packaging test markers.
-- The GitHub Action on hosted runners (script logic is tested locally only).
+- The Laya integration tests (optional model packages are not installed).
 - Any live decision-api server; any local decision model beyond v1's Laya work.
 - External model, server, dataset and licence facts in the plan and in M0.
 - The selector simulation used a loose risk limit (0.25); a run at a realistic
